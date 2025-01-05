@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{104C8CCD-3086-4733-92B1-DD464C61B0AB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CFA28591-5073-41BB-8E43-BDD020D72BF0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "demo", "demo", "{49263E78-CA88-45A9-935F-6BFED7EF708D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server", "src\PicoHex.Server\PicoHex.Server.csproj", "{FE7A3F18-5352-475A-A276-6C54EDB33554}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Demo", "demo\PicoHex.Server.Demo\PicoHex.Server.Demo.csproj", "{22134531-61F6-477C-9A1C-6486AF8C7ACF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Test", "tests\PicoHex.Server.Test\PicoHex.Server.Test.csproj", "{ED5C39D8-2365-493C-94E8-8D23BA6A626D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FE7A3F18-5352-475A-A276-6C54EDB33554} = {104C8CCD-3086-4733-92B1-DD464C61B0AB}
+		{22134531-61F6-477C-9A1C-6486AF8C7ACF} = {49263E78-CA88-45A9-935F-6BFED7EF708D}
+		{ED5C39D8-2365-493C-94E8-8D23BA6A626D} = {CFA28591-5073-41BB-8E43-BDD020D72BF0}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FE7A3F18-5352-475A-A276-6C54EDB33554}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE7A3F18-5352-475A-A276-6C54EDB33554}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE7A3F18-5352-475A-A276-6C54EDB33554}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE7A3F18-5352-475A-A276-6C54EDB33554}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22134531-61F6-477C-9A1C-6486AF8C7ACF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22134531-61F6-477C-9A1C-6486AF8C7ACF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22134531-61F6-477C-9A1C-6486AF8C7ACF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22134531-61F6-477C-9A1C-6486AF8C7ACF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED5C39D8-2365-493C-94E8-8D23BA6A626D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED5C39D8-2365-493C-94E8-8D23BA6A626D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED5C39D8-2365-493C-94E8-8D23BA6A626D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED5C39D8-2365-493C-94E8-8D23BA6A626D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
