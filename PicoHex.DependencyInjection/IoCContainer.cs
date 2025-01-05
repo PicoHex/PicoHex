@@ -1,4 +1,4 @@
-namespace PicoHex.Ioc;
+namespace PicoHex.DependencyInjection;
 
 public class DiContainer
 {

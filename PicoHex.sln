@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Demo", "demo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Test", "tests\PicoHex.Server.Test\PicoHex.Server.Test.csproj", "{ED5C39D8-2365-493C-94E8-8D23BA6A626D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Ioc", "PicoHex.Ioc\PicoHex.Ioc.csproj", "{0D8F57F8-9FBF-429F-B628-AD5B07EB2DA3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DependencyInjection", "PicoHex.DependencyInjection\PicoHex.DependencyInjection.csproj", "{0D8F57F8-9FBF-429F-B628-AD5B07EB2DA3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "tests\TestProject1\TestProject1.csproj", "{805E4554-1423-4B84-A7D2-071E31409EF4}"
 EndProject

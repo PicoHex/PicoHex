@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\PicoHex.Ioc\PicoHex.Ioc.csproj" />
+      <ProjectReference Include="..\..\PicoHex.DependencyInjection\PicoHex.DependencyInjection.csproj" />
     </ItemGroup>
 
 </Project>

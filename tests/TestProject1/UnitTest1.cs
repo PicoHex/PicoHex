@@ -1,4 +1,6 @@
-﻿namespace TestProject1;
+﻿using PicoHex.DependencyInjection;
+
+namespace TestProject1;
 
 public class DiContainerTests
 {
