@@ -35,21 +35,25 @@ public class DiContainerTests
     public void Register_And_Resolve_Scoped()
     {
         _container.Register<IService, ServiceImpl>(Lifetime.Scoped);
+        IService s1,
+            s2,
+            s3,
+            s4;
         using (var scope1 = _container.CreateScope())
         {
-            var s1 = _container.Resolve<IService>();
-            var s2 = _container.Resolve<IService>();
+            s1 = _container.Resolve<IService>();
+            s2 = _container.Resolve<IService>();
 
             Assert.Same(s1, s2);
         }
 
         using (var scope2 = _container.CreateScope())
         {
-            var s3 = _container.Resolve<IService>();
-            var s4 = _container.Resolve<IService>();
+            s3 = _container.Resolve<IService>();
+            s4 = _container.Resolve<IService>();
 
             Assert.Same(s3, s4);
-            Assert.NotSame(s3, _container.Resolve<IService>());
+            Assert.NotSame(s3, s1);
         }
     }
 
