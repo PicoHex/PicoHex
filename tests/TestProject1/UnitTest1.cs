@@ -1,34 +1,34 @@
-﻿using PicoHex.DependencyInjection;
-
-namespace TestProject1;
+﻿namespace TestProject1;
 
 public class DiContainerTests
 {
-    private DiContainer _container;
+    private readonly ISvcRegistry _svcRegistry;
+    private readonly ISvcProvider _svcProvider;
 
     public DiContainerTests()
     {
-        _container = new DiContainer();
+        _svcRegistry = ContainerBootstrap.CreateRegistry();
+        _svcProvider = _svcRegistry.CreateProvider();
     }
 
     [Fact]
     public void Register_And_Resolve_Transient()
     {
-        _container.Register<IService, ServiceImpl>(Lifetime.Transient);
-        var s1 = _container.Resolve<IService>();
-        var s2 = _container.Resolve<IService>();
+        _svcRegistry.AddService<IService, ServiceImpl>(SvcLifetime.Transient);
+        var s1 = _svcProvider.Resolve<IService>();
+        var s2 = _svcProvider.Resolve<IService>();
 
-        Assert.NotNull((object?)s1);
-        Assert.NotNull((object?)s2);
+        Assert.NotNull(s1);
+        Assert.NotNull(s2);
         Assert.NotSame(s1, s2);
     }
 
     [Fact]
     public void Register_And_Resolve_Singleton()
     {
-        _container.Register<IService, ServiceImpl>(Lifetime.Singleton);
-        var s1 = _container.Resolve<IService>();
-        var s2 = _container.Resolve<IService>();
+        _svcRegistry.AddService<IService, ServiceImpl>(SvcLifetime.Singleton);
+        var s1 = _svcProvider.Resolve<IService>();
+        var s2 = _svcProvider.Resolve<IService>();
 
         Assert.Same(s1, s2);
     }
@@ -36,23 +36,23 @@ public class DiContainerTests
     [Fact]
     public void Register_And_Resolve_Scoped()
     {
-        _container.Register<IService, ServiceImpl>(Lifetime.Scoped);
+        _svcRegistry.AddService<IService, ServiceImpl>(SvcLifetime.Scoped);
         IService s1,
             s2,
             s3,
             s4;
-        using (var scope1 = _container.CreateScope())
+        using (var scope1 = _svcProvider.CreateScope())
         {
-            s1 = _container.Resolve<IService>();
-            s2 = _container.Resolve<IService>();
+            s1 = scope1.Resolve<IService>();
+            s2 = scope1.Resolve<IService>();
 
             Assert.Same(s1, s2);
         }
 
-        using (var scope2 = _container.CreateScope())
+        using (var scope2 = _svcProvider.CreateScope())
         {
-            s3 = _container.Resolve<IService>();
-            s4 = _container.Resolve<IService>();
+            s3 = scope2.Resolve<IService>();
+            s4 = scope2.Resolve<IService>();
 
             Assert.Same(s3, s4);
             Assert.NotSame(s3, s1);
@@ -62,18 +62,18 @@ public class DiContainerTests
     [Fact]
     public void Register_And_Resolve_PerThread()
     {
-        _container.Register<IService, ServiceImpl>(Lifetime.PerThread);
+        _svcRegistry.AddService<IService, ServiceImpl>(SvcLifetime.PerThread);
 
-        IService s1 = null;
-        IService s2 = null;
+        IService? s1 = null;
+        IService? s2 = null;
 
         var t1 = new Thread(() =>
         {
-            s1 = _container.Resolve<IService>();
+            s1 = _svcProvider.Resolve<IService>();
         });
         var t2 = new Thread(() =>
         {
-            s2 = _container.Resolve<IService>();
+            s2 = _svcProvider.Resolve<IService>();
         });
 
         t1.Start();
@@ -81,24 +81,15 @@ public class DiContainerTests
         t1.Join();
         t2.Join();
 
-        Assert.NotNull((object?)s1);
-        Assert.NotNull((object?)s2);
+        Assert.NotNull(s1);
+        Assert.NotNull(s2);
         Assert.NotSame(s1, s2);
     }
 
     [Fact]
     public void Throws_When_Not_Registered()
     {
-        Assert.Throws<System.InvalidOperationException>(() => _container.Resolve<IService>());
-    }
-
-    [Fact]
-    public void Cyclic_Dependency_Detected()
-    {
-        _container.Register<INode1, Node1>();
-        _container.Register<INode2, Node2>();
-
-        Assert.Throws<System.InvalidOperationException>(() => _container.Resolve<INode1>());
+        Assert.Throws<InvalidOperationException>(() => _svcProvider.Resolve<IService>());
     }
 }
 

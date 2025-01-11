@@ -6,4 +6,8 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\PicoHex.DependencyInjection.Abstractions\PicoHex.DependencyInjection.Abstractions.csproj" />
+    </ItemGroup>
+
 </Project>
