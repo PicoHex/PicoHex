@@ -5,21 +5,20 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
     public object? Resolve(Type implementationType)
     {
         var descriptor = registry.GetServiceDescriptor(implementationType);
-        if (descriptor.Lifetime == SvcLifetime.Singleton)
+        return descriptor.Lifetime switch
         {
-            return registry.GetSingletonInstance(
-                implementationType,
-                () => CreateInstance(descriptor)
-            );
-        }
-        if (descriptor.Lifetime == SvcLifetime.PerThread)
-        {
-            return registry.GetPerThreadInstance(
-                implementationType,
-                () => CreateInstance(descriptor)
-            );
-        }
-        return CreateInstance(descriptor);
+            SvcLifetime.Singleton
+                => registry.GetSingletonInstance(
+                    implementationType,
+                    () => CreateInstance(descriptor)
+                ),
+            SvcLifetime.PerThread
+                => registry.GetPerThreadInstance(
+                    implementationType,
+                    () => CreateInstance(descriptor)
+                ),
+            _ => CreateInstance(descriptor)
+        };
     }
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
