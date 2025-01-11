@@ -28,8 +28,22 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
     {
         if (descriptor.Factory is not null)
             return descriptor.Factory(this);
-        if (descriptor.ImplementationType is not null)
-            return Activator.CreateInstance(descriptor.ImplementationType)!;
-        throw new InvalidOperationException("No factory or implementation type found.");
+        if (descriptor.ImplementationType is null)
+            throw new InvalidOperationException("No factory or implementation type found.");
+        var implementationType = descriptor.ImplementationType;
+        var constructor = implementationType.GetConstructors().FirstOrDefault();
+        if (constructor == null)
+        {
+            throw new InvalidOperationException(
+                $"No public constructor found for type {implementationType.Name}"
+            );
+        }
+
+        var parameters = constructor
+            .GetParameters()
+            .Select(param => Resolve(param.ParameterType))
+            .ToArray();
+
+        return constructor.Invoke(parameters);
     }
 }
