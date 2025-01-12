@@ -76,31 +76,39 @@ public class DiContainerTests
     [Fact]
     public void Register_And_Resolve_PerThread()
     {
-        var svcRegistry = ContainerBootstrap.CreateRegistry();
-        var svcProvider = svcRegistry.CreateProvider();
-
-        svcRegistry.AddService<IService, ServiceImpl>(SvcLifetime.PerThread);
-
-        IService? s1 = null;
-        IService? s2 = null;
-
-        var t1 = new Thread(() =>
+        try
         {
-            s1 = svcProvider.Resolve<IService>();
-        });
-        var t2 = new Thread(() =>
+            var svcRegistry = ContainerBootstrap.CreateRegistry();
+            var svcProvider = svcRegistry.CreateProvider();
+
+            svcRegistry.AddService<IService, ServiceImpl>(SvcLifetime.PerThread);
+
+            IService? s1 = null;
+            IService? s2 = null;
+
+            var t1 = new Thread(() =>
+            {
+                s1 = svcProvider.Resolve<IService>();
+            });
+            var t2 = new Thread(() =>
+            {
+                s2 = svcProvider.Resolve<IService>();
+            });
+
+            t1.Start();
+            t2.Start();
+            t1.Join();
+            t2.Join();
+
+            Assert.NotNull(s1);
+            Assert.NotNull(s2);
+            Assert.NotSame(s1, s2);
+        }
+        catch (Exception e)
         {
-            s2 = svcProvider.Resolve<IService>();
-        });
-
-        t1.Start();
-        t2.Start();
-        t1.Join();
-        t2.Join();
-
-        Assert.NotNull(s1);
-        Assert.NotNull(s2);
-        Assert.NotSame(s1, s2);
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     [Fact]
