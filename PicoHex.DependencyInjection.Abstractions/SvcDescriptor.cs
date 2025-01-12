@@ -6,6 +6,12 @@ public sealed class SvcDescriptor
         : this(serviceType, lifetime)
     {
         ImplementationType = implementationType;
+        var constructorInfo = implementationType.GetConstructors().FirstOrDefault();
+        if (constructorInfo is null)
+            throw new InvalidOperationException(
+                $"No public constructor found for type {implementationType.Name}"
+            );
+        Constructor = new ConstructorForResolve(constructorInfo);
     }
 
     public SvcDescriptor(Type serviceType, Func<ISvcProvider, object> factory, SvcLifetime lifetime)
@@ -21,7 +27,14 @@ public sealed class SvcDescriptor
     }
 
     public Type ServiceType { get; }
-    public Type? ImplementationType { get; }
     public Func<ISvcProvider, object>? Factory { get; }
+    public Type? ImplementationType { get; }
+    public ConstructorForResolve? Constructor { get; }
     public SvcLifetime Lifetime { get; }
+}
+
+public sealed class ConstructorForResolve(ConstructorInfo constructorInfo)
+{
+    public ConstructorInfo ConstructorInfo { get; } = constructorInfo;
+    public ParameterInfo[] Parameters { get; } = constructorInfo.GetParameters();
 }

@@ -10,8 +10,8 @@ public static class ContainerBootstrap
         registry.AddTransient<ISvcRegistryFactory, SvcRegistryFactory>();
         registry.AddTransient<ISvcProviderFactory, SvcProviderFactory>();
         registry.AddTransient<ISvcScopeFactory, SvcScopeFactory>();
-        var provider = registry.CreateProvider();
-        var registryFactory = provider.Resolve<ISvcRegistryFactory>();
-        return registryFactory.CreateRegistry();
+        registry.AddTransient<ISvcRegistry>(_ => registry);
+        registry.AddTransient<ISvcProvider>(_ => registry.CreateProvider());
+        return registry;
     }
 }

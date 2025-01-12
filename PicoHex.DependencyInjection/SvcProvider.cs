@@ -2,6 +2,8 @@
 
 public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) : ISvcProvider
 {
+    private readonly ConcurrentStack<Type> _resolutionStack = new();
+
     public object? Resolve(Type implementationType)
     {
         var descriptor = registry.GetServiceDescriptor(implementationType);
@@ -27,22 +29,37 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
     {
         if (descriptor.Factory is not null)
             return descriptor.Factory(this);
+
         if (descriptor.ImplementationType is null)
             throw new InvalidOperationException("No factory or implementation type found.");
+
         var implementationType = descriptor.ImplementationType;
-        var constructor = implementationType.GetConstructors().FirstOrDefault();
-        if (constructor == null)
+
+        if (_resolutionStack.Contains(implementationType))
+            throw new InvalidOperationException(
+                $"Circular dependency detected for type {implementationType.Name}."
+            );
+
+        var constructor = descriptor.Constructor;
+        if (constructor is null)
         {
             throw new InvalidOperationException(
                 $"No public constructor found for type {implementationType.Name}"
             );
         }
+        _resolutionStack.Push(implementationType);
 
-        var parameters = constructor
-            .GetParameters()
-            .Select(param => Resolve(param.ParameterType))
-            .ToArray();
-
-        return constructor.Invoke(parameters);
+        try
+        {
+            var parameters = constructor
+                .Parameters
+                .Select(param => Resolve(param.ParameterType))
+                .ToArray();
+            return constructor.ConstructorInfo.Invoke(parameters);
+        }
+        finally
+        {
+            _resolutionStack.TryPop(out _);
+        }
     }
 }
