@@ -1,10 +1,8 @@
-using System.Collections.Concurrent;
-
 namespace PicoHex.DependencyInjection.Abstractions;
 
 public interface ISvcProvider
 {
-    object? Resolve(Type implementationType);
+    object? Resolve(Type serviceType);
     ISvcScope CreateScope();
 }
 

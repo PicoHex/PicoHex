@@ -19,11 +19,11 @@ public class SvcRegistry(ISvcProviderFactory providerFactory) : ISvcRegistry
         return this;
     }
 
-    public Func<ISvcProvider, object?> GetInstanceFactory(Type implementationType)
+    public Func<ISvcProvider, object?> GetInstanceFactory(Type serviceType)
     {
-        if (!_instanceFactory.TryGetValue(implementationType, out var factory))
+        if (!_instanceFactory.TryGetValue(serviceType, out var factory))
             throw new InvalidOperationException(
-                $"No instance factory found for type {implementationType}."
+                $"No instance factory found for type {serviceType}."
             );
         return factory;
     }

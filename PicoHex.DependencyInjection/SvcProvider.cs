@@ -6,19 +6,19 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
 
-    private object? Resolve(Type type, ISvcProvider svcProvider, Stack<Type> resolutionStack)
+    private object? Resolve(Type serviceType, ISvcProvider svcProvider, Stack<Type> resolutionStack)
     {
-        var descriptor = registry.GetServiceDescriptor(type);
+        var descriptor = registry.GetServiceDescriptor(serviceType);
         return descriptor.Lifetime switch
         {
             SvcLifetime.Singleton
                 => registry.GetSingletonInstance(
-                    type,
+                    serviceType,
                     () => CreateInstance(descriptor, svcProvider, resolutionStack)
                 ),
             SvcLifetime.PerThread
                 => registry.GetPerThreadInstance(
-                    type,
+                    serviceType,
                     () => CreateInstance(descriptor, svcProvider, resolutionStack)
                 ),
             _ => CreateInstance(descriptor, svcProvider, resolutionStack)

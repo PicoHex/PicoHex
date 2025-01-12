@@ -2,7 +2,7 @@ namespace PicoHex.DependencyInjection.Abstractions;
 
 public interface ISvcScope : IDisposable, IAsyncDisposable
 {
-    object Resolve(Type implementationType);
+    object Resolve(Type serviceType);
 }
 
 public static class SvcScopeExtensions

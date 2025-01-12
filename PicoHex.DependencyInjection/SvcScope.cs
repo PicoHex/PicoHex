@@ -4,12 +4,12 @@ public class SvcScope(ISvcProvider provider) : ISvcScope
 {
     private readonly ConcurrentDictionary<Type, object> _services = new();
 
-    public object Resolve(Type implementationType) =>
+    public object Resolve(Type serviceType) =>
         _services.GetOrAdd(
-            implementationType,
-            provider.Resolve(implementationType)
+            serviceType,
+            provider.Resolve(serviceType)
                 ?? throw new InvalidOperationException(
-                    $"Service for type {implementationType} could not be resolved."
+                    $"Service for type {serviceType} could not be resolved."
                 )
         );
 
