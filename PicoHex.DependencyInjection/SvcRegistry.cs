@@ -14,19 +14,15 @@ public class SvcRegistry(ISvcProviderFactory providerFactory) : ISvcRegistry
             throw new InvalidOperationException(
                 $"Service descriptor for type {descriptor.ServiceType} already exists."
             );
-        _instanceFactory[descriptor.ServiceType] = svcProvider =>
-            descriptor.Factory ?? svcProvider.Resolve(descriptor.ServiceType);
+        if (descriptor.Factory is not null)
+            GetOrAddInstanceFactory(descriptor.ServiceType, descriptor.Factory);
         return this;
     }
 
-    public Func<ISvcProvider, object?> GetInstanceFactory(Type serviceType)
-    {
-        if (!_instanceFactory.TryGetValue(serviceType, out var factory))
-            throw new InvalidOperationException(
-                $"No instance factory found for type {serviceType}."
-            );
-        return factory;
-    }
+    public Func<ISvcProvider, object?> GetOrAddInstanceFactory(
+        Type serviceType,
+        Func<ISvcProvider, object?> factory
+    ) => _instanceFactory.GetOrAdd(serviceType, factory);
 
     public object? GetSingletonInstance(Type type, Func<object?> instanceFactory)
     {

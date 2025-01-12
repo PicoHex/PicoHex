@@ -2,7 +2,18 @@
 
 public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) : ISvcProvider
 {
-    public object? Resolve(Type serviceType) => Resolve(serviceType, this, new Stack<Type>());
+    public object? Resolve(Type serviceType)
+    {
+        var factory = registry.GetOrAddInstanceFactory(
+            serviceType,
+            svcProvider =>
+            {
+                var resolutionStack = new Stack<Type>();
+                return Resolve(serviceType, svcProvider, resolutionStack);
+            }
+        );
+        return factory(this);
+    }
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
 
