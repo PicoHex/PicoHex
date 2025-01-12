@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace PicoHex.DependencyInjection.Abstractions;
 
 public interface ISvcProvider

@@ -2,9 +2,10 @@
 
 public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) : ISvcProvider
 {
-    private readonly ConcurrentStack<Type> _resolutionStack = new();
+    public object? Resolve(Type implementationType) =>
+        Resolve(implementationType, new Stack<Type>());
 
-    public object? Resolve(Type implementationType)
+    private object? Resolve(Type implementationType, Stack<Type> resolutionStack)
     {
         var descriptor = registry.GetServiceDescriptor(implementationType);
         return descriptor.Lifetime switch
@@ -12,20 +13,18 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
             SvcLifetime.Singleton
                 => registry.GetSingletonInstance(
                     implementationType,
-                    () => CreateInstance(descriptor)
+                    () => CreateInstance(descriptor, resolutionStack)
                 ),
             SvcLifetime.PerThread
                 => registry.GetPerThreadInstance(
                     implementationType,
-                    () => CreateInstance(descriptor)
+                    () => CreateInstance(descriptor, resolutionStack)
                 ),
-            _ => CreateInstance(descriptor)
+            _ => CreateInstance(descriptor, resolutionStack)
         };
     }
 
-    public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
-
-    private object CreateInstance(SvcDescriptor descriptor)
+    private object CreateInstance(SvcDescriptor descriptor, Stack<Type> resolutionStack)
     {
         if (descriptor.Factory is not null)
             return descriptor.Factory(this);
@@ -35,7 +34,7 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
 
         var implementationType = descriptor.ImplementationType;
 
-        if (_resolutionStack.Contains(implementationType))
+        if (resolutionStack.Contains(implementationType))
             throw new InvalidOperationException(
                 $"Circular dependency detected for type {implementationType.Name}."
             );
@@ -47,19 +46,21 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
                 $"No public constructor found for type {implementationType.Name}"
             );
         }
-        _resolutionStack.Push(implementationType);
+        resolutionStack.Push(implementationType);
 
         try
         {
             var parameters = constructor
                 .Parameters
-                .Select(param => Resolve(param.ParameterType))
+                .Select(param => Resolve(param.ParameterType, resolutionStack))
                 .ToArray();
             return constructor.ConstructorInfo.Invoke(parameters);
         }
         finally
         {
-            _resolutionStack.TryPop(out _);
+            resolutionStack.Pop();
         }
     }
+
+    public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
 }
