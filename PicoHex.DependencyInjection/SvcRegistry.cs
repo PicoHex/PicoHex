@@ -15,7 +15,7 @@ public class SvcRegistry(ISvcProviderFactory providerFactory) : ISvcRegistry
                 $"Service descriptor for type {descriptor.ServiceType} already exists."
             );
         _instanceFactory[descriptor.ServiceType] = svcProvider =>
-            descriptor.Factory ?? Resolve(descriptor.ServiceType, svcProvider, new Stack<Type>());
+            descriptor.Factory ?? svcProvider.Resolve(descriptor.ServiceType);
         return this;
     }
 
@@ -53,64 +53,5 @@ public class SvcRegistry(ISvcProviderFactory providerFactory) : ISvcRegistry
         if (!_descriptors.TryGetValue(type, out var descriptor))
             throw new InvalidOperationException($"No service descriptor found for type {type}.");
         return descriptor;
-    }
-
-    private object? Resolve(Type type, ISvcProvider svcProvider, Stack<Type> resolutionStack)
-    {
-        var descriptor = GetServiceDescriptor(type);
-        return descriptor.Lifetime switch
-        {
-            SvcLifetime.Singleton
-                => GetSingletonInstance(
-                    type,
-                    () => CreateInstance(descriptor, svcProvider, resolutionStack)
-                ),
-            SvcLifetime.PerThread
-                => GetPerThreadInstance(
-                    type,
-                    () => CreateInstance(descriptor, svcProvider, resolutionStack)
-                ),
-            _ => CreateInstance(descriptor, svcProvider, resolutionStack)
-        };
-    }
-
-    private object CreateInstance(
-        SvcDescriptor descriptor,
-        ISvcProvider svcProvider,
-        Stack<Type> resolutionStack
-    )
-    {
-        if (descriptor.Factory is not null)
-            return descriptor.Factory(svcProvider);
-
-        if (descriptor.ImplementationType is null)
-            throw new InvalidOperationException("No factory or implementation type found.");
-
-        var implementationType = descriptor.ImplementationType;
-
-        if (resolutionStack.Contains(implementationType))
-            throw new InvalidOperationException(
-                $"Circular dependency detected for type {implementationType.Name}."
-            );
-
-        var constructor = descriptor.Constructor;
-        if (constructor is null)
-            throw new InvalidOperationException(
-                $"No public constructor found for type {implementationType.Name}"
-            );
-        resolutionStack.Push(implementationType);
-
-        try
-        {
-            var parameters = constructor
-                .Parameters
-                .Select(param => Resolve(param.ParameterType, svcProvider, resolutionStack))
-                .ToArray();
-            return constructor.ConstructorInfo.Invoke(parameters);
-        }
-        finally
-        {
-            resolutionStack.Pop();
-        }
     }
 }
