@@ -3,9 +3,9 @@ namespace PicoHex.DependencyInjection;
 public class SvcRegistry(ISvcProviderFactory providerFactory) : ISvcRegistry
 {
     private readonly ConcurrentDictionary<Type, SvcDescriptor> _descriptors = new();
-    private readonly ConcurrentDictionary<Type, object?> _singletonInstance = new();
-    private readonly ConcurrentDictionary<Type, ThreadLocal<object?>> _perThreadInstance = new();
-    private readonly ConcurrentDictionary<Type, Func<ISvcProvider, object?>> _instanceFactory =
+    private readonly ConcurrentDictionary<Type, object?> _singletonInstances = new();
+    private readonly ConcurrentDictionary<Type, ThreadLocal<object?>> _perThreadInstances = new();
+    private readonly ConcurrentDictionary<Type, Func<ISvcProvider, object?>> _instanceFactories =
         new();
 
     public ISvcRegistry AddServiceDescriptor(SvcDescriptor descriptor)
@@ -14,31 +14,35 @@ public class SvcRegistry(ISvcProviderFactory providerFactory) : ISvcRegistry
             throw new InvalidOperationException(
                 $"Service descriptor for type {descriptor.ServiceType} already exists."
             );
+
         if (descriptor.Factory is not null)
             GetOrAddInstanceFactory(descriptor.ServiceType, descriptor.Factory);
+
         return this;
     }
 
     public Func<ISvcProvider, object?> GetOrAddInstanceFactory(
         Type serviceType,
         Func<ISvcProvider, object?> factory
-    ) => _instanceFactory.GetOrAdd(serviceType, factory);
+    ) => _instanceFactories.GetOrAdd(serviceType, factory);
 
     public object? GetSingletonInstance(Type type, Func<object?> instanceFactory)
     {
-        if (_singletonInstance.TryGetValue(type, out var instance))
+        if (_singletonInstances.TryGetValue(type, out var instance))
             return instance;
+
         instance = instanceFactory();
-        _singletonInstance[type] = instance;
+        _singletonInstances[type] = instance;
         return instance;
     }
 
     public object? GetPerThreadInstance(Type type, Func<object?> instanceFactory)
     {
-        if (_perThreadInstance.TryGetValue(type, out var instance))
+        if (_perThreadInstances.TryGetValue(type, out var instance))
             return instance.Value;
+
         instance = new ThreadLocal<object?>(instanceFactory);
-        _perThreadInstance[type] = instance;
+        _perThreadInstances[type] = instance;
         return instance.Value;
     }
 

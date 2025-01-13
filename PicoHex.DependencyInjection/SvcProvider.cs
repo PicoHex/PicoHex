@@ -12,6 +12,7 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
                 return Resolve(serviceType, svcProvider, resolutionStack);
             }
         );
+
         return factory(this);
     }
 
@@ -50,18 +51,19 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
 
         var implementationType = descriptor.ImplementationType;
 
+        // Check for circular dependencies
         if (resolutionStack.Contains(implementationType))
             throw new InvalidOperationException(
                 $"Circular dependency detected for type {implementationType.Name}."
             );
 
-        var constructor = descriptor.Constructor;
-        if (constructor is null)
-            throw new InvalidOperationException(
+        var constructor =
+            descriptor.Constructor
+            ?? throw new InvalidOperationException(
                 $"No public constructor found for type {implementationType.Name}"
             );
-        resolutionStack.Push(implementationType);
 
+        resolutionStack.Push(implementationType);
         try
         {
             var parameters = constructor
