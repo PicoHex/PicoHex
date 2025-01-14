@@ -37,7 +37,7 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
         };
     }
 
-    private object CreateInstance(
+    private object? CreateInstance(
         SvcDescriptor descriptor,
         ISvcProvider svcProvider,
         Stack<Type> resolutionStack

@@ -27,7 +27,7 @@ public sealed class SvcDescriptor
     }
 
     public Type ServiceType { get; }
-    public Func<ISvcProvider, object>? Factory { get; }
+    public Func<ISvcProvider, object?>? Factory { get; }
     public Type? ImplementationType { get; }
     public ConstructorForResolve? Constructor { get; }
     public SvcLifetime Lifetime { get; }
