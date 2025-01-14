@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Test", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DependencyInjection.Abstractions", "PicoHex.DependencyInjection.Abstractions\PicoHex.DependencyInjection.Abstractions.csproj", "{0D8F57F8-9FBF-429F-B628-AD5B07EB2DA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "tests\TestProject1\TestProject1.csproj", "{805E4554-1423-4B84-A7D2-071E31409EF4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DependencyInjection.Test", "tests\PicoHex.DependencyInjection.Test\PicoHex.DependencyInjection.Test.csproj", "{805E4554-1423-4B84-A7D2-071E31409EF4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DependencyInjection", "PicoHex.DependencyInjection\PicoHex.DependencyInjection.csproj", "{630A7C7E-8AE1-49B7-B872-6F84EEBB3A85}"
 EndProject

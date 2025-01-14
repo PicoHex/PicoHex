@@ -1,6 +1,6 @@
-﻿namespace TestProject1;
+﻿namespace PicoHex.DependencyInjection.Test;
 
-public class DiContainerTests
+public class DependencyInjectionTests
 {
     [Fact]
     public void Register_And_Resolve_Transient()

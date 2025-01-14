@@ -5,58 +5,75 @@ internal class Program
     static async Task Main(string[] args)
     {
         // Step 1: Create the IoC container
-        var serviceCollection = new ServiceCollection();
+        var svcRegistry = ContainerBootstrap.CreateRegistry();
 
         // Registering logging
-        serviceCollection.AddLogging(builder => builder.AddConsole());
+        // serviceCollection.AddLogging(builder => builder.AddConsole());
 
         // Registering Handlers
-        serviceCollection.AddSingleton<IStreamHandler, MyStreamHandler>();
-        serviceCollection.AddSingleton<IBytesHandler, MyBytesHandler>();
+        svcRegistry.AddSingleton<IStreamHandler, MyStreamHandler>();
+        svcRegistry.AddSingleton<IBytesHandler, MyBytesHandler>();
+        svcRegistry.AddSingleton<ILogger<TcpServer>, Logger<TcpServer>>();
+        svcRegistry.AddSingleton<ILogger<UdpServer>, Logger<UdpServer>>();
+        svcRegistry.AddSingleton<ILogger<MyStreamHandler>, Logger<MyStreamHandler>>();
+        svcRegistry.AddSingleton<ILogger<MyBytesHandler>, Logger<MyBytesHandler>>();
+        svcRegistry.AddSingleton<ILoggerFactory>(
+            _ => LoggerFactory.Create(builder => builder.AddConsole())
+        );
 
         // Registering servers
-        serviceCollection.AddSingleton<Func<IStreamHandler>>(
-            sp => sp.GetRequiredService<IStreamHandler>
+        svcRegistry.AddSingleton<Func<IStreamHandler>>(sp => sp.Resolve<IStreamHandler>);
+        svcRegistry.AddSingleton<Func<IBytesHandler>>(sp => sp.Resolve<IBytesHandler>);
+        svcRegistry.AddSingleton<TcpServer>(
+            sp =>
+                new TcpServer(
+                    IPAddress.Any,
+                    12345,
+                    sp.Resolve<Func<IStreamHandler>>(),
+                    sp.Resolve<ILogger<TcpServer>>()
+                )
         );
-        serviceCollection.AddSingleton<Func<IBytesHandler>>(
-            sp => sp.GetRequiredService<IBytesHandler>
+        svcRegistry.AddSingleton<UdpServer>(
+            sp =>
+                new UdpServer(
+                    IPAddress.Any,
+                    12345,
+                    sp.Resolve<Func<IBytesHandler>>(),
+                    sp.Resolve<ILogger<UdpServer>>()
+                )
         );
-        serviceCollection.AddSingleton<TcpServer>();
-        serviceCollection.AddSingleton<UdpServer>();
 
-        serviceCollection.BuildServiceProvider();
-
-        var serviceProvider = serviceCollection.BuildServiceProvider();
+        var serviceProvider = svcRegistry.CreateProvider();
 
         // Step 2: Try to get a logger from the IoC container
-        var logger = serviceProvider.GetService<ILogger<Program>>();
+        // var logger = serviceProvider.GetService<ILogger<Program>>();
 
         // Step 3: If no logger is registered, set up a default console logger
-        if (logger == null)
-        {
-            logger = CreateDefaultLogger<Program>();
-            Console.WriteLine("No logger registered, using default console logger.");
-        }
+        // if (logger == null)
+        // {
+        //     logger = CreateDefaultLogger<Program>();
+        //     Console.WriteLine("No logger registered, using default console logger.");
+        // }
 
         // Step 4: Set up the rest of your services
         try
         {
             // Proceed with starting the servers (TcpServer and UdpServer)
-            var tcpServer = serviceProvider.GetRequiredService<TcpServer>();
-            var udpServer = serviceProvider.GetRequiredService<UdpServer>();
+            var tcpServer = serviceProvider.Resolve<TcpServer>();
+            var udpServer = serviceProvider.Resolve<UdpServer>();
 
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Run servers
-            var tcpServerTask = tcpServer.StartAsync(cancellationTokenSource.Token);
-            var udpServerTask = udpServer.StartAsync(cancellationTokenSource.Token);
+            var tcpServerTask = tcpServer?.StartAsync(cancellationTokenSource.Token);
+            var udpServerTask = udpServer?.StartAsync(cancellationTokenSource.Token);
 
             // Wait for servers to complete
             await Task.WhenAny(tcpServerTask, udpServerTask).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An unhandled exception occurred during application startup");
+            Console.WriteLine($"An unhandled exception occurred during application startup: {ex}");
         }
         finally
         {
