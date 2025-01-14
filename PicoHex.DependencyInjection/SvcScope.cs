@@ -2,16 +2,10 @@ namespace PicoHex.DependencyInjection;
 
 public class SvcScope(ISvcProvider provider) : ISvcScope
 {
-    private readonly ConcurrentDictionary<Type, object> _services = new();
+    private readonly ConcurrentDictionary<Type, object?> _services = new();
 
-    public object Resolve(Type serviceType) =>
-        _services.GetOrAdd(
-            serviceType,
-            provider.Resolve(serviceType)
-                ?? throw new InvalidOperationException(
-                    $"Service for type {serviceType} could not be resolved."
-                )
-        );
+    public object? Resolve(Type serviceType) =>
+        _services.GetOrAdd(serviceType, provider.Resolve(serviceType));
 
     public void Dispose()
     {

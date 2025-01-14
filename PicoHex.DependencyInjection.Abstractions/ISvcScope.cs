@@ -1,3 +1,3 @@
 namespace PicoHex.DependencyInjection.Abstractions;
 
-public interface ISvcScope : IResolver, IDisposable, IAsyncDisposable { }
+public interface ISvcScope : IResolver, IDisposable, IAsyncDisposable;

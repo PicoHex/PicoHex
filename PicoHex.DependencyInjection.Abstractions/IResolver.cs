@@ -7,8 +7,9 @@ public interface IResolver
 
 public static class SvcResolverExtensions
 {
-    public static T Resolve<T>(this IResolver provider)
+    public static T? Resolve<T>(this IResolver provider)
     {
-        return (T)provider.Resolve(typeof(T))!;
+        var obj = provider.Resolve(typeof(T));
+        return obj is null ? default : (T)obj;
     }
 }
