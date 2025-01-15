@@ -14,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\PicoHex.DependencyInjection\PicoHex.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\PicoHex.DependencyInjection\PicoHex.DependencyInjection.csproj" />
       <ProjectReference Include="..\..\src\PicoHex.Server\PicoHex.Server.csproj" />
     </ItemGroup>
 
