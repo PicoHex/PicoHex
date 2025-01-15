@@ -1,24 +1,15 @@
-﻿using System.Net;
-using System.Net.Sockets;
-using System.Text;
+﻿namespace PicoHex.HttpServer;
 
-namespace PicoHex.HttpServer;
-
-public class HttpServer
+public class HttpServer(string ip, int port)
 {
-    private TcpListener _listener;
-
-    public HttpServer(string ip, int port)
-    {
-        _listener = new TcpListener(IPAddress.Parse(ip), port);
-    }
+    private readonly TcpListener _listener = new(IPAddress.Parse(ip), port);
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         _listener.Start();
         while (!cancellationToken.IsCancellationRequested)
         {
-            TcpClient client = await _listener.AcceptTcpClientAsync();
+            var client = await _listener.AcceptTcpClientAsync(cancellationToken);
             _ = ProcessRequestAsync(client);
         }
         _listener.Stop();
@@ -26,11 +17,11 @@ public class HttpServer
 
     private async Task ProcessRequestAsync(TcpClient client)
     {
-        NetworkStream stream = client.GetStream();
+        var stream = client.GetStream();
         try
         {
-            HttpRequest request = await ReadRequestAsync(stream);
-            HttpResponse response = ProcessRequest(request);
+            var request = await ReadRequestAsync(stream);
+            var response = ProcessRequest(request);
             await WriteResponseAsync(stream, response);
         }
         catch (Exception ex)
@@ -45,19 +36,19 @@ public class HttpServer
 
     private async Task<HttpRequest> ReadRequestAsync(NetworkStream stream)
     {
-        HttpRequest request = new HttpRequest
+        var request = new HttpRequest
         {
             Headers = new Dictionary<string, string>(),
-            Body = new byte[0]
+            Body = []
         };
 
-        using (StreamReader reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true))
+        using (var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true))
         {
-            string requestLine = await reader.ReadLineAsync();
+            var requestLine = await reader.ReadLineAsync();
             if (string.IsNullOrEmpty(requestLine))
                 throw new InvalidOperationException("Invalid request line.");
 
-            string[] parts = requestLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var parts = requestLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length != 3)
                 throw new InvalidOperationException("Invalid request line format.");
 
@@ -65,24 +56,23 @@ public class HttpServer
             request.Path = parts[1];
             request.ProtocolVersion = parts[2];
 
-            string line;
-            while ((line = await reader.ReadLineAsync()) != null && line != "")
+            while (await reader.ReadLineAsync() is { } line && line != "")
             {
-                int colonIndex = line.IndexOf(':');
+                var colonIndex = line.IndexOf(':');
                 if (colonIndex == -1)
                     throw new InvalidOperationException("Invalid header format.");
 
-                string headerName = line.Substring(0, colonIndex).Trim();
-                string headerValue = line.Substring(colonIndex + 1).Trim();
+                var headerName = line.Substring(0, colonIndex).Trim();
+                var headerValue = line.Substring(colonIndex + 1).Trim();
                 request.Headers[headerName] = headerValue;
             }
 
-            if (request.Headers.TryGetValue("Content-Length", out string contentLengthString))
+            if (request.Headers.TryGetValue("Content-Length", out var contentLengthString))
             {
-                if (int.TryParse(contentLengthString, out int contentLength))
+                if (int.TryParse(contentLengthString, out var contentLength))
                 {
-                    byte[] bodyBuffer = new byte[contentLength];
-                    int bytesRead = await reader.BaseStream.ReadAsync(bodyBuffer, 0, contentLength);
+                    var bodyBuffer = new byte[contentLength];
+                    var bytesRead = await reader.BaseStream.ReadAsync(bodyBuffer.AsMemory(0, contentLength));
                     if (bytesRead != contentLength)
                         throw new InvalidOperationException("Incomplete request body.");
 
@@ -100,8 +90,8 @@ public class HttpServer
     {
         if (request.Method == "GET")
         {
-            string body = "<html><body>Hello from custom HttpListener!</body></html>";
-            byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+            var body = "<html><body>Hello from custom HttpListener!</body></html>";
+            var bodyBytes = Encoding.UTF8.GetBytes(body);
             return new HttpResponse
             {
                 StatusCode = 200,
@@ -116,8 +106,8 @@ public class HttpServer
         }
         else
         {
-            string errorBody = "Method Not Allowed";
-            byte[] errorBodyBytes = Encoding.UTF8.GetBytes(errorBody);
+            var errorBody = "Method Not Allowed";
+            var errorBodyBytes = Encoding.UTF8.GetBytes(errorBody);
             return new HttpResponse
             {
                 StatusCode = 405,
@@ -134,17 +124,17 @@ public class HttpServer
 
     private async Task WriteResponseAsync(NetworkStream stream, HttpResponse response)
     {
-        StringBuilder responseBuilder = new StringBuilder();
+        var responseBuilder = new StringBuilder();
         responseBuilder.AppendLine($"{response.ProtocolVersion} {response.StatusCode} {response.StatusDescription}");
         foreach (var header in response.Headers)
             responseBuilder.AppendLine($"{header.Key}: {header.Value}");
         responseBuilder.AppendLine();
 
-        string headerString = responseBuilder.ToString();
-        byte[] headerBytes = Encoding.UTF8.GetBytes(headerString);
-        await stream.WriteAsync(headerBytes, 0, headerBytes.Length);
+        var headerString = responseBuilder.ToString();
+        var headerBytes = Encoding.UTF8.GetBytes(headerString);
+        await stream.WriteAsync(headerBytes);
 
-        if (response.Body != null && response.Body.Length > 0)
-            await stream.WriteAsync(response.Body, 0, response.Body.Length);
+        if (response.Body is { Length: > 0 })
+            await stream.WriteAsync(response.Body.AsMemory(0, response.Body.Length));
     }
 }
