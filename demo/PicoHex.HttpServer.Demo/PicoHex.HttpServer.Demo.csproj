@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PicoHex.HttpServer\PicoHex.HttpServer.csproj" />
+      <ProjectReference Include="..\..\src\PicoHex.HttpServer\PicoHex.HttpServer.csproj" />
     </ItemGroup>
 
 </Project>
