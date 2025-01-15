@@ -15,7 +15,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
             // Read the request
             var request = await ReadRequestAsync(stream, cancellationToken);
 
-            // Process the request (basic example: respond with a fixed response)
+            // Process the request
             var response = ProcessRequest(request);
 
             // Write the response
@@ -28,8 +28,13 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
             // Attempt to write an error response to the client
             try
             {
-                var errorResponse =
-                    "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n";
+                var errorResponse = new HttpResponse
+                {
+                    StatusCode = 500,
+                    StatusDescription = "Internal Server Error",
+                    Headers = { ["Content-Length"] = "0" },
+                    Body =  []
+                };
                 await WriteResponseAsync(stream, errorResponse, cancellationToken);
             }
             catch
@@ -39,51 +44,101 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
         }
     }
 
-    private async Task<string> ReadRequestAsync(
+    private async Task<HttpRequest> ReadRequestAsync(
         NetworkStream stream,
         CancellationToken cancellationToken
     )
     {
         using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
 
-        var requestBuilder = new StringBuilder();
-        char[] buffer = new char[1024];
+        var requestLine = await reader.ReadLineAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(requestLine))
+            throw new InvalidOperationException("Empty request line");
 
-        int bytesRead;
-        while ((bytesRead = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+        var parts = requestLine.Split(' ');
+        if (parts.Length != 3)
+            throw new InvalidOperationException("Invalid request line");
+
+        var request = new HttpRequest
         {
-            requestBuilder.Append(buffer, 0, bytesRead);
+            Method = parts[0],
+            Path = parts[1],
+            ProtocolVersion = parts[2]
+        };
 
-            // Check if the end of the HTTP request headers has been reached
-            if (requestBuilder.ToString().Contains("\r\n\r\n"))
+        string? headerLine;
+        while (
+            !string.IsNullOrWhiteSpace(headerLine = await reader.ReadLineAsync(cancellationToken))
+        )
+        {
+            var headerParts = headerLine.Split(':', 2);
+            if (headerParts.Length == 2)
             {
-                break;
-            }
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
+                request.Headers[headerParts[0].Trim()] = headerParts[1].Trim();
             }
         }
 
-        return requestBuilder.ToString();
+        if (
+            request.Headers.TryGetValue("Content-Length", out var contentLengthValue)
+            && int.TryParse(contentLengthValue, out var contentLength)
+            && contentLength > 0
+        )
+        {
+            var buffer = new byte[contentLength];
+            await stream.ReadExactlyAsync(buffer, 0, contentLength, cancellationToken);
+            request.Body = buffer;
+        }
+
+        return request;
     }
 
-    private string ProcessRequest(string request)
+    private HttpResponse ProcessRequest(HttpRequest request)
     {
         // Basic example: Always return a 200 OK response
         const string responseBody = "<html><body><h1>Hello, World!</h1></body></html>";
-        return $"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {responseBody.Length}\r\n\r\n{responseBody}";
+        return new HttpResponse
+        {
+            StatusCode = 200,
+            StatusDescription = "OK",
+            Headers =
+            {
+                ["Content-Type"] = "text/html",
+                ["Content-Length"] = responseBody.Length.ToString()
+            },
+            Body = Encoding.UTF8.GetBytes(responseBody)
+        };
     }
 
     private async Task WriteResponseAsync(
         NetworkStream stream,
-        string response,
+        HttpResponse response,
         CancellationToken cancellationToken
     )
     {
-        byte[] responseBytes = Encoding.UTF8.GetBytes(response);
-        await stream.WriteAsync(responseBytes, 0, responseBytes.Length, cancellationToken);
+        var responseBuilder = new StringBuilder();
+
+        responseBuilder.AppendLine(
+            $"{response.ProtocolVersion} {response.StatusCode} {response.StatusDescription}"
+        );
+        foreach (var header in response.Headers)
+        {
+            responseBuilder.AppendLine($"{header.Key}: {header.Value}");
+        }
+        responseBuilder.AppendLine();
+
+        var responseHeaderBytes = Encoding.UTF8.GetBytes(responseBuilder.ToString());
+        await stream.WriteAsync(
+            responseHeaderBytes,
+            0,
+            responseHeaderBytes.Length,
+            cancellationToken
+        );
+
+        if (response.Body.Length > 0)
+        {
+            await stream.WriteAsync(response.Body, 0, response.Body.Length, cancellationToken);
+        }
+
         await stream.FlushAsync(cancellationToken);
     }
 }
