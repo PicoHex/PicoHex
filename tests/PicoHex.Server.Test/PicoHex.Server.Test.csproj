@@ -26,7 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\PicoHex.Server\PicoHex.Server.csproj" />
+      <ProjectReference Include="..\..\src\Server\PicoHex.Server\PicoHex.Server.csproj" />
     </ItemGroup>
 
 </Project>
