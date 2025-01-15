@@ -79,15 +79,14 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
         }
 
         if (
-            request.Headers.TryGetValue("Content-Length", out var contentLengthValue)
-            && int.TryParse(contentLengthValue, out var contentLength)
-            && contentLength > 0
+            !request.Headers.TryGetValue("Content-Length", out var contentLengthValue)
+            || !int.TryParse(contentLengthValue, out var contentLength)
+            || contentLength <= 0
         )
-        {
-            var buffer = new byte[contentLength];
-            await stream.ReadExactlyAsync(buffer, 0, contentLength, cancellationToken);
-            request.Body = buffer;
-        }
+            return request;
+        var buffer = new byte[contentLength];
+        await stream.ReadExactlyAsync(buffer, 0, contentLength, cancellationToken);
+        request.Body = buffer;
 
         return request;
     }
@@ -127,16 +126,14 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
         responseBuilder.AppendLine();
 
         var responseHeaderBytes = Encoding.UTF8.GetBytes(responseBuilder.ToString());
-        await stream.WriteAsync(
-            responseHeaderBytes,
-            0,
-            responseHeaderBytes.Length,
-            cancellationToken
-        );
+        await stream.WriteAsync(responseHeaderBytes, cancellationToken);
 
         if (response.Body.Length > 0)
         {
-            await stream.WriteAsync(response.Body, 0, response.Body.Length, cancellationToken);
+            await stream.WriteAsync(
+                response.Body.AsMemory(0, response.Body.Length),
+                cancellationToken
+            );
         }
 
         await stream.FlushAsync(cancellationToken);
