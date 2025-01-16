@@ -2,7 +2,11 @@
 
 var serviceProvider = new ServiceCollection()
     .AddLogging(builder => builder.AddConsole())
-    .AddTransient<IStreamHandler, HttpHandler>()
+    .AddTransient<IStreamHandler, RestfulHandler>()
+    .AddSingleton<TcpServer>()
+    .AddSingleton<IHandlerFactory, HandlerFactory>()
+    .AddSingleton<HttpHandler>()
+    .AddSingleton<RestfulHandler>()
     .BuildServiceProvider();
 
 var logger = serviceProvider.GetRequiredService<ILogger<TcpServer>>();

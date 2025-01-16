@@ -16,10 +16,14 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
             var request = await ReadRequestAsync(stream, cancellationToken);
 
             // Process the request
-            var response = ProcessRequest(request);
+            var response = await ProcessRequestAsync(request);
 
             // Write the response
             await WriteResponseAsync(stream, response, cancellationToken);
+        }
+        catch (IOException ioEx)
+        {
+            _logger.LogWarning(ioEx, "Client disconnected abruptly during processing.");
         }
         catch (Exception ex)
         {
@@ -44,7 +48,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
         }
     }
 
-    private async Task<HttpRequest> ReadRequestAsync(
+    private async ValueTask<HttpRequest> ReadRequestAsync(
         NetworkStream stream,
         CancellationToken cancellationToken
     )
@@ -91,10 +95,11 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
         return request;
     }
 
-    private HttpResponse ProcessRequest(HttpRequest request)
+    private async ValueTask<HttpResponse> ProcessRequestAsync(HttpRequest request)
     {
         // Basic example: Always return a 200 OK response
         const string responseBody = "<html><body><h1>Hello, World!</h1></body></html>";
+        await Task.Delay(1000); // Simulate processing time
         return new HttpResponse
         {
             StatusCode = 200,
@@ -108,7 +113,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
         };
     }
 
-    private async Task WriteResponseAsync(
+    private async ValueTask WriteResponseAsync(
         NetworkStream stream,
         HttpResponse response,
         CancellationToken cancellationToken

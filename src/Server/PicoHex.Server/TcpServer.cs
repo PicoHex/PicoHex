@@ -4,24 +4,23 @@ public class TcpServer : IDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly int _port;
-    private readonly Func<IStreamHandler> _streamHandlerFactory;
     private readonly ILogger<TcpServer> _logger;
     private readonly SemaphoreSlim _connectionSemaphore;
     private readonly TcpListener _listener;
     private bool _isDisposed;
+    private readonly IHandlerFactory _handlerFactory;
 
     public TcpServer(
         IPAddress ipAddress,
         int port,
-        Func<IStreamHandler> streamHandlerFactory,
+        IHandlerFactory handlerFactory,
         ILogger<TcpServer> logger,
         int maxConcurrentConnections = 100
     )
     {
         _ipAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
         _port = port;
-        _streamHandlerFactory =
-            streamHandlerFactory ?? throw new ArgumentNullException(nameof(streamHandlerFactory));
+        _handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _connectionSemaphore = new SemaphoreSlim(maxConcurrentConnections);
         _listener = new TcpListener(_ipAddress, _port);
@@ -41,24 +40,31 @@ public class TcpServer : IDisposable
             {
                 await _connectionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-                var client = await _listener
-                    .AcceptTcpClientAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (cancellationToken.IsCancellationRequested)
+                try
                 {
-                    _connectionSemaphore.Release();
-                    break;
+                    var client = await _listener
+                        .AcceptTcpClientAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        _connectionSemaphore.Release();
+                        break;
+                    }
+
+                    _ = HandleClientConnectionAsync(client, cancellationToken)
+                        .ContinueWith(_ => _connectionSemaphore.Release(), TaskScheduler.Default);
                 }
-
-                client.NoDelay = true;
-                _logger.LogInformation(
-                    "Client connected from {@RemoteEndPoint}",
-                    client.Client.RemoteEndPoint
-                );
-
-                _ = HandleClientConnectionAsync(client, cancellationToken)
-                    .ContinueWith(_ => _connectionSemaphore.Release(), TaskScheduler.Default);
+                catch (SocketException socketEx)
+                {
+                    _logger.LogWarning(
+                        socketEx,
+                        "Socket exception while accepting a client connection."
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unexpected error while accepting a client connection.");
+                }
             }
         }
         catch (OperationCanceledException)
@@ -97,16 +103,27 @@ public class TcpServer : IDisposable
             await using var stream = client.GetStream();
             try
             {
-                var streamHandler = _streamHandlerFactory();
-                await streamHandler.HandleAsync(stream, cancellationToken).ConfigureAwait(false);
+                // Read the initial HTTP request line to get the path
+                var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
+                var requestLine = await reader.ReadLineAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(requestLine))
+                    throw new InvalidOperationException("Empty request line");
+
+                var parts = requestLine.Split(' ');
+                if (parts.Length < 2)
+                    throw new InvalidOperationException("Invalid request line");
+
+                var path = parts[1]; // Extract the request path
+
+                // Get the appropriate handler from the factory
+                var handler = _handlerFactory.GetHandler(path);
+
+                // Handle the request
+                await handler.HandleAsync(stream, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error handling client {@RemoteEndPoint}",
-                    client.Client.RemoteEndPoint
-                );
+                _logger.LogError(ex, "Error handling client connection");
             }
             finally
             {
