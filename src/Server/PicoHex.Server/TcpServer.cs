@@ -4,7 +4,7 @@ public class TcpServer : IDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly int _port;
-    private readonly Func<IStreamHandler> _streamHandlerFactory;
+    private readonly Func<ITcpHandler> _tcpHandlerFactory;
     private readonly ILogger<TcpServer> _logger;
     private readonly SemaphoreSlim _connectionSemaphore;
     private readonly TcpListener _listener;
@@ -13,15 +13,15 @@ public class TcpServer : IDisposable
     public TcpServer(
         IPAddress ipAddress,
         int port,
-        Func<IStreamHandler> streamHandlerFactory,
+        Func<ITcpHandler> tcpHandlerFactory,
         ILogger<TcpServer> logger,
         int maxConcurrentConnections = 100
     )
     {
         _ipAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
         _port = port;
-        _streamHandlerFactory =
-            streamHandlerFactory ?? throw new ArgumentNullException(nameof(streamHandlerFactory));
+        _tcpHandlerFactory =
+            tcpHandlerFactory ?? throw new ArgumentNullException(nameof(tcpHandlerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _connectionSemaphore = new SemaphoreSlim(maxConcurrentConnections);
         _listener = new TcpListener(_ipAddress, _port);
@@ -97,8 +97,8 @@ public class TcpServer : IDisposable
             await using var stream = client.GetStream();
             try
             {
-                var streamHandler = _streamHandlerFactory();
-                await streamHandler.HandleAsync(stream, cancellationToken).ConfigureAwait(false);
+                var tcpHandler = _tcpHandlerFactory();
+                await tcpHandler.HandleAsync(stream, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

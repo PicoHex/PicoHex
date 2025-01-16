@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server.Demo;
 
-public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IBytesHandler
+public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
 {
     private readonly ILogger<MyBytesHandler> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));

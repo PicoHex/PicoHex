@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server.Http;
 
-public class HttpHandler(ILogger<HttpHandler> logger) : IStreamHandler
+public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
 {
     private readonly ILogger<HttpHandler> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));

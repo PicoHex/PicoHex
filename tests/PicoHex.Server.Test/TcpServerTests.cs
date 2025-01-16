@@ -8,7 +8,7 @@ public class TcpServerTests
         // Arrange
         var ipAddress = IPAddress.Loopback;
         var port = 5000;
-        var mockHandler = new Mock<IStreamHandler>();
+        var mockHandler = new Mock<ITcpHandler>();
         var mockLogger = new Mock<ILogger<TcpServer>>();
 
         mockHandler

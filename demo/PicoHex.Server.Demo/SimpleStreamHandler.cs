@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server.Demo;
 
-public class SimpleStreamHandler : IStreamHandler
+public class SimpleStreamHandler : ITcpHandler
 {
     public async ValueTask HandleAsync(NetworkStream stream, CancellationToken cancellationToken)
     {

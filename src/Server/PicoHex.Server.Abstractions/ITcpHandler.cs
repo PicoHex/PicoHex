@@ -1,6 +1,6 @@
-﻿namespace PicoHex.Server;
+﻿namespace PicoHex.Server.Abstractions;
 
-public interface IStreamHandler
+public interface ITcpHandler
 {
     ValueTask HandleAsync(NetworkStream stream, CancellationToken cancellationToken = default);
 }

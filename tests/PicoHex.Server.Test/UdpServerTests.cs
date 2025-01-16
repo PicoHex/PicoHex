@@ -8,7 +8,7 @@ public class UdpServerTests
         // Arrange
         var ipAddress = IPAddress.Loopback;
         var port = 5001;
-        var mockHandler = new Mock<IBytesHandler>();
+        var mockHandler = new Mock<IUdpHandler>();
         var mockLogger = new Mock<ILogger<UdpServer>>();
 
         mockHandler

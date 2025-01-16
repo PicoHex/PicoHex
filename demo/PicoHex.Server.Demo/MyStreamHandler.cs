@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server.Demo;
 
-public class MyStreamHandler(ILogger<MyStreamHandler> logger) : IStreamHandler
+public class MyStreamHandler(ILogger<MyStreamHandler> logger) : ITcpHandler
 {
     private readonly ILogger<MyStreamHandler> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));

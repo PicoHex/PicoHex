@@ -1,12 +1,14 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using PicoHex.Server.Abstractions;
+
 var serviceProvider = new ServiceCollection()
     .AddLogging(builder => builder.AddConsole())
-    .AddTransient<IStreamHandler, HttpHandler>()
+    .AddTransient<ITcpHandler, HttpHandler>()
     .BuildServiceProvider();
 
 var logger = serviceProvider.GetRequiredService<ILogger<TcpServer>>();
-IStreamHandler HandlerFactory() => serviceProvider.GetRequiredService<IStreamHandler>();
+ITcpHandler HandlerFactory() => serviceProvider.GetRequiredService<ITcpHandler>();
 
 var tcpServer = new TcpServer(IPAddress.Loopback, 8080, HandlerFactory, logger);
 
