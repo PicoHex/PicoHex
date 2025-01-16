@@ -54,7 +54,7 @@ public class DependencyInjectionTests
         var svcProvider = svcRegistry.CreateProvider();
 
         svcRegistry.AddService<IService, ServiceImpl>(SvcLifetime.Scoped);
-        IService s1;
+        IService? s1;
         using (var scope1 = svcProvider.CreateScope())
         {
             s1 = scope1.Resolve<IService>();
@@ -146,8 +146,8 @@ public interface IServiceB { }
 
 public class ServiceBImpl : IServiceB
 {
-    private IServiceA _serviceA;
-    private IServiceC _serviceC;
+    private IServiceA? _serviceA;
+    private IServiceC? _serviceC;
 
     public ServiceBImpl(ISvcRegistry registry, ISvcProvider provider)
     {

@@ -1,6 +1,6 @@
-﻿namespace PicoHex.Server;
+﻿namespace PicoHex.Server.Abstractions;
 
-public interface IBytesHandler
+public interface IUdpHandler
 {
     ValueTask HandleAsync(
         byte[] data,

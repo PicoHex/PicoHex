@@ -1,4 +1,6 @@
-﻿namespace PicoHex.Server.Test;
+﻿using PicoHex.Server.Abstractions;
+
+namespace PicoHex.Server.Test;
 
 public class UdpServerTests
 {
@@ -8,8 +10,8 @@ public class UdpServerTests
         // Arrange
         var ipAddress = IPAddress.Loopback;
         var port = 5001;
-        var mockHandler = new Mock<IBytesHandler>();
-        var mockLogger = new Mock<ILogger<UdpServer>>();
+        var mockHandler = new Mock<IUdpHandler>();
+        var mockLogger = new Mock<ILogger<UdpServer>?>();
 
         mockHandler
             .Setup(

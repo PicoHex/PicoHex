@@ -1,8 +1,8 @@
 ﻿namespace PicoHex.Server.Demo;
 
-internal class Program
+internal static class Program
 {
-    static async Task Main(string[] args)
+    private static async Task Main(string[] args)
     {
         // Step 1: Create the IoC container
         var svcRegistry = ContainerBootstrap.CreateRegistry();
@@ -11,8 +11,8 @@ internal class Program
         // serviceCollection.AddLogging(builder => builder.AddConsole());
 
         // Registering Handlers
-        svcRegistry.AddSingleton<IStreamHandler, MyStreamHandler>();
-        svcRegistry.AddSingleton<IBytesHandler, MyBytesHandler>();
+        svcRegistry.AddSingleton<ITcpHandler, MyStreamHandler>();
+        svcRegistry.AddSingleton<IUdpHandler, MyBytesHandler>();
         svcRegistry.AddSingleton<ILogger<TcpServer>, Logger<TcpServer>>();
         svcRegistry.AddSingleton<ILogger<UdpServer>, Logger<UdpServer>>();
         svcRegistry.AddSingleton<ILogger<MyStreamHandler>, Logger<MyStreamHandler>>();
@@ -22,14 +22,14 @@ internal class Program
         );
 
         // Registering servers
-        svcRegistry.AddSingleton<Func<IStreamHandler>>(sp => sp.Resolve<IStreamHandler>);
-        svcRegistry.AddSingleton<Func<IBytesHandler>>(sp => sp.Resolve<IBytesHandler>);
+        svcRegistry.AddSingleton<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>!);
+        svcRegistry.AddSingleton<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>!);
         svcRegistry.AddSingleton<TcpServer>(
             sp =>
                 new TcpServer(
                     IPAddress.Any,
                     12345,
-                    sp.Resolve<Func<IStreamHandler>>(),
+                    sp.Resolve<Func<ITcpHandler>>(),
                     sp.Resolve<ILogger<TcpServer>>()
                 )
         );
@@ -38,7 +38,7 @@ internal class Program
                 new UdpServer(
                     IPAddress.Any,
                     12345,
-                    sp.Resolve<Func<IBytesHandler>>(),
+                    sp.Resolve<Func<IUdpHandler>>(),
                     sp.Resolve<ILogger<UdpServer>>()
                 )
         );

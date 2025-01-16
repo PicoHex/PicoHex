@@ -1,6 +1,6 @@
 namespace PicoHex.Server.Http;
 
-public class RestfulHandler(ILogger<RestfulHandler> logger) : IStreamHandler
+public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
 {
     private readonly ILogger<RestfulHandler> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));

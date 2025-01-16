@@ -1,18 +1,32 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-var serviceProvider = new ServiceCollection()
-    .AddLogging(builder => builder.AddConsole())
-    .AddTransient<IStreamHandler, RestfulHandler>()
-    .AddSingleton<TcpServer>()
-    .AddSingleton<IHandlerFactory, HandlerFactory>()
-    .AddSingleton<HttpHandler>()
-    .AddSingleton<RestfulHandler>()
-    .BuildServiceProvider();
+// Step 1: Create the IoC container
 
-var logger = serviceProvider.GetRequiredService<ILogger<TcpServer>>();
-IStreamHandler HandlerFactory() => serviceProvider.GetRequiredService<IStreamHandler>();
+var svcRegistry = ContainerBootstrap.CreateRegistry();
 
-var tcpServer = new TcpServer(IPAddress.Loopback, 8080, HandlerFactory, logger);
+svcRegistry
+    // .AddLogging(builder => builder.AddConsole())
+    .AddTransient<ITcpHandler, RestfulHandler>()
+    .AddTransient<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler>()!)
+    .AddSingleton<TcpServer>(
+        sp =>
+            new TcpServer(
+                IPAddress.Any,
+                8080,
+                sp.Resolve<Func<ITcpHandler>>(),
+                sp.Resolve<ILogger<TcpServer>>()
+            )
+    )
+    .AddSingleton<RestfulHandler>();
+
+svcRegistry
+    .AddSingleton<ILogger<TcpServer>, Logger<TcpServer>>()
+    .AddSingleton<ILogger<RestfulHandler>, Logger<RestfulHandler>>()
+    .AddSingleton<ILoggerFactory>(_ => LoggerFactory.Create(builder => builder.AddConsole()));
+
+var svcProvider = svcRegistry.CreateProvider();
+
+var tcpServer = svcProvider.Resolve<TcpServer>()!;
 
 Console.WriteLine("Starting TCP server on http://localhost:8080...");
 var cts = new CancellationTokenSource();

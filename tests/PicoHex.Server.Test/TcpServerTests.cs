@@ -1,4 +1,6 @@
-﻿namespace PicoHex.Server.Test;
+﻿using PicoHex.Server.Abstractions;
+
+namespace PicoHex.Server.Test;
 
 public class TcpServerTests
 {
@@ -8,8 +10,8 @@ public class TcpServerTests
         // Arrange
         var ipAddress = IPAddress.Loopback;
         var port = 5000;
-        var mockHandler = new Mock<IStreamHandler>();
-        var mockLogger = new Mock<ILogger<TcpServer>>();
+        var mockHandler = new Mock<ITcpHandler>();
+        var mockLogger = new Mock<ILogger<TcpServer>?>();
 
         mockHandler
             .Setup(h => h.HandleAsync(It.IsAny<NetworkStream>(), It.IsAny<CancellationToken>()))

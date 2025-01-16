@@ -1,10 +1,12 @@
-﻿namespace PicoHex.Server;
+﻿using PicoHex.Server.Abstractions;
+
+namespace PicoHex.Server;
 
 public class UdpServer : IDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly int _port;
-    private readonly Func<IBytesHandler> _bytesHandlerFactory;
+    private readonly Func<IUdpHandler> _udpHandlerFactory;
     private readonly ILogger<UdpServer> _logger;
     private readonly ArrayPool<byte> _bufferPool;
     private readonly UdpClient _udpClient;
@@ -13,14 +15,14 @@ public class UdpServer : IDisposable
     public UdpServer(
         IPAddress ipAddress,
         int port,
-        Func<IBytesHandler> bytesHandlerFactory,
-        ILogger<UdpServer> logger
+        Func<IUdpHandler>? udpHandlerFactory,
+        ILogger<UdpServer>? logger
     )
     {
         _ipAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
         _port = port;
-        _bytesHandlerFactory =
-            bytesHandlerFactory ?? throw new ArgumentNullException(nameof(bytesHandlerFactory));
+        _udpHandlerFactory =
+            udpHandlerFactory ?? throw new ArgumentNullException(nameof(udpHandlerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _bufferPool = ArrayPool<byte>.Shared;
         _udpClient = new UdpClient(new IPEndPoint(_ipAddress, _port));
@@ -92,8 +94,8 @@ public class UdpServer : IDisposable
     {
         try
         {
-            var bytesHandler = _bytesHandlerFactory();
-            await bytesHandler
+            var udpHandler = _udpHandlerFactory();
+            await udpHandler
                 .HandleAsync(data, remoteEndPoint, cancellationToken)
                 .ConfigureAwait(false);
         }

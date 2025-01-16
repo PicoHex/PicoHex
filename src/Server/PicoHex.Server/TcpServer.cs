@@ -1,4 +1,6 @@
-﻿namespace PicoHex.Server;
+﻿using PicoHex.Server.Abstractions;
+
+namespace PicoHex.Server;
 
 public class TcpServer : IDisposable
 {
@@ -8,19 +10,20 @@ public class TcpServer : IDisposable
     private readonly SemaphoreSlim _connectionSemaphore;
     private readonly TcpListener _listener;
     private bool _isDisposed;
-    private readonly IHandlerFactory _handlerFactory;
+    private readonly Func<ITcpHandler> _tcpHandlerFactory;
 
     public TcpServer(
         IPAddress ipAddress,
         int port,
-        IHandlerFactory handlerFactory,
-        ILogger<TcpServer> logger,
+        Func<ITcpHandler>? tcpHandlerFactory,
+        ILogger<TcpServer>? logger,
         int maxConcurrentConnections = 100
     )
     {
         _ipAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
         _port = port;
-        _handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
+        _tcpHandlerFactory =
+            tcpHandlerFactory ?? throw new ArgumentNullException(nameof(tcpHandlerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _connectionSemaphore = new SemaphoreSlim(maxConcurrentConnections);
         _listener = new TcpListener(_ipAddress, _port);
@@ -113,10 +116,8 @@ public class TcpServer : IDisposable
                 if (parts.Length < 2)
                     throw new InvalidOperationException("Invalid request line");
 
-                var path = parts[1]; // Extract the request path
-
                 // Get the appropriate handler from the factory
-                var handler = _handlerFactory.GetHandler(path);
+                var handler = _tcpHandlerFactory();
 
                 // Handle the request
                 await handler.HandleAsync(stream, cancellationToken);
