@@ -44,7 +44,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         }
     }
 
-    private async Task<HttpRequest> ReadRequestAsync(
+    private static async Task<HttpRequest> ReadRequestAsync(
         NetworkStream stream,
         CancellationToken cancellationToken
     )
@@ -91,7 +91,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         return request;
     }
 
-    private HttpResponse ProcessRequest(HttpRequest request)
+    private static HttpResponse ProcessRequest(HttpRequest request)
     {
         // Basic example: Always return a 200 OK response
         const string responseBody = "<html><body><h1>Hello, World!</h1></body></html>";
@@ -108,7 +108,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         };
     }
 
-    private async Task WriteResponseAsync(
+    private static async Task WriteResponseAsync(
         NetworkStream stream,
         HttpResponse response,
         CancellationToken cancellationToken
