@@ -24,11 +24,13 @@ internal static class Program
         // Registering servers
         svcRegistry.AddSingleton<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>!);
         svcRegistry.AddSingleton<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>!);
+        const int tcpPort = 12345;
+        const int udpPort = 12346;
         svcRegistry.AddSingleton<TcpServer>(
             sp =>
                 new TcpServer(
                     IPAddress.Any,
-                    12345,
+                    tcpPort,
                     sp.Resolve<Func<ITcpHandler>>(),
                     sp.Resolve<ILogger<TcpServer>>()
                 )
@@ -37,7 +39,7 @@ internal static class Program
             sp =>
                 new UdpServer(
                     IPAddress.Any,
-                    12345,
+                    udpPort,
                     sp.Resolve<Func<IUdpHandler>>(),
                     sp.Resolve<ILogger<UdpServer>>()
                 )
