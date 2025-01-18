@@ -1,6 +1,4 @@
-﻿using PicoHex.Server.Abstractions;
-
-namespace PicoHex.Server.Test;
+﻿namespace PicoHex.Server.Test;
 
 public class TcpServerTests
 {
