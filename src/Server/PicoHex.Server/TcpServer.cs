@@ -1,11 +1,9 @@
-﻿using PicoHex.Server.Abstractions;
-
-namespace PicoHex.Server;
+﻿namespace PicoHex.Server;
 
 public class TcpServer : IDisposable
 {
     private readonly IPAddress _ipAddress;
-    private readonly int _port;
+    private readonly ushort _port;
     private readonly ILogger<TcpServer> _logger;
     private readonly SemaphoreSlim _connectionSemaphore;
     private readonly TcpListener _listener;
@@ -14,7 +12,7 @@ public class TcpServer : IDisposable
 
     public TcpServer(
         IPAddress ipAddress,
-        int port,
+        ushort port,
         Func<ITcpHandler>? tcpHandlerFactory,
         ILogger<TcpServer>? logger,
         int maxConcurrentConnections = 100
@@ -106,20 +104,7 @@ public class TcpServer : IDisposable
             await using var stream = client.GetStream();
             try
             {
-                // Read the initial HTTP request line to get the path
-                var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
-                var requestLine = await reader.ReadLineAsync(cancellationToken);
-                if (string.IsNullOrWhiteSpace(requestLine))
-                    throw new InvalidOperationException("Empty request line");
-
-                var parts = requestLine.Split(' ');
-                if (parts.Length < 2)
-                    throw new InvalidOperationException("Invalid request line");
-
-                // Get the appropriate handler from the factory
                 var handler = _tcpHandlerFactory();
-
-                // Handle the request
                 await handler.HandleAsync(stream, cancellationToken);
             }
             catch (Exception ex)

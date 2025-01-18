@@ -9,7 +9,7 @@ public class TcpServerTests
     {
         // Arrange
         var ipAddress = IPAddress.Loopback;
-        var port = 5000;
+        ushort port = 5000;
         var mockHandler = new Mock<ITcpHandler>();
         var mockLogger = new Mock<ILogger<TcpServer>?>();
 

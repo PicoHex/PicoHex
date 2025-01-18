@@ -1,11 +1,9 @@
-﻿using PicoHex.Server.Abstractions;
-
-namespace PicoHex.Server;
+﻿namespace PicoHex.Server;
 
 public class UdpServer : IDisposable
 {
     private readonly IPAddress _ipAddress;
-    private readonly int _port;
+    private readonly ushort _port;
     private readonly Func<IUdpHandler> _udpHandlerFactory;
     private readonly ILogger<UdpServer> _logger;
     private readonly ArrayPool<byte> _bufferPool;
@@ -14,7 +12,7 @@ public class UdpServer : IDisposable
 
     public UdpServer(
         IPAddress ipAddress,
-        int port,
+        ushort port,
         Func<IUdpHandler>? udpHandlerFactory,
         ILogger<UdpServer>? logger
     )

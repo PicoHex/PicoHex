@@ -22,8 +22,8 @@ internal static class Program
         );
 
         // Registering servers
-        svcRegistry.AddSingleton<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>!);
-        svcRegistry.AddSingleton<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>!);
+        svcRegistry.AddSingleton<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
+        svcRegistry.AddSingleton<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
         const int tcpPort = 12345;
         const int udpPort = 12346;
         svcRegistry.AddSingleton<TcpServer>(
