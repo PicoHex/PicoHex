@@ -25,18 +25,18 @@ public class JsonLogFormatter : ILogFormatter
 }
 
 // 文件输出 Sink
-public class FileLogSink : ILogSink, IDisposable
+public class FileLogSink(string filePath) : ILogSink, IDisposable
 {
-    private readonly StreamWriter _writer;
+    private readonly StreamWriter _writer = new(filePath, append: true);
 
-    public FileLogSink(string filePath)
+    public async ValueTask WriteAsync(string formattedMessage)
     {
-        _writer = new StreamWriter(filePath, append: true);
+        await _writer.WriteLineAsync(formattedMessage);
     }
 
-    public Task WriteAsync(string formattedMessage)
+    public async ValueTask DisposeAsync()
     {
-        return _writer.WriteLineAsync(formattedMessage);
+        await _writer.DisposeAsync();
     }
 
     public void Dispose()

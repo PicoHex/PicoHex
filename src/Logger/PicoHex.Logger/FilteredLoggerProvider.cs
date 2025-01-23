@@ -1,26 +1,17 @@
 namespace PicoHex.Logger;
 
-public class FilteredLoggerProvider : ILoggerProvider
+public class FilteredLoggerProvider(
+    ILoggerProvider innerProvider,
+    Func<string, LogLevel, bool> filter)
+    : ILoggerProvider
 {
-    private readonly ILoggerProvider _innerProvider;
-    private readonly Func<string, LogLevel, bool> _filter;
-
-    public FilteredLoggerProvider(
-        ILoggerProvider innerProvider,
-        Func<string, LogLevel, bool> filter
-    )
-    {
-        _innerProvider = innerProvider;
-        _filter = filter;
-    }
-
     public ILogger CreateLogger(string categoryName)
     {
-        var innerLogger = _innerProvider.CreateLogger(categoryName);
-        return new FilteredLogger(innerLogger, logLevel => _filter(categoryName, logLevel));
+        var innerLogger = innerProvider.CreateLogger(categoryName);
+        return new FilteredLogger(innerLogger, logLevel => filter(categoryName, logLevel));
     }
 
-    public void Dispose() => _innerProvider.Dispose();
+    public void Dispose() => innerProvider.Dispose();
 }
 
 public class FilteredLogger : ILogger

@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server;
 
-public class TcpServer : IDisposable
+public class TcpServer : IDisposable,IAsyncDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly ushort _port;
@@ -132,5 +132,21 @@ public class TcpServer : IDisposable
         _listener.Stop();
         _connectionSemaphore.Dispose();
         _isDisposed = true;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CastAndDispose(_connectionSemaphore);
+        await CastAndDispose(_listener);
+
+        return;
+
+        static async ValueTask CastAndDispose(IDisposable resource)
+        {
+            if (resource is IAsyncDisposable resourceAsyncDisposable)
+                await resourceAsyncDisposable.DisposeAsync();
+            else
+                resource.Dispose();
+        }
     }
 }

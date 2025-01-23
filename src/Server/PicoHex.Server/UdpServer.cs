@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server;
 
-public class UdpServer : IDisposable
+public class UdpServer : IDisposable,IAsyncDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly ushort _port;
@@ -131,5 +131,20 @@ public class UdpServer : IDisposable
         Stop();
         _udpClient.Dispose();
         _isDisposed = true;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CastAndDispose(_udpClient);
+
+        return;
+
+        static async ValueTask CastAndDispose(IDisposable resource)
+        {
+            if (resource is IAsyncDisposable resourceAsyncDisposable)
+                await resourceAsyncDisposable.DisposeAsync();
+            else
+                resource.Dispose();
+        }
     }
 }
