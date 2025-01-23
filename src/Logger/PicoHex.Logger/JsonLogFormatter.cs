@@ -20,27 +20,27 @@ public class JsonLogFormatter : ILogFormatter
             Message = defaultFormatter(state, exception),
             Exception = exception?.ToString()
         };
-        return JsonConvert.SerializeObject(logEntry);
+        return System.Text.Json.JsonSerializer.Serialize(logEntry);
     }
 }
 
 // 文件输出 Sink
-public class FileLogSink : ILogSink, IDisposable
+public class FileLogSink(string filePath) : ILogSink, IDisposable
 {
-    private readonly StreamWriter _writer;
+    private readonly StreamWriter _writer = new(filePath, append: true);
 
-    public FileLogSink(string filePath)
+    public async ValueTask WriteAsync(string formattedMessage)
     {
-        _writer = new StreamWriter(filePath, append: true);
-    }
-
-    public Task WriteAsync(string formattedMessage)
-    {
-        return _writer.WriteLineAsync(formattedMessage);
+        await _writer.WriteLineAsync(formattedMessage);
     }
 
     public void Dispose()
     {
         _writer.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _writer.DisposeAsync();
     }
 }
