@@ -6,7 +6,10 @@ public sealed class SvcDescriptor
         : this(serviceType, lifetime)
     {
         ImplementationType = implementationType;
-        var constructorInfo = implementationType.GetConstructors().FirstOrDefault();
+        var constructorInfo = implementationType
+            .GetConstructors()
+            .OrderByDescending(p => p.GetParameters().Length)
+            .FirstOrDefault();
         if (constructorInfo is null)
             throw new InvalidOperationException(
                 $"No public constructor found for type {implementationType.Name}"
