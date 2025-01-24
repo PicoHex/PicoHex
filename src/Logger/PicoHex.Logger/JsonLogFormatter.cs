@@ -20,7 +20,7 @@ public class JsonLogFormatter : ILogFormatter
             Message = defaultFormatter(state, exception),
             Exception = exception?.ToString()
         };
-        return JsonConvert.SerializeObject(logEntry);
+        return System.Text.Json.JsonSerializer.Serialize(logEntry);
     }
 }
 
@@ -34,13 +34,13 @@ public class FileLogSink(string filePath) : ILogSink, IDisposable
         await _writer.WriteLineAsync(formattedMessage);
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await _writer.DisposeAsync();
-    }
-
     public void Dispose()
     {
         _writer.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _writer.DisposeAsync();
     }
 }
