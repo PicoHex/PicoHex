@@ -2,8 +2,8 @@ namespace PicoHex.Logger;
 
 public class FilteredLoggerProvider(
     ILoggerProvider innerProvider,
-    Func<string, LogLevel, bool> filter)
-    : ILoggerProvider
+    Func<string, LogLevel, bool> filter
+) : ILoggerProvider
 {
     public ILogger CreateLogger(string categoryName)
     {
@@ -27,7 +27,7 @@ public class FilteredLogger : ILogger
 
     public void Log<TState>(
         LogLevel logLevel,
-        EventId eventId,
+        EventId<> eventId,
         TState state,
         Exception? exception,
         Func<TState, Exception?, string> formatter

@@ -5,7 +5,7 @@ public class JsonLogFormatter : ILogFormatter
     public string Format<TState>(
         LogLevel logLevel,
         string categoryName,
-        EventId eventId,
+        EventId<> eventId,
         TState state,
         Exception? exception,
         Func<TState, Exception?, string> defaultFormatter

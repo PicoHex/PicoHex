@@ -13,3 +13,5 @@ public interface ILogger
     IDisposable? BeginScope<TState>(TState state)
         where TState : notnull;
 }
+
+public interface ILogger<out T> : ILogger;

@@ -35,7 +35,7 @@ public class CustomLogger : ILogger
 
     public void Log<TState>(
         LogLevel logLevel,
-        EventId eventId,
+        EventId<> eventId,
         TState state,
         Exception? exception,
         Func<TState, Exception?, string> formatter
