@@ -4,11 +4,20 @@ public interface ILogger
 {
     void Log<TState>(
         LogLevel logLevel,
-        EventId eventId,
+        LogId logId,
         TState state,
         Exception? exception,
         Func<TState, Exception?, string> formatter
     );
+
+    ValueTask LogAsync<TState>(
+        LogLevel logLevel,
+        LogId logId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter
+    );
+
     bool IsEnabled(LogLevel logLevel);
     IDisposable? BeginScope<TState>(TState state)
         where TState : notnull;

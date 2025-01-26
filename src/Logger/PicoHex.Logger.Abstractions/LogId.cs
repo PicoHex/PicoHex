@@ -1,6 +1,6 @@
 namespace PicoHex.Logger.Abstractions;
 
-public readonly struct EventId : IEquatable<EventId>
+public readonly struct LogId : IEquatable<LogId>
 {
     private enum IdType
     {
@@ -15,7 +15,7 @@ public readonly struct EventId : IEquatable<EventId>
     private readonly Guid _guidId;
     private readonly string? _name;
 
-    public EventId(int id, string? name = null)
+    public LogId(int id, string? name = null)
     {
         _type = IdType.Int;
         _intId = id;
@@ -24,7 +24,7 @@ public readonly struct EventId : IEquatable<EventId>
         _name = name;
     }
 
-    public EventId(long id, string? name = null)
+    public LogId(long id, string? name = null)
     {
         _type = IdType.Long;
         _longId = id;
@@ -33,7 +33,7 @@ public readonly struct EventId : IEquatable<EventId>
         _name = name;
     }
 
-    public EventId(Guid id, string? name = null)
+    public LogId(Guid id, string? name = null)
     {
         _type = IdType.Guid;
         _guidId = id;
@@ -42,11 +42,11 @@ public readonly struct EventId : IEquatable<EventId>
         _name = name;
     }
 
-    public static implicit operator EventId(int id) => new(id);
+    public static implicit operator LogId(int id) => new(id);
 
-    public static implicit operator EventId(long id) => new(id);
+    public static implicit operator LogId(long id) => new(id);
 
-    public static implicit operator EventId(Guid id) => new(id);
+    public static implicit operator LogId(Guid id) => new(id);
 
     public bool IsInt => _type == IdType.Int;
     public bool IsLong => _type == IdType.Long;
@@ -70,7 +70,7 @@ public readonly struct EventId : IEquatable<EventId>
     public string? Name => _name;
 
     // --------------------- 相等性比较 ---------------------
-    public bool Equals(EventId other)
+    public bool Equals(LogId other)
     {
         if (_type != other._type)
             return false;
@@ -85,7 +85,7 @@ public readonly struct EventId : IEquatable<EventId>
     }
 
     public override bool Equals([NotNullWhen(true)] object? obj) =>
-        obj is EventId other && Equals(other);
+        obj is LogId other && Equals(other);
 
     public override int GetHashCode() =>
         _type switch
@@ -96,9 +96,9 @@ public readonly struct EventId : IEquatable<EventId>
             _ => 0
         };
 
-    public static bool operator ==(EventId left, EventId right) => left.Equals(right);
+    public static bool operator ==(LogId left, LogId right) => left.Equals(right);
 
-    public static bool operator !=(EventId left, EventId right) => !left.Equals(right);
+    public static bool operator !=(LogId left, LogId right) => !left.Equals(right);
 
     public override string ToString() =>
         _name

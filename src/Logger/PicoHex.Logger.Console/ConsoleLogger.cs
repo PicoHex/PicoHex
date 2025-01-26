@@ -1,40 +1,53 @@
 namespace PicoHex.Logger.Console;
 
-public class ConsoleLogger : ILogger
+public class ConsoleLogger(string categoryName, ILogFormatter formatter, ILogSink sink) : ILogger
 {
-    private readonly string _categoryName;
-    private readonly ILogFormatter _formatter;
-    private readonly ILogSink _sink;
-
-    public ConsoleLogger(string categoryName, ILogFormatter formatter, ILogSink sink)
-    {
-        _categoryName = categoryName;
-        _formatter = formatter;
-        _sink = sink;
-    }
-
     public void Log<TState>(
         LogLevel logLevel,
-        EventId eventId,
+        LogId logId,
         TState state,
         Exception? exception,
-        Func<TState, Exception?, string> formatter
+        Func<TState, Exception?, string> formatter1
     )
     {
         if (!IsEnabled(logLevel))
             return;
 
-        var formattedMessage = _formatter.Format(
+        var formattedMessage = formatter.Format(
             logLevel,
-            _categoryName,
-            eventId,
+            categoryName,
+            logId,
             state,
             exception,
-            formatter
+            formatter1
         );
 
         // 同步等待异步写入完成（确保日志顺序）
-        _sink.WriteAsync(formattedMessage).GetAwaiter().GetResult();
+        sink.Write(formattedMessage);
+    }
+
+    public ValueTask LogAsync<TState>(
+        LogLevel logLevel,
+        LogId logId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter1
+    )
+    {
+        if (!IsEnabled(logLevel))
+            return ValueTask.CompletedTask;
+
+        var formattedMessage = formatter.Format(
+            logLevel,
+            categoryName,
+            logId,
+            state,
+            exception,
+            formatter1
+        );
+
+        // 同步等待异步写入完成（确保日志顺序）
+        return sink.WriteAsync(formattedMessage);
     }
 
     public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None; // 默认启用所有级别
@@ -43,8 +56,6 @@ public class ConsoleLogger : ILogger
         where TState : notnull => NullScope.Instance; // 暂不支持作用域
 }
 
-public sealed class ConsoleLogger<T> : ConsoleLogger, ILogger<T>
-{
-    public ConsoleLogger(ILogFormatter formatter, ILogSink sink)
-        : base(typeof(T).FullName ?? typeof(T).Name, formatter, sink) { }
-}
+public sealed class ConsoleLogger<T>(ILogFormatter formatter, ILogSink sink)
+    : ConsoleLogger(typeof(T).FullName ?? typeof(T).Name, formatter, sink),
+        ILogger<T>;

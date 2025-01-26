@@ -47,9 +47,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.Serilog", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.Console", "src\Logger\PicoHex.Logger.Console\PicoHex.Logger.Console.csproj", "{5FA1CC1F-8DFF-4E85-9EC5-52DE23E609DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Tcp.Server", "src\Server\PicoHex.Tcp.Server\PicoHex.Tcp.Server.csproj", "{1BE69972-6EED-4A52-A6A7-3954157AC67D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Socket", "src\Server\PicoHex.Socket\PicoHex.Socket.csproj", "{1BE69972-6EED-4A52-A6A7-3954157AC67D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Listener.Demo", "demo\PicoHex.Listener.Demo\PicoHex.Listener.Demo.csproj", "{20654068-6A1F-44D9-8C79-F775FA2B3ADC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Socket.Demo", "demo\PicoHex.Socket.Demo\PicoHex.Socket.Demo.csproj", "{20654068-6A1F-44D9-8C79-F775FA2B3ADC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

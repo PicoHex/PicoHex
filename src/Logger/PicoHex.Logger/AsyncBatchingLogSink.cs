@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 namespace PicoHex.Logger;
 
 public class AsyncBatchingLogSink : ILogSink, IDisposable
@@ -28,6 +26,11 @@ public class AsyncBatchingLogSink : ILogSink, IDisposable
         });
     }
 
+    public void Write(string formattedMessage)
+    {
+        throw new NotImplementedException();
+    }
+
     public ValueTask WriteAsync(string formattedMessage)
     {
         _queue.Add(formattedMessage);
@@ -38,5 +41,22 @@ public class AsyncBatchingLogSink : ILogSink, IDisposable
     {
         _cts.Cancel();
         _processingTask.Wait();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CastAndDispose(_queue);
+        await CastAndDispose(_cts);
+        await CastAndDispose(_processingTask);
+
+        return;
+
+        static async ValueTask CastAndDispose(IDisposable resource)
+        {
+            if (resource is IAsyncDisposable resourceAsyncDisposable)
+                await resourceAsyncDisposable.DisposeAsync();
+            else
+                resource.Dispose();
+        }
     }
 }

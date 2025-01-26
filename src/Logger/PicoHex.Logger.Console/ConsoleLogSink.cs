@@ -4,7 +4,7 @@ public class ConsoleLogSink : ILogSink
 {
     private static readonly Lock Lock = new();
 
-    public ValueTask WriteAsync(string formattedMessage)
+    public void Write(string formattedMessage)
     {
         lock (Lock)
         {
@@ -14,7 +14,11 @@ public class ConsoleLogSink : ILogSink
             System.Console.WriteLine(formattedMessage);
             System.Console.ForegroundColor = originalColor;
         }
+    }
 
+    public ValueTask WriteAsync(string formattedMessage)
+    {
+        Write(formattedMessage);
         return ValueTask.CompletedTask;
     }
 
@@ -40,4 +44,9 @@ public class ConsoleLogSink : ILogSink
             LogLevel.Emergency => ConsoleColor.DarkMagenta,
             _ => ConsoleColor.White
         };
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
+    }
 }

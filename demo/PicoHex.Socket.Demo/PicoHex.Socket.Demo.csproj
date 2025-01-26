@@ -5,10 +5,11 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>PicoHex.Listener.Demo</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Server\PicoHex.Tcp.Server\PicoHex.Tcp.Server.csproj" />
+      <ProjectReference Include="..\..\src\Server\PicoHex.Socket\PicoHex.Socket.csproj" />
     </ItemGroup>
 
 </Project>

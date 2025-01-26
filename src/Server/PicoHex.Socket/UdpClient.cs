@@ -1,8 +1,8 @@
-﻿namespace PicoHex.Tcp.Server;
+﻿namespace PicoHex.Socket;
 
 public sealed class UdpClient : IDisposable, IAsyncDisposable
 {
-    private readonly Socket _socket;
+    private readonly System.Net.Sockets.Socket _socket;
     private readonly MemoryPool<byte> _memoryPool = MemoryPool<byte>.Shared;
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
@@ -13,12 +13,16 @@ public sealed class UdpClient : IDisposable, IAsyncDisposable
 
     public UdpClient(AddressFamily addressFamily = AddressFamily.InterNetwork)
     {
-        _socket = new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
+        _socket = new System.Net.Sockets.Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
     }
 
     public UdpClient(IPEndPoint localEndPoint)
     {
-        _socket = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+        _socket = new System.Net.Sockets.Socket(
+            localEndPoint.AddressFamily,
+            SocketType.Dgram,
+            ProtocolType.Udp
+        );
         _socket.Bind(localEndPoint);
         _ = StartReceiveLoopAsync(_cts.Token);
     }

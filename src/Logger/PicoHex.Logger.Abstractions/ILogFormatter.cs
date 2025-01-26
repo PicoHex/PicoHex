@@ -5,7 +5,7 @@ public interface ILogFormatter
     string Format<TState>(
         LogLevel logLevel,
         string categoryName,
-        EventId eventId,
+        LogId logId,
         TState state,
         Exception? exception,
         Func<TState, Exception?, string> defaultFormatter

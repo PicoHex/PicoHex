@@ -5,7 +5,7 @@ public class JsonLogFormatter : ILogFormatter
     public string Format<TState>(
         LogLevel logLevel,
         string categoryName,
-        EventId<> eventId,
+        LogId logId,
         TState state,
         Exception? exception,
         Func<TState, Exception?, string> defaultFormatter
@@ -16,7 +16,7 @@ public class JsonLogFormatter : ILogFormatter
             Timestamp = DateTime.UtcNow,
             Level = logLevel.ToString(),
             Category = categoryName,
-            EventId = eventId,
+            EventId = logId,
             Message = defaultFormatter(state, exception),
             Exception = exception?.ToString()
         };
@@ -28,6 +28,11 @@ public class JsonLogFormatter : ILogFormatter
 public class FileLogSink(string filePath) : ILogSink, IDisposable
 {
     private readonly StreamWriter _writer = new(filePath, append: true);
+
+    public void Write(string formattedMessage)
+    {
+        throw new NotImplementedException();
+    }
 
     public async ValueTask WriteAsync(string formattedMessage)
     {

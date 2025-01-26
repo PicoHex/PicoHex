@@ -2,7 +2,7 @@
 
 using System.Net;
 using System.Text;
-using PicoHex.Tcp.Server;
+using PicoHex.Socket;
 
 var tcpListener = new TcpListener(new IPEndPoint(IPAddress.Any, 8080));
 

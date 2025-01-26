@@ -1,8 +1,8 @@
-﻿namespace PicoHex.Tcp.Server;
+﻿namespace PicoHex.Socket;
 
 public sealed class TcpClient : IDisposable, IAsyncDisposable
 {
-    private readonly Socket _socket;
+    private readonly System.Net.Sockets.Socket _socket;
     private readonly MemoryPool<byte> _memoryPool = MemoryPool<byte>.Shared;
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
@@ -15,7 +15,7 @@ public sealed class TcpClient : IDisposable, IAsyncDisposable
 
     public TcpClient(AddressFamily addressFamily = AddressFamily.InterNetwork)
     {
-        _socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+        _socket = new System.Net.Sockets.Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
         _socket.NoDelay = true;
     }
 

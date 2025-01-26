@@ -1,8 +1,8 @@
-﻿namespace PicoHex.Tcp.Server;
+﻿namespace PicoHex.Socket;
 
 public sealed class TcpListener : IDisposable, IAsyncDisposable
 {
-    private readonly Socket _listenerSocket;
+    private readonly System.Net.Sockets.Socket _listenerSocket;
     private readonly CancellationTokenSource _cts = new();
     private readonly MemoryPool<byte> _memoryPool = MemoryPool<byte>.Shared;
     private readonly ConcurrentDictionary<Guid, TcpClientHandler> _clients = new();
@@ -15,7 +15,7 @@ public sealed class TcpListener : IDisposable, IAsyncDisposable
 
     public TcpListener(IPEndPoint localEndPoint, int backlog = 100)
     {
-        _listenerSocket = new Socket(
+        _listenerSocket = new System.Net.Sockets.Socket(
             localEndPoint.AddressFamily,
             SocketType.Stream,
             ProtocolType.Tcp
@@ -152,7 +152,7 @@ public sealed class TcpListener : IDisposable, IAsyncDisposable
 
     private sealed class TcpClientHandler : IDisposable, IAsyncDisposable
     {
-        private readonly Socket _socket;
+        private readonly System.Net.Sockets.Socket _socket;
         private readonly MemoryPool<byte> _memoryPool;
         private bool _disposed;
         private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -162,7 +162,7 @@ public sealed class TcpListener : IDisposable, IAsyncDisposable
 
         public Guid ClientId { get; } = Guid.NewGuid();
 
-        public TcpClientHandler(Socket socket, MemoryPool<byte> memoryPool)
+        public TcpClientHandler(System.Net.Sockets.Socket socket, MemoryPool<byte> memoryPool)
         {
             _socket = socket;
             _memoryPool = memoryPool;
@@ -290,9 +290,12 @@ public sealed class TcpListener : IDisposable, IAsyncDisposable
 
 public static class SocketExtensions
 {
-    public static async Task<Socket> AcceptAsync(this Socket socket, CancellationToken ct)
+    public static async Task<System.Net.Sockets.Socket> AcceptAsync(
+        this System.Net.Sockets.Socket socket,
+        CancellationToken ct
+    )
     {
-        var tcs = new TaskCompletionSource<Socket>(
+        var tcs = new TaskCompletionSource<System.Net.Sockets.Socket>(
             TaskCreationOptions.RunContinuationsAsynchronously
         );
         await using var reg = ct.Register(() => tcs.TrySetCanceled());

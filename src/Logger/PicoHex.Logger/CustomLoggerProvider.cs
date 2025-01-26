@@ -35,7 +35,7 @@ public class CustomLogger : ILogger
 
     public void Log<TState>(
         LogLevel logLevel,
-        EventId<> eventId,
+        LogId logId,
         TState state,
         Exception? exception,
         Func<TState, Exception?, string> formatter
@@ -48,7 +48,7 @@ public class CustomLogger : ILogger
         var formattedMessage = _formatter.Format(
             logLevel,
             _categoryName,
-            eventId,
+            logId,
             state,
             exception,
             formatter
@@ -56,6 +56,17 @@ public class CustomLogger : ILogger
 
         // 输出到 Sink
         _sink.WriteAsync(formattedMessage).ConfigureAwait(false).GetAwaiter().GetResult();
+    }
+
+    public ValueTask LogAsync<TState>(
+        LogLevel logLevel,
+        LogId logId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter
+    )
+    {
+        throw new NotImplementedException();
     }
 
     public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Information;
