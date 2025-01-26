@@ -193,11 +193,10 @@ public sealed class TcpListener : IDisposable, IAsyncDisposable
                         break;
                     }
 
-                    if (bytesRead == 0) // 正常关闭
-                    {
-                        Disconnected?.Invoke(ClientId);
-                        break;
-                    }
+                    if (bytesRead != 0)
+                        continue; // 正常关闭
+                    Disconnected?.Invoke(ClientId);
+                    break;
                 }
             }
             catch (Exception ex)
@@ -216,10 +215,10 @@ public sealed class TcpListener : IDisposable, IAsyncDisposable
             await _sendLock.WaitAsync(ct);
             try
             {
-                int totalSent = 0;
+                var totalSent = 0;
                 while (totalSent < data.Length && !ct.IsCancellationRequested)
                 {
-                    var sent = await _socket.SendAsync(data.Slice(totalSent), SocketFlags.None, ct);
+                    var sent = await _socket.SendAsync(data[totalSent..], SocketFlags.None, ct);
                     if (sent == 0)
                         throw new SocketException((int)SocketError.ConnectionReset);
                     totalSent += sent;

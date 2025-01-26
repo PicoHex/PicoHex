@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Tcp.Server;
 
-public class UdpListener : IDisposable, IAsyncDisposable
+public sealed class UdpListener : IDisposable, IAsyncDisposable
 {
     private readonly Socket _socket;
     private readonly CancellationTokenSource _cts = new();
@@ -54,20 +54,25 @@ public class UdpListener : IDisposable, IAsyncDisposable
             var data = buffer.Slice(0, result.ReceivedBytes).ToArray();
             bufferOwner.Dispose();
 
-            var remoteEP = (IPEndPoint)result.RemoteEndPoint;
-            DataReceived?.Invoke(data, remoteEP);
+            var remoteEndPoint = (IPEndPoint)result.RemoteEndPoint;
+            DataReceived?.Invoke(data, remoteEndPoint);
         }
     }
 
     public async ValueTask SendAsync(
         byte[] data,
-        IPEndPoint remoteEP,
+        IPEndPoint remoteEndPoint,
         CancellationToken ct = default
     )
     {
         try
         {
-            await _socket.SendToAsync(new ArraySegment<byte>(data), SocketFlags.None, remoteEP, ct);
+            await _socket.SendToAsync(
+                new ArraySegment<byte>(data),
+                SocketFlags.None,
+                remoteEndPoint,
+                ct
+            );
         }
         catch (Exception ex)
         {
@@ -94,7 +99,7 @@ public class UdpListener : IDisposable, IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (_disposed)
             return;
@@ -109,7 +114,7 @@ public class UdpListener : IDisposable, IAsyncDisposable
         _disposed = true;
     }
 
-    protected virtual async ValueTask DisposeAsyncCore()
+    private async ValueTask DisposeAsyncCore()
     {
         await _cts.CancelAsync();
         try
