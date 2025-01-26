@@ -1,6 +1,6 @@
 namespace PicoHex.Logger;
 
-public class AsyncBatchingLogSink : ILogSink, IDisposable
+public class AsyncBatchingLogSink : ILogSink
 {
     private readonly BlockingCollection<string> _queue = new();
     private readonly CancellationTokenSource _cts = new();
