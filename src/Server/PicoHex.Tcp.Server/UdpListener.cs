@@ -10,10 +10,10 @@ public class UdpListener : IDisposable, IAsyncDisposable
     public event Action<byte[], IPEndPoint>? DataReceived;
     public event Action<Exception>? ErrorOccurred;
 
-    public UdpListener(IPEndPoint localEP)
+    public UdpListener(IPEndPoint localEndPoint)
     {
-        _socket = new Socket(localEP.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-        _socket.Bind(localEP);
+        _socket = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+        _socket.Bind(localEndPoint);
     }
 
     public void Start()
