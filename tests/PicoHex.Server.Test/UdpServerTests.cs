@@ -9,16 +9,15 @@ public class UdpServerTests
         var ipAddress = IPAddress.Loopback;
         ushort port = 5001;
         var mockHandler = new Mock<IUdpHandler>();
-        var mockLogger = new Mock<ILogger<UdpServer>?>();
+        var mockLogger = new Mock<ILogger<UdpServer>>();
 
         mockHandler
-            .Setup(
-                h =>
-                    h.HandleAsync(
-                        It.IsAny<byte[]>(),
-                        It.IsAny<EndPoint>(),
-                        It.IsAny<CancellationToken>()
-                    )
+            .Setup(h =>
+                h.HandleAsync(
+                    It.IsAny<byte[]>(),
+                    It.IsAny<EndPoint>(),
+                    It.IsAny<CancellationToken>()
+                )
             )
             .Returns(ValueTask.CompletedTask);
 

@@ -1,7 +1,16 @@
-﻿namespace PicoHex.DependencyInjection.Test;
+﻿using Xunit.Abstractions;
+
+namespace PicoHex.DependencyInjection.Test;
 
 public class DependencyInjectionTests
 {
+    private readonly ITestOutputHelper _testOutputHelper;
+
+    public DependencyInjectionTests(ITestOutputHelper testOutputHelper)
+    {
+        _testOutputHelper = testOutputHelper;
+    }
+
     [Fact]
     public void Register_And_Resolve_Transient()
     {
@@ -106,7 +115,7 @@ public class DependencyInjectionTests
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _testOutputHelper.WriteLine(e.ToString());
             throw;
         }
     }
@@ -146,8 +155,8 @@ public interface IServiceB { }
 
 public class ServiceBImpl : IServiceB
 {
-    private IServiceA? _serviceA;
-    private IServiceC? _serviceC;
+    private readonly IServiceA? _serviceA;
+    private readonly IServiceC? _serviceC;
 
     public ServiceBImpl(ISvcRegistry registry, ISvcProvider provider)
     {

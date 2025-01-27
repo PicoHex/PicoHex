@@ -7,9 +7,9 @@ public class TcpServerTests
     {
         // Arrange
         var ipAddress = IPAddress.Loopback;
-        ushort port = 5000;
+        const ushort port = 5000;
         var mockHandler = new Mock<ITcpHandler>();
-        var mockLogger = new Mock<ILogger<TcpServer>?>();
+        var mockLogger = new Mock<ILogger<TcpServer>>();
 
         mockHandler
             .Setup(h => h.HandleAsync(It.IsAny<NetworkStream>(), It.IsAny<CancellationToken>()))
@@ -31,7 +31,7 @@ public class TcpServerTests
         await client.ConnectAsync(ipAddress, port, cts.Token);
         var stream = client.GetStream();
         var message = Encoding.UTF8.GetBytes("Hello Server");
-        await stream.WriteAsync(message, 0, message.Length, cts.Token);
+        await stream.WriteAsync(message, cts.Token);
 
         // Allow some time for the server to process
         await Task.Delay(500, cts.Token);
