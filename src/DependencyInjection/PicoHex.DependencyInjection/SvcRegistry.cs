@@ -10,6 +10,13 @@ public class SvcRegistry(ISvcProviderFactory providerFactory) : ISvcRegistry
 
     public ISvcRegistry AddServiceDescriptor(SvcDescriptor descriptor)
     {
+        // 新增校验：确保开放泛型注册的合法性
+        if (
+            descriptor.ServiceType.IsGenericTypeDefinition
+            && descriptor.ImplementationType is { IsGenericTypeDefinition: false }
+        )
+            throw new ArgumentException("开放泛型服务必须对应开放泛型实现类型");
+
         if (!_descriptors.TryAdd(descriptor.ServiceType, descriptor))
             throw new InvalidOperationException(
                 $"Service descriptor for type {descriptor.ServiceType} already exists."

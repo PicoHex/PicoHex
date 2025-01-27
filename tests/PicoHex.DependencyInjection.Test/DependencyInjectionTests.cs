@@ -2,15 +2,8 @@
 
 namespace PicoHex.DependencyInjection.Test;
 
-public class DependencyInjectionTests
+public class DependencyInjectionTests(ITestOutputHelper testOutputHelper)
 {
-    private readonly ITestOutputHelper _testOutputHelper;
-
-    public DependencyInjectionTests(ITestOutputHelper testOutputHelper)
-    {
-        _testOutputHelper = testOutputHelper;
-    }
-
     [Fact]
     public void Register_And_Resolve_Transient()
     {
@@ -115,7 +108,7 @@ public class DependencyInjectionTests
         }
         catch (Exception e)
         {
-            _testOutputHelper.WriteLine(e.ToString());
+            testOutputHelper.WriteLine(e.ToString());
             throw;
         }
     }

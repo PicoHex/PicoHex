@@ -21,21 +21,50 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
     private object? Resolve(Type serviceType, ISvcProvider svcProvider, Stack<Type> resolutionStack)
     {
         var descriptor = registry.GetServiceDescriptor(serviceType);
-        return descriptor.Lifetime switch
-        {
-            SvcLifetime.Singleton
-                => registry.GetSingletonInstance(
-                    serviceType,
-                    () => CreateInstance(descriptor, svcProvider, resolutionStack)
-                ),
-            SvcLifetime.PerThread
-                => registry.GetPerThreadInstance(
-                    serviceType,
-                    () => CreateInstance(descriptor, svcProvider, resolutionStack)
-                ),
-            _ => CreateInstance(descriptor, svcProvider, resolutionStack)
-        };
+
+        // 处理闭合泛型类型：检查是否存在对应的开放泛型注册
+        if (!IsClosedGenericType(serviceType))
+            return descriptor.Lifetime switch
+            {
+                SvcLifetime.Singleton
+                    => registry.GetSingletonInstance(
+                        serviceType,
+                        () => CreateInstance(descriptor, svcProvider, resolutionStack)
+                    ),
+                SvcLifetime.PerThread
+                    => registry.GetPerThreadInstance(
+                        serviceType,
+                        () => CreateInstance(descriptor, svcProvider, resolutionStack)
+                    ),
+                _ => CreateInstance(descriptor, svcProvider, resolutionStack)
+            };
+        // 动态构造闭合实现类型
+        if (descriptor.ImplementationType == null)
+            return descriptor.Lifetime switch
+            {
+                SvcLifetime.Singleton
+                    => registry.GetSingletonInstance(
+                        serviceType,
+                        () => CreateInstance(descriptor, svcProvider, resolutionStack)
+                    ),
+                SvcLifetime.PerThread
+                    => registry.GetPerThreadInstance(
+                        serviceType,
+                        () => CreateInstance(descriptor, svcProvider, resolutionStack)
+                    ),
+                _ => CreateInstance(descriptor, svcProvider, resolutionStack)
+            };
+        var closedImplType = descriptor
+            .ImplementationType
+            .MakeGenericType(serviceType.GetGenericArguments());
+
+        // 创建临时描述符并解析
+        var tempDescriptor = new SvcDescriptor(serviceType, closedImplType, descriptor.Lifetime);
+        return CreateInstance(tempDescriptor, svcProvider, new Stack<Type>());
     }
+
+    private static bool IsClosedGenericType(Type type) =>
+        type is { IsGenericType: true, IsGenericTypeDefinition: false };
 
     private object? CreateInstance(
         SvcDescriptor descriptor,
@@ -63,6 +92,12 @@ public class SvcProvider(ISvcRegistry registry, ISvcScopeFactory scopeFactory) :
                 $"No public constructor found for type {implementationType.Name}"
             );
 
+        // 处理开放泛型实现类型（需动态闭合）
+        if (implementationType.IsGenericTypeDefinition)
+        {
+            var serviceGenericArgs = descriptor.ServiceType.GetGenericArguments();
+            implementationType = implementationType.MakeGenericType(serviceGenericArgs);
+        }
         resolutionStack.Push(implementationType);
         try
         {
