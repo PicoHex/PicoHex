@@ -1,6 +1,6 @@
 namespace PicoHex.DependencyInjection;
 
-public sealed class SvcScope(ISvcProvider provider, ILogger<SvcScope> logger) : ISvcScope
+public sealed class SvcScope(ISvcProvider provider) : ISvcScope
 {
     private readonly ISvcProvider _provider =
         provider ?? throw new ArgumentNullException(nameof(provider));
@@ -28,7 +28,7 @@ public sealed class SvcScope(ISvcProvider provider, ILogger<SvcScope> logger) : 
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError($"同步释放 {svc.GetType()} 失败: {ex}");
+                        Console.WriteLine($"同步释放 {svc.GetType()} 失败: {ex}");
                     }
                     break;
 
@@ -39,7 +39,7 @@ public sealed class SvcScope(ISvcProvider provider, ILogger<SvcScope> logger) : 
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError($"强制同步释放异步资源 {svc.GetType()} 失败: {ex}");
+                        Console.WriteLine($"强制同步释放异步资源 {svc.GetType()} 失败: {ex}");
                     }
                     break;
             }
@@ -62,7 +62,7 @@ public sealed class SvcScope(ISvcProvider provider, ILogger<SvcScope> logger) : 
             }
             catch (Exception ex)
             {
-                logger.LogError($"异步释放 {svc.GetType()} 失败: {ex}");
+                Console.WriteLine($"异步释放 {svc.GetType()} 失败: {ex}");
             }
         }
 
@@ -77,7 +77,7 @@ public sealed class SvcScope(ISvcProvider provider, ILogger<SvcScope> logger) : 
             }
             catch (Exception ex)
             {
-                logger.LogError($"异步路径同步释放 {svc.GetType()} 失败: {ex}");
+                Console.WriteLine($"异步路径同步释放 {svc.GetType()} 失败: {ex}");
             }
         }
 
