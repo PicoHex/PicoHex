@@ -1,6 +1,31 @@
 namespace PicoHex.Logger.NG;
 
-public class LoggerProvider
+public class LoggerProvider(ILogSink sink) : ILoggerProvider
 {
-    
+    public ILogger CreateLogger(string category)
+    {
+        return new CategoryLogger(category, sink);
+    }
+
+    public void Dispose() { }
+
+    private class CategoryLogger(string category, ILogSink sink) : ILogger
+    {
+        public void Log(LogLevel level, string message, Exception? exception = null)
+        {
+            if (level < sink.MinimumLevel)
+                return;
+
+            var entry = new LogEntry
+            {
+                Timestamp = DateTime.Now,
+                Level = level,
+                Category = category,
+                Message = message,
+                Exception = exception
+            };
+
+            sink.Emit(entry);
+        }
+    }
 }

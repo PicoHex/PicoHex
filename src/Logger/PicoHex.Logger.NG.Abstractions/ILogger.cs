@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG;
+namespace PicoHex.Logger.NG.Abstractions;
 
 public interface ILogger
 {
@@ -6,26 +6,3 @@ public interface ILogger
 }
 
 public interface ILogger<out T> : ILogger;
-
-public interface ILogFormatter
-{
-    string Format(LogEntry entry);
-}
-
-public interface ILogSink
-{
-    LogLevel MinimumLevel { get; set; }
-    void Emit(LogEntry entry);
-}
-
-public interface ILoggerProvider : IDisposable
-{
-    ILogger CreateLogger(string category);
-}
-
-public interface ILoggerFactory
-{
-    ILogger CreateLogger(string category);
-    ILogger<T> CreateLogger<T>();
-    void AddProvider(ILoggerProvider provider);
-}

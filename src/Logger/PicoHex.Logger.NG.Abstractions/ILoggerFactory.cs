@@ -1,6 +1,8 @@
 namespace PicoHex.Logger.NG.Abstractions;
 
-public class ILoggerFactory
+public interface ILoggerFactory
 {
-    
+    ILogger CreateLogger(string category);
+    ILogger<T> CreateLogger<T>();
+    void AddProvider(ILoggerProvider provider);
 }
