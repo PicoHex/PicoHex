@@ -18,15 +18,11 @@ factory.AddProvider(new LoggerProvider(fileSink));
 var logger = factory.CreateLogger<Program>();
 
 // Usage examples
-logger.Log(LogLevel.Information, "Starting application");
-logger.Log(LogLevel.Warning, "Low memory warning");
-logger.Log(LogLevel.Error, "Database connection failed", new Exception("Connection timeout"));
+logger.LogInformation("Starting application");
+logger.LogWarning("Low memory warning");
+logger.LogError("Database connection failed", new Exception("Connection timeout"));
 
 // Usage examples
-await logger.LogAsync(LogLevel.Information, "Starting application");
-await logger.LogAsync(LogLevel.Warning, "Low memory warning");
-await logger.LogAsync(
-    LogLevel.Error,
-    "Database connection failed",
-    new Exception("Connection timeout")
-);
+await logger.LogInformationAsync("Starting application");
+await logger.LogWarningAsync("Low memory warning");
+await logger.LogErrorAsync("Database connection failed", new Exception("Connection timeout"));
