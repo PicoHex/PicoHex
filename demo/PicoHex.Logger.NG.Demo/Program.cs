@@ -21,3 +21,12 @@ var logger = factory.CreateLogger<Program>();
 logger.Log(LogLevel.Information, "Starting application");
 logger.Log(LogLevel.Warning, "Low memory warning");
 logger.Log(LogLevel.Error, "Database connection failed", new Exception("Connection timeout"));
+
+// Usage examples
+await logger.LogAsync(LogLevel.Information, "Starting application");
+await logger.LogAsync(LogLevel.Warning, "Low memory warning");
+await logger.LogAsync(
+    LogLevel.Error,
+    "Database connection failed",
+    new Exception("Connection timeout")
+);
