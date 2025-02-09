@@ -1,6 +1,4 @@
-﻿using Xunit.Abstractions;
-
-namespace PicoHex.DependencyInjection.Test;
+﻿namespace PicoHex.DependencyInjection.Test;
 
 public class DependencyInjectionTests(ITestOutputHelper testOutputHelper)
 {
