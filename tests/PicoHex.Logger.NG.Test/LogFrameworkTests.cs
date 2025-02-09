@@ -148,6 +148,15 @@ public static class LogFrameworkTests
             {
                 Entries.Add(entry);
             }
+
+            public ValueTask EmitAsync(
+                LogEntry entry,
+                CancellationToken cancellationToken = default
+            )
+            {
+                Entries.Add(entry);
+                return ValueTask.CompletedTask;
+            }
         }
     }
 
@@ -176,6 +185,17 @@ public static class LogFrameworkTests
             public void Log(LogLevel level, string message, Exception? exception = null)
             {
                 LogCalled = true;
+            }
+
+            public ValueTask LogAsync(
+                LogLevel level,
+                string message,
+                Exception? exception = null,
+                CancellationToken cancellationToken = default
+            )
+            {
+                LogCalled = true;
+                return ValueTask.CompletedTask;
             }
         }
     }
@@ -217,6 +237,17 @@ public static class LogFrameworkTests
                 {
                     logAction();
                 }
+
+                public ValueTask LogAsync(
+                    LogLevel level,
+                    string message,
+                    Exception? exception = null,
+                    CancellationToken cancellationToken = default
+                )
+                {
+                    logAction();
+                    return ValueTask.CompletedTask;
+                }
             }
         }
     }
@@ -254,6 +285,16 @@ public static class LogFrameworkTests
             private class NullLogger : ILogger
             {
                 public void Log(LogLevel level, string message, Exception? exception = null) { }
+
+                public ValueTask LogAsync(
+                    LogLevel level,
+                    string message,
+                    Exception? exception = null,
+                    CancellationToken cancellationToken = default
+                )
+                {
+                    return ValueTask.CompletedTask;
+                }
             }
         }
     }

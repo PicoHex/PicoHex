@@ -8,4 +8,10 @@ public class ConsoleSink(ILogFormatter formatter) : ILogSink
     {
         Console.WriteLine(formatter.Format(entry));
     }
+
+    public ValueTask EmitAsync(LogEntry entry, CancellationToken cancellationToken = default)
+    {
+        Console.WriteLine(formatter.Format(entry));
+        return ValueTask.CompletedTask;
+    }
 }

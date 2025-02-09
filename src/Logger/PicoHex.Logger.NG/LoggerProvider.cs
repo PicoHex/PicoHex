@@ -27,5 +27,27 @@ public class LoggerProvider(ILogSink sink) : ILoggerProvider
 
             sink.Emit(entry);
         }
+
+        public async ValueTask LogAsync(
+            LogLevel level,
+            string message,
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (level < sink.MinimumLevel)
+                return;
+
+            var entry = new LogEntry
+            {
+                Timestamp = DateTime.Now,
+                Level = level,
+                Category = category,
+                Message = message,
+                Exception = exception
+            };
+
+            await sink.EmitAsync(entry, cancellationToken);
+        }
     }
 }

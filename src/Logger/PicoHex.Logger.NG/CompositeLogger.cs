@@ -9,4 +9,17 @@ public class CompositeLogger(IEnumerable<ILogger> loggers) : ILogger
             logger.Log(level, message, exception);
         }
     }
+
+    public async ValueTask LogAsync(
+        LogLevel level,
+        string message,
+        Exception? exception = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        foreach (var logger in loggers)
+        {
+            await logger.LogAsync(level, message, exception, cancellationToken);
+        }
+    }
 }
