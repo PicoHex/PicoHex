@@ -6,6 +6,9 @@ public class ConsoleSink(ILogFormatter formatter) : ILogSink
 
     public void Emit(LogEntry entry)
     {
+        if (entry.Level < MinimumLevel)
+            return;
+
         var originalColor = Console.ForegroundColor;
         Console.ForegroundColor = GetConsoleColor(entry.Level);
         Console.WriteLine(formatter.Format(entry));
