@@ -34,7 +34,10 @@ public class FileLogSink(string filePath) : ILogSink, IDisposable
         throw new NotImplementedException();
     }
 
-    public async ValueTask WriteAsync(string formattedMessage)
+    public async ValueTask WriteAsync(
+        string formattedMessage,
+        CancellationToken cancellationToken = default
+    )
     {
         await _writer.WriteLineAsync(formattedMessage);
     }

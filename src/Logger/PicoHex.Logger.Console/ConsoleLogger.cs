@@ -52,7 +52,7 @@ public class ConsoleLogger(string categoryName, ILogFormatter formatter, ILogSin
 
     public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None; // 默认启用所有级别
 
-    public IDisposable? BeginScope<TState>(TState state)
+    public IDisposable BeginScope<TState>(TState state)
         where TState : notnull => NullScope.Instance; // 暂不支持作用域
 }
 

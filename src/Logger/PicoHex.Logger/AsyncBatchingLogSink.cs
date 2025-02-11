@@ -29,9 +29,12 @@ public class AsyncBatchingLogSink : ILogSink
         throw new NotImplementedException();
     }
 
-    public ValueTask WriteAsync(string formattedMessage)
+    public ValueTask WriteAsync(
+        string formattedMessage,
+        CancellationToken cancellationToken = default
+    )
     {
-        _queue.Add(formattedMessage);
+        _queue.Add(formattedMessage, cancellationToken);
         return ValueTask.CompletedTask;
     }
 

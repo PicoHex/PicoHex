@@ -16,7 +16,10 @@ public class ConsoleLogSink : ILogSink
         }
     }
 
-    public ValueTask WriteAsync(string formattedMessage)
+    public ValueTask WriteAsync(
+        string formattedMessage,
+        CancellationToken cancellationToken = default
+    )
     {
         Write(formattedMessage);
         return ValueTask.CompletedTask;
