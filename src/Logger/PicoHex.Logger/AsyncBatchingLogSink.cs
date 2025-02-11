@@ -26,7 +26,7 @@ public class AsyncBatchingLogSink : ILogSink
 
     public void Write(string formattedMessage)
     {
-        throw new NotImplementedException();
+        _queue.Add(formattedMessage);
     }
 
     public ValueTask WriteAsync(
