@@ -54,6 +54,8 @@ public interface ILogger
         Exception? exception = null,
         CancellationToken cancellationToken = default
     );
+
+    IDisposable BeginScope<TState>(TState state);
 }
 
 /// <summary>

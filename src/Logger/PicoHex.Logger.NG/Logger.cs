@@ -18,4 +18,24 @@ public class Logger<T>(ILoggerFactory factory) : ILogger<T>
     {
         await _logger.LogAsync(level, message, exception, cancellationToken);
     }
+
+    public IDisposable BeginScope<TState>(TState state)
+    {
+        return new LogScope(state);
+    }
+
+    private void LogInternal(LogLevel level, string message, Exception? exception)
+    {
+        var scopes = CurrentScopes; // Implement CurrentScopes property
+        var entry = new LogEntry
+        {
+            Timestamp = DateTime.UtcNow,
+            Level = level,
+            Message = message,
+            Exception = exception,
+            Scopes = scopes.Select(s => s.State).ToList()
+        };
+
+        _sink.Emit(entry);
+    }
 }

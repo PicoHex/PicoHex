@@ -1,4 +1,6 @@
-﻿namespace PicoHex.Logger.NG.Test;
+﻿using PicoHex.Logger.NG.Core;
+
+namespace PicoHex.Logger.NG.Test;
 
 public static class LogFrameworkTests
 {
@@ -197,6 +199,11 @@ public static class LogFrameworkTests
                 LogCalled = true;
                 return ValueTask.CompletedTask;
             }
+
+            public IDisposable BeginScope<TState>(TState state)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 
@@ -248,6 +255,11 @@ public static class LogFrameworkTests
                     logAction();
                     return ValueTask.CompletedTask;
                 }
+
+                public IDisposable BeginScope<TState>(TState state)
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
     }
@@ -294,6 +306,11 @@ public static class LogFrameworkTests
                 )
                 {
                     return ValueTask.CompletedTask;
+                }
+
+                public IDisposable BeginScope<TState>(TState state)
+                {
+                    throw new NotImplementedException();
                 }
             }
         }

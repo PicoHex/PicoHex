@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Logger.NG.Abstractions;
+﻿namespace PicoHex.Logger.NG.Core;
 
 public class AsyncLogProcessor : IDisposable
 {

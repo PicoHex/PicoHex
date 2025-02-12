@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG;
+namespace PicoHex.Logger.NG.Core;
 
 public class CompositeLogger(IEnumerable<ILogger> loggers) : ILogger
 {
@@ -21,5 +21,10 @@ public class CompositeLogger(IEnumerable<ILogger> loggers) : ILogger
         {
             await logger.LogAsync(level, message, exception, cancellationToken);
         }
+    }
+
+    public IDisposable BeginScope<TState>(TState state)
+    {
+        throw new NotImplementedException();
     }
 }

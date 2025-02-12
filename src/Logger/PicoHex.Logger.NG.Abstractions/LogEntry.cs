@@ -53,4 +53,5 @@ public class LogEntry
     /// when available.
     /// </value>
     public Exception? Exception { get; set; }
+    public IReadOnlyList<object?> Scopes { get; set; } = [];
 }

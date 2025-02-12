@@ -49,5 +49,10 @@ public class LoggerProvider(ILogSink sink) : ILoggerProvider
 
             await sink.EmitAsync(entry, cancellationToken);
         }
+
+        public IDisposable BeginScope<TState>(TState state)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace PicoHex.Logger.NG.Abstractions;
 
-public class ILogScope
+public interface ILogScope : IDisposable
 {
-    
+    object? State { get; }
+    IReadOnlyList<ILogScope> ActiveScopes { get; }
 }
