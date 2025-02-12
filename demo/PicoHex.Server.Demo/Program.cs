@@ -14,9 +14,7 @@ svcRegistry.AddSingleton<ILogger<TcpServer>, Logger<TcpServer>>();
 svcRegistry.AddSingleton<ILogger<UdpServer>, Logger<UdpServer>>();
 svcRegistry.AddSingleton<ILogger<MyStreamHandler>, Logger<MyStreamHandler>>();
 svcRegistry.AddSingleton<ILogger<MyBytesHandler>, Logger<MyBytesHandler>>();
-svcRegistry.AddSingleton<ILoggerFactory>(_ =>
-    LoggerFactory.Create(builder => builder.AddConsole())
-);
+svcRegistry.AddSingleton(_ => LoggerFactory.Create(builder => builder.AddConsole()));
 
 // Registering servers
 svcRegistry.AddSingleton<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
