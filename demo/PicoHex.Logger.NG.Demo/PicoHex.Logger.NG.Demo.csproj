@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\Logger\PicoHex.Logger.Console\PicoHex.Logger.Console.csproj" />
+      <ProjectReference Include="..\..\src\Logger\PicoHex.Logger.Json\PicoHex.Logger.Json.csproj" />
     </ItemGroup>
 
 </Project>
