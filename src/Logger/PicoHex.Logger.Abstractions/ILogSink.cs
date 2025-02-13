@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG.Abstractions;
+namespace PicoHex.Logger.Abstractions;
 
 /// <summary>
 /// Defines a destination for log entries in the logging framework.

@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG.Abstractions;
+namespace PicoHex.Logger.Abstractions;
 
 /// <summary>
 /// Defines a formatter for converting log entries into standardized string representations.

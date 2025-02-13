@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG.Abstractions;
+namespace PicoHex.Logger.Abstractions;
 
 /// <summary>
 /// Represents a single entry in the application log, containing relevant information for tracking and debugging.

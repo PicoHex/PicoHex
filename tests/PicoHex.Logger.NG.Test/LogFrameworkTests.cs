@@ -1,6 +1,4 @@
-﻿using PicoHex.Logger.NG.Core;
-
-namespace PicoHex.Logger.NG.Test;
+﻿namespace PicoHex.Logger.NG.Test;
 
 public static class LogFrameworkTests
 {
@@ -88,7 +86,7 @@ public static class LogFrameworkTests
             var entry = new LogEntry { Message = "Test" };
 
             using var sw = new StringWriter();
-            Console.SetOut(sw);
+            System.Console.SetOut(sw);
 
             // Act
             sink.Emit(entry);

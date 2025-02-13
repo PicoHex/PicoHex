@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG.Console;
+namespace PicoHex.Logger.Console;
 
 public class LoggerFactory : ILoggerFactory
 {

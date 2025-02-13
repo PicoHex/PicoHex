@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG.Abstractions;
+namespace PicoHex.Logger.Abstractions;
 
 /// <summary>
 /// Represents the core logging interface for writing log entries.

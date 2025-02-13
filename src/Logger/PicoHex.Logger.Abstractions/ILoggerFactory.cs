@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG.Abstractions;
+namespace PicoHex.Logger.Abstractions;
 
 /// <summary>
 /// Represents a factory for creating and managing logger instances and their providers.

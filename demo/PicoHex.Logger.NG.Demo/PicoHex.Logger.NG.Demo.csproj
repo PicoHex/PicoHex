@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Logger\PicoHex.Logger.NG\PicoHex.Logger.NG.csproj" />
+      <ProjectReference Include="..\..\src\Logger\PicoHex.Logger.Console\PicoHex.Logger.Console.csproj" />
     </ItemGroup>
 
 </Project>
