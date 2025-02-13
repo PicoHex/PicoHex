@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG.Core;
+namespace PicoHex.Logger.NG;
 
 public class CompositeLogger(IEnumerable<ILogger> loggers) : ILogger
 {

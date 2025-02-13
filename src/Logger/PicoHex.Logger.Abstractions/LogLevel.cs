@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Logger.Abstractions;
+﻿namespace PicoHex.Logger.NG.Abstractions;
 
 /// <summary>
 /// Represents the severity levels of log events.

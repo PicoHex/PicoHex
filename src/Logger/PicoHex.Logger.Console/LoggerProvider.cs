@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG;
+namespace PicoHex.Logger.NG.Console;
 
 public class LoggerProvider(ILogSink sink) : ILoggerProvider
 {

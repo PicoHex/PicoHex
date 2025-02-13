@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.NG;
+namespace PicoHex.Logger.Console;
 
 public class SimpleFormatter : ILogFormatter
 {
