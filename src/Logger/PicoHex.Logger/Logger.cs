@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.Console;
+namespace PicoHex.Logger;
 
 public class Logger<T>(ILoggerFactory factory) : ILogger<T>
 {

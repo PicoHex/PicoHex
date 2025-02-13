@@ -1,4 +1,4 @@
-namespace PicoHex.Logger.Console;
+namespace PicoHex.Logger;
 
 public class ConsoleSink(ILogFormatter formatter) : ILogSink
 {

@@ -2,6 +2,8 @@
 
 // Configure logger factory
 
+using PicoHex.Logger;
+
 var factory = new LoggerFactory();
 
 // Console sink with simple formatter
