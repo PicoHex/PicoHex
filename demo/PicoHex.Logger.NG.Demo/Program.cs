@@ -3,6 +3,7 @@
 // Configure logger factory
 
 using PicoHex.Logger;
+using PicoHex.Logger.Console;
 
 var factory = new LoggerFactory();
 

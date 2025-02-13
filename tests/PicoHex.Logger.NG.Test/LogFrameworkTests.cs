@@ -1,4 +1,6 @@
-﻿namespace PicoHex.Logger.NG.Test;
+﻿using PicoHex.Logger.Console;
+
+namespace PicoHex.Logger.NG.Test;
 
 public static class LogFrameworkTests
 {

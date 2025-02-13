@@ -1,4 +1,4 @@
-namespace PicoHex.Logger;
+namespace PicoHex.Logger.Console;
 
 public class ConsoleSink(ILogFormatter formatter) : ILogSink
 {
@@ -9,10 +9,10 @@ public class ConsoleSink(ILogFormatter formatter) : ILogSink
         if (entry.Level < MinimumLevel)
             return;
 
-        var originalColor = Console.ForegroundColor;
-        Console.ForegroundColor = GetConsoleColor(entry.Level);
-        Console.WriteLine(formatter.Format(entry));
-        Console.ForegroundColor = originalColor;
+        var originalColor = System.Console.ForegroundColor;
+        System.Console.ForegroundColor = GetConsoleColor(entry.Level);
+        System.Console.WriteLine(formatter.Format(entry));
+        System.Console.ForegroundColor = originalColor;
     }
 
     public ValueTask EmitAsync(LogEntry entry, CancellationToken cancellationToken = default)
