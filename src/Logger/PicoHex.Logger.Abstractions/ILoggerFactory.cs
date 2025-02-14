@@ -38,23 +38,6 @@ public interface ILoggerFactory
     ILogger CreateLogger(string category);
 
     /// <summary>
-    /// Creates a generic logger instance for the specified type.
-    /// </summary>
-    /// <typeparam name="T">The type whose name will be used as the logger category</typeparam>
-    /// <returns>An <see cref="ILogger{T}"/> instance for the specified type</returns>
-    /// <remarks>
-    /// <para>
-    /// This is a convenience method that typically calls <see cref="CreateLogger(string)"/> with
-    /// the type's full name as the category.
-    /// </para>
-    /// <example>
-    /// Creating a logger for a service class:
-    /// <code>var logger = factory.CreateLogger&lt;OrderService&gt;();</code>
-    /// </example>
-    /// </remarks>
-    ILogger<T> CreateLogger<T>();
-
-    /// <summary>
     /// Adds a logging provider to the factory's collection.
     /// </summary>
     /// <param name="provider">The logging provider to add</param>

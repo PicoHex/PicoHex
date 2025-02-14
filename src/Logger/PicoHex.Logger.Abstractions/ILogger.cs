@@ -61,18 +61,18 @@ public interface ILogger
 /// <summary>
 /// Generic variant of <see cref="ILogger"/> that associates logs with a specific category type.
 /// </summary>
-/// <typeparam name="T">The type used to define the logging category</typeparam>
+/// <typeparam name="TCategory">The type used to define the logging category</typeparam>
 /// <remarks>
 /// <para>
 /// Typically used through dependency injection where the consumer type becomes the log category.
-/// The category name is usually derived from the full type name of <typeparamref name="T"/>.
+/// The category name is usually derived from the full type name of <typeparamref name="TCategory"/>.
 /// </para>
 /// <para>
 /// Example usage in a service class:
 /// <code>ILogger&lt;OrderService&gt; logger;</code>
 /// </para>
 /// </remarks>
-public interface ILogger<out T> : ILogger;
+public interface ILogger<out TCategory> : ILogger;
 
 /// <summary>
 /// Provides extension methods for <see cref="ILogger"/> to enable level-specific logging.

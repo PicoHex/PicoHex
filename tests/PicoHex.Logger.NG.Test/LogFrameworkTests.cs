@@ -37,7 +37,7 @@ public static class LogFrameworkTests
         public void SimpleFormatter_FormatsCorrectly()
         {
             // Arrange
-            var formatter = new SimpleFormatter();
+            var formatter = new ConsoleFormatter();
             var entry = new LogEntry
             {
                 Timestamp = new DateTime(2023, 1, 1, 12, 0, 0),
@@ -83,7 +83,7 @@ public static class LogFrameworkTests
         public void ConsoleSink_Emit_WritesToConsole()
         {
             // Arrange
-            var formatter = new SimpleFormatter();
+            var formatter = new ConsoleFormatter();
             var sink = new ConsoleSink(formatter);
             var entry = new LogEntry { Message = "Test" };
 
@@ -102,7 +102,7 @@ public static class LogFrameworkTests
         {
             // Arrange
             var tempFile = Path.GetTempFileName();
-            var formatter = new SimpleFormatter();
+            var formatter = new ConsoleFormatter();
             var sink = new FileSink(formatter, tempFile);
             var entry = new LogEntry { Message = "File test" };
 

@@ -8,7 +8,7 @@ using PicoHex.Logger.Console;
 var factory = new LoggerFactory();
 
 // Console sink with simple formatter
-var consoleFormatter = new SimpleFormatter();
+var consoleFormatter = new ConsoleFormatter();
 var consoleSink = new ConsoleSink(consoleFormatter) { MinimumLevel = LogLevel.Information };
 factory.AddProvider(new LoggerProvider(consoleSink));
 

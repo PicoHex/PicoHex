@@ -7,7 +7,7 @@ namespace PicoHex.Logger.Abstractions;
 /// Implement this interface to create custom log targets (e.g., console, file, database, or external services).
 /// The sink will only process log entries that meet or exceed the <see cref="MinimumLevel"/> threshold.
 /// </remarks>
-public interface ILogSink
+public interface ILogSink : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Gets or sets the minimum severity level required for log entries to be processed by this sink.

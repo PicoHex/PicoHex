@@ -3,5 +3,5 @@
 public interface ILogScope : IDisposable
 {
     object? State { get; }
-    IReadOnlyList<ILogScope> ActiveScopes { get; }
+    // IReadOnlyList<ILogScope> ActiveScopes { get; }
 }
