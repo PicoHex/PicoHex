@@ -13,14 +13,13 @@ public static class LogFrameworkTests
             var exception = new Exception("Test exception");
 
             // Act
-            var entry = new LogEntry
-            {
-                Timestamp = new DateTime(2023, 1, 1),
-                Level = LogLevel.Error,
-                Category = "Tests",
-                Message = "Test message",
-                Exception = exception
-            };
+            var entry = new LogEntry(
+                new DateTime(2023, 1, 1),
+                LogLevel.Error,
+                "Tests",
+                "Test message",
+                exception
+            );
 
             // Assert
             Assert.Equal(new DateTime(2023, 1, 1), entry.Timestamp);
@@ -38,13 +37,12 @@ public static class LogFrameworkTests
         {
             // Arrange
             var formatter = new ConsoleFormatter();
-            var entry = new LogEntry
-            {
-                Timestamp = new DateTime(2023, 1, 1, 12, 0, 0),
-                Level = LogLevel.Information,
-                Category = "TestCategory",
-                Message = "Test Message"
-            };
+            var entry = new LogEntry(
+                new DateTime(2023, 1, 1, 12, 0, 0),
+                LogLevel.Information,
+                "TestCategory",
+                "Test Message"
+            );
 
             // Act
             var result = formatter.Format(entry);
@@ -58,14 +56,13 @@ public static class LogFrameworkTests
         {
             // Arrange
             var formatter = new JsonFormatter();
-            var entry = new LogEntry
-            {
-                Timestamp = new DateTime(2023, 1, 1, 12, 0, 0),
-                Level = LogLevel.Error,
-                Category = "TestCategory",
-                Message = "Test Message",
-                Exception = new Exception("Test exception")
-            };
+            var entry = new LogEntry(
+                new DateTime(2023, 1, 1, 12, 0, 0),
+                LogLevel.Error,
+                "TestCategory",
+                "Test Message",
+                new Exception("Test exception")
+            );
 
             // Act
             var result = formatter.Format(entry);
@@ -85,7 +82,11 @@ public static class LogFrameworkTests
             // Arrange
             var formatter = new ConsoleFormatter();
             var sink = new ConsoleSink(formatter);
-            var entry = new LogEntry { Message = "Test" };
+            var entry = new LogEntry(
+                new DateTime(2023, 1, 1, 12, 0, 0),
+                LogLevel.Error,
+                Message: "Test"
+            );
 
             using var sw = new StringWriter();
             System.Console.SetOut(sw);
@@ -104,7 +105,11 @@ public static class LogFrameworkTests
             var tempFile = Path.GetTempFileName();
             var formatter = new ConsoleFormatter();
             var sink = new FileSink(formatter, tempFile);
-            var entry = new LogEntry { Message = "File test" };
+            var entry = new LogEntry(
+                new DateTime(2023, 1, 1, 12, 0, 0),
+                LogLevel.Error,
+                Message: "File test"
+            );
 
             try
             {

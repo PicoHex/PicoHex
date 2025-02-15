@@ -25,6 +25,6 @@ public class CompositeLogger(IEnumerable<ILogger> loggers) : ILogger
 
     public IDisposable BeginScope<TState>(TState state)
     {
-        throw new NotImplementedException();
+        return new LogScope(state);
     }
 }

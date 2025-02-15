@@ -16,14 +16,7 @@ public class LoggerProvider(ILogSink sink) : ILoggerProvider
             if (level < sink.MinimumLevel)
                 return;
 
-            var entry = new LogEntry
-            {
-                Timestamp = DateTime.Now,
-                Level = level,
-                Category = category,
-                Message = message,
-                Exception = exception
-            };
+            var entry = new LogEntry(DateTime.Now, level, category, message, exception);
 
             sink.Emit(entry);
         }
@@ -38,14 +31,7 @@ public class LoggerProvider(ILogSink sink) : ILoggerProvider
             if (level < sink.MinimumLevel)
                 return;
 
-            var entry = new LogEntry
-            {
-                Timestamp = DateTime.Now,
-                Level = level,
-                Category = category,
-                Message = message,
-                Exception = exception
-            };
+            var entry = new LogEntry(DateTime.Now, level, category, message, exception);
 
             await sink.EmitAsync(entry, cancellationToken);
         }

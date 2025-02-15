@@ -7,7 +7,14 @@ namespace PicoHex.Logger.Abstractions;
 /// This class serves as the fundamental unit of logging within the framework, capturing essential details
 /// about application events, errors, and diagnostic information.
 /// </remarks>
-public class LogEntry
+public record LogEntry(
+    DateTime Timestamp,
+    LogLevel Level,
+    string? Category = null,
+    string? Message = null,
+    Exception? Exception = null,
+    IReadOnlyList<KeyValuePair<string, object>>? Scope = null
+)
 {
     /// <summary>
     /// Gets or sets the exact date and time when the log entry was created.
@@ -15,7 +22,7 @@ public class LogEntry
     /// <value>
     /// UTC timestamp of the log event, typically initialized automatically when the entry is created.
     /// </value>
-    public DateTime Timestamp { get; set; }
+    public DateTime Timestamp { get; } = Timestamp;
 
     /// <summary>
     /// Gets or sets the severity level of the log entry.
@@ -24,7 +31,7 @@ public class LogEntry
     /// One of the <see cref="LogLevel"/> values indicating the importance/severity category
     /// of the log entry (e.g., Debug, Information, Warning, Error, Critical).
     /// </value>
-    public LogLevel Level { get; set; }
+    public LogLevel Level { get; } = Level;
 
     /// <summary>
     /// Gets or sets the category name for the log entry.
@@ -33,7 +40,7 @@ public class LogEntry
     /// Optional string typically used to indicate the source component or service type
     /// generating the log (e.g., controller name, service class name).
     /// </value>
-    public string? Category { get; set; }
+    public string? Category { get; } = Category;
 
     /// <summary>
     /// Gets or sets the primary log message describing the event.
@@ -42,7 +49,7 @@ public class LogEntry
     /// Human-readable message describing the logged event. This is the main content
     /// of the log entry and is typically required for meaningful logging.
     /// </value>
-    public string? Message { get; set; }
+    public string? Message { get; } = Message;
 
     /// <summary>
     /// Gets or sets the exception associated with the log entry.
@@ -52,6 +59,7 @@ public class LogEntry
     /// error conditions or critical failures. Includes full exception stack trace
     /// when available.
     /// </value>
-    public Exception? Exception { get; set; }
-    public IReadOnlyList<object?> Scopes { get; set; } = [];
+    public Exception? Exception { get; } = Exception;
+
+    public IReadOnlyList<KeyValuePair<string, object>>? Scope { get; } = Scope;
 }

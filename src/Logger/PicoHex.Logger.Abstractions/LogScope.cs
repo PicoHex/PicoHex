@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Logger;
+namespace PicoHex.Logger.Abstractions;
 
 public class LogScope : IDisposable
 {
@@ -14,7 +14,7 @@ public class LogScope : IDisposable
     {
         get
         {
-            if (Scopes.Value is null || Scopes.Value.Count is 0)
+            if (Scopes.Value == null || Scopes.Value.Count == 0)
                 return null;
 
             return Scopes
