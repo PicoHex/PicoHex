@@ -3,24 +3,22 @@
 
 // 注册示例（使用Microsoft DI）
 
-using PicoHex.DependencyInjection;
-using PicoHex.DependencyInjection.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using PicoHex.Log.NG;
 
-var svcRegistry = ContainerBootstrap.CreateRegistry();
+var svcRegistry = new ServiceCollection();
 svcRegistry.AddSingleton<ILogFormatter, ConsoleLogFormatter>();
 svcRegistry.AddSingleton<ILogSink, ConsoleLogSink>();
-svcRegistry.AddSingleton<ILoggerFactory>(sp => new LoggerFactory(
-    sp.Resolve<ILogSink>(),
-    LogLevel.Debug
-));
+svcRegistry.AddSingleton<ILoggerFactory>(
+    sp => new LoggerFactory(sp.GetRequiredService<ILogSink>(), LogLevel.Debug)
+);
 svcRegistry.AddTransient(typeof(ILogger<>), typeof(Logger<>));
 
 Console.WriteLine("Hello World!");
 
 // 使用示例
-var provider = svcRegistry.CreateProvider();
-var logger = provider.Resolve<ILogger<Program>>();
+var provider = svcRegistry.BuildServiceProvider();
+var logger = provider.GetRequiredService<ILogger<Program>>();
 
 using (logger.BeginScope("Transaction-123"))
 {

@@ -29,3 +29,17 @@ logger.Error("Database connection failed", new Exception("Connection timeout"));
 await logger.InfoAsync("Starting application");
 await logger.WarningAsync("Low memory warning");
 await logger.ErrorAsync("Database connection failed", new Exception("Connection timeout"));
+
+// Usage examples
+using (logger.BeginScope("Transaction-123"))
+{
+    logger.Log(LogLevel.Information, "Processing started");
+    try
+    {
+        throw new DivideByZeroException();
+    }
+    catch (Exception ex)
+    {
+        logger.Log(LogLevel.Error, "Processing failed", ex);
+    }
+}

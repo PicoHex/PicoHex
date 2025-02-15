@@ -16,4 +16,14 @@ public class FileSink(ILogFormatter formatter, string filePath) : ILogSink
             formatter.Format(entry) + Environment.NewLine,
             cancellationToken
         );
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        return ValueTask.CompletedTask;
+    }
 }

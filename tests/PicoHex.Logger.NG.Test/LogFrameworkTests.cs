@@ -159,6 +159,16 @@ public static class LogFrameworkTests
                 Entries.Add(entry);
                 return ValueTask.CompletedTask;
             }
+
+            public void Dispose()
+            {
+                // TODO release managed resources here
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                return ValueTask.CompletedTask;
+            }
         }
     }
 
