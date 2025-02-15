@@ -38,7 +38,7 @@ public class LoggerProvider(ILogSink sink) : ILoggerProvider
 
         public IDisposable BeginScope<TState>(TState state)
         {
-            throw new NotImplementedException();
+            return new LogScope(state);
         }
     }
 }
