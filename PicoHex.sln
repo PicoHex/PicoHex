@@ -47,7 +47,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DependencyInjection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DependencyInjection.NG.Test", "tests\PicoHex.DependencyInjection.NG.Test\PicoHex.DependencyInjection.NG.Test.csproj", "{CF081794-F9D1-40AF-86CD-84923D52A173}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.NG.Demo", "demo\PicoHex.Logger.NG.Demo\PicoHex.Logger.NG.Demo.csproj", "{50802F6A-25F6-42B3-B758-81D2F5611271}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.Demo", "demo\PicoHex.Logger.Demo\PicoHex.Logger.Demo.csproj", "{50802F6A-25F6-42B3-B758-81D2F5611271}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.Abstractions", "src\Logger\PicoHex.Logger.Abstractions\PicoHex.Logger.Abstractions.csproj", "{88844FF8-CDEC-49E7-BA94-4F4FBE531FA9}"
 EndProject
@@ -59,7 +59,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.Json", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log.NG", "src\Logger\PicoHex.Log.NG\PicoHex.Log.NG.csproj", "{1B2AB72D-FEB3-4DDB-96BA-CE4CDDD1C5E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.Test", "demo\PicoHex.Logger.Test\PicoHex.Logger.Test.csproj", "{DCE93BDC-2A15-4195-A9FD-835CA6664BAC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.NG.Demo", "demo\PicoHex.Logger.NG.Demo\PicoHex.Logger.NG.Demo.csproj", "{DCE93BDC-2A15-4195-A9FD-835CA6664BAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,36 +1,25 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-// Configure logger factory
 
-using PicoHex.Logger;
-using PicoHex.Logger.Console;
+// 注册示例（使用Microsoft DI）
 
-var factory = new LoggerFactory();
+using Microsoft.Extensions.DependencyInjection;
+using PicoHex.Log.NG;
 
-// Console sink with simple formatter
-var consoleFormatter = new ConsoleFormatter();
-var consoleSink = new ConsoleSink(consoleFormatter) { MinimumLevel = LogLevel.Information };
-factory.AddProvider(new LoggerProvider(consoleSink));
+var svcRegistry = new ServiceCollection();
+svcRegistry.AddSingleton<ILogFormatter, ConsoleLogFormatter>();
+svcRegistry.AddSingleton<ILogSink, ConsoleLogSink>();
+svcRegistry.AddSingleton<ILoggerFactory>(
+    sp => new LoggerFactory(sp.GetRequiredService<ILogSink>(), LogLevel.Debug)
+);
+svcRegistry.AddTransient(typeof(ILogger<>), typeof(Logger<>));
 
-// File sink with JSON formatter
-var jsonFormatter = new JsonFormatter();
-var fileSink = new FileSink(jsonFormatter, "log.json") { MinimumLevel = LogLevel.Warning };
-factory.AddProvider(new LoggerProvider(fileSink));
+Console.WriteLine("Hello World!");
 
-// Create logger
-var logger = factory.CreateLogger<Program>();
+// 使用示例
+var provider = svcRegistry.BuildServiceProvider();
+var logger = provider.GetRequiredService<ILogger<Program>>();
 
-// Usage examples
-logger.Info("Starting application");
-logger.Warning("Low memory warning");
-logger.Error("Database connection failed", new Exception("Connection timeout"));
-
-// Usage examples
-await logger.InfoAsync("Starting application");
-await logger.WarningAsync("Low memory warning");
-await logger.ErrorAsync("Database connection failed", new Exception("Connection timeout"));
-
-// Usage examples
 using (logger.BeginScope("Transaction-123"))
 {
     logger.Log(LogLevel.Information, "Processing started");
@@ -43,3 +32,5 @@ using (logger.BeginScope("Transaction-123"))
         logger.Log(LogLevel.Error, "Processing failed", ex);
     }
 }
+
+Console.ReadLine();
