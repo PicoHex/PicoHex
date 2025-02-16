@@ -13,7 +13,7 @@ public record LogEntry(
     string? Category = null,
     string? Message = null,
     Exception? Exception = null,
-    IReadOnlyList<KeyValuePair<string, object>>? Scope = null
+    IReadOnlyList<KeyValuePair<string, object>>? Scopes = null
 )
 {
     /// <summary>
@@ -61,5 +61,5 @@ public record LogEntry(
     /// </value>
     public Exception? Exception { get; } = Exception;
 
-    public IReadOnlyList<KeyValuePair<string, object>>? Scope { get; } = Scope;
+    public IReadOnlyList<KeyValuePair<string, object>>? Scopes { get; } = Scopes;
 }

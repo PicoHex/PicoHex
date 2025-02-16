@@ -177,15 +177,15 @@ public static class LogFrameworkTests
         }
     }
 
-    public class CompositeLoggerTests
+    public class InternalLoggerTests
     {
         [Fact]
         public void Log_ForwardsToAllLoggers()
         {
             // Arrange
-            var logger1 = new TestLogger();
-            var logger2 = new TestLogger();
-            var composite = new CompositeLogger([logger1, logger2]);
+            var logger1 = new TestGenericTypeLogger();
+            var logger2 = new TestGenericTypeLogger();
+            var composite = new InternalLogger([logger1, logger2]);
 
             // Act
             composite.Log(LogLevel.Debug, "Test");
@@ -195,7 +195,7 @@ public static class LogFrameworkTests
             Assert.True(logger2.LogCalled);
         }
 
-        private class TestLogger : ILogger
+        private class TestGenericTypeLogger : ILogger
         {
             public bool LogCalled { get; private set; }
 
@@ -248,12 +248,12 @@ public static class LogFrameworkTests
 
             public ILogger CreateLogger(string category)
             {
-                return new TestLogger(() => LogCount++);
+                return new TestGenericTypeLogger(() => LogCount++);
             }
 
             public void Dispose() { }
 
-            private class TestLogger(Action logAction) : ILogger
+            private class TestGenericTypeLogger(Action logAction) : ILogger
             {
                 public void Log(LogLevel level, string message, Exception? exception = null)
                 {
@@ -279,17 +279,17 @@ public static class LogFrameworkTests
         }
     }
 
-    public class LoggerTests
+    public class GenericTypeLoggerTests
     {
         [Fact]
         public void GenericLogger_UsesTypeNameAsCategory()
         {
             // Arrange
             var factory = new TestLoggerFactory();
-            var logger = factory.CreateLogger<LoggerTests>();
+            var logger = factory.CreateLogger<GenericTypeLoggerTests>();
 
             // Assert
-            Assert.Equal(typeof(LoggerTests).FullName, factory.LastCategory);
+            Assert.Equal(typeof(GenericTypeLoggerTests).FullName, factory.LastCategory);
         }
 
         private class TestLoggerFactory : ILoggerFactory
@@ -304,7 +304,7 @@ public static class LogFrameworkTests
 
             public ILogger<T> CreateLogger<T>()
             {
-                return new Logger<T>(this);
+                return new GenericTypeLogger<T>(this);
             }
 
             public void AddProvider(ILoggerProvider provider) { }

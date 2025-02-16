@@ -33,13 +33,16 @@ await logger.ErrorAsync("Database connection failed", new Exception("Connection 
 // Usage examples
 using (logger.BeginScope("Transaction-123"))
 {
-    logger.Log(LogLevel.Information, "Processing started");
-    try
+    using (logger.BeginScope("transaction-456"))
     {
-        throw new DivideByZeroException();
-    }
-    catch (Exception ex)
-    {
-        logger.Log(LogLevel.Error, "Processing failed", ex);
+        logger.Log(LogLevel.Information, "Processing started");
+        try
+        {
+            throw new DivideByZeroException();
+        }
+        catch (Exception ex)
+        {
+            logger.Log(LogLevel.Error, "Processing failed", ex);
+        }
     }
 }

@@ -10,7 +10,7 @@ public class ConsoleLogFormatter : ILogFormatter
         sb.Append($"[{entry.Category}] ");
         sb.Append(entry.Message);
 
-        if (entry.Exception != null)
+        if (entry.Exception is not null)
         {
             sb.AppendLine();
             sb.Append($"EXCEPTION: {entry.Exception}");

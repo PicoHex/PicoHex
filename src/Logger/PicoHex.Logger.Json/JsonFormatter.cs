@@ -19,7 +19,7 @@ public class JsonFormatter(bool indent = false) : ILogFormatter
             Category = entry,
             Message = entry.Message,
             Exception = entry.Exception,
-            Scope = entry.Scope?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            Scope = entry.Scopes?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
         };
 
         return JsonSerializer.Serialize(logObject, _options);

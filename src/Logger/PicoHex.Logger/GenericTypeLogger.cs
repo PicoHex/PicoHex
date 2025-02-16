@@ -1,8 +1,9 @@
 namespace PicoHex.Logger;
 
-public class Logger<T>(ILoggerFactory factory) : ILogger<T>
+public class GenericTypeLogger<T>(ILoggerFactory factory) : ILogger<T>
 {
     private readonly ILogger _logger = factory.CreateLogger(typeof(T).FullName!);
+    private readonly AsyncLocal<Stack<object>> _scopes = new();
 
     public void Log(LogLevel level, string message, Exception? exception = null)
     {
@@ -19,5 +20,15 @@ public class Logger<T>(ILoggerFactory factory) : ILogger<T>
         await _logger.LogAsync(level, message, exception, cancellationToken);
     }
 
-    public IDisposable BeginScope<TState>(TState state) => _logger.BeginScope(state);
+    public IDisposable BeginScope<TState>(TState state)
+    {
+        var stack = _scopes.Value ??= new Stack<object>();
+        stack.Push(state!);
+
+        return new LogScope(() =>
+        {
+            if (stack.Count > 0)
+                stack.Pop();
+        });
+    }
 }

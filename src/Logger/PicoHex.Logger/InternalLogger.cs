@@ -1,6 +1,6 @@
 namespace PicoHex.Logger;
 
-public class CompositeLogger(IEnumerable<ILogger> loggers) : ILogger
+public class InternalLogger(IEnumerable<ILogger> loggers) : ILogger
 {
     public void Log(LogLevel level, string message, Exception? exception = null)
     {

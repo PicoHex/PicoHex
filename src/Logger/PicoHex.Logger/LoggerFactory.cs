@@ -7,10 +7,10 @@ public class LoggerFactory : ILoggerFactory
     public ILogger CreateLogger(string category)
     {
         var loggers = _providers.Select(p => p.CreateLogger(category)).ToList();
-        return new CompositeLogger(loggers);
+        return new InternalLogger(loggers);
     }
 
-    public ILogger<T> CreateLogger<T>() => new Logger<T>(this);
+    public ILogger<T> CreateLogger<T>() => new GenericTypeLogger<T>(this);
 
     public void AddProvider(ILoggerProvider provider)
     {

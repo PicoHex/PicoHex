@@ -16,13 +16,12 @@ public class ConsoleFormatter : ILogFormatter
             sb.Append($"EXCEPTION: {entry.Exception}");
         }
 
-        var scope = entry.Scope is not null
-            ? $" [Scopes: {string.Join(", ", entry.Scope.Select(s => $"{s.Key}={s.Value}"))}]"
-            : "";
+        if (entry.Scopes is null || !entry.Scopes.Any())
+            return sb.ToString();
 
         sb.AppendLine();
         sb.Append("SCOPES: [");
-        sb.Append(string.Join(" => ", scope));
+        sb.Append(string.Join(" => ", entry.Scopes.Select(s => $"{s.Key}={s.Value}")));
         sb.Append(']');
 
         return sb.ToString();
