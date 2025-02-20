@@ -1,75 +1,75 @@
-namespace PicoHex.Abstractions.DependencyInjection;
+namespace PicoHex.Core.DependencyInjection;
 
 public static partial class SvcRegistryExtensions
 {
     #region Add by type
 
-    public static ISvcRegistry AddPerThread(this ISvcRegistry registry, Type serviceType) =>
+    public static ISvcRegistry AddTransient(this ISvcRegistry registry, Type serviceType) =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(serviceType, serviceType, SvcLifetime.PerThread)
+            new SvcDescriptor(serviceType, serviceType, SvcLifetime.Transient)
         );
 
-    public static ISvcRegistry AddPerThread(
+    public static ISvcRegistry AddTransient(
         this ISvcRegistry registry,
         Type serviceType,
         Type implementationType
     ) =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(serviceType, implementationType, SvcLifetime.PerThread)
+            new SvcDescriptor(serviceType, implementationType, SvcLifetime.Transient)
         );
 
-    public static ISvcRegistry AddPerThread<TService>(
+    public static ISvcRegistry AddTransient<TService>(
         this ISvcRegistry registry,
         Type implementationType
     )
         where TService : class =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(typeof(TService), implementationType, SvcLifetime.PerThread)
+            new SvcDescriptor(typeof(TService), implementationType, SvcLifetime.Transient)
         );
 
-    public static ISvcRegistry AddPerThread<TService>(this ISvcRegistry registry)
+    public static ISvcRegistry AddTransient<TService>(this ISvcRegistry registry)
         where TService : class =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(typeof(TService), typeof(TService), SvcLifetime.PerThread)
+            new SvcDescriptor(typeof(TService), typeof(TService), SvcLifetime.Transient)
         );
 
-    public static ISvcRegistry AddPerThread<TService, TImplementation>(this ISvcRegistry registry)
+    public static ISvcRegistry AddTransient<TService, TImplementation>(this ISvcRegistry registry)
         where TService : class
         where TImplementation : class, TService =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(typeof(TService), typeof(TImplementation), SvcLifetime.PerThread)
+            new SvcDescriptor(typeof(TService), typeof(TImplementation), SvcLifetime.Transient)
         );
 
     #endregion
 
     #region Add by factory
 
-    public static ISvcRegistry AddPerThread(
+    public static ISvcRegistry AddTransient(
         this ISvcRegistry registry,
         Type serviceType,
         Func<ISvcProvider, object> factory
     ) =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(serviceType, factory, SvcLifetime.PerThread)
+            new SvcDescriptor(serviceType, factory, SvcLifetime.Transient)
         );
 
-    public static ISvcRegistry AddPerThread<TService>(
+    public static ISvcRegistry AddTransient<TService>(
         this ISvcRegistry registry,
         Func<ISvcProvider, TService> factory
     )
         where TService : class =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(typeof(TService), factory, SvcLifetime.PerThread)
+            new SvcDescriptor(typeof(TService), factory, SvcLifetime.Transient)
         );
 
-    public static ISvcRegistry AddPerThread<TService, TImplementation>(
+    public static ISvcRegistry AddTransient<TService, TImplementation>(
         this ISvcRegistry registry,
         Func<ISvcProvider, TImplementation> factory
     )
         where TService : class
         where TImplementation : class, TService =>
         registry.AddServiceDescriptor(
-            new SvcDescriptor(typeof(TService), factory, SvcLifetime.PerThread)
+            new SvcDescriptor(typeof(TService), factory, SvcLifetime.Transient)
         );
 
     #endregion

@@ -61,7 +61,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log.NG", "src\Logge
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Logger.NG.Demo", "demo\PicoHex.Logger.NG.Demo\PicoHex.Logger.NG.Demo.csproj", "{DCE93BDC-2A15-4195-A9FD-835CA6664BAC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Abstractions", "src\PicoHex.Abstractions\PicoHex.Abstractions.csproj", "{880B0DC7-A859-424D-A21B-2C1DC7F61A7C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Core", "src\PicoHex.Core\PicoHex.Core.csproj", "{880B0DC7-A859-424D-A21B-2C1DC7F61A7C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
