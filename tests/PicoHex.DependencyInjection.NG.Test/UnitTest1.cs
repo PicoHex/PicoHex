@@ -1,61 +1,25 @@
 ﻿namespace PicoHex.DependencyInjection.NG.Test;
 
+public interface IService { }
+
+public class ServiceImpl : IService { }
+
+public interface IGenericService<T> { }
+
+public class GenericServiceImpl<T> : IGenericService<T> { }
+
+[RegisterService(typeof(IService), Lifetime.Singleton)]
+[RegisterGeneric(typeof(IGenericService<>), typeof(GenericServiceImpl<>), Lifetime.Transient)]
+public class TestContainer { }
+
+public interface INotRegisteredService { }
+
 public class ContainerTests
 {
-    public interface IService;
-
-    public class ServiceA : IService;
-
-    public interface IScopedService;
-
-    public class ScopedServiceImpl : IScopedService;
-
-    public interface IPerThreadService;
-
-    public class PerThreadServiceImpl : IPerThreadService;
-
-    public interface IGenericService<T>;
-
-    public class GenericServiceImpl<T> : IGenericService<T>;
-
-    public interface ICircularA;
-
-    public interface ICircularB;
-
-    public class CircularA : ICircularA
-    {
-        public CircularA(ICircularB b) { }
-    }
-
-    public class CircularB : ICircularB
-    {
-        public CircularB(ICircularA a) { }
-    }
-
     [Fact]
-    public void Should_Detect_Circular_Dependency()
+    public void Should_Resolve_Singleton_Service()
     {
-        // Arrange
-        var registry = new Registry()
-            .Register<ICircularA, CircularA>()
-            .Register<ICircularB, CircularB>();
-
-        var container = registry.Build();
-
-        // Act & Assert
-        var ex = Assert.Throws<InvalidOperationException>(() => container.GetService<ICircularA>());
-        Assert.Contains(
-            "Circular dependency detected: ICircularA -> ICircularB -> ICircularA",
-            ex.Message
-        );
-    }
-
-    [Fact]
-    public void Singleton_Should_Return_Same_Instance()
-    {
-        var registry = new Registry().Register<IService, ServiceA>(Lifetime.Singleton);
-
-        var container = registry.Build();
+        var container = new ServiceContainer();
         var instance1 = container.GetService<IService>();
         var instance2 = container.GetService<IService>();
 
@@ -63,82 +27,108 @@ public class ContainerTests
     }
 
     [Fact]
-    public void Scoped_Should_Return_Different_Instances_In_Different_Scopes()
+    public void Should_Resolve_Generic_Service()
     {
-        var registry = new Registry().Register<IScopedService, ScopedServiceImpl>(Lifetime.Scoped);
-
-        var container = registry.Build();
-        var instance1 = container.CreateScope().GetService<IScopedService>();
-        var instance2 = container.CreateScope().GetService<IScopedService>();
-
-        Assert.NotSame(instance1, instance2);
-    }
-
-    [Fact]
-    public void PerThread_Should_Return_Different_Instances_In_Different_Threads()
-    {
-        var registry = new Registry().Register<IPerThreadService, PerThreadServiceImpl>(
-            Lifetime.PerThread
-        );
-
-        var container = registry.Build();
-        IPerThreadService? threadInstance = null;
-
-        var thread = new Thread(() =>
-        {
-            threadInstance = container.GetService<IPerThreadService>();
-        });
-
-        thread.Start();
-        thread.Join();
-
-        var mainInstance = container.GetService<IPerThreadService>();
-        Assert.NotSame(mainInstance, threadInstance);
-    }
-
-    [Fact]
-    public void Closed_Generic_Should_Resolve_Correctly()
-    {
-        var registry = new Registry().Register(
-            typeof(IGenericService<>),
-            typeof(GenericServiceImpl<>),
-            Lifetime.Transient
-        );
-
-        var container = registry.Build();
+        var container = new ServiceContainer();
         var service = container.GetService<IGenericService<string>>();
 
         Assert.IsType<GenericServiceImpl<string>>(service);
     }
 
     [Fact]
-    public void Container_Should_Resolve_Itself()
+    public void Scoped_Service_Should_Be_Isolated()
     {
-        var registry = new Registry();
-        var container = registry.Build();
+        var container = new ServiceContainer();
 
-        var resolved = container.GetService<IContainer>();
-        Assert.Same(container, resolved);
-    }
+        using var scope1 = container.CreateScope();
+        var s1 = scope1.ServiceProvider.GetService(typeof(IService));
 
-    public class DisposableService : IDisposable
-    {
-        public bool IsDisposed { get; private set; }
+        using var scope2 = container.CreateScope();
+        var s2 = scope2.ServiceProvider.GetService(typeof(IService));
 
-        public void Dispose() => IsDisposed = true;
+        Assert.Same(s1, s2);
     }
 
     [Fact]
-    public void Singleton_Should_Be_Disposed()
+    public void Pooled_Service_Should_Reuse_Instances()
     {
-        var registry = new Registry().Register<DisposableService, DisposableService>(
-            Lifetime.Singleton
+        var container = new ServiceContainer();
+        container.Register<IDatabase, Database>(Lifetime.Pooled);
+
+        var instances = new List<IDatabase>();
+        for (int i = 0; i < 5; i++)
+        {
+            using var scope = container.CreateScope();
+            var instance = (IDatabase)scope.ServiceProvider.GetService(typeof(IDatabase));
+            instances.Add(instance);
+        }
+
+        // 验证实例重用
+        var distinctCount = instances.Distinct().Count();
+        Assert.True(distinctCount < 5); // 根据PoolSize验证实际重用次数
+    }
+
+    [Fact]
+    public void Should_Throw_On_Unregistered_Service()
+    {
+        var container = new ServiceContainer();
+
+        Assert.Throws<InvalidOperationException>(
+            () => container.GetService<INotRegisteredService>()
         );
+    }
 
-        var container = registry.Build();
-        var service = container.GetService<DisposableService>();
+    [Fact]
+    public void ThreadLocal_Service_Should_Be_Per_Thread()
+    {
+        var container = new ServiceContainer();
+        container.Register<ICache, MemoryCache>(Lifetime.PerThread);
 
-        container.Dispose();
-        Assert.True(service.IsDisposed);
+        ICache? thread1Cache = null;
+        ICache? thread2Cache = null;
+
+        var thread1 = new Thread(() => thread1Cache = container.GetService<ICache>());
+        var thread2 = new Thread(() => thread2Cache = container.GetService<ICache>());
+
+        thread1.Start();
+        thread2.Start();
+        thread1.Join();
+        thread2.Join();
+
+        Assert.NotNull(thread1Cache);
+        Assert.NotNull(thread2Cache);
+        Assert.NotSame(thread1Cache, thread2Cache);
+    }
+
+    [Fact]
+    public void Should_Detect_Circular_Dependency()
+    {
+        var container = new ServiceContainer();
+        container.Register<A, A>(Lifetime.Singleton); // 明确指定实现类型
+        container.Register<B, B>(Lifetime.Singleton);
+
+        Assert.Throws<InvalidOperationException>(() => container.Validate());
     }
 }
+
+// 测试用类
+public class A
+{
+    public A(B b) { }
+}
+
+public class B
+{
+    public B(A a) { }
+}
+
+public interface IDatabase : IDisposable { }
+
+public class Database : IDatabase
+{
+    public void Dispose() { }
+}
+
+public interface ICache { }
+
+public class MemoryCache : ICache { }

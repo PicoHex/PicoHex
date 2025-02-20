@@ -21,9 +21,8 @@ public class LogScope : IDisposable
                 .Value
                 .SelectMany(
                     s =>
-                        s is IEnumerable<KeyValuePair<string, object>> coll
-                            ? coll
-                            : [new KeyValuePair<string, object>("Scope", s)]
+                        s as IEnumerable<KeyValuePair<string, object>>
+                        ?? [new KeyValuePair<string, object>("Scope", s)]
                 )
                 .ToList();
         }

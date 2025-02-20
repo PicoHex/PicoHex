@@ -26,9 +26,9 @@ logger.Warning("Low memory warning");
 logger.Error("Database connection failed", new Exception("Connection timeout"));
 
 // Usage examples
-await logger.InfoAsync("Starting application");
-await logger.WarningAsync("Low memory warning");
-await logger.ErrorAsync("Database connection failed", new Exception("Connection timeout"));
+await logger.InfoAsync("Starting application async");
+await logger.WarningAsync("Low memory warning async");
+await logger.ErrorAsync("Database connection failed async", new Exception("Connection timeout"));
 
 // Usage examples
 using (logger.BeginScope("Transaction-123"))
