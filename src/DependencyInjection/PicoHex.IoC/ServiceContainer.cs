@@ -3,7 +3,7 @@
 /// <summary>
 /// AOT-compatible service container
 /// </summary>
-public partial class ServiceContainer : IServiceProvider, IDisposable
+public class ServiceContainer : IServiceProvider, IDisposable
 {
     private readonly Dictionary<Type, ServiceDescriptor> _descriptors = new();
     private readonly Dictionary<Type, object> _singletons = new();
@@ -20,12 +20,14 @@ public partial class ServiceContainer : IServiceProvider, IDisposable
             _descriptors[descriptor.ServiceType] = descriptor;
         }
 
-        // The source generator will inject code to populate the _factories dictionary
-        RegisterGeneratedFactories();
+        // Find and use the generated factory provider
+        var factoryProviderType = Type.GetType("PicoHex.IoC.GeneratedFactoryProvider, PicoHex.IoC");
+        if (factoryProviderType != null)
+        {
+            var provider = Activator.CreateInstance(factoryProviderType) as IFactoryProvider;
+            provider?.RegisterFactories(this, _factories);
+        }
     }
-
-    // This is now a regular private method that will be implemented by the source generator
-    private void RegisterGeneratedFactories() { }
 
     /// <summary>
     /// Gets a service of the specified type
