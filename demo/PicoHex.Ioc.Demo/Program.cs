@@ -1,45 +1,26 @@
-﻿// Example usage
+﻿var builder = new ContainerBuilder();
+GeneratedIoC.ContainerRegistration.Register(builder);
+var container = builder.Build();
 
-using PicoHex.IoC;
+var service = container.Resolve<IDataService>();
+service.ProcessData();
 
-var services = new ServiceCollection();
-services.AddSingleton<ILogger, ConsoleLogger>();
-services.AddTransient<UserService, UserService>();
-
-// Build container
-using var container = new ServiceContainer(services);
-
-// Resolve service and use it
-var userService = container.GetService<UserService>();
-userService.DoWork();
-
-public interface ILogger
+public interface IDataService
 {
-    void Log(string message);
+    void ProcessData();
 }
 
-public class ConsoleLogger : ILogger
-{
-    public void Log(string message)
-    {
-        Console.WriteLine(message);
-    }
-}
-
-public class UserService
+public class DataService : IDataService
 {
     private readonly ILogger _logger;
 
-    // Constructor injection
-    public UserService(ILogger logger)
+    public DataService(ILogger logger)
     {
         _logger = logger;
     }
 
-    public void DoWork()
+    public void ProcessData()
     {
-        _logger.Log("Work done by UserService");
+        _logger.Log("Processing data...");
     }
 }
-
-// Configuration
