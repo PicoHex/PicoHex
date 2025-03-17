@@ -1,26 +1,102 @@
-﻿var builder = new ContainerBuilder();
-GeneratedIoC.ContainerRegistration.Register(builder);
-var container = builder.Build();
+﻿using PicoHex.IoC;
 
-var service = container.Resolve<IDataService>();
-service.ProcessData();
-
-public interface IDataService
+// 测试用例类
+public static class IocTests
 {
-    void ProcessData();
-}
-
-public class DataService : IDataService
-{
-    private readonly ILogger _logger;
-
-    public DataService(ILogger logger)
+    // 基础注入测试
+    public static void TestBasicInjection()
     {
-        _logger = logger;
+        var container = new SvcContainer();
+        container.Register<IA, A>();
+        container.Register<IB, B>();
+
+        // A的构造函数需要IB参数
+        var a = (IA)container.GetService(typeof(A));
+        Console.WriteLine("Basic Injection Test Passed");
     }
 
-    public void ProcessData()
+    // 循环依赖检测测试
+    public static void TestCircularDependency()
     {
-        _logger.Log("Processing data...");
+        var container = new SvcContainer();
+        container.Register<ICircularA, CircularA>();
+        container.Register<ICircularB, CircularB>();
+
+        try
+        {
+            container.GetService(typeof(ICircularA));
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine(
+                ex.Message.Contains("Circular dependency detected")
+                    ? "Circular Dependency Detection Test Passed"
+                    : "Circular Test Failed: Wrong exception message"
+            );
+            return;
+        }
+
+        Console.WriteLine("Circular Test Failed: Expected exception not thrown");
+    }
+
+    // AOT兼容性测试
+    public static void TestAotCompatibility()
+    {
+        // AOT环境下需要确保容器能正确执行
+        var container = new SvcContainer();
+        container.Register<IA, A>();
+        container.Register<IB, B>();
+
+        try
+        {
+            var service = container.GetService(typeof(IA));
+            Console.WriteLine("AOT Compatibility Test Passed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"AOT Test Failed: {ex.Message}");
+        }
+    }
+}
+
+// 测试依赖类
+public interface IA { }
+
+public interface IB { }
+
+public interface ICircularA { }
+
+public interface ICircularB { }
+
+public class A : IA
+{
+    public A(IB b) { }
+}
+
+public class B : IB
+{
+    public B() { }
+}
+
+public class CircularA : ICircularA
+{
+    public CircularA(ICircularB b) { }
+}
+
+public class CircularB : ICircularB
+{
+    public CircularB(ICircularA a) { }
+}
+
+// 程序入口
+public class Program
+{
+    public static void Main()
+    {
+        Console.WriteLine("Running Tests:");
+
+        IocTests.TestBasicInjection();
+        IocTests.TestCircularDependency();
+        IocTests.TestAotCompatibility();
     }
 }

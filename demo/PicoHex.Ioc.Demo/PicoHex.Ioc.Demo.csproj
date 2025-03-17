@@ -5,10 +5,14 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <PublishAOT>true</PublishAOT>
+        <TrimMode>partial</TrimMode>
+        <PublishAot>true</PublishAot>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.IoC\PicoHex.IoC.csproj" />
+      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.IoC\PicoHex.IoC.csproj"  />
     </ItemGroup>
 
 </Project>
