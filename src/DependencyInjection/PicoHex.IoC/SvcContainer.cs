@@ -2,35 +2,49 @@ namespace PicoHex.IoC;
 
 public class SvcContainer : ISvcProvider
 {
-    private readonly IDictionary<Type, Func<ISvcProvider, object>> _factories =
-        new Dictionary<Type, Func<ISvcProvider, object>>();
+    private readonly Dictionary<Type, Func<ISvcProvider, object>> _factories = new();
     private readonly Stack<Type> _resolving = new();
 
-    public void Register<TImplementation>() => Register<TImplementation, TImplementation>();
+    public void Register<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            TImplementation
+    >() => Register<TImplementation, TImplementation>();
 
-    public void Register<TInterface, TImplementation>()
+    public void Register<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TInterface,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            TImplementation
+    >()
         where TImplementation : TInterface
     {
         RegisterImplementation<TImplementation>();
         RegisterMapping<TInterface, TImplementation>();
     }
 
-    private void RegisterImplementation<T>() => RegisterMapping<T, T>();
+    private void RegisterImplementation<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T
+    >() => RegisterMapping<T, T>();
 
-    private void RegisterMapping<TInterface, TImplementation>()
+    private void RegisterMapping<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TInterface,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            TImplementation
+    >()
     {
-        var interfaceType = typeof(TInterface);
-        var implementationType = typeof(TImplementation);
-        RegisterMapping(interfaceType, implementationType);
+        RegisterMapping(typeof(TInterface), typeof(TImplementation));
     }
 
-    private void RegisterMapping(Type interfaceType, Type implementationType)
+    private void RegisterMapping(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type interfaceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type implementationType
+    )
     {
         if (_factories.ContainsKey(interfaceType))
             return;
 
-        var factory = CreateFactory(implementationType);
-        _factories[interfaceType] = factory;
+        _factories[interfaceType] = CreateFactory(implementationType);
     }
 
     public object GetService(Type serviceType)
@@ -66,25 +80,7 @@ public class SvcContainer : ISvcProvider
         var selectedConstructor = constructors
             .OrderByDescending(c => c.GetParameters().Length)
             .First();
-        var parameters = selectedConstructor.GetParameters();
 
-        var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
-        var args = parameters
-            .Select(p =>
-            {
-                var getServiceCall = Expression.Call(
-                    providerParam,
-                    typeof(ISvcProvider).GetMethod(nameof(GetService), [typeof(Type)])!,
-                    Expression.Constant(p.ParameterType)
-                );
-                return Expression.Convert(getServiceCall, p.ParameterType); // 关键转换
-            })
-            .ToArray<Expression>();
-
-        var newExpr = Expression.New(selectedConstructor, args);
-        var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
-        var factory = lambda.Compile();
-
-        return factory;
+        return AotFactoryGenerator.CreateFactory(selectedConstructor); // 关键修改点
     }
 }
