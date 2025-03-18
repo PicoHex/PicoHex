@@ -35,7 +35,7 @@ public class SvcContainer : ISvcProvider
         _factories[interfaceType] = (factory, constructor);
     }
 
-    public object Resolve(Type serviceType)
+    public object GetService(Type serviceType)
     {
         if (!_factories.TryGetValue(serviceType, out var entry))
             throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
@@ -61,7 +61,7 @@ public class SvcContainer : ISvcProvider
     }
 
     private (Func<ISvcProvider, object> factory, ConstructorInfo constructor) CreateFactory(
-        Type type
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
     )
     {
         var constructors = type.GetConstructors();
@@ -76,7 +76,7 @@ public class SvcContainer : ISvcProvider
             {
                 var getServiceCall = Expression.Call(
                     providerParam,
-                    typeof(ISvcProvider).GetMethod("GetService", [typeof(Type)])!,
+                    typeof(ISvcProvider).GetMethod(nameof(GetService), [typeof(Type)])!,
                     Expression.Constant(p.ParameterType)
                 );
                 return Expression.Convert(getServiceCall, p.ParameterType); // 关键转换

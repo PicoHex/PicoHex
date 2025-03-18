@@ -9,7 +9,7 @@ public static class IocTests
         var container = new SvcContainer();
         container.Register<ISvcProvider, SvcContainer>();
 
-        var subContainer = (ISvcProvider)container.Resolve(typeof(ISvcProvider));
+        var subContainer = (ISvcProvider)container.GetService(typeof(ISvcProvider));
         Console.WriteLine("Bootstrapping Test Passed");
     }
 
@@ -22,7 +22,7 @@ public static class IocTests
         container.Register<IC, C>();
 
         // A的构造函数需要IB参数
-        var a = (A)container.Resolve(typeof(A));
+        var a = (A)container.GetService(typeof(A));
         Console.WriteLine("Basic Injection Test Passed");
     }
 
@@ -35,7 +35,7 @@ public static class IocTests
 
         try
         {
-            container.Resolve(typeof(ICircularA));
+            container.GetService(typeof(ICircularA));
         }
         catch (InvalidOperationException ex)
         {
@@ -61,7 +61,7 @@ public static class IocTests
 
         try
         {
-            var service = container.Resolve(typeof(A));
+            var service = container.GetService(typeof(A));
             Console.WriteLine("AOT Compatibility Test Passed");
         }
         catch (Exception ex)
@@ -117,5 +117,7 @@ public class Program
         IocTests.TestBasicInjection();
         IocTests.TestCircularDependency();
         IocTests.TestAotCompatibility();
+
+        Console.ReadLine();
     }
 }

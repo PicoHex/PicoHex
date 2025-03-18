@@ -9,6 +9,15 @@
         <TrimMode>partial</TrimMode>
         <PublishAot>true</PublishAot>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+
+        <!-- 启用严格修剪分析 -->
+        <IsTrimmable>true</IsTrimmable>
+        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+
+        <!-- 显式声明 AOT 需求 -->
+        <IlcDisableReflection>false</IlcDisableReflection>
+        <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
     </PropertyGroup>
 
     <ItemGroup>

@@ -2,5 +2,5 @@
 
 public interface ISvcProvider
 {
-    object Resolve(Type serviceType);
+    object GetService(Type serviceType);
 }
