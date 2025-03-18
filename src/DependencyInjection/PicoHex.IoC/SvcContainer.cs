@@ -1,0 +1,92 @@
+namespace PicoHex.IoC;
+
+public class SvcContainer : ISvcProvider
+{
+    private readonly IDictionary<
+        Type,
+        (Func<ISvcProvider, object> factory, ConstructorInfo? constructor)
+    > _factories = new Dictionary<Type, (Func<ISvcProvider, object>, ConstructorInfo?)>();
+    private readonly Stack<Type> _resolving = new();
+
+    public void Register<TImplementation>() => Register<TImplementation, TImplementation>();
+
+    public void Register<TInterface, TImplementation>()
+        where TImplementation : TInterface
+    {
+        RegisterImplementation<TImplementation>();
+        RegisterMapping<TInterface, TImplementation>();
+    }
+
+    private void RegisterImplementation<T>() => RegisterMapping<T, T>();
+
+    private void RegisterMapping<TInterface, TImplementation>()
+    {
+        var interfaceType = typeof(TInterface);
+        var implementationType = typeof(TImplementation);
+        RegisterMapping(interfaceType, implementationType);
+    }
+
+    private void RegisterMapping(Type interfaceType, Type implementationType)
+    {
+        if (_factories.ContainsKey(interfaceType))
+            return;
+
+        var (factory, constructor) = CreateFactory(implementationType);
+        _factories[interfaceType] = (factory, constructor);
+    }
+
+    public object Resolve(Type serviceType)
+    {
+        if (!_factories.TryGetValue(serviceType, out var entry))
+            throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
+
+        // 循环依赖检测
+        if (_resolving.Contains(serviceType))
+        {
+            var cycle = string.Join(" → ", _resolving.Reverse().Select(t => t.Name));
+            throw new InvalidOperationException(
+                $"Circular dependency detected: {cycle} → {serviceType.Name}"
+            );
+        }
+
+        _resolving.Push(serviceType);
+        try
+        {
+            return entry.factory(this); // 使用当前容器作为服务提供者
+        }
+        finally
+        {
+            _resolving.Pop();
+        }
+    }
+
+    private (Func<ISvcProvider, object> factory, ConstructorInfo constructor) CreateFactory(
+        Type type
+    )
+    {
+        var constructors = type.GetConstructors();
+        var selectedConstructor = constructors
+            .OrderByDescending(c => c.GetParameters().Length)
+            .First();
+        var parameters = selectedConstructor.GetParameters();
+
+        var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
+        var args = parameters
+            .Select(p =>
+            {
+                var getServiceCall = Expression.Call(
+                    providerParam,
+                    typeof(ISvcProvider).GetMethod("GetService", [typeof(Type)])!,
+                    Expression.Constant(p.ParameterType)
+                );
+                return Expression.Convert(getServiceCall, p.ParameterType); // 关键转换
+            })
+            .ToArray<Expression>();
+
+        var newExpr = Expression.New(selectedConstructor, args);
+        var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
+        var factory = lambda.Compile();
+
+        return (factory, selectedConstructor);
+    }
+}

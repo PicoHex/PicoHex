@@ -3,15 +3,26 @@
 // 测试用例类
 public static class IocTests
 {
+    // 自举测试
+    public static void TestBootstrapping()
+    {
+        var container = new SvcContainer();
+        container.Register<ISvcProvider, SvcContainer>();
+
+        var subContainer = (ISvcProvider)container.Resolve(typeof(ISvcProvider));
+        Console.WriteLine("Bootstrapping Test Passed");
+    }
+
     // 基础注入测试
     public static void TestBasicInjection()
     {
         var container = new SvcContainer();
-        container.Register<IA, A>();
+        container.Register<A>();
         container.Register<IB, B>();
+        container.Register<IC, C>();
 
         // A的构造函数需要IB参数
-        var a = (IA)container.GetService(typeof(A));
+        var a = (A)container.Resolve(typeof(A));
         Console.WriteLine("Basic Injection Test Passed");
     }
 
@@ -24,7 +35,7 @@ public static class IocTests
 
         try
         {
-            container.GetService(typeof(ICircularA));
+            container.Resolve(typeof(ICircularA));
         }
         catch (InvalidOperationException ex)
         {
@@ -44,12 +55,13 @@ public static class IocTests
     {
         // AOT环境下需要确保容器能正确执行
         var container = new SvcContainer();
-        container.Register<IA, A>();
+        container.Register<A>();
         container.Register<IB, B>();
+        container.Register<IC, C>();
 
         try
         {
-            var service = container.GetService(typeof(IA));
+            var service = container.Resolve(typeof(A));
             Console.WriteLine("AOT Compatibility Test Passed");
         }
         catch (Exception ex)
@@ -60,22 +72,28 @@ public static class IocTests
 }
 
 // 测试依赖类
-public interface IA { }
 
-public interface IB { }
+public interface IB;
 
-public interface ICircularA { }
+public interface IC;
 
-public interface ICircularB { }
+public interface ICircularA;
 
-public class A : IA
+public interface ICircularB;
+
+public class A(IB b)
 {
-    public A(IB b) { }
+    public IB B { get; } = b;
 }
 
-public class B : IB
+public class B(IC c) : IB
 {
-    public B() { }
+    public IC C { get; } = c;
+}
+
+public class C : IC
+{
+    public C() { }
 }
 
 public class CircularA : ICircularA
@@ -95,6 +113,7 @@ public class Program
     {
         Console.WriteLine("Running Tests:");
 
+        IocTests.TestBootstrapping();
         IocTests.TestBasicInjection();
         IocTests.TestCircularDependency();
         IocTests.TestAotCompatibility();
