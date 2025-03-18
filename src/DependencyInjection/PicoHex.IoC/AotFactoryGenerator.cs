@@ -1,6 +1,6 @@
 namespace PicoHex.IoC;
 
-public class AotFactoryGenerator
+public static class AotFactoryGenerator
 {
     public static Func<ISvcProvider, object> CreateFactory(ConstructorInfo constructor)
     {
@@ -17,7 +17,7 @@ public class AotFactoryGenerator
                 );
                 return Expression.Convert(getServiceCall, p.ParameterType);
             })
-            .ToArray();
+            .ToArray<Expression>();
 
         var newExpr = Expression.New(constructor, args);
         var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
