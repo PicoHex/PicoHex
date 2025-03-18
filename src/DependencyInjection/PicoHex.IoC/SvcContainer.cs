@@ -2,10 +2,8 @@ namespace PicoHex.IoC;
 
 public class SvcContainer : ISvcProvider
 {
-    private readonly IDictionary<
-        Type,
-        (Func<ISvcProvider, object> factory, ConstructorInfo? constructor)
-    > _factories = new Dictionary<Type, (Func<ISvcProvider, object>, ConstructorInfo?)>();
+    private readonly IDictionary<Type, Func<ISvcProvider, object>> _factories =
+        new Dictionary<Type, Func<ISvcProvider, object>>();
     private readonly Stack<Type> _resolving = new();
 
     public void Register<TImplementation>() => Register<TImplementation, TImplementation>();
@@ -31,8 +29,8 @@ public class SvcContainer : ISvcProvider
         if (_factories.ContainsKey(interfaceType))
             return;
 
-        var (factory, constructor) = CreateFactory(implementationType);
-        _factories[interfaceType] = (factory, constructor);
+        var factory = CreateFactory(implementationType);
+        _factories[interfaceType] = factory;
     }
 
     public object GetService(Type serviceType)
@@ -52,7 +50,7 @@ public class SvcContainer : ISvcProvider
         _resolving.Push(serviceType);
         try
         {
-            return entry.factory(this); // 使用当前容器作为服务提供者
+            return entry(this); // 使用当前容器作为服务提供者
         }
         finally
         {
@@ -60,7 +58,7 @@ public class SvcContainer : ISvcProvider
         }
     }
 
-    private (Func<ISvcProvider, object> factory, ConstructorInfo constructor) CreateFactory(
+    private static Func<ISvcProvider, object> CreateFactory(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
     )
     {
@@ -87,6 +85,6 @@ public class SvcContainer : ISvcProvider
         var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
         var factory = lambda.Compile();
 
-        return (factory, selectedConstructor);
+        return factory;
     }
 }
