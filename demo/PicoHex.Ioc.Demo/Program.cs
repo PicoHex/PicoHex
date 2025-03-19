@@ -5,7 +5,6 @@ public static class IocTests
     public static void TestBootstrapping()
     {
         var container = Bootstrap.CreateContainer();
-        container.RegisterTransient<ISvcContainer, SvcContainer>();
 
         var provider = container.CreateProvider();
         var subContainer = (ISvcProvider)provider.Resolve(typeof(ISvcProvider));
@@ -115,7 +114,7 @@ public class Program
     {
         Console.WriteLine("Running Tests:");
 
-        // IocTests.TestBootstrapping();
+        IocTests.TestBootstrapping();
         IocTests.TestBasicInjection();
         IocTests.TestCircularDependency();
         IocTests.TestAotCompatibility();

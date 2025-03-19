@@ -22,8 +22,7 @@ public class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
         _resolving.Push(serviceType);
         try
         {
-            svcDescriptor.Factory ??= CreateAotFactory(serviceType);
-            return svcDescriptor.Factory(this);
+            return svcDescriptor.Factory!(this);
         }
         finally
         {
@@ -32,32 +31,4 @@ public class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
     }
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
-
-    private static Func<ISvcProvider, object> CreateAotFactory(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
-    )
-    {
-        var constructor = type.GetConstructors()
-            .OrderByDescending(c => c.GetParameters().Length)
-            .First();
-
-        var parameters = constructor.GetParameters();
-        var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
-
-        var args = parameters
-            .Select(p =>
-            {
-                var getServiceCall = Expression.Call(
-                    providerParam,
-                    typeof(ISvcResolver).GetMethod(nameof(Resolve))!,
-                    Expression.Constant(p.ParameterType)
-                );
-                return Expression.Convert(getServiceCall, p.ParameterType);
-            })
-            .ToArray<Expression>();
-
-        var newExpr = Expression.New(constructor, args);
-        var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
-        return lambda.Compile();
-    }
 }
