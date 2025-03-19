@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.IoC.Abstractions;
 
-public interface ISvcProvider
+public interface ISvcProvider : ISvcResolver
 {
-    object GetService(Type serviceType);
+    ISvcScope CreateScope();
 }

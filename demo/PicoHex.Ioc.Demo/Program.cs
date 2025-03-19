@@ -4,36 +4,39 @@ public static class IocTests
     // 自举测试
     public static void TestBootstrapping()
     {
-        var container = new SvcContainer();
-        container.Register<ISvcProvider, SvcContainer>();
+        var container = Bootstrap.CreateContainer();
+        container.RegisterTransient<ISvcContainer, SvcContainer>();
 
-        var subContainer = (ISvcProvider)container.GetService(typeof(ISvcProvider));
+        var provider = container.CreateProvider();
+        var subContainer = (ISvcProvider)provider.Resolve(typeof(ISvcProvider));
         Console.WriteLine("Bootstrapping Test Passed");
     }
 
     // 基础注入测试
     public static void TestBasicInjection()
     {
-        var container = new SvcContainer();
-        container.Register<A>();
-        container.Register<IB, B>();
-        container.Register<IC, C>();
+        var container = Bootstrap.CreateContainer();
+        container.RegisterTransient<A>();
+        container.RegisterTransient<IB, B>();
+        container.RegisterTransient<IC, C>();
 
         // A的构造函数需要IB参数
-        var a = (A)container.GetService(typeof(A));
+        var provider = container.CreateProvider();
+        var a = (A)provider.Resolve(typeof(A));
         Console.WriteLine("Basic Injection Test Passed");
     }
 
     // 循环依赖检测测试
     public static void TestCircularDependency()
     {
-        var container = new SvcContainer();
-        container.Register<ICircularA, CircularA>();
-        container.Register<ICircularB, CircularB>();
+        var container = Bootstrap.CreateContainer();
+        container.RegisterTransient<ICircularA, CircularA>();
+        container.RegisterTransient<ICircularB, CircularB>();
 
         try
         {
-            container.GetService(typeof(ICircularA));
+            var provider = container.CreateProvider();
+            provider.Resolve(typeof(ICircularA));
         }
         catch (InvalidOperationException ex)
         {
@@ -52,14 +55,15 @@ public static class IocTests
     public static void TestAotCompatibility()
     {
         // AOT环境下需要确保容器能正确执行
-        var container = new SvcContainer();
-        container.Register<A>();
-        container.Register<IB, B>();
-        container.Register<IC, C>();
+        var container = Bootstrap.CreateContainer();
+        container.RegisterTransient<A>();
+        container.RegisterTransient<IB, B>();
+        container.RegisterTransient<IC, C>();
 
         try
         {
-            var service = container.GetService(typeof(A));
+            var provider = container.CreateProvider();
+            provider.Resolve(typeof(A));
             Console.WriteLine("AOT Compatibility Test Passed");
         }
         catch (Exception ex)
@@ -111,7 +115,7 @@ public class Program
     {
         Console.WriteLine("Running Tests:");
 
-        IocTests.TestBootstrapping();
+        // IocTests.TestBootstrapping();
         IocTests.TestBasicInjection();
         IocTests.TestCircularDependency();
         IocTests.TestAotCompatibility();

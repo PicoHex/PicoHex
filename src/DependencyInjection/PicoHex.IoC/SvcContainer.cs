@@ -1,67 +1,22 @@
 namespace PicoHex.IoC;
 
-public class SvcContainer : ISvcProvider
+public class SvcContainer(ISvcProviderFactory providerFactory) : ISvcContainer
 {
-    private readonly ConcurrentDictionary<Type, Func<ISvcProvider, object>> _factories = new();
-    private readonly ConcurrentStack<Type> _resolving = new();
+    private readonly ConcurrentDictionary<Type, SvcDescriptor> _descriptors = new();
 
-    public void Register<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            TImplementation
-    >() => Register<TImplementation, TImplementation>();
-
-    public void Register<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TInterface,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            TImplementation
-    >()
-        where TImplementation : TInterface
+    public ISvcContainer Register(SvcDescriptor descriptor)
     {
-        RegisterImplementation<TImplementation>();
-        RegisterMapping<TInterface, TImplementation>();
+        descriptor.Factory ??= CreateAotFactory(descriptor.ImplementationType);
+        _descriptors.TryAdd(descriptor.ServiceType, descriptor);
+        _descriptors.TryAdd(descriptor.ImplementationType, descriptor);
+        return this;
     }
 
-    private void RegisterImplementation<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T
-    >() => RegisterMapping<T, T>();
+    public ISvcProvider CreateProvider() => providerFactory.CreateProvider(this);
 
-    private void RegisterMapping<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TInterface,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            TImplementation
-    >() => RegisterMapping(typeof(TInterface), typeof(TImplementation));
-
-    private void RegisterMapping(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type interfaceType,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type implementationType
-    ) => _factories.GetOrAdd(interfaceType, CreateAotFactory(implementationType));
-
-    public object GetService(Type serviceType)
-    {
-        if (!_factories.TryGetValue(serviceType, out var entry))
-            throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
-
-        // 循环依赖检测
-        if (_resolving.Contains(serviceType))
-        {
-            var cycle = string.Join(" → ", _resolving.Reverse().Select(t => t.Name));
-            throw new InvalidOperationException(
-                $"Circular dependency detected: {cycle} → {serviceType.Name}"
-            );
-        }
-
-        _resolving.Push(serviceType);
-        try
-        {
-            return entry(this); // 使用当前容器作为服务提供者
-        }
-        finally
-        {
-            _resolving.TryPop(out _);
-        }
-    }
+    public SvcDescriptor? GetDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
+    ) => _descriptors.GetValueOrDefault(type);
 
     private static Func<ISvcProvider, object> CreateAotFactory(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
@@ -79,7 +34,7 @@ public class SvcContainer : ISvcProvider
             {
                 var getServiceCall = Expression.Call(
                     providerParam,
-                    typeof(ISvcProvider).GetMethod(nameof(ISvcProvider.GetService))!,
+                    typeof(ISvcProvider).GetMethod(nameof(ISvcProvider.Resolve))!,
                     Expression.Constant(p.ParameterType)
                 );
                 return Expression.Convert(getServiceCall, p.ParameterType);
