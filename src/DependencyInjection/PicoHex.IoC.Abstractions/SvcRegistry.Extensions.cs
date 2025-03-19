@@ -20,7 +20,9 @@ public static partial class SvcRegistryExtensions
         SvcLifetime lifecycle
     ) => registry.Register(new SvcDescriptor(serviceType, implementationType, lifecycle));
 
-    public static ISvcContainer Register<TService>(
+    public static ISvcContainer Register<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
+    >(
         this ISvcContainer registry,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type implementationType,

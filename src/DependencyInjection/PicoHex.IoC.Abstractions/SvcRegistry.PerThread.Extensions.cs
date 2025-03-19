@@ -5,61 +5,63 @@ public static partial class SvcRegistryExtensions
     #region Add by type
 
     public static ISvcContainer RegisterPerThread(
-        this ISvcContainer registry,
+        this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType
-    ) => registry.Register(serviceType, SvcLifetime.PerThread);
+    ) => container.Register(serviceType, SvcLifetime.PerThread);
 
     public static ISvcContainer RegisterPerThread(
-        this ISvcContainer registry,
+        this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type implementationType
-    ) => registry.Register(serviceType, implementationType, SvcLifetime.PerThread);
-
-    public static ISvcContainer RegisterPerThread<TService>(
-        this ISvcContainer registry,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type implementationType
-    ) => registry.Register<TService>(implementationType, SvcLifetime.PerThread);
+    ) => container.Register(serviceType, implementationType, SvcLifetime.PerThread);
 
     public static ISvcContainer RegisterPerThread<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
-    >(this ISvcContainer registry) => registry.Register<TService>(SvcLifetime.PerThread);
+    >(
+        this ISvcContainer container,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type implementationType
+    ) => container.Register<TService>(implementationType, SvcLifetime.PerThread);
+
+    public static ISvcContainer RegisterPerThread<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
+    >(this ISvcContainer container) => container.Register<TService>(SvcLifetime.PerThread);
 
     public static ISvcContainer RegisterPerThread<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
-    >(this ISvcContainer registry)
+    >(this ISvcContainer container)
         where TImplementation : TService =>
-        registry.Register<TService, TImplementation>(SvcLifetime.PerThread);
+        container.Register<TService, TImplementation>(SvcLifetime.PerThread);
 
     #endregion
 
     #region Add by factory
 
     public static ISvcContainer RegisterPerThread(
-        this ISvcContainer registry,
+        this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
         Func<ISvcProvider, object> factory
-    ) => registry.Register(serviceType, factory, SvcLifetime.PerThread);
+    ) => container.Register(serviceType, factory, SvcLifetime.PerThread);
 
     public static ISvcContainer RegisterPerThread<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
-    >(this ISvcContainer registry, Func<ISvcProvider, TService> factory)
-        where TService : class => registry.Register(factory, SvcLifetime.PerThread);
+    >(this ISvcContainer container, Func<ISvcProvider, TService> factory)
+        where TService : class => container.Register(factory, SvcLifetime.PerThread);
 
     public static ISvcContainer RegisterPerThread<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
-    >(this ISvcContainer registry, Func<ISvcProvider, TImplementation> factory)
+    >(this ISvcContainer container, Func<ISvcProvider, TImplementation> factory)
         where TService : class
         where TImplementation : class, TService =>
-        registry.Register<TService>(factory, SvcLifetime.PerThread);
+        container.Register<TService>(factory, SvcLifetime.PerThread);
 
     #endregion
 }

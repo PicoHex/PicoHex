@@ -5,61 +5,63 @@ public static partial class SvcRegistryExtensions
     #region Add by type
 
     public static ISvcContainer RegisterPooled(
-        this ISvcContainer registry,
+        this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType
-    ) => registry.Register(serviceType, SvcLifetime.Pooled);
+    ) => container.Register(serviceType, SvcLifetime.Pooled);
 
     public static ISvcContainer RegisterPooled(
-        this ISvcContainer registry,
+        this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type implementationType
-    ) => registry.Register(serviceType, implementationType, SvcLifetime.Pooled);
-
-    public static ISvcContainer RegisterPooled<TService>(
-        this ISvcContainer registry,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type implementationType
-    ) => registry.Register<TService>(implementationType, SvcLifetime.Pooled);
+    ) => container.Register(serviceType, implementationType, SvcLifetime.Pooled);
 
     public static ISvcContainer RegisterPooled<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
-    >(this ISvcContainer registry) => registry.Register<TService>(SvcLifetime.Pooled);
+    >(
+        this ISvcContainer container,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type implementationType
+    ) => container.Register<TService>(implementationType, SvcLifetime.Pooled);
+
+    public static ISvcContainer RegisterPooled<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
+    >(this ISvcContainer container) => container.Register<TService>(SvcLifetime.Pooled);
 
     public static ISvcContainer RegisterPooled<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
-    >(this ISvcContainer registry)
+    >(this ISvcContainer container)
         where TImplementation : TService =>
-        registry.Register<TService, TImplementation>(SvcLifetime.Pooled);
+        container.Register<TService, TImplementation>(SvcLifetime.Pooled);
 
     #endregion
 
     #region Add by factory
 
     public static ISvcContainer RegisterPooled(
-        this ISvcContainer registry,
+        this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
         Func<ISvcProvider, object> factory
-    ) => registry.Register(serviceType, factory, SvcLifetime.Pooled);
+    ) => container.Register(serviceType, factory, SvcLifetime.Pooled);
 
     public static ISvcContainer RegisterPooled<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
-    >(this ISvcContainer registry, Func<ISvcProvider, TService> factory)
-        where TService : class => registry.Register(factory, SvcLifetime.Pooled);
+    >(this ISvcContainer container, Func<ISvcProvider, TService> factory)
+        where TService : class => container.Register(factory, SvcLifetime.Pooled);
 
     public static ISvcContainer RegisterPooled<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
-    >(this ISvcContainer registry, Func<ISvcProvider, TImplementation> factory)
+    >(this ISvcContainer container, Func<ISvcProvider, TImplementation> factory)
         where TService : class
         where TImplementation : class, TService =>
-        registry.Register<TService>(factory, SvcLifetime.Pooled);
+        container.Register<TService>(factory, SvcLifetime.Pooled);
 
     #endregion
 }

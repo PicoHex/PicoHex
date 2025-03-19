@@ -7,7 +7,7 @@ public static class IocTests
         var container = Bootstrap.CreateContainer();
 
         var provider = container.CreateProvider();
-        var subContainer = (ISvcProvider)provider.Resolve(typeof(ISvcProvider));
+        var subContainer = (ISvcProvider)provider.Resolve(typeof(ISvcProvider))!;
         Console.WriteLine("Bootstrapping Test Passed");
     }
 
@@ -21,7 +21,7 @@ public static class IocTests
 
         // A的构造函数需要IB参数
         var provider = container.CreateProvider();
-        var a = (A)provider.Resolve(typeof(A));
+        var a = (A)provider.Resolve(typeof(A))!;
         Console.WriteLine("Basic Injection Test Passed");
     }
 

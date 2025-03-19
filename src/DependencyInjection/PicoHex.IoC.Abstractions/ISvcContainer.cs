@@ -4,5 +4,7 @@ public interface ISvcContainer
 {
     ISvcContainer Register(SvcDescriptor descriptor);
     ISvcProvider CreateProvider();
-    SvcDescriptor? GetDescriptor(Type type);
+    SvcDescriptor? GetDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
+    );
 }
