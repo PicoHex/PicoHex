@@ -44,7 +44,7 @@ public class SvcContainer : ISvcProvider
         if (_factories.ContainsKey(interfaceType))
             return;
 
-        _factories[interfaceType] = CreateFactory(implementationType);
+        _factories[interfaceType] = CreateAotFactory(implementationType);
     }
 
     public object GetService(Type serviceType)
@@ -72,15 +72,31 @@ public class SvcContainer : ISvcProvider
         }
     }
 
-    private static Func<ISvcProvider, object> CreateFactory(
+    private static Func<ISvcProvider, object> CreateAotFactory(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
     )
     {
-        var constructors = type.GetConstructors();
-        var selectedConstructor = constructors
+        var constructor = type.GetConstructors()
             .OrderByDescending(c => c.GetParameters().Length)
             .First();
 
-        return AotFactoryGenerator.CreateFactory(selectedConstructor); // 关键修改点
+        var parameters = constructor.GetParameters();
+        var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
+
+        var args = parameters
+            .Select(p =>
+            {
+                var getServiceCall = Expression.Call(
+                    providerParam,
+                    typeof(ISvcProvider).GetMethod(nameof(ISvcProvider.GetService))!,
+                    Expression.Constant(p.ParameterType)
+                );
+                return Expression.Convert(getServiceCall, p.ParameterType);
+            })
+            .ToArray<Expression>();
+
+        var newExpr = Expression.New(constructor, args);
+        var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
+        return lambda.Compile();
     }
 }
