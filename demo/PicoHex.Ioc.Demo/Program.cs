@@ -1,6 +1,4 @@
-﻿using PicoHex.IoC;
-
-// 测试用例类
+﻿// 测试用例类
 public static class IocTests
 {
     // 自举测试

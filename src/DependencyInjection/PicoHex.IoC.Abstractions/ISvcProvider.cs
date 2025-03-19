@@ -1,4 +1,4 @@
-﻿namespace PicoHex.IoC;
+﻿namespace PicoHex.IoC.Abstractions;
 
 public interface ISvcProvider
 {

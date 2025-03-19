@@ -2,8 +2,8 @@ namespace PicoHex.IoC;
 
 public class SvcContainer : ISvcProvider
 {
-    private readonly Dictionary<Type, Func<ISvcProvider, object>> _factories = new();
-    private readonly Stack<Type> _resolving = new();
+    private readonly ConcurrentDictionary<Type, Func<ISvcProvider, object>> _factories = new();
+    private readonly ConcurrentStack<Type> _resolving = new();
 
     public void Register<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -29,23 +29,14 @@ public class SvcContainer : ISvcProvider
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TInterface,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
-    >()
-    {
-        RegisterMapping(typeof(TInterface), typeof(TImplementation));
-    }
+    >() => RegisterMapping(typeof(TInterface), typeof(TImplementation));
 
     private void RegisterMapping(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type interfaceType,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type implementationType
-    )
-    {
-        if (_factories.ContainsKey(interfaceType))
-            return;
-
-        _factories[interfaceType] = CreateAotFactory(implementationType);
-    }
+    ) => _factories.GetOrAdd(interfaceType, CreateAotFactory(implementationType));
 
     public object GetService(Type serviceType)
     {
@@ -68,7 +59,7 @@ public class SvcContainer : ISvcProvider
         }
         finally
         {
-            _resolving.Pop();
+            _resolving.TryPop(out _);
         }
     }
 
