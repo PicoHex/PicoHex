@@ -25,7 +25,15 @@ public class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
         _resolving.Push(serviceType);
         try
         {
-            return svcDescriptor.Factory!(this);
+            return svcDescriptor.Lifetime switch
+            {
+                SvcLifetime.Transient => svcDescriptor.Factory!(this),
+                SvcLifetime.Singleton => svcDescriptor.Factory!(this),
+                SvcLifetime.Scoped => svcDescriptor.Factory!(this),
+                SvcLifetime.PerThread => svcDescriptor.Factory!(this),
+                SvcLifetime.Pooled => svcDescriptor.Factory!(this),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
         finally
         {
