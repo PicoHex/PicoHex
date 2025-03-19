@@ -8,7 +8,10 @@ public class SvcDescriptor(
     SvcLifetime lifetime
 )
 {
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     public Type ServiceType { get; } = serviceType;
+
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     public Type ImplementationType { get; } = implementationType;
     public SvcLifetime Lifetime { get; } = lifetime;
     public Func<ISvcProvider, object>? Factory { get; set; }

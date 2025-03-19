@@ -4,7 +4,10 @@ public class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
 {
     private readonly ConcurrentStack<Type> _resolving = new();
 
-    public object Resolve(Type serviceType)
+    public object Resolve(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
+    )
     {
         var svcDescriptor = container.GetDescriptor(serviceType);
         if (svcDescriptor is null)

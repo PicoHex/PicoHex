@@ -5,7 +5,10 @@ public class SvcScope(ISvcProvider provider) : ISvcScope
     private readonly IList<object?> _services = new List<object?>();
     private volatile bool _disposed;
 
-    public object? Resolve(Type serviceType)
+    public object? Resolve(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
+    )
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(SvcScope));
