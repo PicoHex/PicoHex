@@ -8,12 +8,10 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
     public object? Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType
-    )
-    {
-        return _disposed
+    ) =>
+        _disposed
             ? throw new ObjectDisposedException(nameof(SvcScope))
             : _services.GetOrAdd(serviceType, _ => provider.Resolve(serviceType));
-    }
 
     public void Dispose()
     {

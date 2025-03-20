@@ -78,44 +78,6 @@ public class DependencyInjectionTests(ITestOutputHelper testOutputHelper)
     }
 
     [Fact]
-    public void Register_And_Resolve_PerThread()
-    {
-        try
-        {
-            var svcRegistry = Bootstrap.CreateContainer();
-            var svcProvider = svcRegistry.CreateProvider();
-
-            svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.PerThread);
-
-            IService? s1 = null;
-            IService? s2 = null;
-
-            var t1 = new Thread(() =>
-            {
-                s1 = svcProvider.Resolve<IService>();
-            });
-            var t2 = new Thread(() =>
-            {
-                s2 = svcProvider.Resolve<IService>();
-            });
-
-            t1.Start();
-            t2.Start();
-            t1.Join();
-            t2.Join();
-
-            Assert.NotNull(s1);
-            Assert.NotNull(s2);
-            Assert.NotSame(s1, s2);
-        }
-        catch (Exception e)
-        {
-            testOutputHelper.WriteLine(e.ToString());
-            throw;
-        }
-    }
-
-    [Fact]
     public void Throws_When_Not_Registered()
     {
         var svcRegistry = Bootstrap.CreateContainer();

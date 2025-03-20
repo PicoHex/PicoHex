@@ -1,6 +1,6 @@
 namespace PicoHex.IoC.Abstractions;
 
-public interface ISvcResolver : IDisposable, IAsyncDisposable
+public interface ISvcResolver
 {
     object? Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]

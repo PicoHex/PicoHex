@@ -3,10 +3,7 @@ namespace PicoHex.IoC;
 public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
     : ISvcProvider
 {
-    private volatile bool _disposed;
     private readonly ConcurrentStack<Type> _resolving = new();
-    private static readonly ConcurrentDictionary<Type, object> Singletons = new();
-    private static readonly ConcurrentDictionary<Type, ThreadLocal<object?>> PerThread = new();
 
     public object Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -34,7 +31,6 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
                 SvcLifetime.Transient => svcDescriptor.Factory!(this),
                 SvcLifetime.Singleton => GetSingleton(svcDescriptor),
                 SvcLifetime.Scoped => svcDescriptor.Factory!(this),
-                SvcLifetime.PerThread => CreatePerThread(svcDescriptor),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -44,59 +40,13 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         }
     }
 
-    private object GetSingleton(SvcDescriptor svcDescriptor) =>
-        svcDescriptor.Instance
-        ?? Singletons.GetOrAdd(svcDescriptor.ServiceType, svcDescriptor.Factory!(this));
-
-    private object CreatePerThread(SvcDescriptor svcDescriptor)
+    private object GetSingleton(SvcDescriptor svcDescriptor)
     {
-        if (PerThread.TryGetValue(svcDescriptor.ServiceType, out var instance))
-            return instance.Value!;
-
-        instance = new ThreadLocal<object?>(() => svcDescriptor.Factory!(this));
-        PerThread[svcDescriptor.ServiceType] = instance;
-        return instance.Value!;
+        if (svcDescriptor.Instance is not null)
+            return svcDescriptor.Instance;
+        svcDescriptor.Instance = svcDescriptor.Factory!(this);
+        return svcDescriptor.Instance;
     }
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
-
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(disposing: false);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (_disposed)
-            return;
-        if (disposing)
-        {
-            foreach (var service in PerThread)
-            {
-                if (service.Value.Value is IDisposable disposable)
-                    disposable.Dispose();
-            }
-        }
-        _disposed = true;
-    }
-
-    private async ValueTask DisposeAsyncCore()
-    {
-        if (_disposed)
-            return;
-        foreach (var service in PerThread)
-        {
-            if (service.Value.Value is IDisposable disposable)
-                disposable.Dispose();
-            if (service.Value.Value is IAsyncDisposable asyncDisposable)
-                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
-        }
-        _disposed = true;
-    }
 }

@@ -1,4 +1,7 @@
 ﻿// 测试用例类
+
+namespace PicoHex.Ioc.Demo;
+
 public static class IocTests
 {
     // 自举测试
