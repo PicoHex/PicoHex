@@ -9,7 +9,9 @@ public static class Bootstrap
         ).CreateContainer();
         container.RegisterTransient<ISvcProviderFactory, SvcProviderFactory>();
         container.RegisterTransient<ISvcScopeFactory, SvcScopeFactory>();
-        container.RegisterTransient<ISvcProvider>(_ => container.CreateProvider());
+        container.RegisterTransient<ISvcProvider>(sp =>
+            sp.Resolve<ISvcProviderFactory>()!.CreateProvider(container)
+        );
         return container;
     }
 }

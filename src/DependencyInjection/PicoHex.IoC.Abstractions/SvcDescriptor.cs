@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.IoC.Abstractions;
 
-public class SvcDescriptor(
+public sealed class SvcDescriptor(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         Type serviceType,
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]

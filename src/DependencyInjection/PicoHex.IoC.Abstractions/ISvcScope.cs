@@ -1,3 +1,3 @@
 namespace PicoHex.IoC.Abstractions;
 
-public interface ISvcScope : ISvcResolver, IDisposable, IAsyncDisposable;
+public interface ISvcScope : ISvcResolver;

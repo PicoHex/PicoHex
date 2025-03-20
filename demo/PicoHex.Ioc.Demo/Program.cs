@@ -112,13 +112,14 @@ public class Program
 {
     public static void Main()
     {
-        Console.WriteLine("Running Tests:");
+        Console.WriteLine($"Running Tests: {DateTime.Now}");
 
         IocTests.TestBootstrapping();
         IocTests.TestBasicInjection();
         IocTests.TestCircularDependency();
         IocTests.TestAotCompatibility();
 
+        Console.WriteLine($"Tests finish: {DateTime.Now}");
         Console.ReadLine();
     }
 }

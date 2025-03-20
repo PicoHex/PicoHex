@@ -1,8 +1,8 @@
 namespace PicoHex.IoC;
 
-public class SvcScope(ISvcProvider provider) : ISvcScope
+public sealed class SvcScope(ISvcProvider provider) : ISvcScope
 {
-    private readonly IList<object?> _services = new List<object?>();
+    private readonly List<object?> _services = new();
     private volatile bool _disposed;
 
     public object? Resolve(
@@ -30,7 +30,7 @@ public class SvcScope(ISvcProvider provider) : ISvcScope
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (_disposed)
             return;
@@ -45,7 +45,7 @@ public class SvcScope(ISvcProvider provider) : ISvcScope
         _disposed = true;
     }
 
-    protected virtual async ValueTask DisposeAsyncCore()
+    private async ValueTask DisposeAsyncCore()
     {
         if (_disposed)
             return;

@@ -1,6 +1,6 @@
 namespace PicoHex.IoC;
 
-public class SvcContainer(ISvcProviderFactory providerFactory) : ISvcContainer
+public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcContainer
 {
     private readonly ConcurrentDictionary<Type, SvcDescriptor> _descriptors = new();
 
