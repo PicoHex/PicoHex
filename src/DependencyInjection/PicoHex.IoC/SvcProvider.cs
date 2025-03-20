@@ -6,7 +6,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     private volatile bool _disposed;
     private readonly ConcurrentStack<Type> _resolving = new();
     private static readonly ConcurrentDictionary<Type, object> Singletons = new();
-    private readonly ThreadLocal<Dictionary<Type, object>> _perThread = new(() => new());
+    private static readonly ConcurrentDictionary<Type, ThreadLocal<object?>> PerThread = new();
 
     public object Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -31,7 +31,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         {
             return svcDescriptor.Lifetime switch
             {
-                SvcLifetime.Transient => CreateTransient(svcDescriptor),
+                SvcLifetime.Transient => svcDescriptor.Factory!(this),
                 SvcLifetime.Singleton => GetSingleton(svcDescriptor),
                 SvcLifetime.Scoped => svcDescriptor.Factory!(this),
                 SvcLifetime.PerThread => CreatePerThread(svcDescriptor),
@@ -44,19 +44,18 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         }
     }
 
-    private object CreateTransient(SvcDescriptor svcDescriptor) => svcDescriptor.Factory!(this);
-
     private object GetSingleton(SvcDescriptor svcDescriptor) =>
-        Singletons.GetOrAdd(svcDescriptor.ServiceType, svcDescriptor.Factory!(this));
+        svcDescriptor.Instance
+        ?? Singletons.GetOrAdd(svcDescriptor.ServiceType, svcDescriptor.Factory!(this));
 
     private object CreatePerThread(SvcDescriptor svcDescriptor)
     {
-        var instances = _perThread.Value!;
-        if (instances.TryGetValue(svcDescriptor.ServiceType, out var instance))
-            return instance;
-        instance = svcDescriptor.Factory!(this);
-        instances[svcDescriptor.ServiceType] = instance;
-        return instance;
+        if (PerThread.TryGetValue(svcDescriptor.ServiceType, out var instance))
+            return instance.Value!;
+
+        instance = new ThreadLocal<object?>(() => svcDescriptor.Factory!(this));
+        PerThread[svcDescriptor.ServiceType] = instance;
+        return instance.Value!;
     }
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
@@ -64,14 +63,12 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     public void Dispose()
     {
         Dispose(disposing: true);
-        GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
     {
         await DisposeAsyncCore().ConfigureAwait(false);
         Dispose(disposing: false);
-        GC.SuppressFinalize(this);
     }
 
     private void Dispose(bool disposing)
@@ -80,9 +77,9 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             return;
         if (disposing)
         {
-            foreach (var service in _perThread.Value!)
+            foreach (var service in PerThread)
             {
-                if (service.Value is IDisposable disposable)
+                if (service.Value.Value is IDisposable disposable)
                     disposable.Dispose();
             }
         }
@@ -93,11 +90,11 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     {
         if (_disposed)
             return;
-        foreach (var service in _perThread.Value!)
+        foreach (var service in PerThread)
         {
-            if (service.Value is IDisposable disposable)
+            if (service.Value.Value is IDisposable disposable)
                 disposable.Dispose();
-            if (service.Value is IAsyncDisposable asyncDisposable)
+            if (service.Value.Value is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync().ConfigureAwait(false);
         }
         _disposed = true;

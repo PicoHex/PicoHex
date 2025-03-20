@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.IoC.Abstractions;
 
-public static partial class SvcRegistryExtensions
+public static partial class SvcContainerExtensions
 {
     #region Add by type
 

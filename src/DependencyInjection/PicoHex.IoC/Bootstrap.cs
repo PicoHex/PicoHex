@@ -7,6 +7,7 @@ public static class Bootstrap
         var container = new SvcContainerFactory(
             new SvcProviderFactory(new SvcScopeFactory())
         ).CreateContainer();
+        container.RegisterSingle<ISvcContainer>(container);
         container.RegisterTransient<ISvcProviderFactory, SvcProviderFactory>();
         container.RegisterTransient<ISvcScopeFactory, SvcScopeFactory>();
         container.RegisterTransient<ISvcProvider>(sp =>

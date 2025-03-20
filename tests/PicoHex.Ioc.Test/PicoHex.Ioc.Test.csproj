@@ -25,8 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DependencyInjection.Abstractions\PicoHex.DependencyInjection.Abstractions.csproj" />
-      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DependencyInjection\PicoHex.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.IoC\PicoHex.IoC.csproj" />
     </ItemGroup>
 
 </Project>

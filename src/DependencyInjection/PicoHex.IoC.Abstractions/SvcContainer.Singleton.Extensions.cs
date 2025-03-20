@@ -1,7 +1,23 @@
 ﻿namespace PicoHex.IoC.Abstractions;
 
-public static partial class SvcRegistryExtensions
+public static partial class SvcContainerExtensions
 {
+    #region Add by instance
+
+    public static ISvcContainer RegisterSingle(
+        this ISvcContainer container,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
+        object instance
+    ) => container.Register(new SvcDescriptor(serviceType, instance));
+
+    public static ISvcContainer RegisterSingle<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
+    >(this ISvcContainer container, object instance) =>
+        container.Register(new SvcDescriptor(typeof(TService), instance));
+
+    #endregion
+
     #region Add by type
 
     public static ISvcContainer RegisterSingle(

@@ -2,7 +2,7 @@ namespace PicoHex.IoC;
 
 public sealed class SvcScope(ISvcProvider provider) : ISvcScope
 {
-    private readonly List<object?> _services = new();
+    private readonly ConcurrentDictionary<Type, object?> _services = new();
     private volatile bool _disposed;
 
     public object? Resolve(
@@ -10,24 +10,20 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
             Type serviceType
     )
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(SvcScope));
-        var service = provider.Resolve(serviceType);
-        _services.Add(service);
-        return service;
+        return _disposed
+            ? throw new ObjectDisposedException(nameof(SvcScope))
+            : _services.GetOrAdd(serviceType, _ => provider.Resolve(serviceType));
     }
 
     public void Dispose()
     {
         Dispose(disposing: true);
-        GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
     {
         await DisposeAsyncCore().ConfigureAwait(false);
         Dispose(disposing: false);
-        GC.SuppressFinalize(this);
     }
 
     private void Dispose(bool disposing)
@@ -38,7 +34,7 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
         {
             foreach (var service in _services)
             {
-                if (service is IDisposable disposable)
+                if (service.Value is IDisposable disposable)
                     disposable.Dispose();
             }
         }
@@ -51,9 +47,9 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
             return;
         foreach (var service in _services)
         {
-            if (service is IDisposable disposable)
+            if (service.Value is IDisposable disposable)
                 disposable.Dispose();
-            if (service is IAsyncDisposable asyncDisposable)
+            if (service.Value is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync().ConfigureAwait(false);
         }
         _disposed = true;

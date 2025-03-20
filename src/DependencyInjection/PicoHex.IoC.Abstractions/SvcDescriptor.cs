@@ -15,6 +15,14 @@ public sealed class SvcDescriptor(
     public Type ImplementationType { get; } = implementationType;
     public SvcLifetime Lifetime { get; } = lifetime;
     public Func<ISvcProvider, object>? Factory { get; set; }
+    public object? Instance { get; set; }
+
+    public SvcDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
+        object instance
+    )
+        : this(serviceType, serviceType, SvcLifetime.Singleton) => Instance = instance;
 
     public SvcDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
