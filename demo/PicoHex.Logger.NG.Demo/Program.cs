@@ -1,24 +1,23 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-
-// 注册示例（使用Microsoft DI）
-
-using Microsoft.Extensions.DependencyInjection;
+using PicoHex.IoC;
+using PicoHex.IoC.Abstractions;
 using PicoHex.Log.NG;
 
-var svcRegistry = new ServiceCollection();
-svcRegistry.AddSingleton<ILogFormatter, ConsoleLogFormatter>();
-svcRegistry.AddSingleton<ILogSink, ConsoleLogSink>();
-svcRegistry.AddSingleton<ILoggerFactory>(
-    sp => new LoggerFactory(sp.GetRequiredService<ILogSink>(), LogLevel.Debug)
-);
-svcRegistry.AddTransient(typeof(ILogger<>), typeof(Logger<>));
+var container = Bootstrap.CreateContainer();
+container.RegisterSingle<ILogFormatter, ConsoleLogFormatter>();
+container.RegisterSingle<ILogSink, ConsoleLogSink>();
+container.RegisterSingle<ILoggerFactory>(sp => new LoggerFactory(
+    sp.Resolve<ILogSink>()!,
+    LogLevel.Debug
+));
+container.RegisterTransient(typeof(ILogger<Program>), typeof(Logger<Program>));
 
 Console.WriteLine("Hello World!");
 
 // 使用示例
-var provider = svcRegistry.BuildServiceProvider();
-var logger = provider.GetRequiredService<ILogger<Program>>();
+var provider = container.CreateProvider();
+var logger = provider.Resolve<ILogger<Program>>();
 
 using (logger.BeginScope("Transaction-123"))
 {
