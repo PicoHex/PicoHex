@@ -1,5 +1,6 @@
 ﻿using PicoHex.DI;
 using PicoHex.DI.Abstractions;
+using PicoHex.DI.Extensions;
 
 namespace PicoHex.DI.Test;
 

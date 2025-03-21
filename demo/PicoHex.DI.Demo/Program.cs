@@ -1,5 +1,7 @@
 ﻿// 测试用例类
 
+using PicoHex.DI.Extensions;
+
 namespace PicoHex.DI.Demo;
 
 public static class IocTests
