@@ -1,4 +1,4 @@
-// 测试用例类
+﻿// 测试用例类
 
 namespace PicoHex.DI.Demo;
 

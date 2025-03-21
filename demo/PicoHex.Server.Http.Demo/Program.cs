@@ -2,27 +2,24 @@
 
 // Step 1: Create the IoC container
 
-var svcRegistry = ContainerBootstrap.CreateRegistry();
+var svcRegistry = Bootstrap.CreateContainer();
 const int tcpPort = 8080;
 svcRegistry
     // .AddLogging(builder => builder.AddConsole())
-    .AddTransient<ITcpHandler, RestfulHandler>()
-    .AddTransient<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler>()!)
-    .AddSingleton<TcpServer>(
-        sp =>
-            new TcpServer(
-                IPAddress.Any,
-                tcpPort,
-                sp.Resolve<Func<ITcpHandler>>(),
-                sp.Resolve<ILogger<TcpServer>>()
-            )
-    )
-    .AddSingleton<RestfulHandler>();
+    .RegisterTransient<ITcpHandler, RestfulHandler>()
+    .RegisterTransient<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler>()!)
+    .RegisterSingle<TcpServer>(sp => new TcpServer(
+        IPAddress.Any,
+        tcpPort,
+        sp.Resolve<Func<ITcpHandler>>(),
+        sp.Resolve<ILogger<TcpServer>>()
+    ))
+    .RegisterSingle<RestfulHandler>();
 
 svcRegistry
-    .AddSingleton<ILogger<TcpServer>, Logger<TcpServer>>()
-    .AddSingleton<ILogger<RestfulHandler>, Logger<RestfulHandler>>()
-    .AddSingleton<ILoggerFactory>(_ => LoggerFactory.Create(builder => builder.AddConsole()));
+    .RegisterSingle<ILogger<TcpServer>, Logger<TcpServer>>()
+    .RegisterSingle<ILogger<RestfulHandler>, Logger<RestfulHandler>>()
+    .RegisterSingle<ILoggerFactory>(_ => LoggerFactory.Create(builder => builder.AddConsole()));
 
 var svcProvider = svcRegistry.CreateProvider();
 

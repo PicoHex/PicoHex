@@ -1,33 +1,31 @@
 ﻿// Step 1: Create the IoC container
-using PicoHex.Server;
-using PicoHex.Server.Demo;
 
-var svcRegistry = ContainerBootstrap.CreateRegistry();
+var svcRegistry = Bootstrap.CreateContainer();
 
 // Registering logging
 // serviceCollection.AddLogging(builder => builder.AddConsole());
 
 // Registering Handlers
-svcRegistry.AddSingleton<ITcpHandler, MyStreamHandler>();
-svcRegistry.AddSingleton<IUdpHandler, MyBytesHandler>();
-svcRegistry.AddSingleton<ILogger<TcpServer>, Logger<TcpServer>>();
-svcRegistry.AddSingleton<ILogger<UdpServer>, Logger<UdpServer>>();
-svcRegistry.AddSingleton<ILogger<MyStreamHandler>, Logger<MyStreamHandler>>();
-svcRegistry.AddSingleton<ILogger<MyBytesHandler>, Logger<MyBytesHandler>>();
-svcRegistry.AddSingleton(_ => LoggerFactory.Create(builder => builder.AddConsole()));
+svcRegistry.RegisterSingle<ITcpHandler, MyStreamHandler>();
+svcRegistry.RegisterSingle<IUdpHandler, MyBytesHandler>();
+svcRegistry.RegisterSingle<ILogger<TcpServer>, Logger<TcpServer>>();
+svcRegistry.RegisterSingle<ILogger<UdpServer>, Logger<UdpServer>>();
+svcRegistry.RegisterSingle<ILogger<MyStreamHandler>, Logger<MyStreamHandler>>();
+svcRegistry.RegisterSingle<ILogger<MyBytesHandler>, Logger<MyBytesHandler>>();
+svcRegistry.RegisterSingle(_ => LoggerFactory.Create(builder => builder.AddConsole()));
 
 // Registering servers
-svcRegistry.AddSingleton<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
-svcRegistry.AddSingleton<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
+svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
+svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
 const int tcpPort = 12345;
 const int udpPort = 12346;
-svcRegistry.AddSingleton<TcpServer>(sp => new TcpServer(
+svcRegistry.RegisterSingle<TcpServer>(sp => new TcpServer(
     IPAddress.Any,
     tcpPort,
     sp.Resolve<Func<ITcpHandler>>(),
     sp.Resolve<ILogger<TcpServer>>()
 ));
-svcRegistry.AddSingleton<UdpServer>(sp => new UdpServer(
+svcRegistry.RegisterSingle<UdpServer>(sp => new UdpServer(
     IPAddress.Any,
     udpPort,
     sp.Resolve<Func<IUdpHandler>>(),

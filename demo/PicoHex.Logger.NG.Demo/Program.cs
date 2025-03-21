@@ -1,8 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using PicoHex.IoC;
-using PicoHex.IoC.Abstractions;
-using PicoHex.Log.NG;
+// See https://aka.ms/new-console-template for more information
 
 var container = Bootstrap.CreateContainer();
 container.RegisterSingle<ILogFormatter, ConsoleLogFormatter>();

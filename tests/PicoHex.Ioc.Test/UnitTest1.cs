@@ -1,7 +1,7 @@
-﻿using PicoHex.IoC;
-using PicoHex.IoC.Abstractions;
+﻿using PicoHex.DI;
+using PicoHex.DI.Abstractions;
 
-namespace PicoHex.Ioc.Test;
+namespace PicoHex.DI.Test;
 
 public class DependencyInjectionTests
 {

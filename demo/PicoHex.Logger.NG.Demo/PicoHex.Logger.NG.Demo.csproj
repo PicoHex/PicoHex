@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -9,8 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.IoC.Abstractions\PicoHex.IoC.Abstractions.csproj" />
-      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.IoC\PicoHex.IoC.csproj" />
+      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" />
+      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj" />
       <ProjectReference Include="..\..\src\Logger\PicoHex.Log.NG\PicoHex.Log.NG.csproj" />
     </ItemGroup>
 

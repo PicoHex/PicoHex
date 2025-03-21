@@ -1,4 +1,4 @@
-﻿// Global using directives
+// Global using directives
 
-global using PicoHex.IoC;
-global using PicoHex.IoC.Abstractions;
+global using PicoHex.DI;
+global using PicoHex.DI.Abstractions;

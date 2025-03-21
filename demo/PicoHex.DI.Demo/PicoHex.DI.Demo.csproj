@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -9,7 +9,7 @@
         <TrimMode>partial</TrimMode>
         <PublishAot>true</PublishAot>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-
+        
         <!-- 启用严格修剪分析 -->
         <IsTrimmable>true</IsTrimmable>
         <EnableTrimAnalyzer>true</EnableTrimAnalyzer>

@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DependencyInjection\PicoHex.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj" />
       <ProjectReference Include="..\..\src\Server\PicoHex.Server.Http\PicoHex.Server.Http.csproj" />
       <ProjectReference Include="..\..\src\Server\PicoHex.Server\PicoHex.Server.csproj" />
     </ItemGroup>
