@@ -1,8 +1,4 @@
-﻿using PicoHex.DI;
-using PicoHex.DI.Abstractions;
-using PicoHex.DI.Extensions;
-
-namespace PicoHex.DI.Test;
+﻿namespace PicoHex.DI.Test;
 
 public class DependencyInjectionTests
 {

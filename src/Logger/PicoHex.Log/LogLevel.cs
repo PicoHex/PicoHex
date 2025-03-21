@@ -4,9 +4,12 @@ public enum LogLevel : byte
 {
     Trace,
     Debug,
-    Information,
+    Info,
+    Notice,
     Warning,
     Error,
     Critical,
+    Alert,
+    Emergency,
     None = byte.MaxValue
 }

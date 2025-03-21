@@ -8,4 +8,14 @@ public class Logger<T>(ILoggerFactory factory) : ILogger<T>
 
     public void Log(LogLevel logLevel, string message, Exception? exception = null) =>
         _logger.Log(logLevel, message, exception);
+
+    public ValueTask LogAsync(
+        LogLevel logLevel,
+        string message,
+        Exception? exception = null,
+        CancellationToken? cancellationToken = null
+    )
+    {
+        throw new NotImplementedException();
+    }
 }

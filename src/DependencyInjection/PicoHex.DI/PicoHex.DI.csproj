@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <!-- 明确指定.NET Core目标框架 -->
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
 
         <!-- 必须启用的分析器设置 -->
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
@@ -20,9 +20,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <!-- 使用最新稳定版分析器包 -->
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" PrivateAssets="all" />
+      <ProjectReference Include="..\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" />
     </ItemGroup>
 
 </Project>

@@ -2,8 +2,6 @@
 
 // Step 1: Create the IoC container
 
-using PicoHex.DI.Extensions;
-
 var svcRegistry = Bootstrap.CreateContainer();
 const int tcpPort = 8080;
 svcRegistry

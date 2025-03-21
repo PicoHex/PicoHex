@@ -44,6 +44,16 @@ public class LoggerFactory(ILogSink sink, LogLevel minLevel = LogLevel.Debug) : 
             _ = sink.WriteAsync(entry); // Fire and forget
         }
 
+        public ValueTask LogAsync(
+            LogLevel logLevel,
+            string message,
+            Exception? exception = null,
+            CancellationToken? cancellationToken = null
+        )
+        {
+            throw new NotImplementedException();
+        }
+
         private class Scope(Action onDispose) : IDisposable
         {
             public void Dispose() => onDispose?.Invoke();

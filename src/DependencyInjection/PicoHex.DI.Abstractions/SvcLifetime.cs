@@ -1,4 +1,4 @@
-﻿namespace PicoHex.DI;
+﻿namespace PicoHex.DI.Abstractions;
 
 public enum SvcLifetime : byte
 {

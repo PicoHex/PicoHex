@@ -1,4 +1,4 @@
-﻿namespace PicoHex.DI;
+﻿namespace PicoHex.DI.Abstractions;
 
 public sealed class SvcDescriptor(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]

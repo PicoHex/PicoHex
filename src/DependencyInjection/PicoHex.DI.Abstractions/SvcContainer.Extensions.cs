@@ -1,4 +1,4 @@
-﻿namespace PicoHex.DI.Extensions;
+﻿namespace PicoHex.DI.Abstractions;
 
 public static partial class SvcContainerExtensions
 {
