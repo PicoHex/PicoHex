@@ -4,5 +4,6 @@ public enum SvcLifetime : byte
 {
     Transient,
     Singleton,
-    Scoped
+    Scoped,
+    PerThread
 }

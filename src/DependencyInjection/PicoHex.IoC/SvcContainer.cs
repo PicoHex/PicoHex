@@ -6,8 +6,9 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
 
     public ISvcContainer Register(SvcDescriptor descriptor)
     {
-        if (descriptor.Factory is null && descriptor.Instance is null)
+        if (descriptor.Factory is null && descriptor.SingleInstance is null)
             descriptor.Factory = CreateAotFactory(descriptor.ImplementationType);
+
         _descriptors.TryAdd(descriptor.ServiceType, descriptor);
         _descriptors.TryAdd(descriptor.ImplementationType, descriptor);
         return this;

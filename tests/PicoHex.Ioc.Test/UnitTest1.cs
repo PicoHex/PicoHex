@@ -7,6 +7,48 @@ namespace PicoHex.Ioc.Test;
 public class DependencyInjectionTests(ITestOutputHelper testOutputHelper)
 {
     [Fact]
+    public void Register_And_Resolve_PerThread()
+    {
+        try
+        {
+            var svcRegistry = Bootstrap.CreateContainer();
+            var svcProvider = svcRegistry.CreateProvider();
+
+            svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.PerThread);
+
+            IService? s1 = null;
+            IService? s2 = null;
+            IService? s3 = null;
+
+            var t1 = new Thread(() =>
+            {
+                s1 = svcProvider.Resolve<IService>();
+                s2 = svcProvider.Resolve<IService>();
+            });
+            var t2 = new Thread(() =>
+            {
+                s3 = svcProvider.Resolve<IService>();
+            });
+
+            t1.Start();
+            t2.Start();
+            t1.Join();
+            t2.Join();
+
+            Assert.NotNull(s1);
+            Assert.NotNull(s2);
+            Assert.NotNull(s3);
+            Assert.Same(s1, s2);
+            Assert.NotSame(s1, s3);
+        }
+        catch (Exception e)
+        {
+            testOutputHelper.WriteLine(e.ToString());
+            throw;
+        }
+    }
+
+    [Fact]
     public void Register_And_Resolve_Transient()
     {
         var svcRegistry = Bootstrap.CreateContainer();
