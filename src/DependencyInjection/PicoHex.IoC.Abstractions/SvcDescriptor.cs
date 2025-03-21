@@ -16,7 +16,6 @@ public sealed class SvcDescriptor(
     public SvcLifetime Lifetime { get; } = lifetime;
     public Func<ISvcProvider, object>? Factory { get; set; }
     public object? SingleInstance { get; set; }
-    public ThreadLocal<object>? ThreadLocalInstance { get; set; }
 
     public SvcDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
