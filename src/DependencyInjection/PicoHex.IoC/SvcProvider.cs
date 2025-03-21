@@ -51,7 +51,9 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
 
     private object GetThreadLocal(SvcDescriptor svcDescriptor)
     {
-        svcDescriptor.ThreadLocalInstance ??= new ThreadLocal<object>(
+        if (svcDescriptor.ThreadLocalInstance is not null)
+            return svcDescriptor.ThreadLocalInstance;
+        svcDescriptor.ThreadLocalInstance = new ThreadLocal<object>(
             () => svcDescriptor.Factory!(this)
         );
         return svcDescriptor.ThreadLocalInstance.Value!;
