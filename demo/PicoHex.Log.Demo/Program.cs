@@ -6,7 +6,8 @@ var container = Bootstrap.CreateContainer();
 container.AddConsoleLogger();
 
 // Create logger
-var logger = container.CreateLogger<Program>();
+// var logger = container.CreateLogger<Program>();
+var logger = container.CreateProvider().Resolve<ILogger>()!;
 
 // Usage examples
 logger.Info("Starting application");

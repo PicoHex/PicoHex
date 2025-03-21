@@ -6,6 +6,4 @@ public static class ContainerExtensions
     {
         return container;
     }
-
-    public static ILogger CreateLogger<T>(this ISvcContainer container) { }
 }
