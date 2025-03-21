@@ -85,14 +85,16 @@ public class DependencyInjectionTests(ITestOutputHelper testOutputHelper)
 
             IService? s1 = null;
             IService? s2 = null;
+            IService? s3 = null;
 
             var t1 = new Thread(() =>
             {
                 s1 = svcProvider.Resolve<IService>();
+                s2 = svcProvider.Resolve<IService>();
             });
             var t2 = new Thread(() =>
             {
-                s2 = svcProvider.Resolve<IService>();
+                s3 = svcProvider.Resolve<IService>();
             });
 
             t1.Start();
@@ -102,7 +104,8 @@ public class DependencyInjectionTests(ITestOutputHelper testOutputHelper)
 
             Assert.NotNull(s1);
             Assert.NotNull(s2);
-            Assert.NotSame(s1, s2);
+            Assert.Same(s1, s2);
+            Assert.NotSame(s1, s3);
         }
         catch (Exception e)
         {

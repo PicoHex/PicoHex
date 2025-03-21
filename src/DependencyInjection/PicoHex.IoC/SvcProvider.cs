@@ -31,6 +31,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
                 SvcLifetime.Transient => svcDescriptor.Factory!(this),
                 SvcLifetime.Singleton => GetSingleton(svcDescriptor),
                 SvcLifetime.Scoped => svcDescriptor.Factory!(this),
+                SvcLifetime.PerThread => GetThreadLocal(svcDescriptor),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -42,10 +43,18 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
 
     private object GetSingleton(SvcDescriptor svcDescriptor)
     {
-        if (svcDescriptor.Instance is not null)
-            return svcDescriptor.Instance;
-        svcDescriptor.Instance = svcDescriptor.Factory!(this);
-        return svcDescriptor.Instance;
+        if (svcDescriptor.SingleInstance is not null)
+            return svcDescriptor.SingleInstance;
+        svcDescriptor.SingleInstance = svcDescriptor.Factory!(this);
+        return svcDescriptor.SingleInstance;
+    }
+
+    private object GetThreadLocal(SvcDescriptor svcDescriptor)
+    {
+        svcDescriptor.ThreadLocalInstance ??= new ThreadLocal<object>(
+            () => svcDescriptor.Factory!(this)
+        );
+        return svcDescriptor.ThreadLocalInstance.Value!;
     }
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
