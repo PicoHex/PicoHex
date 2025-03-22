@@ -33,7 +33,10 @@ public class TcpServer : IDisposable, IAsyncDisposable
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         _listener.Start();
-        _logger.LogInformation("TCP server started on {IPAddress}:{Port}", _ipAddress, _port);
+        await _logger.InfoAsync(
+            $"TCP server started on {_ipAddress}:{_port}",
+            cancellationToken: cancellationToken
+        );
 
         try
         {
@@ -57,29 +60,41 @@ public class TcpServer : IDisposable, IAsyncDisposable
                 }
                 catch (SocketException socketEx)
                 {
-                    _logger.LogWarning(
+                    await _logger.WarningAsync(
+                        "Socket exception while accepting a client connection",
                         socketEx,
-                        "Socket exception while accepting a client connection"
+                        cancellationToken
                     );
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Unexpected error while accepting a client connection");
+                    await _logger.ErrorAsync(
+                        "Unexpected error while accepting a client connection",
+                        ex,
+                        cancellationToken: cancellationToken
+                    );
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("TCP server shutdown requested");
+            await _logger.InfoAsync(
+                "TCP server shutdown requested",
+                cancellationToken: cancellationToken
+            );
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "TCP server encountered an error");
+            await _logger.ErrorAsync(
+                "TCP server encountered an error",
+                ex,
+                cancellationToken: cancellationToken
+            );
         }
         finally
         {
             Stop();
-            _logger.LogInformation("TCP server stopped");
+            await _logger.InfoAsync("TCP server stopped", cancellationToken: cancellationToken);
         }
     }
 
@@ -109,13 +124,17 @@ public class TcpServer : IDisposable, IAsyncDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error handling client connection");
+                await _logger.ErrorAsync(
+                    "Error handling client connection",
+                    ex,
+                    cancellationToken: cancellationToken
+                );
             }
             finally
             {
-                _logger.LogInformation(
-                    "Client {@RemoteEndPoint} connection closed",
-                    client.Client.RemoteEndPoint
+                await _logger.InfoAsync(
+                    $"Client {client.Client.RemoteEndPoint} connection closed",
+                    cancellationToken: cancellationToken
                 );
             }
         }

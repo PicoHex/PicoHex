@@ -1,3 +1,5 @@
+using PicoHex.Log.Extensions;
+
 namespace PicoHex.Server.Http;
 
 public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
@@ -18,7 +20,11 @@ public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling RESTful request");
+            await _logger.ErrorAsync(
+                "Error handling RESTful request",
+                ex,
+                cancellationToken: cancellationToken
+            );
 
             // Respond with a 500 error if something goes wrong
             try
@@ -61,7 +67,7 @@ public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing request");
+            _logger.Error("Error processing request", ex);
             return new HttpResponse
             {
                 StatusCode = 500,

@@ -15,7 +15,10 @@ public class MyStreamHandler(ILogger<MyStreamHandler> logger) : ITcpHandler
         try
         {
             // Example of logging inside the stream handler
-            _logger.LogInformation("Handling incoming stream...");
+            await _logger.InfoAsync(
+                "Handling incoming stream...",
+                cancellationToken: cancellationToken
+            );
 
             // Simulate processing the stream (e.g., reading data)
             byte[] buffer = new byte[1024];
@@ -23,16 +26,26 @@ public class MyStreamHandler(ILogger<MyStreamHandler> logger) : ITcpHandler
 
             if (bytesRead > 0)
             {
-                _logger.LogInformation($"Received {bytesRead} bytes.");
+                await _logger.InfoAsync(
+                    $"Received {bytesRead} bytes.",
+                    cancellationToken: cancellationToken
+                );
             }
             else
             {
-                _logger.LogWarning("Received zero bytes or client closed the connection.");
+                await _logger.WarningAsync(
+                    "Received zero bytes or client closed the connection.",
+                    cancellationToken: cancellationToken
+                );
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while handling stream");
+            await _logger.ErrorAsync(
+                "Error while handling stream",
+                ex,
+                cancellationToken: cancellationToken
+            );
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server;
 
-public class UdpServer : IDisposable,IAsyncDisposable
+public class UdpServer : IDisposable, IAsyncDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly ushort _port;
@@ -32,7 +32,10 @@ public class UdpServer : IDisposable,IAsyncDisposable
     /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("UDP server started on {IPAddress}:{Port}", _ipAddress, _port);
+        await _logger.InfoAsync(
+            "UDP server started on {_ipAddress}:{_port}",
+            cancellationToken: cancellationToken
+        );
 
         try
         {
@@ -64,23 +67,34 @@ public class UdpServer : IDisposable,IAsyncDisposable
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error receiving UDP datagram");
+                    await _logger.ErrorAsync(
+                        "Error receiving UDP datagram",
+                        ex,
+                        cancellationToken: cancellationToken
+                    );
                     _bufferPool.Return(buffer);
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("UDP server shutdown requested");
+            await _logger.InfoAsync(
+                "UDP server shutdown requested",
+                cancellationToken: cancellationToken
+            );
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "UDP server encountered an error");
+            await _logger.ErrorAsync(
+                "UDP server encountered an error",
+                ex,
+                cancellationToken: cancellationToken
+            );
         }
         finally
         {
             Stop();
-            _logger.LogInformation("UDP server stopped");
+            await _logger.InfoAsync("UDP server stopped", cancellationToken: cancellationToken);
         }
     }
 
@@ -99,10 +113,10 @@ public class UdpServer : IDisposable,IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(
+            await _logger.ErrorAsync(
+                $"Error processing datagram from {remoteEndPoint}",
                 ex,
-                "Error processing datagram from {@RemoteEndPoint}",
-                remoteEndPoint
+                cancellationToken: cancellationToken
             );
         }
         finally

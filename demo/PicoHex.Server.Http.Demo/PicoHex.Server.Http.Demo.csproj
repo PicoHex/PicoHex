@@ -10,12 +10,9 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" />
       <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj" />
+      <ProjectReference Include="..\..\src\Logger\PicoHex.Log\PicoHex.Log.csproj" />
       <ProjectReference Include="..\..\src\Server\PicoHex.Server.Http\PicoHex.Server.Http.csproj" />
       <ProjectReference Include="..\..\src\Server\PicoHex.Server\PicoHex.Server.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.3" />
     </ItemGroup>
 
 </Project>

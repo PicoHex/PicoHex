@@ -3,7 +3,7 @@
 Console.WriteLine("Hello, World!");
 
 var container = Bootstrap.CreateContainer();
-container.AddConsoleLogger<Program>();
+container.RegisterConsoleLogger<Program>();
 
 // Create logger
 var logger = container.CreateLogger<Program>();

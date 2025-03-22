@@ -15,16 +15,25 @@ public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
     {
         try
         {
-            _logger.LogInformation($"Received datagram from {remoteEndPoint}");
+            await _logger.InfoAsync(
+                $"Received datagram from {remoteEndPoint}",
+                cancellationToken: cancellationToken
+            );
 
             // Example of processing the data (e.g., echoing it back or processing it)
             if (data.Length > 0)
             {
-                _logger.LogInformation($"Data received: {BitConverter.ToString(data)}");
+                await _logger.InfoAsync(
+                    $"Data received: {BitConverter.ToString(data)}",
+                    cancellationToken: cancellationToken
+                );
             }
             else
             {
-                _logger.LogWarning("Received empty datagram.");
+                await _logger.WarningAsync(
+                    "Received empty datagram.",
+                    cancellationToken: cancellationToken
+                );
             }
 
             // Simulate processing delay
@@ -32,7 +41,11 @@ public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while handling datagram");
+            await _logger.ErrorAsync(
+                "Error while handling datagram",
+                ex,
+                cancellationToken: cancellationToken
+            );
         }
     }
 }

@@ -12,25 +12,33 @@ svcRegistry.RegisterSingle<ILogger<TcpServer>, Logger<TcpServer>>();
 svcRegistry.RegisterSingle<ILogger<UdpServer>, Logger<UdpServer>>();
 svcRegistry.RegisterSingle<ILogger<MyStreamHandler>, Logger<MyStreamHandler>>();
 svcRegistry.RegisterSingle<ILogger<MyBytesHandler>, Logger<MyBytesHandler>>();
-svcRegistry.RegisterSingle(_ => LoggerFactory.Create(builder => builder.AddConsole()));
+svcRegistry.RegisterConsoleLogger<Program>();
+
+var logger = svcRegistry.CreateLogger<Program>();
 
 // Registering servers
 svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
 svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
 const int tcpPort = 12345;
 const int udpPort = 12346;
-svcRegistry.RegisterSingle<TcpServer>(sp => new TcpServer(
-    IPAddress.Any,
-    tcpPort,
-    sp.Resolve<Func<ITcpHandler>>(),
-    sp.Resolve<ILogger<TcpServer>>()
-));
-svcRegistry.RegisterSingle<UdpServer>(sp => new UdpServer(
-    IPAddress.Any,
-    udpPort,
-    sp.Resolve<Func<IUdpHandler>>(),
-    sp.Resolve<ILogger<UdpServer>>()
-));
+svcRegistry.RegisterSingle<TcpServer>(
+    sp =>
+        new TcpServer(
+            IPAddress.Any,
+            tcpPort,
+            sp.Resolve<Func<ITcpHandler>>(),
+            sp.Resolve<ILogger<TcpServer>>()
+        )
+);
+svcRegistry.RegisterSingle<UdpServer>(
+    sp =>
+        new UdpServer(
+            IPAddress.Any,
+            udpPort,
+            sp.Resolve<Func<IUdpHandler>>(),
+            sp.Resolve<ILogger<UdpServer>>()
+        )
+);
 
 var serviceProvider = svcRegistry.CreateProvider();
 
@@ -63,18 +71,4 @@ try
 catch (Exception ex)
 {
     Console.WriteLine($"An unhandled exception occurred during application startup: {ex}");
-}
-finally
-{
-    await Log.CloseAndFlushAsync();
-}
-
-// Creates a default logger that logs to the console
-ILogger<T> CreateDefaultLogger<T>()
-{
-    var factory = LoggerFactory.Create(builder =>
-    {
-        builder.AddConsole(); // This will log to the console by default
-    });
-    return factory.CreateLogger<T>();
 }

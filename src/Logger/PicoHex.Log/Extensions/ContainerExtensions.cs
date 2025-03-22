@@ -2,7 +2,7 @@
 
 public static class ContainerExtensions
 {
-    public static ISvcContainer AddConsoleLogger<T>(this ISvcContainer container) =>
+    public static ISvcContainer RegisterConsoleLogger<T>(this ISvcContainer container) =>
         container
             .RegisterScoped<ILogFormatter, ConsoleLogFormatter>()
             .RegisterScoped<ILoggerFactory, LoggerFactory>()

@@ -8,18 +8,21 @@ svcRegistry
     // .AddLogging(builder => builder.AddConsole())
     .RegisterTransient<ITcpHandler, RestfulHandler>()
     .RegisterTransient<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler>()!)
-    .RegisterSingle<TcpServer>(sp => new TcpServer(
-        IPAddress.Any,
-        tcpPort,
-        sp.Resolve<Func<ITcpHandler>>(),
-        sp.Resolve<ILogger<TcpServer>>()
-    ))
+    .RegisterSingle<TcpServer>(
+        sp =>
+            new TcpServer(
+                IPAddress.Any,
+                tcpPort,
+                sp.Resolve<Func<ITcpHandler>>(),
+                sp.Resolve<ILogger<TcpServer>>()
+            )
+    )
     .RegisterSingle<RestfulHandler>();
 
 svcRegistry
     .RegisterSingle<ILogger<TcpServer>, Logger<TcpServer>>()
     .RegisterSingle<ILogger<RestfulHandler>, Logger<RestfulHandler>>()
-    .RegisterSingle<ILoggerFactory>(_ => LoggerFactory.Create(builder => builder.AddConsole()));
+    .RegisterConsoleLogger<Program>();
 
 var svcProvider = svcRegistry.CreateProvider();
 

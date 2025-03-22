@@ -3,5 +3,6 @@
 global using System.Buffers;
 global using System.Net;
 global using System.Net.Sockets;
-global using Microsoft.Extensions.Logging;
+global using PicoHex.Log.Abstractions;
+global using PicoHex.Log.Extensions;
 global using PicoHex.Server.Abstractions;
