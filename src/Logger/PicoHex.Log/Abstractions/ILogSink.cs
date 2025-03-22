@@ -2,5 +2,5 @@
 
 public interface ILogSink : IDisposable
 {
-    Task WriteAsync(LogEntry entry);
+    ValueTask WriteAsync(LogEntry entry, CancellationToken cancellationToken = default);
 }

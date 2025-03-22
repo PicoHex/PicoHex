@@ -27,10 +27,10 @@ public class ConsoleLogSink : ILogSink
         }
     }
 
-    public async Task WriteAsync(LogEntry entry)
-    {
-        await _channel.Writer.WriteAsync(entry);
-    }
+    public async ValueTask WriteAsync(
+        LogEntry entry,
+        CancellationToken cancellationToken = default
+    ) => await _channel.Writer.WriteAsync(entry, cancellationToken);
 
     public void Dispose()
     {

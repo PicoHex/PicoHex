@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Server;
 
-public class TcpServer : IDisposable,IAsyncDisposable
+public class TcpServer : IDisposable, IAsyncDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly ushort _port;
@@ -59,12 +59,12 @@ public class TcpServer : IDisposable,IAsyncDisposable
                 {
                     _logger.LogWarning(
                         socketEx,
-                        "Socket exception while accepting a client connection."
+                        "Socket exception while accepting a client connection"
                     );
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Unexpected error while accepting a client connection.");
+                    _logger.LogError(ex, "Unexpected error while accepting a client connection");
                 }
             }
         }
