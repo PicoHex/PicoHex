@@ -35,3 +35,6 @@ using (logger.BeginScope("Transaction-123"))
         }
     }
 }
+
+Console.WriteLine("Press any key to exit...");
+Console.ReadKey();

@@ -1,11 +1,12 @@
 ﻿namespace PicoHex.Log;
 
-public class LoggerFactory(ILogSink sink, LogLevel minLevel = LogLevel.Debug) : ILoggerFactory
+public class LoggerFactory(ILogSink sink) : ILoggerFactory
 {
     private readonly AsyncLocal<Stack<object>> _scopes = new();
+    public LogLevel MinLevel { get; set; } = LogLevel.Debug;
 
     public ILogger CreateLogger(string categoryName) =>
-        new InternalLogger(categoryName, sink, minLevel, this);
+        new InternalLogger(categoryName, sink, MinLevel, this);
 
     private class InternalLogger(
         string category,
@@ -44,14 +45,27 @@ public class LoggerFactory(ILogSink sink, LogLevel minLevel = LogLevel.Debug) : 
             _ = sink.WriteAsync(entry); // Fire and forget
         }
 
-        public ValueTask LogAsync(
+        public async ValueTask LogAsync(
             LogLevel logLevel,
             string message,
             Exception? exception = null,
             CancellationToken? cancellationToken = null
         )
         {
-            throw new NotImplementedException();
+            if (logLevel < minLevel)
+                return;
+
+            var entry = new LogEntry
+            {
+                Timestamp = DateTimeOffset.Now,
+                Level = logLevel,
+                Category = category,
+                Message = message,
+                Exception = exception,
+                Scopes = factory._scopes.Value?.Reverse().ToList()
+            };
+
+            await sink.WriteAsync(entry);
         }
 
         private class Scope(Action onDispose) : IDisposable
