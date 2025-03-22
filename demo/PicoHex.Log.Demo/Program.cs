@@ -3,11 +3,11 @@
 Console.WriteLine("Hello, World!");
 
 var container = Bootstrap.CreateContainer();
-container.AddConsoleLogger();
+container.AddConsoleLogger<Program>();
 
 // Create logger
 // var logger = container.CreateLogger<Program>();
-var logger = container.CreateProvider().Resolve<ILogger>()!;
+var logger = container.CreateProvider().Resolve<ILogger<Program>>()!;
 
 // Usage examples
 logger.Info("Starting application");
