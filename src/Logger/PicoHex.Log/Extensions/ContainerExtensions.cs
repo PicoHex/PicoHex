@@ -2,12 +2,13 @@
 
 public static class ContainerExtensions
 {
-    public static ISvcContainer AddConsoleLogger<T>(this ISvcContainer container)
-    {
-        container.RegisterScoped<ILogFormatter, ConsoleLogFormatter>();
-        container.RegisterScoped<ILoggerFactory, LoggerFactory>();
-        container.RegisterScoped<ILogSink, ConsoleLogSink>();
-        container.RegisterScoped<ILogger<T>, Logger<T>>();
-        return container;
-    }
+    public static ISvcContainer AddConsoleLogger<T>(this ISvcContainer container) =>
+        container
+            .RegisterScoped<ILogFormatter, ConsoleLogFormatter>()
+            .RegisterScoped<ILoggerFactory, LoggerFactory>()
+            .RegisterScoped<ILogSink, ConsoleLogSink>()
+            .RegisterScoped<ILogger<T>, Logger<T>>();
+
+    public static ILogger CreateLogger<T>(this ISvcContainer container) =>
+        container.CreateProvider().Resolve<ILogger<T>>()!;
 }
