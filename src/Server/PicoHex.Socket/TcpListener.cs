@@ -75,12 +75,11 @@ public sealed class TcpListener : IDisposable, IAsyncDisposable
 
     private void OnClientDisconnected(Guid clientId)
     {
-        if (_clients.TryRemove(clientId, out var client))
-        {
-            client.Dispose();
-            // 触发客户端断开事件
-            ClientDisconnected?.Invoke(clientId);
-        }
+        if (!_clients.TryRemove(clientId, out var client))
+            return;
+        client.Dispose();
+        // 触发客户端断开事件
+        ClientDisconnected?.Invoke(clientId);
     }
 
     private void OnClientError(Exception ex)

@@ -1,5 +1,3 @@
-using PicoHex.Log.Extensions;
-
 namespace PicoHex.Server.Http;
 
 public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
