@@ -14,8 +14,5 @@ public class Logger<TCategory>(ILoggerFactory factory) : ILogger<TCategory>
         string message,
         Exception? exception = null,
         CancellationToken cancellationToken = default
-    )
-    {
-        await _innerLogger.LogAsync(logLevel, message, exception, cancellationToken);
-    }
+    ) => await _innerLogger.LogAsync(logLevel, message, exception, cancellationToken);
 }
