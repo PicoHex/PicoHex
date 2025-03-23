@@ -6,29 +6,30 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
     public LogLevel MinLevel { get; set; } = LogLevel.Debug;
 
     public ILogger CreateLogger(string categoryName) =>
-        new InternalLogger(categoryName, sinks, MinLevel, this);
+        new InternalLogger(categoryName, sinks, this);
 
     private class InternalLogger : ILogger, IDisposable
     {
-        private readonly Channel<LogEntry> _channel = Channel.CreateUnbounded<LogEntry>();
+        private readonly string _categoryName;
+        private readonly Channel<LogEntry> _channel = Channel.CreateBounded<LogEntry>(
+            new BoundedChannelOptions(1000) { FullMode = BoundedChannelFullMode.DropOldest }
+        );
         private readonly Task _processingTask;
-        private readonly string _category;
         private readonly IEnumerable<ILogSink> _sinks;
-        private readonly LogLevel _minLevel;
         private readonly LoggerFactory _factory;
+        private readonly ILogSink _defaultSink;
 
         public InternalLogger(
-            string category,
+            string categoryName,
             IEnumerable<ILogSink> sinks,
-            LogLevel minLevel,
             LoggerFactory factory
         )
         {
-            _category = category;
             _sinks = sinks;
-            _minLevel = minLevel;
             _factory = factory;
+            _categoryName = categoryName;
             _processingTask = Task.Run(ProcessEntries);
+            _defaultSink = _sinks.First(p => p is ConsoleLogSink);
         }
 
         private async Task ProcessEntries()
@@ -41,8 +42,16 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
                     {
                         await sink.WriteAsync(entry);
                     }
-                    catch
-                    { /* 确保主线程不受影响 */
+                    catch (Exception ex)
+                    {
+                        var sinkEntry = new LogEntry
+                        {
+                            Timestamp = DateTimeOffset.Now,
+                            Level = LogLevel.Error,
+                            Category = _categoryName,
+                            Exception = ex
+                        };
+                        await _defaultSink.WriteAsync(sinkEntry);
                     }
                 }
             }
@@ -62,20 +71,20 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
 
         public void Log(LogLevel logLevel, string message, Exception? exception)
         {
-            if (logLevel < _minLevel)
+            if (logLevel < _factory.MinLevel)
                 return;
 
             var entry = new LogEntry
             {
                 Timestamp = DateTimeOffset.Now,
                 Level = logLevel,
-                Category = _category,
+                Category = _categoryName,
                 Message = message,
                 Exception = exception,
                 Scopes = _factory._scopes.Value?.Reverse().ToList()
             };
 
-            _channel.Writer.WriteAsync(entry); // Fire and forget
+            _channel.Writer.TryWrite(entry); // Fire and forget
         }
 
         public async ValueTask LogAsync(
@@ -85,14 +94,14 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
             CancellationToken cancellationToken = default
         )
         {
-            if (logLevel < _minLevel)
+            if (logLevel < _factory.MinLevel)
                 return;
 
             var entry = new LogEntry
             {
                 Timestamp = DateTimeOffset.Now,
                 Level = logLevel,
-                Category = _category,
+                Category = _categoryName,
                 Message = message,
                 Exception = exception,
                 Scopes = _factory._scopes.Value?.Reverse().ToList()
@@ -109,6 +118,7 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
         public void Dispose()
         {
             _channel.Writer.Complete();
+            _processingTask.Wait();
             _processingTask.Dispose();
             foreach (var sink in _sinks)
                 sink.Dispose();

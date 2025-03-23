@@ -1,13 +1,13 @@
 ﻿namespace PicoHex.Log;
 
-public class Logger<T>(ILoggerFactory factory) : ILogger<T>
+public class Logger<TCategory>(ILoggerFactory factory) : ILogger<TCategory>
 {
-    private readonly ILogger _logger = factory.CreateLogger(typeof(T).FullName!);
+    private readonly ILogger _innerLogger = factory.CreateLogger(typeof(TCategory).FullName!);
 
-    public IDisposable BeginScope<TState>(TState state) => _logger.BeginScope(state);
+    public IDisposable BeginScope<TState>(TState state) => _innerLogger.BeginScope(state);
 
     public void Log(LogLevel logLevel, string message, Exception? exception = null) =>
-        _logger.Log(logLevel, message, exception);
+        _innerLogger.Log(logLevel, message, exception);
 
     public async ValueTask LogAsync(
         LogLevel logLevel,
@@ -16,6 +16,6 @@ public class Logger<T>(ILoggerFactory factory) : ILogger<T>
         CancellationToken cancellationToken = default
     )
     {
-        await _logger.LogAsync(logLevel, message, exception, cancellationToken);
+        await _innerLogger.LogAsync(logLevel, message, exception, cancellationToken);
     }
 }
