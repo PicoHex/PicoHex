@@ -8,7 +8,7 @@ public interface ILogger
         LogLevel logLevel,
         string message,
         Exception? exception = null,
-        CancellationToken? cancellationToken = null
+        CancellationToken cancellationToken = default
     );
 }
 

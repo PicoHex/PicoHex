@@ -13,9 +13,9 @@ public class Logger<T>(ILoggerFactory factory) : ILogger<T>
         LogLevel logLevel,
         string message,
         Exception? exception = null,
-        CancellationToken? cancellationToken = null
+        CancellationToken cancellationToken = default
     )
     {
-        await _logger.LogAsync(logLevel, message, exception);
+        await _logger.LogAsync(logLevel, message, exception, cancellationToken);
     }
 }

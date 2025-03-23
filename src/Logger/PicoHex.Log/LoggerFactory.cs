@@ -49,7 +49,7 @@ public class LoggerFactory(ILogSink sink) : ILoggerFactory
             LogLevel logLevel,
             string message,
             Exception? exception = null,
-            CancellationToken? cancellationToken = null
+            CancellationToken cancellationToken = default
         )
         {
             if (logLevel < minLevel)
@@ -65,7 +65,7 @@ public class LoggerFactory(ILogSink sink) : ILoggerFactory
                 Scopes = factory._scopes.Value?.Reverse().ToList()
             };
 
-            await sink.WriteAsync(entry);
+            await sink.WriteAsync(entry, cancellationToken);
         }
 
         private class Scope(Action onDispose) : IDisposable
