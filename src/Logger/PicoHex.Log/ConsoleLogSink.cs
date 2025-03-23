@@ -1,36 +1,12 @@
 ﻿namespace PicoHex.Log;
 
-public class ConsoleLogSink : ILogSink
+public class ConsoleLogSink(ILogFormatter formatter) : ILogSink
 {
-    private readonly Channel<LogEntry> _channel = Channel.CreateUnbounded<LogEntry>();
-    private readonly ILogFormatter _formatter;
-    private readonly Task _processingTask;
-
-    public ConsoleLogSink(ILogFormatter formatter)
+    public ValueTask WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
     {
-        _formatter = formatter;
-        _processingTask = Task.Run(ProcessEntries);
+        WriteColoredLog(entry.Level, formatter.Format(entry));
+        return ValueTask.CompletedTask;
     }
-
-    private async Task ProcessEntries()
-    {
-        await foreach (var entry in _channel.Reader.ReadAllAsync())
-        {
-            try
-            {
-                var formatted = _formatter.Format(entry);
-                WriteColoredLog(entry.Level, formatted);
-            }
-            catch
-            { /* 确保主线程不受影响 */
-            }
-        }
-    }
-
-    public async ValueTask WriteAsync(
-        LogEntry entry,
-        CancellationToken cancellationToken = default
-    ) => await _channel.Writer.WriteAsync(entry, cancellationToken);
 
     private void WriteColoredLog(LogLevel level, string message)
     {
@@ -56,9 +32,5 @@ public class ConsoleLogSink : ILogSink
         Console.ForegroundColor = originalColor; // 恢复原始颜色
     }
 
-    public void Dispose()
-    {
-        _channel.Writer.Complete();
-        _processingTask.Wait();
-    }
+    public void Dispose() { }
 }

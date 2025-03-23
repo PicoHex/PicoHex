@@ -8,16 +8,46 @@ public class LoggerFactory(ILogSink sink) : ILoggerFactory
     public ILogger CreateLogger(string categoryName) =>
         new InternalLogger(categoryName, sink, MinLevel, this);
 
-    private class InternalLogger(
-        string category,
-        ILogSink sink,
-        LogLevel minLevel,
-        LoggerFactory factory
-    ) : ILogger
+    private class InternalLogger : ILogger, IDisposable
     {
+        private readonly Channel<LogEntry> _channel = Channel.CreateUnbounded<LogEntry>();
+        private readonly Task _processingTask;
+        private readonly string _category;
+        private readonly ILogSink _sink;
+        private readonly LogLevel _minLevel;
+        private readonly LoggerFactory _factory;
+
+        public InternalLogger(
+            string category,
+            ILogSink sink,
+            LogLevel minLevel,
+            LoggerFactory factory
+        )
+        {
+            _category = category;
+            _sink = sink;
+            _minLevel = minLevel;
+            _factory = factory;
+            _processingTask = Task.Run(ProcessEntries);
+        }
+
+        private async Task ProcessEntries()
+        {
+            await foreach (var entry in _channel.Reader.ReadAllAsync())
+            {
+                try
+                {
+                    await _sink.WriteAsync(entry);
+                }
+                catch
+                { /* 确保主线程不受影响 */
+                }
+            }
+        }
+
         public IDisposable BeginScope<TState>(TState state)
         {
-            var stack = factory._scopes.Value ??= new Stack<object>();
+            var stack = _factory._scopes.Value ??= new Stack<object>();
             stack.Push(state!);
 
             return new Scope(() =>
@@ -29,20 +59,20 @@ public class LoggerFactory(ILogSink sink) : ILoggerFactory
 
         public void Log(LogLevel logLevel, string message, Exception? exception)
         {
-            if (logLevel < minLevel)
+            if (logLevel < _minLevel)
                 return;
 
             var entry = new LogEntry
             {
                 Timestamp = DateTimeOffset.Now,
                 Level = logLevel,
-                Category = category,
+                Category = _category,
                 Message = message,
                 Exception = exception,
-                Scopes = factory._scopes.Value?.Reverse().ToList()
+                Scopes = _factory._scopes.Value?.Reverse().ToList()
             };
 
-            _ = sink.WriteAsync(entry); // Fire and forget
+            _channel.Writer.WriteAsync(entry); // Fire and forget
         }
 
         public async ValueTask LogAsync(
@@ -52,25 +82,32 @@ public class LoggerFactory(ILogSink sink) : ILoggerFactory
             CancellationToken cancellationToken = default
         )
         {
-            if (logLevel < minLevel)
+            if (logLevel < _minLevel)
                 return;
 
             var entry = new LogEntry
             {
                 Timestamp = DateTimeOffset.Now,
                 Level = logLevel,
-                Category = category,
+                Category = _category,
                 Message = message,
                 Exception = exception,
-                Scopes = factory._scopes.Value?.Reverse().ToList()
+                Scopes = _factory._scopes.Value?.Reverse().ToList()
             };
 
-            await sink.WriteAsync(entry, cancellationToken);
+            await _channel.Writer.WriteAsync(entry, cancellationToken);
         }
 
         private class Scope(Action onDispose) : IDisposable
         {
-            public void Dispose() => onDispose?.Invoke();
+            public void Dispose() => onDispose();
+        }
+
+        public void Dispose()
+        {
+            _channel.Writer.Complete();
+            _processingTask.Dispose();
+            _sink.Dispose();
         }
     }
 }
