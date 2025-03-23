@@ -1,31 +1,31 @@
 ﻿namespace PicoHex.Log;
 
-public class LoggerFactory(ILogSink sink) : ILoggerFactory
+public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
 {
     private readonly AsyncLocal<Stack<object>> _scopes = new();
     public LogLevel MinLevel { get; set; } = LogLevel.Debug;
 
     public ILogger CreateLogger(string categoryName) =>
-        new InternalLogger(categoryName, sink, MinLevel, this);
+        new InternalLogger(categoryName, sinks, MinLevel, this);
 
     private class InternalLogger : ILogger, IDisposable
     {
         private readonly Channel<LogEntry> _channel = Channel.CreateUnbounded<LogEntry>();
         private readonly Task _processingTask;
         private readonly string _category;
-        private readonly ILogSink _sink;
+        private readonly IEnumerable<ILogSink> _sinks;
         private readonly LogLevel _minLevel;
         private readonly LoggerFactory _factory;
 
         public InternalLogger(
             string category,
-            ILogSink sink,
+            IEnumerable<ILogSink> sinks,
             LogLevel minLevel,
             LoggerFactory factory
         )
         {
             _category = category;
-            _sink = sink;
+            _sinks = sinks;
             _minLevel = minLevel;
             _factory = factory;
             _processingTask = Task.Run(ProcessEntries);
@@ -35,12 +35,15 @@ public class LoggerFactory(ILogSink sink) : ILoggerFactory
         {
             await foreach (var entry in _channel.Reader.ReadAllAsync())
             {
-                try
+                foreach (var sink in _sinks)
                 {
-                    await _sink.WriteAsync(entry);
-                }
-                catch
-                { /* 确保主线程不受影响 */
+                    try
+                    {
+                        await sink.WriteAsync(entry);
+                    }
+                    catch
+                    { /* 确保主线程不受影响 */
+                    }
                 }
             }
         }
@@ -107,7 +110,8 @@ public class LoggerFactory(ILogSink sink) : ILoggerFactory
         {
             _channel.Writer.Complete();
             _processingTask.Dispose();
-            _sink.Dispose();
+            foreach (var sink in _sinks)
+                sink.Dispose();
         }
     }
 }
