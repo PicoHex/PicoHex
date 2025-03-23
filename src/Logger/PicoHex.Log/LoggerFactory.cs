@@ -1,8 +1,9 @@
-﻿namespace PicoHex.Log;
+﻿using System.Collections.Immutable;
+
+namespace PicoHex.Log;
 
 public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
 {
-    private readonly AsyncLocal<Stack<object>> _scopes = new();
     public LogLevel MinLevel { get; set; } = LogLevel.Debug;
 
     public ILogger CreateLogger(string categoryName) =>
@@ -11,8 +12,9 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
     private class InternalLogger : ILogger, IDisposable
     {
         private readonly string _categoryName;
+        private readonly AsyncLocal<ImmutableStack<object>> _scopes = new();
         private readonly Channel<LogEntry> _channel = Channel.CreateBounded<LogEntry>(
-            new BoundedChannelOptions(1000) { FullMode = BoundedChannelFullMode.DropOldest }
+            new BoundedChannelOptions(65535) { FullMode = BoundedChannelFullMode.DropOldest }
         );
         private readonly Task _processingTask;
         private readonly IEnumerable<ILogSink> _sinks;
@@ -59,13 +61,11 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
 
         public IDisposable BeginScope<TState>(TState state)
         {
-            var stack = _factory._scopes.Value ??= new Stack<object>();
-            stack.Push(state!);
-
+            var stack = _scopes.Value ?? ImmutableStack<object>.Empty;
+            _scopes.Value = stack.Push(state!);
             return new Scope(() =>
             {
-                if (stack.Count > 0)
-                    stack.Pop();
+                _scopes.Value = _scopes.Value?.Pop() ?? ImmutableStack<object>.Empty;
             });
         }
 
@@ -81,7 +81,7 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
                 Category = _categoryName,
                 Message = message,
                 Exception = exception,
-                Scopes = _factory._scopes.Value?.Reverse().ToList()
+                Scopes = _scopes.Value?.Reverse().ToList()
             };
 
             _channel.Writer.TryWrite(entry); // Fire and forget
@@ -104,7 +104,7 @@ public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
                 Category = _categoryName,
                 Message = message,
                 Exception = exception,
-                Scopes = _factory._scopes.Value?.Reverse().ToList()
+                Scopes = _scopes.Value?.Reverse().ToList()
             };
 
             await _channel.Writer.WriteAsync(entry, cancellationToken);
