@@ -3,7 +3,7 @@
 var svcRegistry = Bootstrap.CreateContainer();
 
 // Registering logging
-// serviceCollection.AddLogging(builder => builder.AddConsole());
+svcRegistry.RegisterConsoleLogger<Program>();
 
 // Registering Handlers
 svcRegistry.RegisterSingle<ITcpHandler, MyStreamHandler>();
@@ -17,28 +17,22 @@ svcRegistry.RegisterConsoleLogger<Program>();
 var logger = svcRegistry.CreateLogger<Program>();
 
 // Registering servers
-svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
-svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
+svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler>()!);
+svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => () => sp.Resolve<IUdpHandler>()!);
 const int tcpPort = 12345;
 const int udpPort = 12346;
-svcRegistry.RegisterSingle<TcpServer>(
-    sp =>
-        new TcpServer(
-            IPAddress.Any,
-            tcpPort,
-            sp.Resolve<Func<ITcpHandler>>(),
-            sp.Resolve<ILogger<TcpServer>>()
-        )
-);
-svcRegistry.RegisterSingle<UdpServer>(
-    sp =>
-        new UdpServer(
-            IPAddress.Any,
-            udpPort,
-            sp.Resolve<Func<IUdpHandler>>(),
-            sp.Resolve<ILogger<UdpServer>>()
-        )
-);
+svcRegistry.RegisterSingle<TcpServer>(sp => new TcpServer(
+    IPAddress.Any,
+    tcpPort,
+    sp.Resolve<Func<ITcpHandler>>(),
+    sp.Resolve<ILogger<TcpServer>>()
+));
+svcRegistry.RegisterSingle<UdpServer>(sp => new UdpServer(
+    IPAddress.Any,
+    udpPort,
+    sp.Resolve<Func<IUdpHandler>>(),
+    sp.Resolve<ILogger<UdpServer>>()
+));
 
 var serviceProvider = svcRegistry.CreateProvider();
 
@@ -56,19 +50,19 @@ var serviceProvider = svcRegistry.CreateProvider();
 try
 {
     // Proceed with starting the servers (TcpServer and UdpServer)
-    var tcpServer = serviceProvider.Resolve<TcpServer>();
-    var udpServer = serviceProvider.Resolve<UdpServer>();
+    var tcpServer = serviceProvider.Resolve<TcpServer>()!;
+    var udpServer = serviceProvider.Resolve<UdpServer>()!;
 
     using var cancellationTokenSource = new CancellationTokenSource();
 
     // Run servers
-    var tcpServerTask = tcpServer?.StartAsync(cancellationTokenSource.Token);
-    var udpServerTask = udpServer?.StartAsync(cancellationTokenSource.Token);
+    var tcpServerTask = tcpServer.StartAsync(cancellationTokenSource.Token);
+    var udpServerTask = udpServer.StartAsync(cancellationTokenSource.Token);
 
     // Wait for servers to complete
     await Task.WhenAny(tcpServerTask, udpServerTask).GetAwaiter().GetResult();
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"An unhandled exception occurred during application startup: {ex}");
+    logger.Error($"An unhandled exception occurred during application startup: {ex}");
 }

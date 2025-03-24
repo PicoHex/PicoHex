@@ -8,10 +8,13 @@ public static class Bootstrap
             new SvcProviderFactory(new SvcScopeFactory())
         ).CreateContainer();
         container.RegisterSingle<ISvcContainer>(container);
-        container.RegisterTransient<ISvcProviderFactory, SvcProviderFactory>();
-        container.RegisterTransient<ISvcScopeFactory, SvcScopeFactory>();
+        container.RegisterSingle<ISvcProviderFactory, SvcProviderFactory>();
+        container.RegisterSingle<ISvcScopeFactory, SvcScopeFactory>();
         container.RegisterTransient<ISvcProvider>(sp =>
             sp.Resolve<ISvcProviderFactory>()!.CreateProvider(container)
+        );
+        container.RegisterTransient<ISvcScope>(sp =>
+            sp.Resolve<ISvcScopeFactory>()!.CreateScope(sp.Resolve<ISvcProvider>()!)
         );
         return container;
     }
