@@ -41,8 +41,8 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     {
         if (svcDescriptor.SingleInstance is not null)
             return svcDescriptor.SingleInstance;
-        svcDescriptor.SingleInstance = svcDescriptor.Factory!(this);
-        return svcDescriptor.SingleInstance;
+        lock (svcDescriptor)
+            return svcDescriptor.SingleInstance ??= svcDescriptor.Factory!(this);
     }
 
     public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
