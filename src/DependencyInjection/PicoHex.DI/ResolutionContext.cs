@@ -52,9 +52,5 @@ internal sealed class ResolutionContext
     private string FormatCyclePath(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type triggerType
-    )
-    {
-        var path = _dependencyChain.Reverse().Append(triggerType).Select(t => t.Name);
-        return string.Join(" → ", path);
-    }
+    ) => string.Join(" → ", _dependencyChain.Reverse().Append(triggerType).Select(t => t.Name));
 }
