@@ -12,7 +12,7 @@ internal sealed class ResolutionContext
         {
             lock (_syncRoot)
             {
-                return _dependencyChain.Count == 0;
+                return _dependencyChain.Count is 0;
             }
         }
     }
@@ -41,7 +41,7 @@ internal sealed class ResolutionContext
     {
         lock (_syncRoot)
         {
-            if (_dependencyChain.Count == 0)
+            if (_dependencyChain.Count is 0)
                 return;
 
             var type = _dependencyChain.Pop();
