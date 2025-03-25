@@ -21,31 +21,6 @@ internal class InternalLogger : ILogger, IDisposable
         _defaultSink = _sinks.First(p => p is ConsoleLogSink);
     }
 
-    private async Task ProcessEntries()
-    {
-        await foreach (var entry in _channel.Reader.ReadAllAsync())
-        {
-            foreach (var sink in _sinks)
-            {
-                try
-                {
-                    await sink.WriteAsync(entry);
-                }
-                catch (Exception ex)
-                {
-                    var sinkEntry = new LogEntry
-                    {
-                        Timestamp = DateTimeOffset.Now,
-                        Level = LogLevel.Error,
-                        Category = _categoryName,
-                        Exception = ex
-                    };
-                    await _defaultSink.WriteAsync(sinkEntry);
-                }
-            }
-        }
-    }
-
     public IDisposable BeginScope<TState>(TState state)
     {
         var stack = _scopes.Value ?? ImmutableStack<object>.Empty;
@@ -95,6 +70,31 @@ internal class InternalLogger : ILogger, IDisposable
         };
 
         await _channel.Writer.WriteAsync(entry, cancellationToken);
+    }
+
+    private async Task ProcessEntries()
+    {
+        await foreach (var entry in _channel.Reader.ReadAllAsync())
+        {
+            foreach (var sink in _sinks)
+            {
+                try
+                {
+                    await sink.WriteAsync(entry);
+                }
+                catch (Exception ex)
+                {
+                    var sinkEntry = new LogEntry
+                    {
+                        Timestamp = DateTimeOffset.Now,
+                        Level = LogLevel.Error,
+                        Category = _categoryName,
+                        Exception = ex
+                    };
+                    await _defaultSink.WriteAsync(sinkEntry);
+                }
+            }
+        }
     }
 
     private class Scope(Action onDispose) : IDisposable
