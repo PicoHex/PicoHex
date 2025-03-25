@@ -3,29 +3,24 @@ namespace PicoHex.DI;
 public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
     : ISvcProvider
 {
-    private readonly ConcurrentStack<Type> _resolving = new();
+    private static readonly AsyncLocal<ResolutionContext?> AsyncContext = new();
 
     public object Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType
     )
     {
-        var svcDescriptor = container.GetDescriptor(serviceType);
-        if (svcDescriptor is null)
-            throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
+        var context = AsyncContext.Value ??= new ResolutionContext();
 
-        // 循环依赖检测
-        if (_resolving.Contains(serviceType))
-        {
-            var cycle = string.Join(" → ", _resolving.Reverse().Select(t => t.Name));
-            throw new InvalidOperationException(
-                $"Circular dependency detected: {cycle} → {serviceType.Name}"
-            );
-        }
+        if (!context.TryEnterResolution(serviceType, out var cyclePath))
+            throw new InvalidOperationException($"Circular dependency detected: {cyclePath}");
 
-        _resolving.Push(serviceType);
         try
         {
+            var svcDescriptor = container.GetDescriptor(serviceType);
+            if (svcDescriptor is null)
+                throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
+
             return svcDescriptor.Lifetime switch
             {
                 SvcLifetime.Transient => svcDescriptor.Factory!(this),
@@ -36,7 +31,9 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         }
         finally
         {
-            _resolving.TryPop(out _);
+            context.ExitResolution();
+            if (context.IsEmpty)
+                AsyncContext.Value = null;
         }
     }
 
