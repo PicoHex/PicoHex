@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Log;
 
-public class Logger<TCategory>(ILoggerFactory factory) : ILogger<TCategory>
+public sealed class Logger<TCategory>(ILoggerFactory factory) : ILogger<TCategory>
 {
     private readonly ILogger _innerLogger = factory.CreateLogger(typeof(TCategory).FullName!);
 

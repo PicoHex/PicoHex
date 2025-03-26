@@ -1,6 +1,6 @@
 namespace PicoHex.Log;
 
-internal class InternalLogger : ILogger, IDisposable
+internal sealed class InternalLogger : ILogger, IDisposable
 {
     private readonly string _categoryName;
     private readonly AsyncLocal<ImmutableStack<object>> _scopes = new();

@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Log;
 
-public class ConsoleLogSink(ILogFormatter formatter) : ILogSink
+public sealed class ConsoleLogSink(ILogFormatter formatter) : ILogSink
 {
     public ValueTask WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
     {

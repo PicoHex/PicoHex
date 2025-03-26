@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Log;
 
-public class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
+public sealed class LoggerFactory(IEnumerable<ILogSink> sinks) : ILoggerFactory
 {
     public LogLevel MinLevel { get; set; } = LogLevel.Debug;
 
