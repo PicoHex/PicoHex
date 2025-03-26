@@ -1,4 +1,4 @@
-﻿namespace PicoHex.DI;
+﻿namespace PicoHex.DI.Internal;
 
 internal sealed class ResolutionContext
 {
@@ -6,7 +6,7 @@ internal sealed class ResolutionContext
     private readonly Stack<Type> _dependencyChain = new();
     private readonly HashSet<Type> _activeTypes = new();
 
-    public bool IsEmpty
+    internal bool IsEmpty
     {
         get
         {
@@ -17,7 +17,7 @@ internal sealed class ResolutionContext
         }
     }
 
-    public bool TryEnterResolution(
+    internal bool TryEnterResolution(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type,
         out string? cyclePath
     )
@@ -37,7 +37,7 @@ internal sealed class ResolutionContext
         }
     }
 
-    public void ExitResolution()
+    internal void ExitResolution()
     {
         lock (_syncRoot)
         {
