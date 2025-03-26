@@ -13,7 +13,7 @@ public static class Bootstrap
         container.RegisterScoped<ISvcProvider>(
             sp => sp.Resolve<ISvcProviderFactory>()!.CreateProvider(container)
         );
-        container.RegisterTransient<ISvcScope>(
+        container.RegisterScoped<ISvcScope>(
             sp => sp.Resolve<ISvcScopeFactory>()!.CreateScope(sp.Resolve<ISvcProvider>()!)
         );
         return container;
