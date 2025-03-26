@@ -10,13 +10,13 @@ var logger = container.CreateLogger<Program>();
 
 // Usage examples
 logger.Info("Starting application");
-logger.Warning("Low memory warning");
-logger.Error("Database connection failed", new Exception("Connection timeout"));
+logger.Notice("Low memory warning");
+logger.Warning("Database connection failed", new Exception("Connection timeout"));
 
 // Usage examples
-await logger.InfoAsync("Starting application async");
-await logger.WarningAsync("Low memory warning async");
-await logger.ErrorAsync("Database connection failed async", new Exception("Connection timeout"));
+await logger.ErrorAsync("Starting application async");
+await logger.CriticalAsync("Low memory warning async");
+await logger.AlertAsync("Database connection failed async", new Exception("Connection timeout"));
 
 // Usage examples
 using (logger.BeginScope("Transaction-123"))
