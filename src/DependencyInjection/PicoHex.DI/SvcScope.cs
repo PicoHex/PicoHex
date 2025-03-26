@@ -11,7 +11,7 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
     ) =>
         _disposed
             ? throw new ObjectDisposedException(nameof(SvcScope))
-            : _services.GetOrAdd(serviceType, _ => provider.Resolve(serviceType));
+            : _services.GetOrAdd(serviceType, provider.Resolve);
 
     public void Dispose()
     {
