@@ -3,14 +3,14 @@ namespace PicoHex.DI;
 public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
     : ISvcProvider
 {
-    private static readonly AsyncLocal<ResolutionContext?> AsyncContext = new();
+    private readonly AsyncLocal<ResolutionContext?> _asyncContext = new();
 
     public object Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType
     )
     {
-        var context = AsyncContext.Value ??= new ResolutionContext();
+        var context = _asyncContext.Value ??= new ResolutionContext();
 
         if (!context.TryEnterResolution(serviceType, out var cyclePath))
             throw new InvalidOperationException($"Circular dependency detected: {cyclePath}");
@@ -37,7 +37,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         {
             context.ExitResolution();
             if (context.IsEmpty)
-                AsyncContext.Value = null;
+                _asyncContext.Value = null;
         }
     }
 

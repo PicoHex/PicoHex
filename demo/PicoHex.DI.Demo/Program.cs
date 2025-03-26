@@ -34,6 +34,7 @@ public static class IocTests
         var container = Bootstrap.CreateContainer();
         container.RegisterTransient<ICircularA, CircularA>();
         container.RegisterTransient<ICircularB, CircularB>();
+        container.RegisterTransient<ICircularC, CircularC>();
 
         try
         {
@@ -81,10 +82,6 @@ public interface IB;
 
 public interface IC;
 
-public interface ICircularA;
-
-public interface ICircularB;
-
 public class A(IB b)
 {
     public IB B { get; } = b;
@@ -100,6 +97,12 @@ public class C : IC
     public C() { }
 }
 
+public interface ICircularA;
+
+public interface ICircularB;
+
+public interface ICircularC;
+
 public class CircularA : ICircularA
 {
     public CircularA(ICircularB b) { }
@@ -107,7 +110,12 @@ public class CircularA : ICircularA
 
 public class CircularB : ICircularB
 {
-    public CircularB(ICircularA a) { }
+    public CircularB(ICircularC c) { }
+}
+
+public class CircularC : ICircularC
+{
+    public CircularC(ICircularA a) { }
 }
 
 // 程序入口
