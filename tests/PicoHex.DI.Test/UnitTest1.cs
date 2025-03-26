@@ -48,7 +48,7 @@ public class DependencyInjectionTests
     }
 
     [Fact]
-    public void Register_And_Resolve_Scoped()
+    public async void Register_And_Resolve_Scoped()
     {
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
@@ -63,7 +63,7 @@ public class DependencyInjectionTests
             Assert.Same(s1, s2);
         }
 
-        using (var scope2 = svcProvider.CreateScope())
+        await using (var scope2 = svcProvider.CreateScope())
         {
             var s3 = scope2.Resolve<IService>();
             var s4 = scope2.Resolve<IService>();
