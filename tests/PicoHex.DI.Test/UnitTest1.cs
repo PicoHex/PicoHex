@@ -48,7 +48,7 @@ public class DependencyInjectionTests
     }
 
     [Fact]
-    public async void Register_And_Resolve_Scoped()
+    public void Register_And_Resolve_Scoped()
     {
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
@@ -56,6 +56,32 @@ public class DependencyInjectionTests
         svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Scoped);
         IService? s1;
         using (var scope1 = svcProvider.CreateScope())
+        {
+            s1 = scope1.Resolve<IService>();
+            var s2 = scope1.Resolve<IService>();
+
+            Assert.Same(s1, s2);
+        }
+
+        using (var scope2 = svcProvider.CreateScope())
+        {
+            var s3 = scope2.Resolve<IService>();
+            var s4 = scope2.Resolve<IService>();
+
+            Assert.Same(s3, s4);
+            Assert.NotSame(s3, s1);
+        }
+    }
+
+    [Fact]
+    public async Task Register_And_Resolve_Scoped_Async()
+    {
+        var svcRegistry = Bootstrap.CreateContainer();
+        var svcProvider = svcRegistry.CreateProvider();
+
+        svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Scoped);
+        IService? s1;
+        await using (var scope1 = svcProvider.CreateScope())
         {
             s1 = scope1.Resolve<IService>();
             var s2 = scope1.Resolve<IService>();
