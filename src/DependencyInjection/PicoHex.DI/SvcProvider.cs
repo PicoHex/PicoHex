@@ -22,14 +22,11 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             if (svcDescriptor is null)
                 throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
 
-            if (svcDescriptor.Factory is null && svcDescriptor.SingleInstance is null)
-                svcDescriptor.Factory = CreateAotFactory(svcDescriptor.ImplementationType);
-
             return svcDescriptor.Lifetime switch
             {
-                SvcLifetime.Transient => svcDescriptor.Factory!(this),
-                SvcLifetime.Singleton => GetSingleton(svcDescriptor),
-                SvcLifetime.Scoped => svcDescriptor.Factory!(this),
+                SvcLifetime.Transient => GetTransientInstance(svcDescriptor),
+                SvcLifetime.Singleton => GetSingletonInstance(svcDescriptor),
+                SvcLifetime.Scoped => GetScopedInstance(svcDescriptor),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -41,12 +38,31 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         }
     }
 
-    private object GetSingleton(SvcDescriptor svcDescriptor)
+    private object GetTransientInstance(SvcDescriptor svcDescriptor)
+    {
+        if (svcDescriptor.Factory is not null)
+            return svcDescriptor.Factory(this);
+        lock (svcDescriptor)
+            svcDescriptor.Factory = CreateAotFactory(svcDescriptor.ImplementationType);
+        return svcDescriptor.Factory(this);
+    }
+
+    private object GetSingletonInstance(SvcDescriptor svcDescriptor)
     {
         if (svcDescriptor.SingleInstance is not null)
             return svcDescriptor.SingleInstance;
         lock (svcDescriptor)
-            return svcDescriptor.SingleInstance ??= svcDescriptor.Factory!(this);
+            svcDescriptor.Factory = CreateAotFactory(svcDescriptor.ImplementationType);
+        return svcDescriptor.SingleInstance ??= svcDescriptor.Factory!(this);
+    }
+
+    private object GetScopedInstance(SvcDescriptor svcDescriptor)
+    {
+        if (svcDescriptor.Factory is not null)
+            return svcDescriptor.Factory(this);
+        lock (svcDescriptor)
+            svcDescriptor.Factory = CreateAotFactory(svcDescriptor.ImplementationType);
+        return svcDescriptor.Factory(this);
     }
 
     private static Func<ISvcProvider, object> CreateAotFactory(
