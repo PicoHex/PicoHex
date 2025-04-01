@@ -4,6 +4,7 @@ internal sealed class ResolutionContext
 {
     private readonly ConcurrentStack<Type> _dependencyChain = new();
     private readonly ConcurrentDictionary<Type, byte> _activeTypes = new();
+    internal bool IsEmpty => _dependencyChain.IsEmpty;
 
     internal bool TryEnterResolution(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type,

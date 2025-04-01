@@ -33,7 +33,8 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         finally
         {
             context.ExitResolution();
-            _asyncContext.Value = null;
+            if (context.IsEmpty)
+                _asyncContext.Value = null;
         }
     }
 
