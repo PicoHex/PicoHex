@@ -13,10 +13,7 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
             ? throw new ObjectDisposedException(nameof(SvcScope))
             : _services.GetOrAdd(serviceType, provider.Resolve);
 
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-    }
+    public void Dispose() => Dispose(disposing: true);
 
     public async ValueTask DisposeAsync()
     {

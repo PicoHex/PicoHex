@@ -2,33 +2,21 @@
 
 internal sealed class ResolutionContext
 {
-    private readonly ConcurrentStack<Type> _dependencyChain = new();
-    private readonly ConcurrentDictionary<Type, byte> _activeTypes = new();
-    internal bool IsEmpty => _dependencyChain.IsEmpty;
+    private readonly ConcurrentStack<Type> _stack = new();
 
-    internal bool TryEnterResolution(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type,
-        out string? cyclePath
-    )
+    public bool TryEnterResolution(Type type, out string? cyclePath)
     {
-        if (!_activeTypes.TryAdd(type, 0))
+        if (_stack.Contains(type))
         {
-            cyclePath = FormatCyclePath(type);
+            cyclePath = string.Join(" → ", _stack.Reverse().Append(type));
             return false;
         }
-        _dependencyChain.Push(type);
+        _stack.Push(type);
         cyclePath = null;
         return true;
     }
 
-    internal void ExitResolution()
-    {
-        if (_dependencyChain.TryPop(out var type))
-            _activeTypes.TryRemove(type, out _);
-    }
+    public void ExitResolution() => _stack.TryPop(out _);
 
-    private string FormatCyclePath(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type triggerType
-    ) => string.Join(" → ", _dependencyChain.Reverse().Append(triggerType).Select(t => t.Name));
+    public bool IsEmpty => _stack.IsEmpty;
 }

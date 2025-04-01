@@ -43,7 +43,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (svcDescriptor.Factory is not null)
             return svcDescriptor.Factory(this);
         lock (svcDescriptor)
-            svcDescriptor.Factory = CreateAotFactory(svcDescriptor.ImplementationType);
+            svcDescriptor.Factory ??= CreateAotFactory(svcDescriptor.ImplementationType);
         return svcDescriptor.Factory(this);
     }
 
@@ -52,8 +52,15 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (svcDescriptor.SingleInstance is not null)
             return svcDescriptor.SingleInstance;
         lock (svcDescriptor)
-            svcDescriptor.Factory = CreateAotFactory(svcDescriptor.ImplementationType);
-        return svcDescriptor.SingleInstance ??= svcDescriptor.Factory!(this);
+        {
+            if (svcDescriptor.SingleInstance is not null)
+                return svcDescriptor.SingleInstance;
+            svcDescriptor.SingleInstance ??= svcDescriptor.Factory is null
+                ? CreateAotFactory(svcDescriptor.ImplementationType)(this)
+                : svcDescriptor.Factory(this);
+        }
+
+        return svcDescriptor.SingleInstance;
     }
 
     private object GetScopedInstance(SvcDescriptor svcDescriptor)
@@ -61,7 +68,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (svcDescriptor.Factory is not null)
             return svcDescriptor.Factory(this);
         lock (svcDescriptor)
-            svcDescriptor.Factory = CreateAotFactory(svcDescriptor.ImplementationType);
+            svcDescriptor.Factory ??= CreateAotFactory(svcDescriptor.ImplementationType);
         return svcDescriptor.Factory(this);
     }
 
