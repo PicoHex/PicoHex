@@ -28,6 +28,24 @@ public static class IocTests
         Console.WriteLine("Basic Injection Test Passed");
     }
 
+    // 基础注入测试
+    public static void TestIEnumerableInjection()
+    {
+        var container = Bootstrap.CreateContainer();
+        container.RegisterTransient<IService, A>();
+        container.RegisterTransient<IA, A>();
+        container.RegisterTransient<IService, B>();
+        container.RegisterTransient<IB, B>();
+        container.RegisterTransient<IService, C>();
+        container.RegisterTransient<IC, C>();
+        container.RegisterTransient<D>();
+
+        // A的构造函数需要IB参数
+        var provider = container.CreateProvider();
+        var d = (D)provider.Resolve(typeof(D))!;
+        Console.WriteLine("IEnumerable Injection Test Passed");
+    }
+
     // 循环依赖检测测试
     public static void TestCircularDependency()
     {
@@ -78,11 +96,15 @@ public static class IocTests
 
 // 测试依赖类
 
-public interface IB;
+public interface IService;
 
-public interface IC;
+public interface IA : IService;
 
-public class A(IB b)
+public interface IB : IService;
+
+public interface IC : IService;
+
+public class A(IB b) : IA
 {
     public IB B { get; } = b;
 }
@@ -95,6 +117,11 @@ public class B(IC c) : IB
 public class C : IC
 {
     public C() { }
+}
+
+public class D(IEnumerable<IService> services)
+{
+    public IEnumerable<IService> Services { get; } = services;
 }
 
 public interface ICircularA;
@@ -127,6 +154,7 @@ public class Program
 
         IocTests.TestBootstrapping();
         IocTests.TestBasicInjection();
+        IocTests.TestIEnumerableInjection();
         IocTests.TestCircularDependency();
         IocTests.TestAotCompatibility();
 

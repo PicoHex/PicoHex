@@ -11,25 +11,56 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     )
     {
         var context = _asyncContext.Value ??= new ResolutionContext();
-        return ResolveInternal(serviceType, context);
+
+        if (
+            serviceType.IsGenericType
+            && serviceType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+        )
+        {
+            var elementType = serviceType.GetGenericArguments()[0];
+            return ResolveAll(elementType, context);
+        }
+
+        return ResolveLast(serviceType, context);
     }
 
-    private object ResolveInternal(
+    private object ResolveLast(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
         ResolutionContext context
     )
     {
-        if (!context.TryEnterResolution(serviceType, out var cyclePath))
-            throw new InvalidOperationException($"Circular dependency detected: {cyclePath}");
+        var svcDescriptor = container.GetDescriptor(serviceType);
 
+        if (svcDescriptor is null)
+            throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
+
+        return GetOrCreateInstance(svcDescriptor, context);
+    }
+
+    private object ResolveAll(Type elementType, ResolutionContext context)
+    {
+        var descriptors = container.GetDescriptors(elementType);
+
+        if (descriptors is null || descriptors.Count is 0)
+        {
+            var emptyArray = Array.CreateInstance(elementType, 0);
+            return emptyArray;
+        }
+
+        var instances = descriptors.Select(d => GetOrCreateInstance(d, context)).ToArray();
+
+        var array = Array.CreateInstance(elementType, instances.Length);
+        Array.Copy(instances, array, instances.Length);
+        return array;
+    }
+
+    private object GetOrCreateInstance(SvcDescriptor svcDescriptor, ResolutionContext context)
+    {
         try
         {
-            var svcDescriptor = container.GetDescriptor(serviceType);
-
-            if (svcDescriptor is null)
-                throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
-
+            if (!context.TryEnterResolution(svcDescriptor.ServiceType, out var cyclePath))
+                throw new InvalidOperationException($"Circular dependency detected: {cyclePath}");
             return svcDescriptor.Lifetime switch
             {
                 SvcLifetime.Transient => GetTransientInstance(svcDescriptor),
