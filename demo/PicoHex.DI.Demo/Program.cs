@@ -32,12 +32,12 @@ public static class IocTests
     public static void TestIEnumerableInjection()
     {
         var container = Bootstrap.CreateContainer();
-        container.RegisterTransient<IService, A>();
         container.RegisterTransient<IA, A>();
-        container.RegisterTransient<IService, B>();
         container.RegisterTransient<IB, B>();
-        container.RegisterTransient<IService, C>();
         container.RegisterTransient<IC, C>();
+        container.RegisterTransient<IService, A>();
+        container.RegisterTransient<IService, B>();
+        container.RegisterTransient<IService, C>();
         container.RegisterTransient<D>();
 
         // A的构造函数需要IB参数
