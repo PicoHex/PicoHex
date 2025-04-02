@@ -2,21 +2,33 @@ namespace PicoHex.DI;
 
 public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcContainer
 {
-    private readonly ConcurrentDictionary<Type, SvcDescriptor> _descriptors = new();
+    private readonly ConcurrentDictionary<Type, List<SvcDescriptor>> _descriptors = new();
     private volatile bool _disposed;
 
     public ISvcContainer Register(SvcDescriptor descriptor)
     {
-        _descriptors.TryAdd(descriptor.ServiceType, descriptor);
-        _descriptors.TryAdd(descriptor.ImplementationType, descriptor);
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(SvcContainer));
+        ArgumentNullException.ThrowIfNull(descriptor);
+
+        _descriptors.TryAdd(descriptor.ServiceType, []);
+        _descriptors[descriptor.ServiceType].Add(descriptor);
+
+        _descriptors.TryAdd(descriptor.ImplementationType, []);
+        _descriptors[descriptor.ImplementationType].Add(descriptor);
+
         return this;
     }
 
     public ISvcProvider CreateProvider() => providerFactory.CreateProvider(this);
 
-    public SvcDescriptor? GetDescriptor(
+    public List<SvcDescriptor>? GetDescriptors(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
     ) => _descriptors.GetValueOrDefault(type);
+
+    public SvcDescriptor? GetDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
+    ) => _descriptors.GetValueOrDefault(type)?.Last();
 
     public void Dispose() => Dispose(disposing: true);
 
@@ -32,11 +44,9 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             return;
         if (disposing)
         {
-            foreach (var descriptor in _descriptors.Values)
-            {
+            foreach (var descriptor in _descriptors.Values.SelectMany(p => p))
                 if (descriptor.SingleInstance is IDisposable disposable)
                     disposable.Dispose();
-            }
         }
         _disposed = true;
     }
@@ -45,7 +55,7 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
     {
         if (_disposed)
             return;
-        foreach (var descriptor in _descriptors.Values)
+        foreach (var descriptor in _descriptors.Values.SelectMany(p => p))
         {
             if (descriptor.SingleInstance is IDisposable disposable)
                 disposable.Dispose();

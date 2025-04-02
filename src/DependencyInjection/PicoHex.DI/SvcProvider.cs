@@ -11,7 +11,15 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     )
     {
         var context = _asyncContext.Value ??= new ResolutionContext();
+        return ResolveInternal(serviceType, context);
+    }
 
+    private object ResolveInternal(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
+        ResolutionContext context
+    )
+    {
         if (!context.TryEnterResolution(serviceType, out var cyclePath))
             throw new InvalidOperationException($"Circular dependency detected: {cyclePath}");
 
