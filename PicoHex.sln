@@ -41,6 +41,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log.Demo", "demo\Pi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DI.Abstractions", "src\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj", "{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{F23CF46D-24E7-4801-BFB5-092DACEA1BF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Configuration", "src\Configuration\PicoHex.Configuration\PicoHex.Configuration.csproj", "{B1759FE0-C63B-41EF-8326-B9048E7DD3DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +71,8 @@ Global
 		{4E47A2ED-E4BF-488A-A83C-0A2A2E8EC48B} = {CFA28591-5073-41BB-8E43-BDD020D72BF0}
 		{B5E57D1F-1A7B-469D-89BD-D6B15C65FC2C} = {49263E78-CA88-45A9-935F-6BFED7EF708D}
 		{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A} = {8BB4AACE-572F-4370-9383-A2D84FF73DEB}
+		{F23CF46D-24E7-4801-BFB5-092DACEA1BF1} = {104C8CCD-3086-4733-92B1-DD464C61B0AB}
+		{B1759FE0-C63B-41EF-8326-B9048E7DD3DD} = {F23CF46D-24E7-4801-BFB5-092DACEA1BF1}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{22134531-61F6-477C-9A1C-6486AF8C7ACF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -125,5 +131,9 @@ Global
 		{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1759FE0-C63B-41EF-8326-B9048E7DD3DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1759FE0-C63B-41EF-8326-B9048E7DD3DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1759FE0-C63B-41EF-8326-B9048E7DD3DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1759FE0-C63B-41EF-8326-B9048E7DD3DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
