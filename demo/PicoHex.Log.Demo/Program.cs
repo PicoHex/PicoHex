@@ -39,5 +39,5 @@ using (logger.BeginScope("OrderProcessing"))
     }
 }
 
-Console.WriteLine("Press any key to exit...");
+logger.Info("Press any key to exit...");
 Console.ReadKey();

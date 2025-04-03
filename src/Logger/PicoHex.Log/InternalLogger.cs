@@ -8,17 +8,18 @@ internal sealed class InternalLogger : ILogger, IDisposable
         new BoundedChannelOptions(65535) { FullMode = BoundedChannelFullMode.DropOldest }
     );
     private readonly Task _processingTask;
-    private readonly IEnumerable<ILogSink> _sinks;
+    private readonly IAsyncEnumerable<ILogSink> _sinks;
     private readonly LoggerFactory _factory;
     private readonly ILogSink _defaultSink;
 
     public InternalLogger(string categoryName, IEnumerable<ILogSink> sinks, LoggerFactory factory)
     {
-        _sinks = sinks;
+        var logSinks = sinks as ILogSink[] ?? sinks.ToArray();
+        _sinks = logSinks.ToAsyncEnumerable();
         _factory = factory;
         _categoryName = categoryName;
         _processingTask = Task.Run(ProcessEntries);
-        _defaultSink = _sinks.First(p => p is ConsoleLogSink);
+        _defaultSink = logSinks.First(p => p is ConsoleLogSink);
     }
 
     public IDisposable BeginScope<TState>(TState state)
@@ -76,7 +77,7 @@ internal sealed class InternalLogger : ILogger, IDisposable
     {
         await foreach (var entry in _channel.Reader.ReadAllAsync())
         {
-            foreach (var sink in _sinks)
+            await foreach (var sink in _sinks)
             {
                 try
                 {
@@ -104,10 +105,36 @@ internal sealed class InternalLogger : ILogger, IDisposable
 
     public void Dispose()
     {
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
         _channel.Writer.Complete();
         _processingTask.Wait();
         _processingTask.Dispose();
-        foreach (var sink in _sinks)
-            sink.Dispose();
+        await foreach (var sink in _sinks.ConfigureAwait(false))
+        {
+            await TryDisposeSinkAsync(sink).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask TryDisposeSinkAsync(ILogSink sink)
+    {
+        try
+        {
+            if (sink is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            }
+            else if (sink is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($": {ex}");
+        }
     }
 }
