@@ -1,8 +1,8 @@
-﻿Console.WriteLine("Hello, World!");
-
-var container = Bootstrap.CreateContainer();
+﻿var container = Bootstrap.CreateContainer();
 container.RegisterConsoleLogger<Program>();
 var logger = container.CreateLogger<Program>();
+
+await logger.InfoAsync("Hello, World!");
 
 // 输出所有定义的日志级别示例
 logger.Trace("Verbose diagnostic tracing"); // 最详细的跟踪信息
