@@ -2,7 +2,8 @@
 
 public interface ILogger
 {
-    IDisposable BeginScope<TState>(TState state);
+    IDisposable BeginScope<TState>(TState state)
+        where TState : notnull;
     void Log(LogLevel logLevel, string message, Exception? exception = null);
     ValueTask LogAsync(
         LogLevel logLevel,

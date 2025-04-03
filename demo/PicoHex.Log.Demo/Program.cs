@@ -32,31 +32,33 @@ await logger.NoticeAsync("Async notice: New user registration");
 await logger.AlertAsync("Async alert: Brute force attack detected");
 
 // Structured logging with scopes
-using (logger.BeginScope("OrderProcessing"))
+using (logger.BeginScope("OrderProcessing initiated"))
 {
-    logger.Info("Starting order processing workflow");
+    logger.Debug($"Order ID: {12345}");
+    logger.Notice($"User ID: {67890}");
+    logger.Warning($"Processing time: {150}ms");
 
-    try
     {
-        // Nested scope for payment operations
-        using (
-            logger.BeginScope(
-                new Dictionary<string, object> { ["OrderId"] = "ABC-123", ["Amount"] = 299.99m }
-            )
-        )
+        logger.Info("Starting order processing workflow");
+
+        try
         {
-            logger.Debug("Validating order items");
-            logger.Notice("Processing payment for order");
+            // Nested scope for payment operations
+            using (logger.BeginScope("OrderPayment"))
+            {
+                logger.Debug("Validating order items");
+                logger.Notice("Processing payment for order");
 
-            // Simulate business logic failure
-            throw new DivideByZeroException();
+                // Simulate business logic failure
+                throw new DivideByZeroException();
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        // Error logging with exception context
-        logger.Error("Payment processing failed", ex);
-        logger.Critical("Order workflow cannot continue");
+        catch (Exception ex)
+        {
+            // Error logging with exception context
+            logger.Error("Payment processing failed", ex);
+            logger.Critical("Order workflow cannot continue");
+        }
     }
 }
 
