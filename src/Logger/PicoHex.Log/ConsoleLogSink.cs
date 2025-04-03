@@ -34,5 +34,5 @@ public sealed class ConsoleLogSink(ILogFormatter formatter) : ILogSink
 
     public void Dispose() { }
 
-    public async ValueTask DisposeAsync() { }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

@@ -34,7 +34,7 @@ internal sealed class InternalLogger : ILogger, IDisposable
 
     public void Log(LogLevel logLevel, string message, Exception? exception)
     {
-        if (logLevel < _factory.MinLevel)
+        if (logLevel > _factory.MinLevel)
             return;
 
         var entry = new LogEntry
@@ -57,7 +57,7 @@ internal sealed class InternalLogger : ILogger, IDisposable
         CancellationToken cancellationToken = default
     )
     {
-        if (logLevel < _factory.MinLevel)
+        if (logLevel > _factory.MinLevel)
             return;
 
         var entry = new LogEntry
