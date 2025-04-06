@@ -54,7 +54,7 @@ public class DependencyInjectionTests
         var svcProvider = svcRegistry.CreateProvider();
 
         svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Scoped);
-        IService? s1;
+        IService s1;
         using (var scope1 = svcProvider.CreateScope())
         {
             s1 = scope1.Resolve<IService>();
@@ -80,7 +80,7 @@ public class DependencyInjectionTests
         var svcProvider = svcRegistry.CreateProvider();
 
         svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Scoped);
-        IService? s1;
+        IService s1;
         await using (var scope1 = svcProvider.CreateScope())
         {
             s1 = scope1.Resolve<IService>();
@@ -134,8 +134,8 @@ public interface IServiceB;
 
 public class ServiceBImpl : IServiceB
 {
-    private readonly IServiceA? _serviceA;
-    private readonly IServiceC? _serviceC;
+    private readonly IServiceA _serviceA;
+    private readonly IServiceC _serviceC;
 
     public ServiceBImpl(ISvcContainer container, ISvcProvider provider)
     {

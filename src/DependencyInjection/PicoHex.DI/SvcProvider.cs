@@ -102,14 +102,8 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         return svcDescriptor.SingleInstance;
     }
 
-    private object GetScopedInstance(SvcDescriptor svcDescriptor)
-    {
-        if (svcDescriptor.Factory is not null)
-            return svcDescriptor.Factory(this);
-        lock (svcDescriptor)
-            svcDescriptor.Factory ??= CreateAotFactory(svcDescriptor.ImplementationType);
-        return svcDescriptor.Factory(this);
-    }
+    private object GetScopedInstance(SvcDescriptor svcDescriptor) =>
+        scopeFactory.CreateScope(this).Resolve(svcDescriptor.ServiceType);
 
     private static Func<ISvcProvider, object> CreateAotFactory(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type

@@ -2,10 +2,10 @@ namespace PicoHex.DI;
 
 public sealed class SvcScope(ISvcProvider provider) : ISvcScope
 {
-    private readonly ConcurrentDictionary<Type, object?> _services = new();
+    private readonly ConcurrentDictionary<Type, object> _services = new();
     private volatile bool _disposed;
 
-    public object? Resolve(
+    public object Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType
     ) =>

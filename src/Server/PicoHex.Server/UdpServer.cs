@@ -13,8 +13,8 @@ public class UdpServer : IDisposable, IAsyncDisposable
     public UdpServer(
         IPAddress ipAddress,
         ushort port,
-        Func<IUdpHandler>? udpHandlerFactory,
-        ILogger<UdpServer>? logger
+        Func<IUdpHandler> udpHandlerFactory,
+        ILogger<UdpServer> logger
     )
     {
         _ipAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));

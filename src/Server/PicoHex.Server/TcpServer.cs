@@ -13,8 +13,8 @@ public class TcpServer : IDisposable, IAsyncDisposable
     public TcpServer(
         IPAddress ipAddress,
         ushort port,
-        Func<ITcpHandler>? tcpHandlerFactory,
-        ILogger<TcpServer>? logger,
+        Func<ITcpHandler> tcpHandlerFactory,
+        ILogger<TcpServer> logger,
         int maxConcurrentConnections = 100
     )
     {
