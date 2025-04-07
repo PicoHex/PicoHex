@@ -17,7 +17,10 @@ public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : I
         return descriptor.Lifetime switch
         {
             SvcLifetime.Scoped
-                => _scopedServices.GetOrAdd(serviceType, resolver.Resolve(serviceType)),
+                => _scopedServices.GetOrAdd(
+                    serviceType,
+                    new Lazy<object>(() => resolver.Resolve(serviceType)).Value
+                ),
             _ => resolver.Resolve(serviceType)
         };
     }

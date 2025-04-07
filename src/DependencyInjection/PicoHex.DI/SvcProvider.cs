@@ -96,21 +96,16 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     private object GetSingletonInstance(SvcDescriptor svcDescriptor) =>
         _singletons.GetOrAdd(
             svcDescriptor.ServiceType,
-            _ =>
+            new Lazy<object>(() =>
             {
                 if (svcDescriptor.SingleInstance is not null)
                     return svcDescriptor.SingleInstance;
-                lock (svcDescriptor)
-                {
-                    if (svcDescriptor.SingleInstance is not null)
-                        return svcDescriptor.SingleInstance;
-                    svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(
-                        svcDescriptor.ImplementationType
-                    );
-                    svcDescriptor.SingleInstance = svcDescriptor.Factory(this);
-                    return svcDescriptor.SingleInstance;
-                }
-            }
+                svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(
+                    svcDescriptor.ImplementationType
+                );
+                svcDescriptor.SingleInstance = svcDescriptor.Factory(this);
+                return svcDescriptor.SingleInstance;
+            }).Value
         );
 
     private object GetScopedInstance(SvcDescriptor svcDescriptor)
