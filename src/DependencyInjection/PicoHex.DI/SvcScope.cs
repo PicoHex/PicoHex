@@ -16,23 +16,11 @@ public sealed class SvcScope(ISvcContainer container, ISvcProvider provider) : I
 
         return descriptor.Lifetime switch
         {
-            SvcLifetime.Scoped => GetOrCreateScopedInstance(descriptor),
+            SvcLifetime.Scoped
+                => _scopedServices.GetOrAdd(serviceType, provider.Resolve(serviceType)),
             _ => provider.Resolve(serviceType)
         };
     }
-
-    private object GetOrCreateScopedInstance(SvcDescriptor svcDescriptor) =>
-        _scopedServices.GetOrAdd(
-            svcDescriptor.ServiceType,
-            _ =>
-            {
-                if (svcDescriptor.Factory is not null)
-                    return svcDescriptor.Factory(provider);
-
-                var factory = SvcFactory.CreateAotFactory(svcDescriptor.ImplementationType);
-                return factory(provider);
-            }
-        );
 
     public void Dispose() => Dispose(disposing: true);
 

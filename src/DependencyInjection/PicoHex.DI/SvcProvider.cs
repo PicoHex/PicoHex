@@ -119,7 +119,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         return svcDescriptor.Factory(this);
     }
 
-    public ISvcScope CreateScope() => scopeFactory.CreateScope();
+    public ISvcScope CreateScope() => scopeFactory.CreateScope(container, this);
 
     public void Dispose() => Dispose(disposing: true);
 

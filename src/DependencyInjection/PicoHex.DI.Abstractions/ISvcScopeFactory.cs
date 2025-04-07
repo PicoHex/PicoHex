@@ -2,5 +2,5 @@ namespace PicoHex.DI.Abstractions;
 
 public interface ISvcScopeFactory
 {
-    ISvcScope CreateScope();
+    ISvcScope CreateScope(ISvcContainer container, ISvcProvider provider);
 }
