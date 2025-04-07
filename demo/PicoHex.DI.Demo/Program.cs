@@ -10,7 +10,7 @@ public static class IocTests
         var container = Bootstrap.CreateContainer();
 
         var provider = container.CreateProvider();
-        var subContainer = (ISvcProvider)provider.Resolve(typeof(ISvcProvider))!;
+        var svcProvider = (ISvcProvider)provider.Resolve(typeof(ISvcProvider));
         Console.WriteLine("Bootstrapping Test Passed");
     }
 

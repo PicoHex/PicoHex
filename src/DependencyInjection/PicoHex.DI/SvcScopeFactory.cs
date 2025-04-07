@@ -1,6 +1,7 @@
 namespace PicoHex.DI;
 
-public sealed class SvcScopeFactory : ISvcScopeFactory
+public sealed class SvcScopeFactory(ISvcContainer container, ISvcProvider provider)
+    : ISvcScopeFactory
 {
-    public ISvcScope CreateScope(ISvcProvider provider) => new SvcScope(provider);
+    public ISvcScope CreateScope() => new SvcScope(container, provider);
 }

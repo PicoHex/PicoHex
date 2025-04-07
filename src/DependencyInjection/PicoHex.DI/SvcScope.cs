@@ -1,17 +1,38 @@
 namespace PicoHex.DI;
 
-public sealed class SvcScope(ISvcProvider provider) : ISvcScope
+public sealed class SvcScope(ISvcContainer container, ISvcProvider provider) : ISvcScope
 {
-    private readonly ConcurrentDictionary<Type, object> _services = new();
+    private readonly ConcurrentDictionary<Type, object> _scopedServices = new();
     private volatile bool _disposed;
 
-    public object Resolve(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType
-    ) =>
-        _disposed
-            ? throw new ObjectDisposedException(nameof(SvcScope))
-            : _services.GetOrAdd(serviceType, provider.Resolve);
+    public object Resolve(Type serviceType)
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(SvcScope));
+
+        var descriptor =
+            container.GetDescriptor(serviceType)
+            ?? throw new InvalidOperationException($"Service {serviceType} not registered.");
+
+        return descriptor.Lifetime switch
+        {
+            SvcLifetime.Scoped => GetOrCreateScopedInstance(descriptor),
+            _ => provider.Resolve(serviceType)
+        };
+    }
+
+    private object GetOrCreateScopedInstance(SvcDescriptor svcDescriptor) =>
+        _scopedServices.GetOrAdd(
+            svcDescriptor.ServiceType,
+            _ =>
+            {
+                if (svcDescriptor.Factory is not null)
+                    return svcDescriptor.Factory(provider);
+
+                var factory = SvcFactory.CreateAotFactory(svcDescriptor.ImplementationType);
+                return factory(provider);
+            }
+        );
 
     public void Dispose() => Dispose(disposing: true);
 
@@ -27,7 +48,7 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
             return;
         if (disposing)
         {
-            foreach (var service in _services)
+            foreach (var service in _scopedServices)
             {
                 if (service.Value is IDisposable disposable)
                     disposable.Dispose();
@@ -40,7 +61,7 @@ public sealed class SvcScope(ISvcProvider provider) : ISvcScope
     {
         if (_disposed)
             return;
-        foreach (var service in _services)
+        foreach (var service in _scopedServices)
         {
             if (service.Value is IDisposable disposable)
                 disposable.Dispose();

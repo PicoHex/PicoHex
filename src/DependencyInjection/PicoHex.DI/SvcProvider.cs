@@ -4,6 +4,8 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     : ISvcProvider
 {
     private readonly AsyncLocal<ResolutionContext?> _asyncContext = new();
+    private readonly ConcurrentDictionary<Type, object> _singletons = new();
+    private volatile bool _disposed;
 
     public object Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -18,37 +20,39 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         )
         {
             var elementType = serviceType.GetGenericArguments()[0];
-            return ResolveAll(elementType, context);
+
+            var descriptors =
+                container.GetDescriptors(elementType)
+                ?? throw new InvalidOperationException(
+                    $"Service of type {elementType} not registered."
+                );
+            return ResolveAll(elementType, descriptors, context);
         }
 
-        return ResolveLast(serviceType, context);
+        var svcDescriptor =
+            container.GetDescriptor(serviceType)
+            ?? throw new InvalidOperationException(
+                $"Service of type {serviceType} not registered."
+            );
+        return ResolveLast(svcDescriptor, context);
     }
 
-    private object ResolveLast(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
+    private object ResolveLast(SvcDescriptor svcDescriptor, ResolutionContext context) =>
+        GetOrCreateInstance(svcDescriptor, context);
+
+    private object ResolveAll(
+        Type elementType,
+        IList<SvcDescriptor> svcDescriptors,
         ResolutionContext context
     )
     {
-        var svcDescriptor = container.GetDescriptor(serviceType);
-
-        if (svcDescriptor is null)
-            throw new InvalidOperationException($"Type {serviceType.Name} is not registered.");
-
-        return GetOrCreateInstance(svcDescriptor, context);
-    }
-
-    private object ResolveAll(Type elementType, ResolutionContext context)
-    {
-        var descriptors = container.GetDescriptors(elementType);
-
-        if (descriptors is null || descriptors.Count is 0)
+        if (svcDescriptors.Count is 0)
         {
             var emptyArray = Array.CreateInstance(elementType, 0);
             return emptyArray;
         }
 
-        var instances = descriptors.Select(d => GetOrCreateInstance(d, context)).ToArray();
+        var instances = svcDescriptors.Select(d => GetOrCreateInstance(d, context)).ToArray();
 
         var array = Array.CreateInstance(elementType, instances.Length);
         Array.Copy(instances, array, instances.Length);
@@ -82,56 +86,75 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (svcDescriptor.Factory is not null)
             return svcDescriptor.Factory(this);
         lock (svcDescriptor)
-            svcDescriptor.Factory ??= CreateAotFactory(svcDescriptor.ImplementationType);
+            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor.ImplementationType);
         return svcDescriptor.Factory(this);
     }
 
-    private object GetSingletonInstance(SvcDescriptor svcDescriptor)
-    {
-        if (svcDescriptor.SingleInstance is not null)
-            return svcDescriptor.SingleInstance;
-        lock (svcDescriptor)
-        {
-            if (svcDescriptor.SingleInstance is not null)
-                return svcDescriptor.SingleInstance;
-            svcDescriptor.SingleInstance ??= svcDescriptor.Factory is null
-                ? CreateAotFactory(svcDescriptor.ImplementationType)(this)
-                : svcDescriptor.Factory(this);
-        }
-
-        return svcDescriptor.SingleInstance;
-    }
-
-    private object GetScopedInstance(SvcDescriptor svcDescriptor) =>
-        scopeFactory.CreateScope(this).Resolve(svcDescriptor.ServiceType);
-
-    private static Func<ISvcProvider, object> CreateAotFactory(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
-    )
-    {
-        var constructor = type.GetConstructors()
-            .OrderByDescending(c => c.GetParameters().Length)
-            .First();
-
-        var parameters = constructor.GetParameters();
-        var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
-
-        var args = parameters
-            .Select(p =>
+    private object GetSingletonInstance(SvcDescriptor svcDescriptor) =>
+        _singletons.GetOrAdd(
+            svcDescriptor.ServiceType,
+            _ =>
             {
-                var getServiceCall = Expression.Call(
-                    providerParam,
-                    typeof(ISvcResolver).GetMethod(nameof(ISvcResolver.Resolve))!,
-                    Expression.Constant(p.ParameterType)
-                );
-                return Expression.Convert(getServiceCall, p.ParameterType);
-            })
-            .ToArray<Expression>();
+                if (svcDescriptor.SingleInstance is not null)
+                    return svcDescriptor.SingleInstance;
+                lock (svcDescriptor)
+                {
+                    if (svcDescriptor.SingleInstance is not null)
+                        return svcDescriptor.SingleInstance;
+                    svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(
+                        svcDescriptor.ImplementationType
+                    );
+                    svcDescriptor.SingleInstance = svcDescriptor.Factory(this);
+                    return svcDescriptor.SingleInstance;
+                }
+            }
+        );
 
-        var newExpr = Expression.New(constructor, args);
-        var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
-        return lambda.Compile();
+    private object GetScopedInstance(SvcDescriptor svcDescriptor)
+    {
+        if (svcDescriptor.Factory is not null)
+            return svcDescriptor.Factory(this);
+        lock (svcDescriptor)
+            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor.ImplementationType);
+        return svcDescriptor.Factory(this);
     }
 
-    public ISvcScope CreateScope() => scopeFactory.CreateScope(this);
+    public ISvcScope CreateScope() => scopeFactory.CreateScope();
+
+    public void Dispose() => Dispose(disposing: true);
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(disposing: false);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+        if (disposing)
+        {
+            foreach (var service in _singletons)
+            {
+                if (service.Value is IDisposable disposable)
+                    disposable.Dispose();
+            }
+        }
+        _disposed = true;
+    }
+
+    private async ValueTask DisposeAsyncCore()
+    {
+        if (_disposed)
+            return;
+        foreach (var service in _singletons)
+        {
+            if (service.Value is IDisposable disposable)
+                disposable.Dispose();
+            if (service.Value is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+        }
+        _disposed = true;
+    }
 }

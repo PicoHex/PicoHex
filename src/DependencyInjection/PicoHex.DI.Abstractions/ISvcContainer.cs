@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.DI.Abstractions;
 
-public interface ISvcContainer : IDisposable, IAsyncDisposable
+public interface ISvcContainer
 {
     ISvcContainer Register(SvcDescriptor descriptor);
     ISvcProvider CreateProvider();
