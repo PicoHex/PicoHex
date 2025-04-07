@@ -1,6 +1,6 @@
 namespace PicoHex.DI;
 
-public sealed class SvcScope(ISvcContainer container, ISvcProvider provider) : ISvcScope
+public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : ISvcScope
 {
     private readonly ConcurrentDictionary<Type, object> _scopedServices = new();
     private volatile bool _disposed;
@@ -17,8 +17,8 @@ public sealed class SvcScope(ISvcContainer container, ISvcProvider provider) : I
         return descriptor.Lifetime switch
         {
             SvcLifetime.Scoped
-                => _scopedServices.GetOrAdd(serviceType, provider.Resolve(serviceType)),
-            _ => provider.Resolve(serviceType)
+                => _scopedServices.GetOrAdd(serviceType, resolver.Resolve(serviceType)),
+            _ => resolver.Resolve(serviceType)
         };
     }
 
