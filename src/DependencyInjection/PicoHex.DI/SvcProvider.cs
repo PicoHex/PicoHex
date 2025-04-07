@@ -12,6 +12,9 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             Type serviceType
     )
     {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(SvcProvider));
+
         var context = _asyncContext.Value ??= new ResolutionContext();
 
         if (
