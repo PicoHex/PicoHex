@@ -10,7 +10,7 @@ public static class IocTests
         var container = Bootstrap.CreateContainer();
 
         var provider = container.CreateProvider();
-        var svcProvider = (ISvcProvider)provider.Resolve(typeof(ISvcProvider));
+        _ = (ISvcProvider)provider.Resolve(typeof(ISvcProvider));
         Console.WriteLine("Bootstrapping Test Passed");
     }
 
@@ -24,7 +24,7 @@ public static class IocTests
 
         // A的构造函数需要IB参数
         var provider = container.CreateProvider();
-        var a = (A)provider.Resolve(typeof(A))!;
+        _ = (A)provider.Resolve(typeof(A))!;
         Console.WriteLine("Basic Injection Test Passed");
     }
 
@@ -42,7 +42,7 @@ public static class IocTests
 
         // A的构造函数需要IB参数
         var provider = container.CreateProvider();
-        var d = (D)provider.Resolve(typeof(D))!;
+        _ = (D)provider.Resolve(typeof(D))!;
         Console.WriteLine("IEnumerable Injection Test Passed");
     }
 
@@ -61,6 +61,20 @@ public static class IocTests
         }
         catch (InvalidOperationException ex)
         {
+            try
+            {
+                var provider = container.CreateProvider();
+                provider.Resolve(typeof(ICircularA));
+            }
+            catch (InvalidOperationException iex)
+            {
+                Console.WriteLine(
+                    ex.Message.Contains("Circular dependency detected")
+                        ? "Circular Dependency Detection Test Passed"
+                        : "Circular Test Failed: Wrong exception message"
+                );
+            }
+
             Console.WriteLine(
                 ex.Message.Contains("Circular dependency detected")
                     ? "Circular Dependency Detection Test Passed"
