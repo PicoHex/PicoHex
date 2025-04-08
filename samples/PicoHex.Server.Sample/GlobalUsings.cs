@@ -10,4 +10,4 @@ global using PicoHex.Log.Abstractions;
 global using PicoHex.Log.Extensions;
 global using PicoHex.Server;
 global using PicoHex.Server.Abstractions;
-global using PicoHex.Server.Demo;
+global using PicoHex.Server.Sample;

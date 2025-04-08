@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Server.Demo;
+﻿namespace PicoHex.Server.Sample;
 
 public class SimpleStreamHandler : ITcpHandler
 {

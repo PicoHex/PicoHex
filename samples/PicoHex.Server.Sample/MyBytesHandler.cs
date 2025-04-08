@@ -1,48 +1,48 @@
-﻿namespace PicoHex.Server.Demo;
+﻿namespace PicoHex.Server.Sample;
 
-public class MyStreamHandler(ILogger<MyStreamHandler> logger) : ITcpHandler
+public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
 {
-    private readonly ILogger<MyStreamHandler> _logger =
+    private readonly ILogger<MyBytesHandler> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));
 
     // If logger is null, fallback to default console logger
 
     public async ValueTask HandleAsync(
-        NetworkStream stream,
+        byte[] data,
+        EndPoint remoteEndPoint,
         CancellationToken cancellationToken = default
     )
     {
         try
         {
-            // Example of logging inside the stream handler
             await _logger.InfoAsync(
-                "Handling incoming stream...",
+                $"Received datagram from {remoteEndPoint}",
                 cancellationToken: cancellationToken
             );
 
-            // Simulate processing the stream (e.g., reading data)
-            byte[] buffer = new byte[1024];
-            int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
-
-            if (bytesRead > 0)
+            // Example of processing the data (e.g., echoing it back or processing it)
+            if (data.Length > 0)
             {
                 await _logger.InfoAsync(
-                    $"Received {bytesRead} bytes.",
+                    $"Data received: {BitConverter.ToString(data)}",
                     cancellationToken: cancellationToken
                 );
             }
             else
             {
                 await _logger.WarningAsync(
-                    "Received zero bytes or client closed the connection.",
+                    "Received empty datagram.",
                     cancellationToken: cancellationToken
                 );
             }
+
+            // Simulate processing delay
+            await Task.Delay(100, cancellationToken);
         }
         catch (Exception ex)
         {
             await _logger.ErrorAsync(
-                "Error while handling stream",
+                "Error while handling datagram",
                 ex,
                 cancellationToken: cancellationToken
             );
