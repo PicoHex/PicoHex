@@ -54,16 +54,14 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         return array;
     }
 
-    private object GetOrCreateInstance(SvcDescriptor svcDescriptor)
-    {
-        return svcDescriptor.Lifetime switch
+    private object GetOrCreateInstance(SvcDescriptor svcDescriptor) =>
+        svcDescriptor.Lifetime switch
         {
             SvcLifetime.Transient => GetTransientInstance(svcDescriptor),
             SvcLifetime.Singleton => GetSingletonInstance(svcDescriptor),
             SvcLifetime.Scoped => GetScopedInstance(svcDescriptor),
             _ => throw new ArgumentOutOfRangeException()
         };
-    }
 
     private object GetTransientInstance(SvcDescriptor svcDescriptor)
     {
