@@ -10,5 +10,5 @@ public static class ContainerExtensions
             .RegisterSingle<ILogger<T>, Logger<T>>();
 
     public static ILogger CreateLogger<T>(this ISvcContainer container) =>
-        container.CreateProvider().Resolve<ILogger<T>>()!;
+        container.CreateProvider().Resolve<ILogger<T>>();
 }
