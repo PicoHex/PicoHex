@@ -5,7 +5,10 @@ public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : I
     private readonly ConcurrentDictionary<Type, object> _scopedServices = new();
     private volatile bool _disposed;
 
-    public object Resolve(Type serviceType)
+    public object Resolve(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
+    )
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(SvcScope));
