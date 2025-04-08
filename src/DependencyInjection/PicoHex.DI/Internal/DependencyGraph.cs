@@ -1,10 +1,10 @@
 namespace PicoHex.DI.Internal;
 
-public static class DependencyGraph
+internal static class DependencyGraph
 {
     private static readonly ConcurrentDictionary<Type, ImmutableList<Type>> AdjacencyList = new();
 
-    public static void AddDependency(
+    internal static void AddDependency(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
         IEnumerable<Type> dependencies
@@ -15,7 +15,7 @@ public static class DependencyGraph
             updateValueFactory: (_, existing) => existing.AddRange(dependencies)
         );
 
-    public static bool HasCycle(Type startType, out Stack<Type> cyclePath)
+    internal static bool HasCycle(Type startType, out Stack<Type> cyclePath)
     {
         cyclePath = new Stack<Type>();
         var snapshot = AdjacencyList.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
