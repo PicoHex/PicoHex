@@ -2,13 +2,23 @@ namespace PicoHex.DI.Internal;
 
 internal static class SvcFactory
 {
-    internal static Func<ISvcProvider, object> CreateAotFactory(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
-    )
+    internal static Func<ISvcProvider, object> CreateAotFactory(SvcDescriptor svcDescriptor)
     {
-        var constructor = type.GetConstructors()
+        var constructor = svcDescriptor
+            .ImplementationType
+            .GetConstructors()
             .OrderByDescending(c => c.GetParameters().Length)
             .First();
+
+        var dependencies = constructor.GetParameters().Select(p => p.ParameterType).ToList();
+
+        DependencyGraph.AddDependency(svcDescriptor.ServiceType, dependencies);
+        if (DependencyGraph.HasCycle(svcDescriptor.ServiceType, out var cyclePath))
+        {
+            throw new InvalidOperationException(
+                $"Circular dependency detected: {string.Join(" -> ", cyclePath.Select(t => t.Name))}"
+            );
+        }
 
         var parameters = constructor.GetParameters();
         var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");

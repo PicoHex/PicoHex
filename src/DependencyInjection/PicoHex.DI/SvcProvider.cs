@@ -3,7 +3,6 @@ namespace PicoHex.DI;
 public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
     : ISvcProvider
 {
-    private readonly AsyncLocal<ResolutionContext?> _asyncContext = new();
     private readonly ConcurrentDictionary<Type, object> _singletons = new();
     private volatile bool _disposed;
 
@@ -14,8 +13,6 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(SvcProvider));
-
-        var context = _asyncContext.Value ??= new ResolutionContext();
 
         if (
             serviceType.IsGenericType
@@ -29,7 +26,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
                 ?? throw new InvalidOperationException(
                     $"Service of type {elementType} not registered."
                 );
-            return ResolveAll(elementType, descriptors, context);
+            return ResolveAll(elementType, descriptors);
         }
 
         var svcDescriptor =
@@ -37,17 +34,12 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             ?? throw new InvalidOperationException(
                 $"Service of type {serviceType} not registered."
             );
-        return ResolveLast(svcDescriptor, context);
+        return ResolveLast(svcDescriptor);
     }
 
-    private object ResolveLast(SvcDescriptor svcDescriptor, ResolutionContext context) =>
-        GetOrCreateInstance(svcDescriptor, context);
+    private object ResolveLast(SvcDescriptor svcDescriptor) => GetOrCreateInstance(svcDescriptor);
 
-    private object ResolveAll(
-        Type elementType,
-        IList<SvcDescriptor> svcDescriptors,
-        ResolutionContext context
-    )
+    private object ResolveAll(Type elementType, IList<SvcDescriptor> svcDescriptors)
     {
         if (svcDescriptors.Count is 0)
         {
@@ -55,33 +47,22 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             return emptyArray;
         }
 
-        var instances = svcDescriptors.Select(d => GetOrCreateInstance(d, context)).ToArray();
+        var instances = svcDescriptors.Select(GetOrCreateInstance).ToArray();
 
         var array = Array.CreateInstance(elementType, instances.Length);
         Array.Copy(instances, array, instances.Length);
         return array;
     }
 
-    private object GetOrCreateInstance(SvcDescriptor svcDescriptor, ResolutionContext context)
+    private object GetOrCreateInstance(SvcDescriptor svcDescriptor)
     {
-        try
+        return svcDescriptor.Lifetime switch
         {
-            if (!context.TryEnterResolution(svcDescriptor.ServiceType, out var cyclePath))
-                throw new InvalidOperationException($"Circular dependency detected: {cyclePath}");
-            return svcDescriptor.Lifetime switch
-            {
-                SvcLifetime.Transient => GetTransientInstance(svcDescriptor),
-                SvcLifetime.Singleton => GetSingletonInstance(svcDescriptor),
-                SvcLifetime.Scoped => GetScopedInstance(svcDescriptor),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-        finally
-        {
-            context.ExitResolution();
-            if (context.IsEmpty)
-                _asyncContext.Value = null;
-        }
+            SvcLifetime.Transient => GetTransientInstance(svcDescriptor),
+            SvcLifetime.Singleton => GetSingletonInstance(svcDescriptor),
+            SvcLifetime.Scoped => GetScopedInstance(svcDescriptor),
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     private object GetTransientInstance(SvcDescriptor svcDescriptor)
@@ -89,7 +70,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (svcDescriptor.Factory is not null)
             return svcDescriptor.Factory(this);
         lock (svcDescriptor)
-            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor.ImplementationType);
+            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor);
         return svcDescriptor.Factory(this);
     }
 
@@ -100,9 +81,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             {
                 if (svcDescriptor.SingleInstance is not null)
                     return svcDescriptor.SingleInstance;
-                svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(
-                    svcDescriptor.ImplementationType
-                );
+                svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor);
                 svcDescriptor.SingleInstance = svcDescriptor.Factory(this);
                 return svcDescriptor.SingleInstance;
             }).Value
@@ -113,7 +92,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (svcDescriptor.Factory is not null)
             return svcDescriptor.Factory(this);
         lock (svcDescriptor)
-            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor.ImplementationType);
+            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor);
         return svcDescriptor.Factory(this);
     }
 
