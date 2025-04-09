@@ -61,7 +61,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             container.GetDescriptors(elementType)
             ?? throw new ServiceNotRegisteredException(elementType);
 
-        return descriptors.Count == 0
+        return descriptors.Count is 0
             ? CreateEmptyArray(elementType)
             : CreateServiceArray(elementType, descriptors);
     }
@@ -89,7 +89,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         // Try to create from open generic
         var openGenericType = serviceType.GetGenericTypeDefinition();
         var openDescriptor = container.GetDescriptor(openGenericType);
-        if (openDescriptor == null)
+        if (openDescriptor is null)
             return false;
 
         var closedType = openDescriptor
