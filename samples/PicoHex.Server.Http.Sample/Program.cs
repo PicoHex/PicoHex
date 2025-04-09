@@ -19,10 +19,7 @@ svcRegistry
     )
     .RegisterSingle<RestfulHandler>();
 
-svcRegistry
-    .RegisterSingle<ILogger<TcpServer>, Logger<TcpServer>>()
-    .RegisterSingle<ILogger<RestfulHandler>, Logger<RestfulHandler>>()
-    .RegisterLogger();
+svcRegistry.RegisterLogger();
 
 var svcProvider = svcRegistry.CreateProvider();
 
