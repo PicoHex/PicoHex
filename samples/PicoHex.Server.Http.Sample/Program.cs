@@ -7,7 +7,7 @@ const int tcpPort = 8080;
 svcRegistry
     // .AddLogging(builder => builder.AddConsole())
     .RegisterTransient<ITcpHandler, RestfulHandler>()
-    .RegisterTransient<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler>()!)
+    .RegisterTransient<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>)
     .RegisterSingle<TcpServer>(
         sp =>
             new TcpServer(
@@ -30,7 +30,7 @@ var logger = svcRegistry.CreateLogger<Program>();
 await logger.InfoAsync($"Starting TCP server on http://localhost:{tcpPort}...");
 var cts = new CancellationTokenSource();
 
-AppDomain.CurrentDomain.ProcessExit += (_, __) => cts.Cancel();
-Console.CancelKeyPress += (_, __) => cts.Cancel();
+AppDomain.CurrentDomain.ProcessExit += (_, _) => cts.Cancel();
+Console.CancelKeyPress += (_, _) => cts.Cancel();
 
 await tcpServer.StartAsync(cts.Token);

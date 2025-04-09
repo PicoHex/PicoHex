@@ -12,8 +12,8 @@ svcRegistry.RegisterSingle<IUdpHandler, MyBytesHandler>();
 var logger = svcRegistry.CreateLogger<Program>();
 
 // Registering servers
-svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler>()!);
-svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => () => sp.Resolve<IUdpHandler>()!);
+svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
+svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
 const int tcpPort = 12345;
 const int udpPort = 12346;
 svcRegistry.RegisterSingle<TcpServer>(
@@ -51,8 +51,8 @@ var serviceProvider = svcRegistry.CreateProvider();
 try
 {
     // Proceed with starting the servers (TcpServer and UdpServer)
-    var tcpServer = serviceProvider.Resolve<TcpServer>()!;
-    var udpServer = serviceProvider.Resolve<UdpServer>()!;
+    var tcpServer = serviceProvider.Resolve<TcpServer>();
+    var udpServer = serviceProvider.Resolve<UdpServer>();
 
     using var cancellationTokenSource = new CancellationTokenSource();
 
