@@ -2,7 +2,7 @@ namespace PicoHex.DI;
 
 public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : ISvcScope
 {
-    private readonly ConcurrentDictionary<Type, object> _scopedServices = new();
+    private readonly ConcurrentDictionary<Type, object> _scopedInstances = new();
     private volatile bool _disposed;
 
     public object Resolve(
@@ -20,7 +20,7 @@ public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : I
         return descriptor.Lifetime switch
         {
             SvcLifetime.Scoped
-                => _scopedServices.GetOrAdd(
+                => _scopedInstances.GetOrAdd(
                     serviceType,
                     new Lazy<object>(() => resolver.Resolve(serviceType)).Value
                 ),
@@ -28,26 +28,21 @@ public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : I
         };
     }
 
-    public void Dispose() => Dispose(disposing: true);
+    public void Dispose() => DisposeCore(disposing: true);
 
     public async ValueTask DisposeAsync()
     {
         await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(disposing: false);
+        DisposeCore(disposing: false);
     }
 
-    private void Dispose(bool disposing)
+    private void DisposeCore(bool disposing)
     {
         if (_disposed)
             return;
+
         if (disposing)
-        {
-            foreach (var service in _scopedServices)
-            {
-                if (service.Value is IDisposable disposable)
-                    disposable.Dispose();
-            }
-        }
+            DisposeInstances(instance => (instance as IDisposable)?.Dispose());
         _disposed = true;
     }
 
@@ -55,13 +50,19 @@ public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : I
     {
         if (_disposed)
             return;
-        foreach (var service in _scopedServices)
+
+        foreach (var instance in _scopedInstances.Values)
         {
-            if (service.Value is IDisposable disposable)
-                disposable.Dispose();
-            if (service.Value is IAsyncDisposable asyncDisposable)
+            if (instance is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            (instance as IDisposable)?.Dispose();
         }
         _disposed = true;
+    }
+
+    private void DisposeInstances(Action<object> disposeAction)
+    {
+        foreach (var instance in _scopedInstances.Values)
+            disposeAction(instance);
     }
 }
