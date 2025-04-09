@@ -3,16 +3,11 @@
 var svcRegistry = Bootstrap.CreateContainer();
 
 // Registering logging
-svcRegistry.RegisterConsoleLogger<Program>();
+svcRegistry.RegisterLogger();
 
 // Registering Handlers
 svcRegistry.RegisterSingle<ITcpHandler, MyStreamHandler>();
 svcRegistry.RegisterSingle<IUdpHandler, MyBytesHandler>();
-svcRegistry.RegisterSingle<ILogger<TcpServer>, Logger<TcpServer>>();
-svcRegistry.RegisterSingle<ILogger<UdpServer>, Logger<UdpServer>>();
-svcRegistry.RegisterSingle<ILogger<MyStreamHandler>, Logger<MyStreamHandler>>();
-svcRegistry.RegisterSingle<ILogger<MyBytesHandler>, Logger<MyBytesHandler>>();
-svcRegistry.RegisterConsoleLogger<Program>();
 
 var logger = svcRegistry.CreateLogger<Program>();
 
@@ -21,18 +16,24 @@ svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => () => sp.Resolve<ITcpHandler
 svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => () => sp.Resolve<IUdpHandler>()!);
 const int tcpPort = 12345;
 const int udpPort = 12346;
-svcRegistry.RegisterSingle<TcpServer>(sp => new TcpServer(
-    IPAddress.Any,
-    tcpPort,
-    sp.Resolve<Func<ITcpHandler>>(),
-    sp.Resolve<ILogger<TcpServer>>()
-));
-svcRegistry.RegisterSingle<UdpServer>(sp => new UdpServer(
-    IPAddress.Any,
-    udpPort,
-    sp.Resolve<Func<IUdpHandler>>(),
-    sp.Resolve<ILogger<UdpServer>>()
-));
+svcRegistry.RegisterSingle<TcpServer>(
+    sp =>
+        new TcpServer(
+            IPAddress.Any,
+            tcpPort,
+            sp.Resolve<Func<ITcpHandler>>(),
+            sp.Resolve<ILogger<TcpServer>>()
+        )
+);
+svcRegistry.RegisterSingle<UdpServer>(
+    sp =>
+        new UdpServer(
+            IPAddress.Any,
+            udpPort,
+            sp.Resolve<Func<IUdpHandler>>(),
+            sp.Resolve<ILogger<UdpServer>>()
+        )
+);
 
 var serviceProvider = svcRegistry.CreateProvider();
 

@@ -22,7 +22,7 @@ svcRegistry
 svcRegistry
     .RegisterSingle<ILogger<TcpServer>, Logger<TcpServer>>()
     .RegisterSingle<ILogger<RestfulHandler>, Logger<RestfulHandler>>()
-    .RegisterConsoleLogger<Program>();
+    .RegisterLogger();
 
 var svcProvider = svcRegistry.CreateProvider();
 

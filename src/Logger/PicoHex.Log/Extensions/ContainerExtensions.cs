@@ -2,12 +2,12 @@
 
 public static class ContainerExtensions
 {
-    public static ISvcContainer RegisterConsoleLogger<T>(this ISvcContainer container) =>
+    public static ISvcContainer RegisterLogger(this ISvcContainer container) =>
         container
             .RegisterSingle<ILogFormatter, ConsoleLogFormatter>()
             .RegisterSingle<ILoggerFactory, LoggerFactory>()
             .RegisterSingle<ILogSink, ConsoleLogSink>()
-            .RegisterSingle<ILogger<T>, Logger<T>>();
+            .RegisterSingle(typeof(ILogger<>), typeof(Logger<>));
 
     public static ILogger CreateLogger<T>(this ISvcContainer container) =>
         container.CreateProvider().Resolve<ILogger<T>>();

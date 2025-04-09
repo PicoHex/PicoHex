@@ -29,6 +29,33 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             return ResolveAll(elementType, descriptors);
         }
 
+        if (serviceType is { IsGenericType: true, IsGenericTypeDefinition: false })
+        {
+            var existingClosedDescriptor = container.GetDescriptor(serviceType);
+            if (existingClosedDescriptor is not null)
+                return ResolveLast(existingClosedDescriptor);
+
+            var openGenericType = serviceType.GetGenericTypeDefinition();
+
+            var openDescriptor = container.GetDescriptor(openGenericType);
+            if (openDescriptor is not null)
+            {
+                var closedImplType = openDescriptor
+                    .ImplementationType
+                    .MakeGenericType(serviceType.GetGenericArguments());
+
+                var closedDescriptor = new SvcDescriptor(
+                    serviceType,
+                    closedImplType,
+                    openDescriptor.Lifetime
+                );
+
+                container.Register(closedDescriptor);
+
+                return ResolveLast(closedDescriptor);
+            }
+        }
+
         var svcDescriptor =
             container.GetDescriptor(serviceType)
             ?? throw new InvalidOperationException(

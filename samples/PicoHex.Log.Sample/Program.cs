@@ -3,7 +3,7 @@
 var container = Bootstrap.CreateContainer();
 
 // Register console logger with application type
-container.RegisterConsoleLogger<Program>();
+container.RegisterLogger();
 
 // Create typed logger instance
 var logger = container.CreateLogger<Program>();
