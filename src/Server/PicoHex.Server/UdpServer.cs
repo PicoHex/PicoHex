@@ -33,7 +33,7 @@ public class UdpServer : IDisposable, IAsyncDisposable
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         await _logger.InfoAsync(
-            "UDP server started on {_ipAddress}:{_port}",
+            $"UDP server started on {_ipAddress}:{_port}",
             cancellationToken: cancellationToken
         );
 

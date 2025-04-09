@@ -9,8 +9,6 @@ svcRegistry.RegisterLogger();
 svcRegistry.RegisterSingle<ITcpHandler, MyStreamHandler>();
 svcRegistry.RegisterSingle<IUdpHandler, MyBytesHandler>();
 
-var logger = svcRegistry.CreateLogger<Program>();
-
 // Registering servers
 svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
 svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
@@ -38,16 +36,9 @@ svcRegistry.RegisterSingle<UdpServer>(
 var serviceProvider = svcRegistry.CreateProvider();
 
 // Step 2: Try to get a logger from the IoC container
-// var logger = serviceProvider.GetService<ILogger<Program>>();
+var logger = serviceProvider.Resolve<ILogger<Program>>();
 
-// Step 3: If no logger is registered, set up a default console logger
-// if (logger == null)
-// {
-//     logger = CreateDefaultLogger<Program>();
-//     Console.WriteLine("No logger registered, using default console logger.");
-// }
-
-// Step 4: Set up the rest of your services
+// Step 3: Set up the rest of your services
 try
 {
     // Proceed with starting the servers (TcpServer and UdpServer)
