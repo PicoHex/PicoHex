@@ -42,7 +42,12 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             throw new ObjectDisposedException(nameof(SvcProvider));
     }
 
-    private static bool IsEnumerableRequest(Type serviceType, out Type elementType)
+    private static bool IsEnumerableRequest(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            out Type elementType
+    )
     {
         elementType = null!;
         if (
@@ -55,7 +60,10 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         return true;
     }
 
-    private object ResolveAllServices(Type elementType)
+    private object ResolveAllServices(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type elementType
+    )
     {
         var descriptors =
             container.GetDescriptors(elementType)
@@ -66,9 +74,16 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             : CreateServiceArray(elementType, descriptors);
     }
 
-    private static Array CreateEmptyArray(Type elementType) => Array.CreateInstance(elementType, 0);
+    private static Array CreateEmptyArray(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type elementType
+    ) => Array.CreateInstance(elementType, 0);
 
-    private Array CreateServiceArray(Type elementType, IList<SvcDescriptor> descriptors)
+    private Array CreateServiceArray(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type elementType,
+        IList<SvcDescriptor> descriptors
+    )
     {
         var instances = descriptors.Select(ResolveInstance).ToArray();
         var array = Array.CreateInstance(elementType, instances.Length);
@@ -76,7 +91,11 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         return array;
     }
 
-    private bool TryResolveClosedGenericDescriptor(Type serviceType, out SvcDescriptor descriptor)
+    private bool TryResolveClosedGenericDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
+        out SvcDescriptor descriptor
+    )
     {
         descriptor = null!;
         if (!serviceType.IsConstructedGenericType)
@@ -100,7 +119,10 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         return true;
     }
 
-    private object ResolveRegisteredService(Type serviceType)
+    private object ResolveRegisteredService(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
+    )
     {
         var descriptor =
             container.GetDescriptor(serviceType)
