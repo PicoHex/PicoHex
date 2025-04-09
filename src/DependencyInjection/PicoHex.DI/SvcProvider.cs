@@ -3,7 +3,7 @@ namespace PicoHex.DI;
 public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
     : ISvcProvider
 {
-    private readonly ConcurrentDictionary<Type, object> _singletons = new();
+    private readonly ConcurrentDictionary<Type, object> _singletonInstances = new();
     private volatile bool _disposed;
 
     public object Resolve(
@@ -11,138 +11,152 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             Type serviceType
     )
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(SvcProvider));
+        EnsureNotDisposed();
 
-        if (
-            serviceType.IsGenericType
-            && serviceType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
-        )
-        {
-            var elementType = serviceType.GetGenericArguments()[0];
+        if (IsEnumerableRequest(serviceType, out var elementType))
+            return ResolveAllServices(elementType);
 
-            var descriptors =
-                container.GetDescriptors(elementType)
-                ?? throw new InvalidOperationException(
-                    $"Service of type {elementType} not registered."
-                );
-            return ResolveAll(elementType, descriptors);
-        }
-
-        if (serviceType is { IsGenericType: true, IsGenericTypeDefinition: false })
-        {
-            var existingClosedDescriptor = container.GetDescriptor(serviceType);
-            if (existingClosedDescriptor is not null)
-                return ResolveLast(existingClosedDescriptor);
-
-            var openGenericType = serviceType.GetGenericTypeDefinition();
-
-            var openDescriptor = container.GetDescriptor(openGenericType);
-            if (openDescriptor is not null)
-            {
-                var closedImplType = openDescriptor
-                    .ImplementationType
-                    .MakeGenericType(serviceType.GetGenericArguments());
-
-                var closedDescriptor = new SvcDescriptor(
-                    serviceType,
-                    closedImplType,
-                    openDescriptor.Lifetime
-                );
-
-                container.Register(closedDescriptor);
-
-                return ResolveLast(closedDescriptor);
-            }
-        }
-
-        var svcDescriptor =
-            container.GetDescriptor(serviceType)
-            ?? throw new InvalidOperationException(
-                $"Service of type {serviceType} not registered."
-            );
-        return ResolveLast(svcDescriptor);
+        return TryResolveClosedGenericDescriptor(serviceType, out var descriptor)
+            ? ResolveInstance(descriptor)
+            : ResolveRegisteredService(serviceType);
     }
 
-    private object ResolveLast(SvcDescriptor svcDescriptor) => GetOrCreateInstance(svcDescriptor);
-
-    private object ResolveAll(Type elementType, IList<SvcDescriptor> svcDescriptors)
+    public ISvcScope CreateScope()
     {
-        if (svcDescriptors.Count is 0)
-        {
-            var emptyArray = Array.CreateInstance(elementType, 0);
-            return emptyArray;
-        }
+        EnsureNotDisposed();
+        return scopeFactory.CreateScope(container, this);
+    }
 
-        var instances = svcDescriptors.Select(GetOrCreateInstance).ToArray();
+    public void Dispose() => DisposeCore(disposing: true);
 
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        DisposeCore(disposing: false);
+    }
+
+    #region Private Methods
+    private void EnsureNotDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(SvcProvider));
+    }
+
+    private static bool IsEnumerableRequest(Type serviceType, out Type elementType)
+    {
+        elementType = null!;
+        if (
+            !serviceType.IsGenericType
+            || serviceType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
+        )
+            return false;
+
+        elementType = serviceType.GetGenericArguments()[0];
+        return true;
+    }
+
+    private object ResolveAllServices(Type elementType)
+    {
+        var descriptors =
+            container.GetDescriptors(elementType)
+            ?? throw new ServiceNotRegisteredException(elementType);
+
+        return descriptors.Count == 0
+            ? CreateEmptyArray(elementType)
+            : CreateServiceArray(elementType, descriptors);
+    }
+
+    private static Array CreateEmptyArray(Type elementType) => Array.CreateInstance(elementType, 0);
+
+    private Array CreateServiceArray(Type elementType, IList<SvcDescriptor> descriptors)
+    {
+        var instances = descriptors.Select(ResolveInstance).ToArray();
         var array = Array.CreateInstance(elementType, instances.Length);
         Array.Copy(instances, array, instances.Length);
         return array;
     }
 
-    private object GetOrCreateInstance(SvcDescriptor svcDescriptor) =>
-        svcDescriptor.Lifetime switch
+    private bool TryResolveClosedGenericDescriptor(Type serviceType, out SvcDescriptor descriptor)
+    {
+        descriptor = null!;
+        if (!serviceType.IsConstructedGenericType)
+            return false;
+
+        // Check existing registration
+        if ((descriptor = container.GetDescriptor(serviceType)!) is not null)
+            return true;
+
+        // Try to create from open generic
+        var openGenericType = serviceType.GetGenericTypeDefinition();
+        var openDescriptor = container.GetDescriptor(openGenericType);
+        if (openDescriptor == null)
+            return false;
+
+        var closedType = openDescriptor
+            .ImplementationType
+            .MakeGenericType(serviceType.GenericTypeArguments);
+        descriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);
+        container.Register(descriptor);
+        return true;
+    }
+
+    private object ResolveRegisteredService(Type serviceType)
+    {
+        var descriptor =
+            container.GetDescriptor(serviceType)
+            ?? throw new ServiceNotRegisteredException(serviceType);
+        return ResolveInstance(descriptor);
+    }
+
+    private object ResolveInstance(SvcDescriptor descriptor) =>
+        descriptor.Lifetime switch
         {
-            SvcLifetime.Transient => GetTransientInstance(svcDescriptor),
-            SvcLifetime.Singleton => GetSingletonInstance(svcDescriptor),
-            SvcLifetime.Scoped => GetScopedInstance(svcDescriptor),
-            _ => throw new ArgumentOutOfRangeException()
+            SvcLifetime.Transient => CreateTransientInstance(descriptor),
+            SvcLifetime.Singleton => GetOrCreateSingleton(descriptor),
+            SvcLifetime.Scoped => CreateScopedInstance(descriptor),
+            _ => throw new UnsupportedLifetimeException(descriptor.Lifetime)
         };
 
-    private object GetTransientInstance(SvcDescriptor svcDescriptor)
+    private object CreateTransientInstance(SvcDescriptor descriptor)
     {
-        if (svcDescriptor.Factory is not null)
-            return svcDescriptor.Factory(this);
-        lock (svcDescriptor)
-            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor);
-        return svcDescriptor.Factory(this);
+        EnsureFactoryInitialized(descriptor);
+        return descriptor.Factory!(this);
     }
 
-    private object GetSingletonInstance(SvcDescriptor svcDescriptor) =>
-        _singletons.GetOrAdd(
-            svcDescriptor.ServiceType,
-            new Lazy<object>(() =>
-            {
-                if (svcDescriptor.SingleInstance is not null)
-                    return svcDescriptor.SingleInstance;
-                svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor);
-                svcDescriptor.SingleInstance = svcDescriptor.Factory(this);
-                return svcDescriptor.SingleInstance;
-            }).Value
+    private object GetOrCreateSingleton(SvcDescriptor descriptor) =>
+        _singletonInstances.GetOrAdd(
+            descriptor.ServiceType,
+            new Lazy<object>(() => CreateSingleton(descriptor)).Value
         );
 
-    private object GetScopedInstance(SvcDescriptor svcDescriptor)
+    private object CreateSingleton(SvcDescriptor descriptor)
     {
-        if (svcDescriptor.Factory is not null)
-            return svcDescriptor.Factory(this);
-        lock (svcDescriptor)
-            svcDescriptor.Factory ??= SvcFactory.CreateAotFactory(svcDescriptor);
-        return svcDescriptor.Factory(this);
+        EnsureFactoryInitialized(descriptor);
+        return descriptor.SingleInstance ??= descriptor.Factory!(this);
     }
 
-    public ISvcScope CreateScope() => scopeFactory.CreateScope(container, this);
-
-    public void Dispose() => Dispose(disposing: true);
-
-    public async ValueTask DisposeAsync()
+    private object CreateScopedInstance(SvcDescriptor descriptor)
     {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(disposing: false);
+        EnsureFactoryInitialized(descriptor);
+        return descriptor.Factory!(this);
     }
 
-    private void Dispose(bool disposing)
+    private static void EnsureFactoryInitialized(SvcDescriptor descriptor)
+    {
+        if (descriptor.Factory is not null)
+            return;
+
+        lock (descriptor)
+            descriptor.Factory ??= SvcFactory.CreateAotFactory(descriptor);
+    }
+
+    private void DisposeCore(bool disposing)
     {
         if (_disposed)
             return;
+
         if (disposing)
-        {
-            foreach (var service in _singletons)
-            {
-                if (service.Value is IDisposable disposable)
-                    disposable.Dispose();
-            }
-        }
+            DisposeInstances(instance => (instance as IDisposable)?.Dispose());
         _disposed = true;
     }
 
@@ -150,13 +164,20 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     {
         if (_disposed)
             return;
-        foreach (var service in _singletons)
+
+        foreach (var instance in _singletonInstances.Values)
         {
-            if (service.Value is IDisposable disposable)
-                disposable.Dispose();
-            if (service.Value is IAsyncDisposable asyncDisposable)
+            if (instance is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            (instance as IDisposable)?.Dispose();
         }
         _disposed = true;
     }
+
+    private void DisposeInstances(Action<object> disposeAction)
+    {
+        foreach (var instance in _singletonInstances.Values)
+            disposeAction(instance);
+    }
+    #endregion
 }

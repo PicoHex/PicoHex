@@ -59,22 +59,8 @@ public static class IocTests
             var provider = container.CreateProvider();
             provider.Resolve(typeof(ICircularA));
         }
-        catch (InvalidOperationException ex)
+        catch (ServiceNotRegisteredException ex)
         {
-            try
-            {
-                var provider = container.CreateProvider();
-                provider.Resolve(typeof(ICircularA));
-            }
-            catch (InvalidOperationException iex)
-            {
-                Console.WriteLine(
-                    ex.Message.Contains("Circular dependency detected")
-                        ? "Circular Dependency Detection Test Passed"
-                        : "Circular Test Failed: Wrong exception message"
-                );
-            }
-
             Console.WriteLine(
                 ex.Message.Contains("Circular dependency detected")
                     ? "Circular Dependency Detection Test Passed"
