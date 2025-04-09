@@ -23,9 +23,11 @@ svcRegistry.RegisterLogger();
 
 var svcProvider = svcRegistry.CreateProvider();
 
-var tcpServer = svcProvider.Resolve<TcpServer>()!;
+var tcpServer = svcProvider.Resolve<TcpServer>();
 
-Console.WriteLine($"Starting TCP server on http://localhost:{tcpPort}...");
+var logger = svcRegistry.CreateLogger<Program>();
+
+await logger.InfoAsync($"Starting TCP server on http://localhost:{tcpPort}...");
 var cts = new CancellationTokenSource();
 
 AppDomain.CurrentDomain.ProcessExit += (_, __) => cts.Cancel();

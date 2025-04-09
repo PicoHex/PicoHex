@@ -2,9 +2,6 @@
 
 public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
 {
-    private readonly ILogger<MyBytesHandler> _logger =
-        logger ?? throw new ArgumentNullException(nameof(logger));
-
     // If logger is null, fallback to default console logger
 
     public async ValueTask HandleAsync(
@@ -15,7 +12,7 @@ public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
     {
         try
         {
-            await _logger.InfoAsync(
+            await logger.InfoAsync(
                 $"Received datagram from {remoteEndPoint}",
                 cancellationToken: cancellationToken
             );
@@ -23,14 +20,14 @@ public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
             // Example of processing the data (e.g., echoing it back or processing it)
             if (data.Length > 0)
             {
-                await _logger.InfoAsync(
+                await logger.InfoAsync(
                     $"Data received: {BitConverter.ToString(data)}",
                     cancellationToken: cancellationToken
                 );
             }
             else
             {
-                await _logger.WarningAsync(
+                await logger.WarningAsync(
                     "Received empty datagram.",
                     cancellationToken: cancellationToken
                 );
@@ -41,7 +38,7 @@ public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
         }
         catch (Exception ex)
         {
-            await _logger.ErrorAsync(
+            await logger.ErrorAsync(
                 "Error while handling datagram",
                 ex,
                 cancellationToken: cancellationToken
