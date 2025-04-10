@@ -8,15 +8,12 @@ svcRegistry
     // .AddLogging(builder => builder.AddConsole())
     .RegisterTransient<ITcpHandler, RestfulHandler>()
     .RegisterTransient<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>)
-    .RegisterSingle<TcpServer>(
-        sp =>
-            new TcpServer(
-                IPAddress.Any,
-                tcpPort,
-                sp.Resolve<Func<ITcpHandler>>(),
-                sp.Resolve<ILogger<TcpServer>>()
-            )
-    )
+    .RegisterSingle<TcpServer>(sp => new TcpServer(
+        IPAddress.Any,
+        tcpPort,
+        sp.Resolve<Func<ITcpHandler>>(),
+        sp.Resolve<ILogger<TcpServer>>()
+    ))
     .RegisterSingle<RestfulHandler>();
 
 svcRegistry.RegisterLogger();
@@ -25,7 +22,7 @@ var svcProvider = svcRegistry.CreateProvider();
 
 var tcpServer = svcProvider.Resolve<TcpServer>();
 
-var logger = svcRegistry.CreateLogger<Program>();
+var logger = svcProvider.Resolve<ILogger<Program>>();
 
 await logger.InfoAsync($"Starting TCP server on http://localhost:{tcpPort}...");
 var cts = new CancellationTokenSource();

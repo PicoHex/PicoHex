@@ -6,7 +6,7 @@ var container = Bootstrap.CreateContainer();
 container.RegisterLogger();
 
 // Create typed logger instance
-var logger = container.CreateLogger<Program>();
+var logger = container.CreateProvider().Resolve<ILogger<Program>>();
 
 // Demonstrate basic async logging
 await logger.InfoAsync("Hello, World!");
