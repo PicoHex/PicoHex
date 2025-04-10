@@ -105,7 +105,7 @@ public class DependencyInjectionTests
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
 
-        Assert.Throws<InvalidOperationException>(() => svcProvider.Resolve<IService>());
+        Assert.Throws<ServiceNotRegisteredException>(() => svcProvider.Resolve<IService>());
     }
 
     [Fact]
