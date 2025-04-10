@@ -11,11 +11,13 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             throw new ObjectDisposedException(nameof(SvcContainer));
         ArgumentNullException.ThrowIfNull(descriptor);
 
+        if (IsConflictForServiceType(descriptor))
+            throw new InvalidOperationException(
+                $"Duplicate registration for type: {descriptor.ServiceType}"
+            );
+
         _descriptors.TryAdd(descriptor.ServiceType, []);
         _descriptors[descriptor.ServiceType].Add(descriptor);
-
-        _descriptors.TryAdd(descriptor.ImplementationType, []);
-        _descriptors[descriptor.ImplementationType].Add(descriptor);
 
         return this;
     }
@@ -36,6 +38,27 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
     {
         await DisposeAsyncCore().ConfigureAwait(false);
         Dispose(disposing: false);
+    }
+
+    private bool IsConflictForServiceType(SvcDescriptor newDescriptor)
+    {
+        if (!_descriptors.TryGetValue(newDescriptor.ServiceType, out var existingDescriptors))
+            return false;
+
+        foreach (var existing in existingDescriptors)
+        {
+            if (existing.ImplementationType == newDescriptor.ImplementationType)
+                return true;
+
+            if (
+                existing.SingleInstance is not null
+                && newDescriptor.SingleInstance is not null
+                && existing.SingleInstance == newDescriptor.SingleInstance
+            )
+                return true;
+        }
+
+        return false;
     }
 
     private void Dispose(bool disposing)
