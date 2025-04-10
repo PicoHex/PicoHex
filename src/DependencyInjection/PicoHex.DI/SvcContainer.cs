@@ -11,10 +11,12 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             throw new ObjectDisposedException(nameof(SvcContainer));
         ArgumentNullException.ThrowIfNull(descriptor);
 
-        if (IsConflictForServiceType(descriptor))
+        if (IsConflictForServiceType(descriptor, out var conflictDetails))
+        {
             throw new InvalidOperationException(
-                $"Duplicate registration for type: {descriptor.ServiceType}"
+                $"Duplicate registration for type '{descriptor.ServiceType.FullName}'. {conflictDetails}"
             );
+        }
 
         _descriptors.TryAdd(descriptor.ServiceType, []);
         _descriptors[descriptor.ServiceType].Add(descriptor);
@@ -40,22 +42,31 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         Dispose(disposing: false);
     }
 
-    private bool IsConflictForServiceType(SvcDescriptor newDescriptor)
+    private bool IsConflictForServiceType(SvcDescriptor newDescriptor, out string conflictDetails)
     {
+        conflictDetails = null!;
+
         if (!_descriptors.TryGetValue(newDescriptor.ServiceType, out var existingDescriptors))
             return false;
 
         foreach (var existing in existingDescriptors)
         {
             if (existing.ImplementationType == newDescriptor.ImplementationType)
+            {
+                conflictDetails =
+                    $"ImplementationType '{existing.ImplementationType.FullName}' is already registered.";
                 return true;
+            }
 
             if (
-                existing.SingleInstance is not null
-                && newDescriptor.SingleInstance is not null
-                && existing.SingleInstance == newDescriptor.SingleInstance
+                existing.SingleInstance == null
+                || newDescriptor.SingleInstance == null
+                || existing.SingleInstance != newDescriptor.SingleInstance
             )
-                return true;
+                continue;
+            conflictDetails =
+                $"SingleInstance of type '{existing.SingleInstance.GetType().FullName}' is already registered.";
+            return true;
         }
 
         return false;

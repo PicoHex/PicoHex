@@ -87,7 +87,7 @@ public static class IocTests
         {
             Console.WriteLine(
                 ex.Message.Contains("Duplicate registration for type")
-                    ? "Duplicate Registration Test Passed"
+                    ? $"Duplicate Registration Test Passed: {ex.Message}"
                     : "Duplicate Registration Test Failed: Wrong exception message"
             );
             return;
@@ -109,7 +109,7 @@ public static class IocTests
         {
             Console.WriteLine(
                 ex.Message.Contains("Duplicate registration for type")
-                    ? "Duplicate Registration Test Passed"
+                    ? $"Duplicate Registration Test Passed: {ex.Message}"
                     : "Duplicate Registration Test Failed: Wrong exception message"
             );
             return;
