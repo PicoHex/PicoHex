@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Logger\PicoHex.Log\PicoHex.Log.csproj" />
-      <ProjectReference Include="..\PicoHex.Server.Abstractions\PicoHex.Server.Abstractions.csproj" />
+        <ProjectReference Include="..\..\Logger\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj" />
+        <ProjectReference Include="..\PicoHex.Server.Abstractions\PicoHex.Server.Abstractions.csproj" />
     </ItemGroup>
 
 </Project>

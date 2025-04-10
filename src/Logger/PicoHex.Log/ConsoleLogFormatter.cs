@@ -6,7 +6,7 @@ public sealed class ConsoleLogFormatter : ILogFormatter
     {
         var sb = new StringBuilder()
             .Append($"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff}] ")
-            .Append($"{entry.Level.ToString().ToUpper(), -12}")
+            .Append($"{entry.Level.ToString().ToUpper(), -8}")
             .Append($"[{entry.Category}] ")
             .Append(entry.Message);
 

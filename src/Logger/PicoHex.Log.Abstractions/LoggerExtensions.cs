@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Log.Extensions;
+﻿namespace PicoHex.Log.Abstractions;
 
 public static class LoggerExtensions
 {

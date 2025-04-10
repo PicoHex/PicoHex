@@ -1,6 +1,6 @@
-﻿namespace PicoHex.Log;
+﻿namespace PicoHex.Log.Abstractions;
 
-public sealed class LogEntry
+public sealed record LogEntry
 {
     public DateTimeOffset Timestamp { get; set; }
     public LogLevel Level { get; set; }
