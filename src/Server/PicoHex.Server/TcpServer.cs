@@ -1,14 +1,14 @@
 ﻿namespace PicoHex.Server;
 
-public class TcpServer : IDisposable, IAsyncDisposable
+public sealed class TcpServer : IDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly ushort _port;
     private readonly ILogger<TcpServer> _logger;
     private readonly SemaphoreSlim _connectionSemaphore;
     private readonly TcpListener _listener;
-    private bool _isDisposed;
     private readonly Func<ITcpHandler> _tcpHandlerFactory;
+    private volatile bool _isDisposed;
 
     public TcpServer(
         IPAddress ipAddress,
@@ -18,18 +18,18 @@ public class TcpServer : IDisposable, IAsyncDisposable
         int maxConcurrentConnections = 100
     )
     {
-        _ipAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
+        ArgumentNullException.ThrowIfNull(ipAddress);
+        ArgumentNullException.ThrowIfNull(tcpHandlerFactory);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        _ipAddress = ipAddress;
         _port = port;
-        _tcpHandlerFactory =
-            tcpHandlerFactory ?? throw new ArgumentNullException(nameof(tcpHandlerFactory));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _tcpHandlerFactory = tcpHandlerFactory;
+        _logger = logger;
         _connectionSemaphore = new SemaphoreSlim(maxConcurrentConnections);
         _listener = new TcpListener(_ipAddress, _port);
     }
 
-    /// <summary>
-    /// Starts the TCP server and begins listening for client connections.
-    /// </summary>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         _listener.Start();
@@ -43,129 +43,128 @@ public class TcpServer : IDisposable, IAsyncDisposable
             while (!cancellationToken.IsCancellationRequested)
             {
                 await _connectionSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                TcpClient? client = null;
 
                 try
                 {
-                    var client = await _listener
+                    client = await _listener
                         .AcceptTcpClientAsync(cancellationToken)
                         .ConfigureAwait(false);
-                    if (cancellationToken.IsCancellationRequested)
+
+                    await _logger.InfoAsync(
+                        $"Accepted new client connection {client.Client.RemoteEndPoint}",
+                        cancellationToken: cancellationToken
+                    );
+
+                    // Fire and forget with proper error handling
+                    _ = ProcessClientAsync(client, cancellationToken);
+                }
+                catch (Exception ex) when (ex is OperationCanceledException or SocketException)
+                {
+                    client?.Dispose();
+                    _connectionSemaphore.Release();
+
+                    if (ex is SocketException socketEx)
                     {
-                        _connectionSemaphore.Release();
-                        break;
+                        await _logger.WarningAsync(
+                            "Socket exception while accepting connection",
+                            socketEx,
+                            cancellationToken
+                        );
                     }
 
-                    _ = HandleClientConnectionAsync(client, cancellationToken)
-                        .ContinueWith(_ => _connectionSemaphore.Release(), TaskScheduler.Default);
-                }
-                catch (SocketException socketEx)
-                {
-                    await _logger.WarningAsync(
-                        "Socket exception while accepting a client connection",
-                        socketEx,
-                        cancellationToken
-                    );
+                    break;
                 }
                 catch (Exception ex)
                 {
+                    client?.Dispose();
+                    _connectionSemaphore.Release();
                     await _logger.ErrorAsync(
-                        "Unexpected error while accepting a client connection",
+                        "Error accepting client connection",
                         ex,
                         cancellationToken: cancellationToken
                     );
                 }
             }
         }
-        catch (OperationCanceledException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            await _logger.InfoAsync(
-                "TCP server shutdown requested",
+            await _logger.ErrorAsync(
+                "TCP server fatal error",
+                ex,
                 cancellationToken: cancellationToken
             );
+            throw;
+        }
+        finally
+        {
+            Stop();
+
+            await _logger.InfoAsync("TCP server stopped", cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task ProcessClientAsync(TcpClient client, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using (client)
+            {
+                await using var stream = client.GetStream();
+                var handler = _tcpHandlerFactory();
+                await handler.HandleAsync(stream, cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (Exception ex)
         {
             await _logger.ErrorAsync(
-                "TCP server encountered an error",
+                "Client processing error",
                 ex,
                 cancellationToken: cancellationToken
             );
         }
         finally
         {
-            Stop();
-            await _logger.InfoAsync("TCP server stopped", cancellationToken: cancellationToken);
+            _connectionSemaphore.Release();
+            await TryLogClientDisconnect(client, cancellationToken);
         }
     }
 
-    /// <summary>
-    /// Gracefully stops the TCP server.
-    /// </summary>
-    private void Stop()
-    {
-        if (!_listener.Server.IsBound)
-            return;
-
-        _listener.Stop();
-    }
-
-    private async Task HandleClientConnectionAsync(
+    private async ValueTask TryLogClientDisconnect(
         TcpClient client,
         CancellationToken cancellationToken
     )
     {
-        using (client)
+        try
         {
-            await using var stream = client.GetStream();
-            try
-            {
-                var handler = _tcpHandlerFactory();
-                await handler.HandleAsync(stream, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                await _logger.ErrorAsync(
-                    "Error handling client connection",
-                    ex,
-                    cancellationToken: cancellationToken
-                );
-            }
-            finally
-            {
-                await _logger.InfoAsync(
-                    $"Client {client.Client.RemoteEndPoint} connection closed",
-                    cancellationToken: cancellationToken
-                );
-            }
+            var endpoint = client.Client.RemoteEndPoint?.ToString() ?? "unknown";
+
+            await _logger.InfoAsync(
+                $"Client {endpoint} disconnected",
+                cancellationToken: cancellationToken
+            );
+        }
+        catch
+        {
+            // Suppress logging errors
         }
     }
 
-    /// <summary>
-    /// Disposes the TCP server and its resources.
-    /// </summary>
+    private void Stop()
+    {
+        if (_listener.Server.IsBound)
+        {
+            _listener.Stop();
+        }
+    }
+
     public void Dispose()
     {
         if (_isDisposed)
             return;
 
-        _listener.Stop();
+        Stop();
         _connectionSemaphore.Dispose();
         _isDisposed = true;
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await CastAndDispose(_connectionSemaphore);
-        await CastAndDispose(_listener);
-
-        return;
-
-        static async ValueTask CastAndDispose(IDisposable resource)
-        {
-            if (resource is IAsyncDisposable resourceAsyncDisposable)
-                await resourceAsyncDisposable.DisposeAsync();
-            else
-                resource.Dispose();
-        }
     }
 }
