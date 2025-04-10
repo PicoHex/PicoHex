@@ -111,9 +111,9 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (openDescriptor is null)
             return false;
 
-        var closedType = openDescriptor
-            .ImplementationType
-            .MakeGenericType(serviceType.GenericTypeArguments);
+        var closedType = openDescriptor.ImplementationType.MakeGenericType(
+            serviceType.GenericTypeArguments
+        );
         descriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);
         container.Register(descriptor);
         return true;
@@ -165,7 +165,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
 
     private static void EnsureFactoryInitialized(SvcDescriptor descriptor)
     {
-        if (descriptor.Factory is not null)
+        if (descriptor.Factory is not null || descriptor.SingleInstance is not null)
             return;
 
         lock (descriptor)
