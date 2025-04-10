@@ -22,7 +22,8 @@ public sealed class SvcDescriptor(
             Type serviceType,
         object singleInstance
     )
-        : this(serviceType, serviceType, SvcLifetime.Singleton) => SingleInstance = singleInstance;
+        : this(serviceType, singleInstance.GetType(), SvcLifetime.Singleton) =>
+        SingleInstance = singleInstance;
 
     public SvcDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
