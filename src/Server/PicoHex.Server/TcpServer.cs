@@ -33,10 +33,7 @@ public sealed class TcpServer : IDisposable
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         _listener.Start();
-        await _logger.InfoAsync(
-            $"TCP server started on {_ipAddress}:{_port}",
-            cancellationToken: cancellationToken
-        );
+        await _logger.InfoAsync($"TCP server started on {_ipAddress}:{_port}", cancellationToken);
 
         try
         {
@@ -53,7 +50,7 @@ public sealed class TcpServer : IDisposable
 
                     await _logger.InfoAsync(
                         $"Accepted new client connection {client.Client.RemoteEndPoint}",
-                        cancellationToken: cancellationToken
+                        cancellationToken
                     );
 
                     // Fire and forget with proper error handling
@@ -100,7 +97,7 @@ public sealed class TcpServer : IDisposable
         {
             Stop();
 
-            await _logger.InfoAsync("TCP server stopped", cancellationToken: cancellationToken);
+            await _logger.InfoAsync("TCP server stopped", cancellationToken);
         }
     }
 
@@ -139,10 +136,7 @@ public sealed class TcpServer : IDisposable
         {
             var endpoint = client.Client.RemoteEndPoint?.ToString() ?? "unknown";
 
-            await _logger.InfoAsync(
-                $"Client {endpoint} disconnected",
-                cancellationToken: cancellationToken
-            );
+            await _logger.InfoAsync($"Client {endpoint} disconnected", cancellationToken);
         }
         catch
         {
