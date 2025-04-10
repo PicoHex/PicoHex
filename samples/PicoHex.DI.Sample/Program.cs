@@ -99,11 +99,12 @@ public static class IocTests
     public static void DuplicateSingletonRegistration()
     {
         var container = Bootstrap.CreateContainer();
-        container.RegisterSingle<IC>(new C());
+        var c = new C();
+        container.RegisterSingle<IC>(c);
 
         try
         {
-            container.RegisterSingle<IC>(new C());
+            container.RegisterSingle<IC>(c);
         }
         catch (InvalidOperationException ex)
         {
