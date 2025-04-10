@@ -12,11 +12,9 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         ArgumentNullException.ThrowIfNull(descriptor);
 
         if (IsConflictForServiceType(descriptor, out var conflictDetails))
-        {
             throw new InvalidOperationException(
                 $"Duplicate registration for type '{descriptor.ServiceType.FullName}'. {conflictDetails}"
             );
-        }
 
         _descriptors.TryAdd(descriptor.ServiceType, []);
         _descriptors[descriptor.ServiceType].Add(descriptor);
@@ -59,8 +57,8 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             }
 
             if (
-                existing.SingleInstance == null
-                || newDescriptor.SingleInstance == null
+                existing.SingleInstance is null
+                || newDescriptor.SingleInstance is null
                 || existing.SingleInstance != newDescriptor.SingleInstance
             )
                 continue;
