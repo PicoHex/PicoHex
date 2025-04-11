@@ -4,8 +4,14 @@ internal static class SvcFactory
 {
     internal static Func<ISvcProvider, object> CreateAotFactory(SvcDescriptor svcDescriptor)
     {
-        var constructor = svcDescriptor
-            .ImplementationType
+        var implementationType = svcDescriptor.ImplementationType;
+
+        if (implementationType is null)
+            throw new InvalidOperationException(
+                $"The service type '{svcDescriptor.ServiceType.FullName}' has no implementation type."
+            );
+
+        var constructor = implementationType
             .GetConstructors()
             .OrderByDescending(c => c.GetParameters().Length)
             .First();

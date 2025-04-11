@@ -111,7 +111,7 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (openDescriptor is null)
             return false;
 
-        var closedType = openDescriptor.ImplementationType.MakeGenericType(
+        var closedType = openDescriptor.ImplementationType!.MakeGenericType(
             serviceType.GenericTypeArguments
         );
         descriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);

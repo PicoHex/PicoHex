@@ -52,7 +52,7 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             if (existing.ImplementationType == newDescriptor.ImplementationType)
             {
                 conflictDetails =
-                    $"ImplementationType '{existing.ImplementationType.FullName}' is already registered.";
+                    $"ImplementationType '{existing.ImplementationType!.FullName}' is already registered.";
                 return true;
             }
 
