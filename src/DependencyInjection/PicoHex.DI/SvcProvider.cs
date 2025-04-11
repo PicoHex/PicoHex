@@ -16,12 +16,13 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         if (IsEnumerableRequest(serviceType, out var elementType))
             return ResolveAllServices(elementType);
 
-        return TryResolveClosedGenericDescriptor(serviceType, out var descriptor)
-            ? ResolveInstance(descriptor)
-            : ResolveInstance(
-                container.GetDescriptor(serviceType)
-                    ?? throw new ServiceNotRegisteredException(serviceType)
-            );
+        if (IsClosedGenericRequest(serviceType))
+            return ResolveInstance(CreateClosedGenericDescriptor(serviceType));
+
+        return ResolveInstance(
+            container.GetDescriptor(serviceType)
+                ?? throw new ServiceNotRegisteredException(serviceType)
+        );
     }
 
     public ISvcScope CreateScope()
@@ -39,6 +40,39 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     }
 
     #region Private Methods
+
+    private bool IsClosedGenericRequest(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
+    ) => serviceType.IsConstructedGenericType;
+
+    private SvcDescriptor CreateClosedGenericDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
+    )
+    {
+        // Check existing registration first
+        if (container.GetDescriptor(serviceType) is { } existing)
+            return existing;
+
+        // Resolve from open generic
+        var openGenericType = serviceType.GetGenericTypeDefinition();
+        var openDescriptor =
+            container.GetDescriptor(openGenericType)
+            ?? throw new ServiceNotRegisteredException(openGenericType);
+
+        // Create closed generic type
+        var closedType = openDescriptor.ImplementationType!.MakeGenericType(
+            serviceType.GenericTypeArguments
+        );
+
+        // Auto-register closed generic
+        var closedDescriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);
+
+        container.Register(closedDescriptor);
+        return closedDescriptor;
+    }
+
     private void EnsureNotDisposed()
     {
         if (_disposed)
@@ -87,34 +121,6 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         var array = Array.CreateInstance(elementType, instances.Length);
         Array.Copy(instances, array, instances.Length);
         return array;
-    }
-
-    private bool TryResolveClosedGenericDescriptor(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
-        out SvcDescriptor descriptor
-    )
-    {
-        descriptor = null!;
-        if (!serviceType.IsConstructedGenericType)
-            return false;
-
-        // Check existing registration
-        if ((descriptor = container.GetDescriptor(serviceType)!) is not null)
-            return true;
-
-        // Try to create from open generic
-        var openGenericType = serviceType.GetGenericTypeDefinition();
-        var openDescriptor = container.GetDescriptor(openGenericType);
-        if (openDescriptor is null)
-            return false;
-
-        var closedType = openDescriptor.ImplementationType!.MakeGenericType(
-            serviceType.GenericTypeArguments
-        );
-        descriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);
-        container.Register(descriptor);
-        return true;
     }
 
     private object ResolveInstance(SvcDescriptor descriptor)
