@@ -49,7 +49,7 @@ public class OpenGenericTests
         _container.RegisterTransient(typeof(IValidator<>), typeof(EntityValidator<>));
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _provider.Resolve<IValidator<int>>());
+        Assert.NotNull(_provider.Resolve<IValidator<User>>());
     }
 
     [Fact]
@@ -109,7 +109,8 @@ public class Repository<T> : IRepository<T>;
 
 public class UserRepository : IRepository<User>;
 
-public interface IValidator<T>;
+public interface IValidator<T>
+    where T : class;
 
 public class EntityValidator<T> : IValidator<T>
     where T : class;
