@@ -7,10 +7,11 @@ public static class Bootstrap
         var container = new SvcContainerFactory(
             new SvcProviderFactory(new SvcScopeFactory())
         ).CreateContainer();
-        container.RegisterSingle<ISvcContainer>(container);
-        container.RegisterSingle<ISvcProviderFactory, SvcProviderFactory>();
-        container.RegisterSingle<ISvcScopeFactory, SvcScopeFactory>();
-        container.RegisterSingle<ISvcProvider>(sp => sp.Resolve<ISvcContainer>().CreateProvider());
-        return container;
+
+        return container
+            .RegisterSingle<ISvcContainer>(container)
+            .RegisterSingle<ISvcProviderFactory, SvcProviderFactory>()
+            .RegisterSingle<ISvcScopeFactory, SvcScopeFactory>()
+            .RegisterSingle<ISvcProvider>(sp => sp.Resolve<ISvcContainer>().CreateProvider());
     }
 }
