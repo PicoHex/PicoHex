@@ -30,7 +30,7 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
 
     public SvcDescriptor? GetDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
-    ) => _descriptors.GetValueOrDefault(type)?.Last();
+    ) => GetDescriptors(type)?.Last();
 
     public void Dispose() => Dispose(disposing: true);
 

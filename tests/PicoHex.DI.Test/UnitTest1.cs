@@ -8,7 +8,7 @@ public class DependencyInjectionTests
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
 
-        svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Transient);
+        svcRegistry.RegisterTransient<IService, ServiceImpl>();
         var s1 = svcProvider.Resolve<IService>();
         var s2 = svcProvider.Resolve<IService>();
 
@@ -23,9 +23,9 @@ public class DependencyInjectionTests
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
 
-        svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Transient);
-        svcRegistry.Register<IServiceA, ServiceAImpl>(SvcLifetime.Transient);
-        svcRegistry.Register<IServiceB, ServiceBImpl>(SvcLifetime.Transient);
+        svcRegistry.RegisterTransient<IService, ServiceImpl>();
+        svcRegistry.RegisterTransient<IServiceA, ServiceAImpl>();
+        svcRegistry.RegisterTransient<IServiceB, ServiceBImpl>();
         var s1 = svcProvider.Resolve<IServiceA>();
         var s2 = svcProvider.Resolve<IServiceB>();
 
@@ -40,7 +40,7 @@ public class DependencyInjectionTests
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
 
-        svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Singleton);
+        svcRegistry.RegisterSingle<IService, ServiceImpl>();
         var s1 = svcProvider.Resolve<IService>();
         var s2 = svcProvider.Resolve<IService>();
 
@@ -53,7 +53,7 @@ public class DependencyInjectionTests
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
 
-        svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Scoped);
+        svcRegistry.RegisterScoped<IService, ServiceImpl>();
         IService s1;
         using (var scope1 = svcProvider.CreateScope())
         {
@@ -79,7 +79,7 @@ public class DependencyInjectionTests
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
 
-        svcRegistry.Register<IService, ServiceImpl>(SvcLifetime.Scoped);
+        svcRegistry.RegisterScoped<IService, ServiceImpl>();
         IService s1;
         await using (var scope1 = svcProvider.CreateScope())
         {
@@ -114,9 +114,9 @@ public class DependencyInjectionTests
         var svcRegistry = Bootstrap.CreateContainer();
         var svcProvider = svcRegistry.CreateProvider();
 
-        svcRegistry.Register<INode1, Node1>(SvcLifetime.Transient);
-        svcRegistry.Register<INode2, Node2>(SvcLifetime.Transient);
-        svcRegistry.Register<INode3, Node3>(SvcLifetime.Transient);
+        svcRegistry.RegisterTransient<INode1, Node1>();
+        svcRegistry.RegisterTransient<INode2, Node2>();
+        svcRegistry.RegisterTransient<INode3, Node3>();
 
         Assert.Throws<InvalidOperationException>(() => svcProvider.Resolve<INode1>());
     }
