@@ -1,10 +1,8 @@
-﻿// 测试用例类
-
-namespace PicoHex.DI.Sample;
+﻿namespace PicoHex.DI.Sample;
 
 public static class IocTests
 {
-    // 自举测试
+    // Tests container bootstrapping and self-registration
     public static void TestBootstrapping()
     {
         var container = Bootstrap.CreateContainer();
@@ -18,7 +16,7 @@ public static class IocTests
         );
     }
 
-    // 基础注入测试
+    // Tests basic constructor injection with interface implementations
     public static void TestBasicInjection()
     {
         var container = Bootstrap.CreateContainer();
@@ -26,13 +24,13 @@ public static class IocTests
         container.RegisterTransient<IB, B>();
         container.RegisterTransient<IC, C>();
 
-        // A的构造函数需要IB参数
+        // Class A requires IB in its constructor
         var provider = container.CreateProvider();
         _ = (A)provider.Resolve(typeof(A));
         Console.WriteLine("Basic Injection Test Passed");
     }
 
-    // 基础注入测试
+    // Tests IEnumerable dependency injection with multiple implementations
     public static void TestIEnumerableInjection()
     {
         var container = Bootstrap.CreateContainer();
@@ -44,13 +42,13 @@ public static class IocTests
         container.RegisterTransient<IService, C>();
         container.RegisterTransient<D>();
 
-        // A的构造函数需要IB参数
+        // Class D requires IEnumerable<IService> in constructor
         var provider = container.CreateProvider();
         _ = (D)provider.Resolve(typeof(D));
         Console.WriteLine("IEnumerable Injection Test Passed");
     }
 
-    // 循环依赖检测测试
+    // Tests circular dependency detection mechanism
     public static void TestCircularDependency()
     {
         var container = Bootstrap.CreateContainer();
@@ -76,6 +74,7 @@ public static class IocTests
         Console.WriteLine("Circular Test Failed: Expected exception not thrown");
     }
 
+    // Tests duplicate transient registration detection
     public static void DuplicateRegistration()
     {
         var container = Bootstrap.CreateContainer();
@@ -100,6 +99,7 @@ public static class IocTests
         Console.WriteLine("Duplicate Registration Test Failed: Expected exception not thrown");
     }
 
+    // Tests duplicate singleton registration detection
     public static void DuplicateSingletonRegistration()
     {
         var container = Bootstrap.CreateContainer();
@@ -114,7 +114,7 @@ public static class IocTests
         {
             Console.WriteLine(
                 ex.Message.Contains("Duplicate registration for type")
-                    ? $"Duplicate Registration Test Passed: {ex.Message}"
+                    ? $"Duplicate Singleton Registration Test Passed: {ex.Message}"
                     : "Duplicate Registration Test Failed: Wrong exception message"
             );
             return;
@@ -123,10 +123,10 @@ public static class IocTests
         Console.WriteLine("Duplicate Registration Test Failed: Expected exception not thrown");
     }
 
-    // AOT兼容性测试
+    // Tests Ahead-of-Time compilation compatibility scenarios
     public static void TestAotCompatibility()
     {
-        // AOT环境下需要确保容器能正确执行
+        // Verify container can resolve types without reflection in AOT environments
         var container = Bootstrap.CreateContainer();
         container.RegisterTransient<A>();
         container.RegisterTransient<IB, B>();
@@ -145,7 +145,7 @@ public static class IocTests
     }
 }
 
-// 测试依赖类
+// Dependency classes for testing
 
 public interface IService;
 
@@ -175,6 +175,7 @@ public class D(IEnumerable<IService> services)
     public IEnumerable<IService> Services { get; } = services;
 }
 
+// Circular dependency test classes
 public interface ICircularA;
 
 public interface ICircularB;
@@ -187,7 +188,7 @@ public class CircularB(ICircularC c) : ICircularB;
 
 public class CircularC(ICircularA a) : ICircularC;
 
-// 程序入口
+// Program entry point
 public class Program
 {
     public static void Main()
@@ -202,7 +203,7 @@ public class Program
         IocTests.DuplicateSingletonRegistration();
         IocTests.TestAotCompatibility();
 
-        Console.WriteLine($"Tests finish: {DateTime.Now}");
+        Console.WriteLine($"Tests completed: {DateTime.Now}");
         Console.ReadLine();
     }
 }
