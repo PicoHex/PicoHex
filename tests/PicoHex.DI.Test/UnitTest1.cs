@@ -1,149 +1,240 @@
 ﻿namespace PicoHex.DI.Test;
 
-public class DependencyInjectionTests
+public class DependencyInjectionLifecycleTests : IDisposable
 {
-    [Fact]
-    public void Register_And_Resolve_Transient()
+    private readonly ISvcContainer _container;
+    private readonly ISvcProvider _provider;
+
+    public DependencyInjectionLifecycleTests()
     {
-        var svcRegistry = Bootstrap.CreateContainer();
-        var svcProvider = svcRegistry.CreateProvider();
+        _container = Bootstrap.CreateContainer();
+        _provider = _container.CreateProvider();
+    }
 
-        svcRegistry.RegisterTransient<IService, ServiceImpl>();
-        var s1 = svcProvider.Resolve<IService>();
-        var s2 = svcProvider.Resolve<IService>();
+    public void Dispose()
+    {
+        (_container as IDisposable)?.Dispose();
+    }
 
-        Assert.NotNull(s1);
-        Assert.NotNull(s2);
-        Assert.NotSame(s1, s2);
+    #region Transient Lifecycle Tests
+    [Fact]
+    public void Transient_Registration_ShouldCreateNewInstances()
+    {
+        // Arrange
+        _container.RegisterTransient<IService, ServiceImpl>();
+
+        // Act
+        var instance1 = _provider.Resolve<IService>();
+        var instance2 = _provider.Resolve<IService>();
+
+        // Assert
+        Assert.NotSame(instance1, instance2);
     }
 
     [Fact]
-    public void Register_And_Resolve_TransientA()
+    public void Transient_WithDependencies_ShouldResolveCorrectly()
     {
-        var svcRegistry = Bootstrap.CreateContainer();
-        var svcProvider = svcRegistry.CreateProvider();
+        // Arrange
+        _container.RegisterTransient<IService, ServiceImpl>();
+        _container.RegisterTransient<IServiceA, ServiceAImpl>();
+        _container.RegisterTransient<IServiceB, ServiceBImpl>();
 
-        svcRegistry.RegisterTransient<IService, ServiceImpl>();
-        svcRegistry.RegisterTransient<IServiceA, ServiceAImpl>();
-        svcRegistry.RegisterTransient<IServiceB, ServiceBImpl>();
-        var s1 = svcProvider.Resolve<IServiceA>();
-        var s2 = svcProvider.Resolve<IServiceB>();
+        // Act
+        var serviceA = _provider.Resolve<IServiceA>();
+        var serviceB = _provider.Resolve<IServiceB>();
 
-        Assert.NotNull(s1);
-        Assert.NotNull(s2);
-        Assert.NotSame(s1, s2);
+        // Assert
+        Assert.NotNull(serviceA);
+        Assert.NotNull(serviceB);
+        Assert.IsType<ServiceAImpl>(serviceA);
+        Assert.IsType<ServiceBImpl>(serviceB);
+    }
+    #endregion
+
+    #region Singleton Lifecycle Tests
+    [Fact]
+    public void Singleton_Registration_ShouldReturnSameInstance()
+    {
+        // Arrange
+        _container.RegisterSingle<IService, ServiceImpl>();
+
+        // Act
+        var instance1 = _provider.Resolve<IService>();
+        var instance2 = _provider.Resolve<IService>();
+
+        // Assert
+        Assert.Same(instance1, instance2);
     }
 
     [Fact]
-    public void Register_And_Resolve_Singleton()
+    public void Singleton_AcrossScopes_ShouldMaintainSingleInstance()
     {
-        var svcRegistry = Bootstrap.CreateContainer();
-        var svcProvider = svcRegistry.CreateProvider();
+        // Arrange
+        _container.RegisterSingle<IService, ServiceImpl>();
 
-        svcRegistry.RegisterSingle<IService, ServiceImpl>();
-        var s1 = svcProvider.Resolve<IService>();
-        var s2 = svcProvider.Resolve<IService>();
+        // Act
+        var rootInstance = _provider.Resolve<IService>();
+        IService scopedInstance;
 
-        Assert.Same(s1, s2);
-    }
-
-    [Fact]
-    public void Register_And_Resolve_Scoped()
-    {
-        var svcRegistry = Bootstrap.CreateContainer();
-        var svcProvider = svcRegistry.CreateProvider();
-
-        svcRegistry.RegisterScoped<IService, ServiceImpl>();
-        IService s1;
-        using (var scope1 = svcProvider.CreateScope())
+        using (var scope = _provider.CreateScope())
         {
-            s1 = scope1.Resolve<IService>();
-            var s2 = scope1.Resolve<IService>();
-
-            Assert.Same(s1, s2);
+            scopedInstance = scope.Resolve<IService>();
         }
 
-        using (var scope2 = svcProvider.CreateScope())
-        {
-            var s3 = scope2.Resolve<IService>();
-            var s4 = scope2.Resolve<IService>();
+        // Assert
+        Assert.Same(rootInstance, scopedInstance);
+    }
+    #endregion
 
-            Assert.Same(s3, s4);
-            Assert.NotSame(s3, s1);
+    #region Scoped Lifecycle Tests
+    [Fact]
+    public void Scoped_Registration_ShouldCreateInstancePerScope()
+    {
+        // Arrange
+        _container.RegisterScoped<IService, ServiceImpl>();
+
+        // Act
+        IService scope1Instance1,
+            scope1Instance2,
+            scope2Instance;
+
+        using (var scope1 = _provider.CreateScope())
+        {
+            scope1Instance1 = scope1.Resolve<IService>();
+            scope1Instance2 = scope1.Resolve<IService>();
         }
+
+        using (var scope2 = _provider.CreateScope())
+        {
+            scope2Instance = scope2.Resolve<IService>();
+        }
+
+        // Assert
+        Assert.Same(scope1Instance1, scope1Instance2);
+        Assert.NotSame(scope1Instance1, scope2Instance);
     }
 
     [Fact]
-    public async Task Register_And_Resolve_Scoped_Async()
+    public async Task Scoped_AsyncDisposable_ShouldWorkCorrectly()
     {
-        var svcRegistry = Bootstrap.CreateContainer();
-        var svcProvider = svcRegistry.CreateProvider();
+        // Arrange
+        _container.RegisterScoped<IService, ServiceImpl>();
 
-        svcRegistry.RegisterScoped<IService, ServiceImpl>();
-        IService s1;
-        await using (var scope1 = svcProvider.CreateScope())
+        // Act
+        IService scope1Instance;
+        await using (var scope1 = _provider.CreateScope())
         {
-            s1 = scope1.Resolve<IService>();
-            var s2 = scope1.Resolve<IService>();
-
-            Assert.Same(s1, s2);
+            scope1Instance = scope1.Resolve<IService>();
+            var tempInstance = scope1.Resolve<IService>();
+            Assert.Same(scope1Instance, tempInstance);
         }
 
-        await using (var scope2 = svcProvider.CreateScope())
+        await using (var scope2 = _provider.CreateScope())
         {
-            var s3 = scope2.Resolve<IService>();
-            var s4 = scope2.Resolve<IService>();
-
-            Assert.Same(s3, s4);
-            Assert.NotSame(s3, s1);
+            var scope2Instance = scope2.Resolve<IService>();
+            Assert.NotSame(scope1Instance, scope2Instance);
         }
+    }
+    #endregion
+
+    #region Error Handling Tests
+    [Fact]
+    public void Resolve_UnregisteredService_ShouldThrowException()
+    {
+        Assert.Throws<ServiceNotRegisteredException>(
+            () => _provider.Resolve<INonExistingService>()
+        );
     }
 
     [Fact]
-    public void Throws_When_Not_Registered()
+    public void Circular_Dependencies_ShouldThrowException()
     {
-        var svcRegistry = Bootstrap.CreateContainer();
-        var svcProvider = svcRegistry.CreateProvider();
+        // Arrange
+        _container.RegisterTransient<INode1, Node1>();
+        _container.RegisterTransient<INode2, Node2>();
+        _container.RegisterTransient<INode3, Node3>();
 
-        Assert.Throws<ServiceNotRegisteredException>(() => svcProvider.Resolve<IService>());
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => _provider.Resolve<INode1>());
+    }
+    #endregion
+
+    #region Advanced Scenarios
+    [Fact]
+    public void Mixed_Lifecycles_ShouldResolveCorrectly()
+    {
+        // Arrange
+        _container.RegisterSingle<IServiceA, ServiceAImpl>();
+        _container.RegisterScoped<IServiceB, ServiceBImpl>();
+        _container.RegisterTransient<IServiceC, ServiceCImpl>();
+        _container.RegisterTransient<IService, ServiceImpl>();
+
+        // Act
+        var singleton1 = _provider.Resolve<IServiceA>();
+        var singleton2 = _provider.Resolve<IServiceA>();
+
+        IServiceB scoped1,
+            scoped2;
+        using (var scope = _provider.CreateScope())
+        {
+            scoped1 = scope.Resolve<IServiceB>();
+            scoped2 = scope.Resolve<IServiceB>();
+        }
+
+        var transient1 = _provider.Resolve<IServiceC>();
+        var transient2 = _provider.Resolve<IServiceC>();
+
+        // Assert
+        Assert.Same(singleton1, singleton2);
+        Assert.Same(scoped1, scoped2);
+        Assert.NotSame(transient1, transient2);
     }
 
     [Fact]
-    public void Throws_When_Circular_Dependency()
+    public void Runtime_Registration_ShouldWorkInTransient()
     {
-        var svcRegistry = Bootstrap.CreateContainer();
-        var svcProvider = svcRegistry.CreateProvider();
+        // Arrange
+        _container.RegisterTransient<IServiceA, ServiceAImpl>();
+        _container.RegisterTransient<IServiceB, ServiceBImpl>();
+        _container.RegisterTransient<IServiceC, ServiceCImpl>();
 
-        svcRegistry.RegisterTransient<INode1, Node1>();
-        svcRegistry.RegisterTransient<INode2, Node2>();
-        svcRegistry.RegisterTransient<INode3, Node3>();
+        // Act
+        var serviceB = _provider.Resolve<IServiceB>();
 
-        Assert.Throws<InvalidOperationException>(() => svcProvider.Resolve<INode1>());
+        // Assert
+        Assert.NotNull(serviceB);
+        Assert.IsType<ServiceBImpl>(serviceB);
     }
+    #endregion
 }
 
-public interface IServiceA;
+#region Test Interfaces and Classes
+public interface IService { }
 
-public class ServiceAImpl(IService service) : IServiceA;
+public class ServiceImpl : IService { }
+
+public interface IServiceA { }
+
+public class ServiceAImpl : IServiceA
+{
+    public ServiceAImpl(IService service) { }
+}
 
 public interface IServiceB;
 
 public class ServiceBImpl : IServiceB
 {
-    private readonly IServiceA _serviceA;
-    private readonly IServiceC _serviceC;
-
     public ServiceBImpl(ISvcContainer container, ISvcProvider provider)
     {
-        _serviceA = provider.Resolve<IServiceA>();
+        var serviceA = provider.Resolve<IServiceA>();
         container.Register<IServiceC, ServiceCImpl>(SvcLifetime.Transient);
-        _serviceC = provider.Resolve<IServiceC>();
+        var serviceC = provider.Resolve<IServiceC>();
     }
 }
 
 public interface IServiceC { }
 
-public class ServiceCImpl() : IServiceC { }
+public class ServiceCImpl : IServiceC { }
 
 public interface INode1 { }
 
@@ -165,3 +256,6 @@ public class Node3 : INode3
 {
     public Node3(INode2 node2) { }
 }
+
+public interface INonExistingService { }
+#endregion

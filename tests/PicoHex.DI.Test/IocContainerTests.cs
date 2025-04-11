@@ -122,9 +122,6 @@ public class IocContainerTests
 }
 
 // Test interfaces and classes
-public interface IService;
-
-public class ServiceImpl : IService;
 
 public interface IA : IService;
 
