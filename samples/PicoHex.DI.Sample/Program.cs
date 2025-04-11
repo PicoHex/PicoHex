@@ -8,10 +8,11 @@ public static class IocTests
     public static void TestBootstrapping()
     {
         var container = Bootstrap.CreateContainer();
-
         var provider = container.CreateProvider();
+
         Console.WriteLine(
-            provider == (ISvcProvider)provider.Resolve(typeof(ISvcProvider))
+            container == provider.Resolve<ISvcContainer>()
+            && provider == (ISvcProvider)provider.Resolve(typeof(ISvcProvider))
                 ? "Bootstrapping Test Passed"
                 : "Bootstrapping Test Failed"
         );
