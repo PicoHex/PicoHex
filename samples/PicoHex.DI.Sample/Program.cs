@@ -10,8 +10,11 @@ public static class IocTests
         var container = Bootstrap.CreateContainer();
 
         var provider = container.CreateProvider();
-        _ = (ISvcProvider)provider.Resolve(typeof(ISvcProvider));
-        Console.WriteLine("Bootstrapping Test Passed");
+        Console.WriteLine(
+            provider == (ISvcProvider)provider.Resolve(typeof(ISvcProvider))
+                ? "Bootstrapping Test Passed"
+                : "Bootstrapping Test Failed"
+        );
     }
 
     // 基础注入测试

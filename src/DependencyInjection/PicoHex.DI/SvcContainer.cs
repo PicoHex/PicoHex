@@ -3,6 +3,7 @@ namespace PicoHex.DI;
 public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcContainer
 {
     private readonly ConcurrentDictionary<Type, List<SvcDescriptor>> _descriptors = new();
+    private ISvcProvider? Provider { get; set; }
     private volatile bool _disposed;
 
     public ISvcContainer Register(SvcDescriptor descriptor)
@@ -22,7 +23,7 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         return this;
     }
 
-    public ISvcProvider CreateProvider() => providerFactory.CreateProvider(this);
+    public ISvcProvider CreateProvider() => Provider ??= providerFactory.CreateProvider(this);
 
     public List<SvcDescriptor>? GetDescriptors(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type

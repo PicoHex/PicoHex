@@ -10,9 +10,7 @@ public static class Bootstrap
         container.RegisterSingle<ISvcContainer>(container);
         container.RegisterSingle<ISvcProviderFactory, SvcProviderFactory>();
         container.RegisterSingle<ISvcScopeFactory, SvcScopeFactory>();
-        container.RegisterSingle<ISvcProvider>(
-            sp => sp.Resolve<ISvcProviderFactory>().CreateProvider(sp.Resolve<ISvcContainer>())
-        );
+        container.RegisterSingle<ISvcProvider>(sp => sp.Resolve<ISvcContainer>().CreateProvider());
         return container;
     }
 }
