@@ -122,10 +122,6 @@ public class DependencyInjectionTests
     }
 }
 
-public interface IService;
-
-public class ServiceImpl : IService;
-
 public interface IServiceA;
 
 public class ServiceAImpl(IService service) : IServiceA;
