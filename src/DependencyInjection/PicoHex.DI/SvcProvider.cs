@@ -136,7 +136,10 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             SvcLifetime.Transient => CreateTransientInstance(descriptor),
             SvcLifetime.Singleton => GetOrCreateSingleton(descriptor),
             SvcLifetime.Scoped => CreateScopedInstance(descriptor),
-            _ => throw new UnsupportedLifetimeException(descriptor.Lifetime)
+            _
+                => throw new ArgumentOutOfRangeException(
+                    $"Unsupported service lifetime: {descriptor.Lifetime}"
+                )
         };
 
     private object CreateTransientInstance(SvcDescriptor descriptor)
