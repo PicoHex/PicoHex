@@ -18,7 +18,10 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
 
         return TryResolveClosedGenericDescriptor(serviceType, out var descriptor)
             ? ResolveInstance(descriptor)
-            : ResolveRegisteredService(serviceType);
+            : ResolveInstance(
+                container.GetDescriptor(serviceType)
+                    ?? throw new ServiceNotRegisteredException(serviceType)
+            );
     }
 
     public ISvcScope CreateScope()
@@ -70,14 +73,9 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
             ?? throw new ServiceNotRegisteredException(elementType);
 
         return descriptors.Count is 0
-            ? CreateEmptyArray(elementType)
+            ? Array.CreateInstance(elementType, 0)
             : CreateServiceArray(elementType, descriptors);
     }
-
-    private static Array CreateEmptyArray(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type elementType
-    ) => Array.CreateInstance(elementType, 0);
 
     private Array CreateServiceArray(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -117,17 +115,6 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         descriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);
         container.Register(descriptor);
         return true;
-    }
-
-    private object ResolveRegisteredService(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType
-    )
-    {
-        var descriptor =
-            container.GetDescriptor(serviceType)
-            ?? throw new ServiceNotRegisteredException(serviceType);
-        return ResolveInstance(descriptor);
     }
 
     private object ResolveInstance(SvcDescriptor descriptor) =>
