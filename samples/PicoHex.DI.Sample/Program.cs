@@ -24,7 +24,7 @@ public static class IocTests
 
         // A的构造函数需要IB参数
         var provider = container.CreateProvider();
-        _ = (A)provider.Resolve(typeof(A))!;
+        _ = (A)provider.Resolve(typeof(A));
         Console.WriteLine("Basic Injection Test Passed");
     }
 
@@ -42,7 +42,7 @@ public static class IocTests
 
         // A的构造函数需要IB参数
         var provider = container.CreateProvider();
-        _ = (D)provider.Resolve(typeof(D))!;
+        _ = (D)provider.Resolve(typeof(D));
         Console.WriteLine("IEnumerable Injection Test Passed");
     }
 
@@ -177,20 +177,11 @@ public interface ICircularB;
 
 public interface ICircularC;
 
-public class CircularA : ICircularA
-{
-    public CircularA(ICircularB b) { }
-}
+public class CircularA(ICircularB b) : ICircularA;
 
-public class CircularB : ICircularB
-{
-    public CircularB(ICircularC c) { }
-}
+public class CircularB(ICircularC c) : ICircularB;
 
-public class CircularC : ICircularC
-{
-    public CircularC(ICircularA a) { }
-}
+public class CircularC(ICircularA a) : ICircularC;
 
 // 程序入口
 public class Program
