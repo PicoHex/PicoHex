@@ -209,16 +209,13 @@ public class DependencyInjectionLifecycleTests : IDisposable
 }
 
 #region Test Interfaces and Classes
-public interface IService { }
+public interface IService;
 
-public class ServiceImpl : IService { }
+public class ServiceImpl : IService;
 
-public interface IServiceA { }
+public interface IServiceA;
 
-public class ServiceAImpl : IServiceA
-{
-    public ServiceAImpl(IService service) { }
-}
+public class ServiceAImpl(IService service) : IServiceA;
 
 public interface IServiceB;
 
@@ -226,36 +223,27 @@ public class ServiceBImpl : IServiceB
 {
     public ServiceBImpl(ISvcContainer container, ISvcProvider provider)
     {
-        var serviceA = provider.Resolve<IServiceA>();
+        _ = provider.Resolve<IServiceA>();
         container.Register<IServiceC, ServiceCImpl>(SvcLifetime.Transient);
-        var serviceC = provider.Resolve<IServiceC>();
+        _ = provider.Resolve<IServiceC>();
     }
 }
 
-public interface IServiceC { }
+public interface IServiceC;
 
-public class ServiceCImpl : IServiceC { }
+public class ServiceCImpl : IServiceC;
 
-public interface INode1 { }
+public interface INode1;
 
-public interface INode2 { }
+public interface INode2;
 
-public interface INode3 { }
+public interface INode3;
 
-public class Node1 : INode1
-{
-    public Node1(INode3 node3) { }
-}
+public class Node1(INode3 node3) : INode1;
 
-public class Node2 : INode2
-{
-    public Node2(INode1 node1) { }
-}
+public class Node2(INode1 node1) : INode2;
 
-public class Node3 : INode3
-{
-    public Node3(INode2 node2) { }
-}
+public class Node3(INode2 node2) : INode3;
 
-public interface INonExistingService { }
+public interface INonExistingService;
 #endregion
