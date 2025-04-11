@@ -117,49 +117,28 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
         return true;
     }
 
-    private object ResolveInstance(SvcDescriptor descriptor) =>
-        descriptor.Lifetime switch
+    private object ResolveInstance(SvcDescriptor descriptor)
+    {
+        if (descriptor.Factory is null && descriptor.SingleInstance is null)
+            lock (descriptor)
+                descriptor.Factory ??= SvcFactory.CreateAotFactory(descriptor);
+
+        return descriptor.Lifetime switch
         {
-            SvcLifetime.Transient => CreateTransientInstance(descriptor),
-            SvcLifetime.Singleton => GetOrCreateSingleton(descriptor),
-            SvcLifetime.Scoped => CreateScopedInstance(descriptor),
+            SvcLifetime.Transient => descriptor.Factory!(this),
+            SvcLifetime.Singleton
+                => _singletonInstances.GetOrAdd(
+                    descriptor.ServiceType,
+                    new Lazy<object>(
+                        () => descriptor.SingleInstance ??= descriptor.Factory!(this)
+                    ).Value
+                ),
+            SvcLifetime.Scoped => descriptor.Factory!(this),
             _
                 => throw new ArgumentOutOfRangeException(
                     $"Unsupported service lifetime: {descriptor.Lifetime}"
                 )
         };
-
-    private object CreateTransientInstance(SvcDescriptor descriptor)
-    {
-        EnsureFactoryInitialized(descriptor);
-        return descriptor.Factory!(this);
-    }
-
-    private object GetOrCreateSingleton(SvcDescriptor descriptor) =>
-        _singletonInstances.GetOrAdd(
-            descriptor.ServiceType,
-            new Lazy<object>(() => CreateSingleton(descriptor)).Value
-        );
-
-    private object CreateSingleton(SvcDescriptor descriptor)
-    {
-        EnsureFactoryInitialized(descriptor);
-        return descriptor.SingleInstance ??= descriptor.Factory!(this);
-    }
-
-    private object CreateScopedInstance(SvcDescriptor descriptor)
-    {
-        EnsureFactoryInitialized(descriptor);
-        return descriptor.Factory!(this);
-    }
-
-    private static void EnsureFactoryInitialized(SvcDescriptor descriptor)
-    {
-        if (descriptor.Factory is not null || descriptor.SingleInstance is not null)
-            return;
-
-        lock (descriptor)
-            descriptor.Factory ??= SvcFactory.CreateAotFactory(descriptor);
     }
 
     private void DisposeCore(bool disposing)
