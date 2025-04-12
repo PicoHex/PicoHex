@@ -3,13 +3,11 @@ namespace PicoHex.DI;
 public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcContainer
 {
     private readonly ConcurrentDictionary<Type, List<SvcDescriptor>> _descriptors = new();
-    private ISvcProvider? Provider { get; set; }
-    private volatile bool _disposed;
+    private Lazy<ISvcProvider>? _lazyProvider;
+    private readonly Lock _lock = new();
 
     public ISvcContainer Register(SvcDescriptor descriptor)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(SvcContainer));
         ArgumentNullException.ThrowIfNull(descriptor);
 
         if (IsConflictForServiceType(descriptor, out var conflictDetails))
@@ -23,7 +21,19 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         return this;
     }
 
-    public ISvcProvider CreateProvider() => Provider ??= providerFactory.CreateProvider(this);
+    public ISvcProvider GetProvider()
+    {
+        if (_lazyProvider is not null)
+            return _lazyProvider.Value;
+        lock (_lock)
+        {
+            _lazyProvider ??= new Lazy<ISvcProvider>(
+                () => providerFactory.CreateProvider(this),
+                LazyThreadSafetyMode.ExecutionAndPublication
+            );
+        }
+        return _lazyProvider.Value;
+    }
 
     public List<SvcDescriptor>? GetDescriptors(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
@@ -44,14 +54,6 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
     public SvcDescriptor? GetDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
     ) => GetDescriptors(type)?.Last();
-
-    public void Dispose() => Dispose(disposing: true);
-
-    public async ValueTask DisposeAsync()
-    {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(disposing: false);
-    }
 
     #region private methods
 
@@ -113,33 +115,6 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         }
 
         return false;
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (_disposed)
-            return;
-        if (disposing)
-        {
-            foreach (var descriptor in _descriptors.Values.SelectMany(p => p))
-                if (descriptor.SingleInstance is IDisposable disposable)
-                    disposable.Dispose();
-        }
-        _disposed = true;
-    }
-
-    private async ValueTask DisposeAsyncCore()
-    {
-        if (_disposed)
-            return;
-        foreach (var descriptor in _descriptors.Values.SelectMany(p => p))
-        {
-            if (descriptor.SingleInstance is IDisposable disposable)
-                disposable.Dispose();
-            if (descriptor.SingleInstance is IAsyncDisposable asyncDisposable)
-                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
-        }
-        _disposed = true;
     }
 
     #endregion

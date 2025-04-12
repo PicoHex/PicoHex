@@ -6,7 +6,7 @@ public static class IocTests
     public static void TestBootstrapping()
     {
         var container = Bootstrap.CreateContainer();
-        var provider = container.CreateProvider();
+        var provider = container.GetProvider();
 
         Console.WriteLine(
             container == provider.Resolve<ISvcContainer>()
@@ -25,7 +25,7 @@ public static class IocTests
         container.RegisterTransient<IC, C>();
 
         // Class A requires IB in its constructor
-        var provider = container.CreateProvider();
+        var provider = container.GetProvider();
         _ = (A)provider.Resolve(typeof(A));
         Console.WriteLine("Basic Injection Test Passed");
     }
@@ -43,7 +43,7 @@ public static class IocTests
         container.RegisterTransient<D>();
 
         // Class D requires IEnumerable<IService> in constructor
-        var provider = container.CreateProvider();
+        var provider = container.GetProvider();
         _ = (D)provider.Resolve(typeof(D));
         Console.WriteLine("IEnumerable Injection Test Passed");
     }
@@ -58,7 +58,7 @@ public static class IocTests
 
         try
         {
-            var provider = container.CreateProvider();
+            var provider = container.GetProvider();
             provider.Resolve(typeof(ICircularA));
         }
         catch (InvalidOperationException ex)
@@ -134,7 +134,7 @@ public static class IocTests
 
         try
         {
-            var provider = container.CreateProvider();
+            var provider = container.GetProvider();
             provider.Resolve(typeof(A));
             Console.WriteLine("AOT Compatibility Test Passed");
         }

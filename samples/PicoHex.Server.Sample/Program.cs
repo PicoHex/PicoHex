@@ -33,7 +33,7 @@ svcRegistry.RegisterSingle<UdpServer>(
         )
 );
 
-var serviceProvider = svcRegistry.CreateProvider();
+var serviceProvider = svcRegistry.GetProvider();
 
 // Step 2: Try to get a logger from the IoC container
 var logger = serviceProvider.Resolve<ILogger<Program>>();

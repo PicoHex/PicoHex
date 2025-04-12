@@ -8,7 +8,7 @@ public class DependencyInjectionLifecycleTests : IDisposable
     public DependencyInjectionLifecycleTests()
     {
         _container = Bootstrap.CreateContainer();
-        _provider = _container.CreateProvider();
+        _provider = _container.GetProvider();
     }
 
     public void Dispose()

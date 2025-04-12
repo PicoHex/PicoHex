@@ -20,7 +20,7 @@ svcRegistry
 
 svcRegistry.RegisterLogger();
 
-var svcProvider = svcRegistry.CreateProvider();
+var svcProvider = svcRegistry.GetProvider();
 
 var tcpServer = svcProvider.Resolve<TcpServer>();
 

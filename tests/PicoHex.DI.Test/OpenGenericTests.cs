@@ -8,7 +8,7 @@ public class OpenGenericTests
     public OpenGenericTests()
     {
         _container = Bootstrap.CreateContainer();
-        _provider = _container.CreateProvider();
+        _provider = _container.GetProvider();
     }
 
     #region Generic Service Tests
