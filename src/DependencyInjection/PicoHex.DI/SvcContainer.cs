@@ -44,7 +44,7 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         if (descriptors is not null)
             return descriptors;
 
-        if (IsClosedGenericRequest(type))
+        if (type.IsConstructedGenericType)
         {
             var closedGenericDescriptor = CreateClosedGenericDescriptor(type);
             Register(closedGenericDescriptor);
@@ -59,11 +59,6 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
     ) => GetDescriptors(type)?.Last();
 
     #region private methods
-
-    private bool IsClosedGenericRequest(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType
-    ) => serviceType.IsConstructedGenericType;
 
     private SvcDescriptor CreateClosedGenericDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
