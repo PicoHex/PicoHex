@@ -41,12 +41,15 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
     {
         var descriptors = _descriptors.GetValueOrDefault(type);
 
-        if (descriptors is not null || !IsClosedGenericRequest(type))
+        if (descriptors is not null)
             return descriptors;
 
-        var closedGenericDescriptor = CreateClosedGenericDescriptor(type);
-        Register(closedGenericDescriptor);
-        descriptors = _descriptors.GetValueOrDefault(type);
+        if (IsClosedGenericRequest(type))
+        {
+            var closedGenericDescriptor = CreateClosedGenericDescriptor(type);
+            Register(closedGenericDescriptor);
+            descriptors = _descriptors.GetValueOrDefault(type);
+        }
 
         return descriptors;
     }

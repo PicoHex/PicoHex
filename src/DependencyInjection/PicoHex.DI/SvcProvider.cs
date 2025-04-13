@@ -101,7 +101,8 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
                 => _singletonInstances.GetOrAdd(
                     descriptor.ServiceType,
                     new Lazy<object>(
-                        () => descriptor.SingleInstance ??= descriptor.Factory!(this)
+                        () => descriptor.SingleInstance ??= descriptor.Factory!(this),
+                        LazyThreadSafetyMode.ExecutionAndPublication
                     ).Value
                 ),
             SvcLifetime.Scoped => descriptor.Factory!(this),

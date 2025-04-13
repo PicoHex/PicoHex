@@ -22,7 +22,10 @@ public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : I
             SvcLifetime.Scoped
                 => _scopedInstances.GetOrAdd(
                     serviceType,
-                    new Lazy<object>(() => resolver.Resolve(serviceType)).Value
+                    new Lazy<object>(
+                        () => resolver.Resolve(serviceType),
+                        LazyThreadSafetyMode.ExecutionAndPublication
+                    ).Value
                 ),
             _ => resolver.Resolve(serviceType)
         };
