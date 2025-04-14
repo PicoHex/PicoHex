@@ -5,7 +5,7 @@ public static class Bootstrap
     public static ISvcContainer CreateContainer()
     {
         var container = new SvcContainerFactory(
-            new SvcProviderFactory(new SvcScopeFactory())
+            new SvcProviderFactory(new SvcScopeFactory(), new SvcResolverFactory())
         ).CreateContainer();
 
         return container

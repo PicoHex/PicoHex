@@ -1,7 +1,10 @@
 namespace PicoHex.DI;
 
-public sealed class SvcProviderFactory(ISvcScopeFactory scopeFactory) : ISvcProviderFactory
+public sealed class SvcProviderFactory(
+    ISvcScopeFactory scopeFactory,
+    ISvcResolverFactory resolverFactory
+) : ISvcProviderFactory
 {
     public ISvcProvider CreateProvider(ISvcContainer container) =>
-        new SvcProvider(container, scopeFactory);
+        new SvcProvider(container, scopeFactory, resolverFactory);
 }

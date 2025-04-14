@@ -2,7 +2,7 @@ namespace PicoHex.DI.Internal;
 
 internal static class SvcFactory
 {
-    internal static Func<ISvcProvider, object> CreateAotFactory(SvcDescriptor svcDescriptor)
+    internal static Func<ISvcResolver, object> CreateAotFactory(SvcDescriptor svcDescriptor)
     {
         var implementationType = svcDescriptor.ImplementationType;
 
@@ -27,7 +27,7 @@ internal static class SvcFactory
         }
 
         var parameters = constructor.GetParameters();
-        var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
+        var providerParam = Expression.Parameter(typeof(ISvcResolver), "sp");
 
         var args = parameters
             .Select(p =>
@@ -42,7 +42,7 @@ internal static class SvcFactory
             .ToArray<Expression>();
 
         var newExpr = Expression.New(constructor, args);
-        var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
+        var lambda = Expression.Lambda<Func<ISvcResolver, object>>(newExpr, providerParam);
         return lambda.Compile();
     }
 }

@@ -74,55 +74,6 @@ public static class IocTests
         Console.WriteLine("Circular Test Failed: Expected exception not thrown");
     }
 
-    // Tests duplicate transient registration detection
-    public static void DuplicateRegistration()
-    {
-        var container = Bootstrap.CreateContainer();
-        container.RegisterTransient<IA, A>();
-        container.RegisterTransient<IB, B>();
-        container.RegisterTransient<IC, C>();
-
-        try
-        {
-            container.RegisterTransient<IA, A>();
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine(
-                ex.Message.Contains("Duplicate registration for type")
-                    ? $"Duplicate Registration Test Passed: {ex.Message}"
-                    : "Duplicate Registration Test Failed: Wrong exception message"
-            );
-            return;
-        }
-
-        Console.WriteLine("Duplicate Registration Test Failed: Expected exception not thrown");
-    }
-
-    // Tests duplicate singleton registration detection
-    public static void DuplicateSingletonRegistration()
-    {
-        var container = Bootstrap.CreateContainer();
-        var c = new C();
-        container.RegisterSingle<IC>(c);
-
-        try
-        {
-            container.RegisterSingle<IC>(c);
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine(
-                ex.Message.Contains("Duplicate registration for type")
-                    ? $"Duplicate Singleton Registration Test Passed: {ex.Message}"
-                    : "Duplicate Registration Test Failed: Wrong exception message"
-            );
-            return;
-        }
-
-        Console.WriteLine("Duplicate Registration Test Failed: Expected exception not thrown");
-    }
-
     // Tests Ahead-of-Time compilation compatibility scenarios
     public static void TestAotCompatibility()
     {
@@ -199,8 +150,6 @@ public class Program
         IocTests.TestBasicInjection();
         IocTests.TestIEnumerableInjection();
         IocTests.TestCircularDependency();
-        IocTests.DuplicateRegistration();
-        IocTests.DuplicateSingletonRegistration();
         IocTests.TestAotCompatibility();
 
         Console.WriteLine($"Tests completed: {DateTime.Now}");

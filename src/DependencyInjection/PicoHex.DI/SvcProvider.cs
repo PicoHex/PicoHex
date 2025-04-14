@@ -1,9 +1,13 @@
 namespace PicoHex.DI;
 
-public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeFactory)
-    : ISvcProvider
+public sealed class SvcProvider(
+    ISvcContainer container,
+    ISvcScopeFactory scopeFactory,
+    ISvcResolverFactory resolverFactory
+) : ISvcProvider
 {
     private readonly ConcurrentDictionary<Type, object> _singletonInstances = new();
+    private readonly ISvcResolver _resolver = resolverFactory.CreateResolver(container);
     private volatile bool _disposed;
 
     public object Resolve(
@@ -13,19 +17,31 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     {
         EnsureNotDisposed();
 
-        if (IsEnumerableRequest(serviceType, out var elementType))
-            return ResolveAllServices(elementType);
+        var descriptor = container.GetDescriptor(serviceType);
 
-        return ResolveInstance(
-            container.GetDescriptor(serviceType)
-                ?? throw new ServiceNotRegisteredException(serviceType)
-        );
+        return descriptor.Lifetime switch
+        {
+            SvcLifetime.Transient => _resolver.Resolve(serviceType),
+            SvcLifetime.Singleton
+                => _singletonInstances.GetOrAdd(
+                    serviceType,
+                    new Lazy<object>(
+                        () => _resolver.Resolve(serviceType),
+                        LazyThreadSafetyMode.ExecutionAndPublication
+                    ).Value
+                ),
+            SvcLifetime.Scoped
+                => throw new InvalidOperationException(
+                    $"Can not resolve {serviceType} as Scoped from root provider."
+                ),
+            _ => throw new ArgumentOutOfRangeException(nameof(descriptor.Lifetime))
+        };
     }
 
     public ISvcScope CreateScope()
     {
         EnsureNotDisposed();
-        return scopeFactory.CreateScope(container, this);
+        return scopeFactory.CreateScope(container, this, resolverFactory);
     }
 
     public void Dispose() => DisposeCore(disposing: true);
@@ -42,75 +58,6 @@ public sealed class SvcProvider(ISvcContainer container, ISvcScopeFactory scopeF
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(SvcProvider));
-    }
-
-    private static bool IsEnumerableRequest(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            out Type elementType
-    )
-    {
-        elementType = null!;
-        if (
-            !serviceType.IsGenericType
-            || serviceType.GetGenericTypeDefinition() != typeof(IEnumerable<>)
-        )
-            return false;
-
-        elementType = serviceType.GetGenericArguments()[0];
-        return true;
-    }
-
-    private object ResolveAllServices(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type elementType
-    )
-    {
-        var descriptors =
-            container.GetDescriptors(elementType)
-            ?? throw new ServiceNotRegisteredException(elementType);
-
-        return descriptors.Count is 0
-            ? Array.CreateInstance(elementType, 0)
-            : CreateServiceArray(elementType, descriptors);
-    }
-
-    private Array CreateServiceArray(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type elementType,
-        IList<SvcDescriptor> descriptors
-    )
-    {
-        var instances = descriptors.Select(ResolveInstance).ToArray();
-        var array = Array.CreateInstance(elementType, instances.Length);
-        Array.Copy(instances, array, instances.Length);
-        return array;
-    }
-
-    private object ResolveInstance(SvcDescriptor descriptor)
-    {
-        if (descriptor.Factory is null && descriptor.SingleInstance is null)
-            lock (descriptor)
-                descriptor.Factory ??= SvcFactory.CreateAotFactory(descriptor);
-
-        return descriptor.Lifetime switch
-        {
-            SvcLifetime.Transient => descriptor.Factory!(this),
-            SvcLifetime.Singleton
-                => _singletonInstances.GetOrAdd(
-                    descriptor.ServiceType,
-                    new Lazy<object>(
-                        () => descriptor.SingleInstance ??= descriptor.Factory!(this),
-                        LazyThreadSafetyMode.ExecutionAndPublication
-                    ).Value
-                ),
-            SvcLifetime.Scoped => descriptor.Factory!(this),
-            _
-                => throw new ArgumentOutOfRangeException(
-                    $"Unsupported service lifetime: {descriptor.Lifetime}"
-                )
-        };
     }
 
     private void DisposeCore(bool disposing)

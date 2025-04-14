@@ -1,8 +1,13 @@
 namespace PicoHex.DI;
 
-public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : ISvcScope
+public sealed class SvcScope(
+    ISvcContainer container,
+    ISvcProvider provider,
+    ISvcResolverFactory resolverFactory
+) : ISvcScope
 {
     private readonly ConcurrentDictionary<Type, object> _scopedInstances = new();
+    private readonly ISvcResolver _resolver = resolverFactory.CreateResolver(container);
     private volatile bool _disposed;
 
     public object Resolve(
@@ -13,21 +18,20 @@ public sealed class SvcScope(ISvcContainer container, ISvcResolver resolver) : I
         if (_disposed)
             throw new ObjectDisposedException(nameof(SvcScope));
 
-        var descriptor =
-            container.GetDescriptor(serviceType)
-            ?? throw new InvalidOperationException($"Service {serviceType} not registered.");
+        var descriptor = container.GetDescriptor(serviceType);
 
         return descriptor.Lifetime switch
         {
+            SvcLifetime.Singleton => provider.Resolve(serviceType),
             SvcLifetime.Scoped
                 => _scopedInstances.GetOrAdd(
                     serviceType,
                     new Lazy<object>(
-                        () => resolver.Resolve(serviceType),
+                        () => _resolver.Resolve(serviceType),
                         LazyThreadSafetyMode.ExecutionAndPublication
                     ).Value
                 ),
-            _ => resolver.Resolve(serviceType)
+            _ => _resolver.Resolve(serviceType)
         };
     }
 

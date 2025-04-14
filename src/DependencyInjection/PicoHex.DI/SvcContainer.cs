@@ -30,7 +30,7 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         return _lazyProvider.Value;
     }
 
-    public List<SvcDescriptor>? GetDescriptors(
+    public List<SvcDescriptor> GetDescriptors(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
     )
     {
@@ -46,12 +46,12 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             descriptors = _descriptors.GetValueOrDefault(type);
         }
 
-        return descriptors;
+        return descriptors ?? throw new ServiceNotRegisteredException(type);
     }
 
-    public SvcDescriptor? GetDescriptor(
+    public SvcDescriptor GetDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
-    ) => GetDescriptors(type)?.Last();
+    ) => GetDescriptors(type).Last();
 
     #region private methods
 
@@ -71,9 +71,9 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             ?? throw new ServiceNotRegisteredException(openGenericType);
 
         // Create closed generic type
-        var closedType = openDescriptor.ImplementationType!.MakeGenericType(
-            serviceType.GenericTypeArguments
-        );
+        var closedType = openDescriptor
+            .ImplementationType!
+            .MakeGenericType(serviceType.GenericTypeArguments);
 
         // Auto-register closed generic
         var closedDescriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);
