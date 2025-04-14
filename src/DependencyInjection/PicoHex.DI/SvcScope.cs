@@ -35,6 +35,8 @@ public sealed class SvcScope(
         };
     }
 
+    public ISvcScope CreateScope() => provider.CreateScope();
+
     public void Dispose() => DisposeCore(disposing: true);
 
     public async ValueTask DisposeAsync()
