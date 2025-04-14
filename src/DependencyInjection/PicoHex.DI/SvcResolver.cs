@@ -2,12 +2,10 @@ namespace PicoHex.DI;
 
 public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcResolver
 {
-    public object Resolve(Type serviceType)
-    {
-        return IsEnumerableRequest(serviceType, out var elementType)
+    public object Resolve(Type serviceType) =>
+        IsEnumerableRequest(serviceType, out var elementType)
             ? ResolveAllServices(elementType)
             : ResolveInstance(container.GetDescriptor(serviceType));
-    }
 
     #region private
 

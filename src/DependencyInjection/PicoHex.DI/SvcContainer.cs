@@ -39,6 +39,14 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
         if (descriptors is not null)
             return descriptors;
 
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+        {
+            var elementType = type.GetGenericArguments()[0];
+            descriptors = _descriptors.GetValueOrDefault(elementType);
+            if (descriptors is not null)
+                return descriptors;
+        }
+
         if (type.IsConstructedGenericType)
         {
             var closedGenericDescriptor = CreateClosedGenericDescriptor(type);
