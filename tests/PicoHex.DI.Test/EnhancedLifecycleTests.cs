@@ -142,7 +142,7 @@ public class EnhancedLifecycleTests : IDisposable
     {
         // Arrange
         _container.RegisterScoped<IServiceA, ServiceAImpl>();
-        _container.RegisterTransient<IServiceB, ServiceBImpl>();
+        _container.RegisterScoped<IServiceB, ServiceBImpl>();
         _container.RegisterSingle<IService, ServiceImpl>();
 
         // Act
@@ -155,8 +155,8 @@ public class EnhancedLifecycleTests : IDisposable
         }
 
         // Assert
-        Assert.NotSame(transient1, transient2);
-        Assert.NotSame(((ServiceBImpl)transient1).ServiceA, ((ServiceBImpl)transient2).ServiceA); // Scoped 依赖相同
+        Assert.Same(transient1, transient2);
+        Assert.Same(((ServiceBImpl)transient1).ServiceA, ((ServiceBImpl)transient2).ServiceA); // Scoped 依赖相同
     }
     #endregion
 

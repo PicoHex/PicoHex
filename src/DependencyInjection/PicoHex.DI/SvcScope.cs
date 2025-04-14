@@ -1,14 +1,24 @@
 namespace PicoHex.DI;
 
-public sealed class SvcScope(
-    ISvcContainer container,
-    ISvcProvider provider,
-    ISvcResolverFactory resolverFactory
-) : ISvcScope
+public sealed class SvcScope : ISvcScope
 {
     private readonly ConcurrentDictionary<Type, object> _scopedInstances = new();
-    private readonly ISvcResolver _resolver = resolverFactory.CreateResolver(container);
+    private readonly ISvcContainer _container;
+    private readonly ISvcProvider _provider;
+    private readonly ISvcResolver _resolver;
+
     private volatile bool _disposed;
+
+    public SvcScope(
+        ISvcContainer container,
+        ISvcProvider provider,
+        ISvcResolverFactory resolverFactory
+    )
+    {
+        _container = container;
+        _provider = provider;
+        _resolver = resolverFactory.CreateResolver(container, this);
+    }
 
     public object Resolve(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -18,11 +28,11 @@ public sealed class SvcScope(
         if (_disposed)
             throw new ObjectDisposedException(nameof(SvcScope));
 
-        var descriptor = container.GetDescriptor(serviceType);
+        var descriptor = _container.GetDescriptor(serviceType);
 
         return descriptor.Lifetime switch
         {
-            SvcLifetime.Singleton => provider.Resolve(serviceType),
+            SvcLifetime.Singleton => _provider.Resolve(serviceType),
             SvcLifetime.Scoped
                 => _scopedInstances.GetOrAdd(
                     serviceType,
@@ -35,7 +45,7 @@ public sealed class SvcScope(
         };
     }
 
-    public ISvcScope CreateScope() => provider.CreateScope();
+    public ISvcScope CreateScope() => _provider.CreateScope();
 
     public void Dispose() => DisposeCore(disposing: true);
 

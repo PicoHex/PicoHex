@@ -1,6 +1,6 @@
 namespace PicoHex.DI;
 
-public class SvcResolver(ISvcContainer container) : ISvcResolver
+public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcResolver
 {
     public object Resolve(Type serviceType)
     {
@@ -9,7 +9,8 @@ public class SvcResolver(ISvcContainer container) : ISvcResolver
             : ResolveInstance(container.GetDescriptor(serviceType));
     }
 
-    #region MyRegion
+    #region private
+
     private static bool IsEnumerableRequest(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
@@ -59,10 +60,10 @@ public class SvcResolver(ISvcContainer container) : ISvcResolver
         if (descriptor.Lifetime is SvcLifetime.Singleton && descriptor.SingleInstance is not null)
             return descriptor.SingleInstance;
         if (descriptor.Factory is not null)
-            return descriptor.SingleInstance = descriptor.Factory!(this);
+            return descriptor.SingleInstance = descriptor.Factory!(provider);
         lock (descriptor)
             descriptor.Factory ??= SvcFactory.CreateAotFactory(descriptor);
-        return descriptor.SingleInstance = descriptor.Factory(this);
+        return descriptor.SingleInstance = descriptor.Factory(provider);
     }
 
     #endregion

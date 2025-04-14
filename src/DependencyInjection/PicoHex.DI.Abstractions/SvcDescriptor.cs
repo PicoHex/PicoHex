@@ -7,7 +7,7 @@ public sealed class SvcDescriptor
 
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     public Type? ImplementationType { get; }
-    public Func<ISvcResolver, object>? Factory { get; set; }
+    public Func<ISvcProvider, object>? Factory { get; set; }
     public object? SingleInstance { get; set; }
     public SvcLifetime Lifetime { get; }
 
@@ -37,7 +37,7 @@ public sealed class SvcDescriptor
     public SvcDescriptor(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
-        Func<ISvcResolver, object> factory,
+        Func<ISvcProvider, object> factory,
         SvcLifetime lifetime
     )
         : this(serviceType, lifetime)

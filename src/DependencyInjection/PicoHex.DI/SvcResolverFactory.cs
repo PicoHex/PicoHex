@@ -2,5 +2,6 @@ namespace PicoHex.DI;
 
 public class SvcResolverFactory : ISvcResolverFactory
 {
-    public ISvcResolver CreateResolver(ISvcContainer container) => new SvcResolver(container);
+    public ISvcResolver CreateResolver(ISvcContainer container, ISvcProvider provider) =>
+        new SvcResolver(container, provider);
 }
