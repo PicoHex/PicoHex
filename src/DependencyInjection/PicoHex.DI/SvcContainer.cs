@@ -10,11 +10,6 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
     {
         ArgumentNullException.ThrowIfNull(descriptor);
 
-        if (IsConflictForServiceType(descriptor, out var conflictDetails))
-            throw new InvalidOperationException(
-                $"Duplicate registration for type '{descriptor.ServiceType.FullName}'. {conflictDetails}"
-            );
-
         _descriptors.TryAdd(descriptor.ServiceType, []);
         _descriptors[descriptor.ServiceType].Add(descriptor);
 
@@ -76,43 +71,13 @@ public sealed class SvcContainer(ISvcProviderFactory providerFactory) : ISvcCont
             ?? throw new ServiceNotRegisteredException(openGenericType);
 
         // Create closed generic type
-        var closedType = openDescriptor
-            .ImplementationType!
-            .MakeGenericType(serviceType.GenericTypeArguments);
+        var closedType = openDescriptor.ImplementationType!.MakeGenericType(
+            serviceType.GenericTypeArguments
+        );
 
         // Auto-register closed generic
         var closedDescriptor = new SvcDescriptor(serviceType, closedType, openDescriptor.Lifetime);
         return closedDescriptor;
-    }
-
-    private bool IsConflictForServiceType(SvcDescriptor newDescriptor, out string conflictDetails)
-    {
-        conflictDetails = null!;
-
-        if (!_descriptors.TryGetValue(newDescriptor.ServiceType, out var existingDescriptors))
-            return false;
-
-        foreach (var existing in existingDescriptors)
-        {
-            if (existing.ImplementationType == newDescriptor.ImplementationType)
-            {
-                conflictDetails =
-                    $"ImplementationType '{existing.ImplementationType!.FullName}' is already registered.";
-                return true;
-            }
-
-            if (
-                existing.SingleInstance is null
-                || newDescriptor.SingleInstance is null
-                || existing.SingleInstance != newDescriptor.SingleInstance
-            )
-                continue;
-            conflictDetails =
-                $"SingleInstance of type '{existing.SingleInstance.GetType().FullName}' is already registered.";
-            return true;
-        }
-
-        return false;
     }
 
     #endregion
