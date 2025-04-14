@@ -4,10 +4,9 @@ public class SvcResolver(ISvcContainer container) : ISvcResolver
 {
     public object Resolve(Type serviceType)
     {
-        if (IsEnumerableRequest(serviceType, out var elementType))
-            return ResolveAllServices(elementType);
-
-        return ResolveInstance(container.GetDescriptor(serviceType));
+        return IsEnumerableRequest(serviceType, out var elementType)
+            ? ResolveAllServices(elementType)
+            : ResolveInstance(container.GetDescriptor(serviceType));
     }
 
     #region MyRegion

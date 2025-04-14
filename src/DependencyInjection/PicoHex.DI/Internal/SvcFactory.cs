@@ -11,10 +11,14 @@ internal static class SvcFactory
                 $"The service type '{svcDescriptor.ServiceType.FullName}' has no implementation type."
             );
 
-        var constructor = implementationType
-            .GetConstructors()
-            .OrderByDescending(c => c.GetParameters().Length)
-            .First();
+        var constructor =
+            implementationType
+                .GetConstructors()
+                .OrderByDescending(c => c.GetParameters().Length)
+                .FirstOrDefault()
+            ?? throw new ServiceResolutionException(
+                $"No public constructor found for {implementationType}."
+            );
 
         var dependencies = constructor.GetParameters().Select(p => p.ParameterType).ToList();
 
