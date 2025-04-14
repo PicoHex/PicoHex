@@ -175,19 +175,24 @@ public class DependencyInjectionLifecycleTests : IDisposable
 
         IServiceA scoped1,
             scoped2;
+        IServiceC innerScope1,
+            innerScope2;
         using (var scope = _provider.CreateScope())
         {
             scoped1 = scope.Resolve<IServiceA>();
             scoped2 = scope.Resolve<IServiceA>();
-        }
 
-        var transient1 = _provider.Resolve<IServiceC>();
-        var transient2 = _provider.Resolve<IServiceC>();
+            using (var innerScope = scope.CreateScope())
+            {
+                innerScope1 = innerScope.Resolve<IServiceC>();
+                innerScope2 = innerScope.Resolve<IServiceC>();
+            }
+        }
 
         // Assert
         Assert.Same(singleton1, singleton2);
         Assert.Same(scoped1, scoped2);
-        Assert.NotSame(transient1, transient2);
+        Assert.Same(innerScope1, innerScope2);
     }
 
     [Fact]
