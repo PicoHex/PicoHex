@@ -2,7 +2,7 @@ namespace PicoHex.DI.Internal;
 
 internal static class SvcFactory
 {
-    internal static Func<ISvcResolver, object> CreateAotFactory(SvcDescriptor svcDescriptor)
+    internal static Func<ISvcProvider, object> CreateAotFactory(SvcDescriptor svcDescriptor)
     {
         var implementationType = svcDescriptor.ImplementationType;
 
@@ -20,7 +20,8 @@ internal static class SvcFactory
                 $"No public constructor found for {implementationType}."
             );
 
-        var dependencies = constructor.GetParameters().Select(p => p.ParameterType).ToList();
+        var parameters = constructor.GetParameters();
+        var dependencies = parameters.Select(p => p.ParameterType).ToList();
 
         DependencyGraph.AddDependency(svcDescriptor.ServiceType, dependencies);
         if (DependencyGraph.HasCycle(svcDescriptor.ServiceType, out var cyclePath))
@@ -30,15 +31,19 @@ internal static class SvcFactory
             );
         }
 
-        var parameters = constructor.GetParameters();
-        var providerParam = Expression.Parameter(typeof(ISvcResolver), "sp");
+        var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
+
+        var resolveMethod =
+            typeof(ISvcResolver) // 注意基接口
+            .GetMethod(nameof(ISvcResolver.Resolve), [typeof(Type)])
+            ?? throw new MissingMethodException("ISvcResolver.Resolve(Type) not found.");
 
         var args = parameters
             .Select(p =>
             {
                 var getServiceCall = Expression.Call(
                     providerParam,
-                    typeof(ISvcResolver).GetMethod(nameof(ISvcResolver.Resolve))!,
+                    resolveMethod,
                     Expression.Constant(p.ParameterType)
                 );
                 return Expression.Convert(getServiceCall, p.ParameterType);
@@ -46,7 +51,7 @@ internal static class SvcFactory
             .ToArray<Expression>();
 
         var newExpr = Expression.New(constructor, args);
-        var lambda = Expression.Lambda<Func<ISvcResolver, object>>(newExpr, providerParam);
+        var lambda = Expression.Lambda<Func<ISvcProvider, object>>(newExpr, providerParam);
         return lambda.Compile();
     }
 }

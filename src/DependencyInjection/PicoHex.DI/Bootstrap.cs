@@ -15,6 +15,9 @@ public static class Bootstrap
             .RegisterSingle<ISvcProviderFactory>(svcProviderFactory)
             .RegisterSingle<ISvcScopeFactory>(svcScopeFactory)
             .RegisterSingle<ISvcResolverFactory>(svcResolverFactory)
-            .RegisterSingle<ISvcProvider>(container.GetProvider());
+            .RegisterSingle<ISvcProvider>(container.GetProvider())
+            .RegisterScoped<ISvcScope>(sp =>
+                sp.Resolve<ISvcScopeFactory>().CreateScope(container, sp)
+            );
     }
 }

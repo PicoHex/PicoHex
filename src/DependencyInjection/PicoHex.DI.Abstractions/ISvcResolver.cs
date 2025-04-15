@@ -12,5 +12,5 @@ public static class SvcResolverExtensions
 {
     public static T Resolve<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T
-    >(this ISvcResolver provider) => (T)provider.Resolve(typeof(T));
+    >(this ISvcResolver resolver) => (T)resolver.Resolve(typeof(T));
 }

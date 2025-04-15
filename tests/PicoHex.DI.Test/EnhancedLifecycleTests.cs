@@ -187,14 +187,9 @@ public class EnhancedLifecycleTests : IDisposable
         public int Id { get; set; }
     }
 
-    public class ServiceBImpl : IServiceB
+    public class ServiceBImpl(IServiceA serviceA) : IServiceB
     {
-        public IServiceA ServiceA { get; }
-
-        public ServiceBImpl(IServiceA serviceA)
-        {
-            ServiceA = serviceA;
-        }
+        public IServiceA ServiceA { get; } = serviceA;
     }
     #endregion
 }

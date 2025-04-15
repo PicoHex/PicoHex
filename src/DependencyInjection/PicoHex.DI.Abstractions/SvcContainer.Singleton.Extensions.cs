@@ -62,19 +62,19 @@ public static partial class SvcContainerExtensions
         this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
-        Func<ISvcResolver, object> factory
+        Func<ISvcProvider, object> factory
     ) => container.Register(serviceType, factory, SvcLifetime.Singleton);
 
     public static ISvcContainer RegisterSingle<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
-    >(this ISvcContainer container, Func<ISvcResolver, TService> factory)
+    >(this ISvcContainer container, Func<ISvcProvider, TService> factory)
         where TService : class => container.Register(factory, SvcLifetime.Singleton);
 
     public static ISvcContainer RegisterSingle<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
-    >(this ISvcContainer container, Func<ISvcResolver, TImplementation> factory)
+    >(this ISvcContainer container, Func<ISvcProvider, TImplementation> factory)
         where TService : class
         where TImplementation : class, TService =>
         container.Register<TService>(factory, SvcLifetime.Singleton);

@@ -50,13 +50,13 @@ public static partial class SvcContainerExtensions
         this ISvcContainer registry,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type serviceType,
-        Func<ISvcResolver, object> factory,
+        Func<ISvcProvider, object> factory,
         SvcLifetime lifetime
     ) => registry.Register(new SvcDescriptor(serviceType, factory, lifetime));
 
     public static ISvcContainer Register<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
-    >(this ISvcContainer registry, Func<ISvcResolver, TService> factory, SvcLifetime lifetime)
+    >(this ISvcContainer registry, Func<ISvcProvider, TService> factory, SvcLifetime lifetime)
         where TService : class => registry.Register(typeof(TService), factory, lifetime);
 
     public static ISvcContainer Register<
@@ -65,7 +65,7 @@ public static partial class SvcContainerExtensions
             TImplementation
     >(
         this ISvcContainer registry,
-        Func<ISvcResolver, TImplementation> factory,
+        Func<ISvcProvider, TImplementation> factory,
         SvcLifetime lifetime
     )
         where TService : class
