@@ -5,7 +5,6 @@ public sealed class SvcProvider : ISvcProvider
     private readonly ConcurrentDictionary<Type, object> _singletonInstances = new();
     private readonly ISvcContainer _container;
     private readonly ISvcScopeFactory _scopeFactory;
-    private readonly ISvcResolverFactory _resolverFactory;
     private readonly ISvcResolver _resolver;
     private volatile bool _disposed;
 
@@ -17,7 +16,6 @@ public sealed class SvcProvider : ISvcProvider
     {
         _container = container;
         _scopeFactory = scopeFactory;
-        _resolverFactory = resolverFactory;
         _resolver = resolverFactory.CreateResolver(container, this);
     }
 
