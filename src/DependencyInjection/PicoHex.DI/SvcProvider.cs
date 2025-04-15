@@ -52,7 +52,7 @@ public sealed class SvcProvider : ISvcProvider
     public ISvcScope CreateScope()
     {
         EnsureNotDisposed();
-        return _scopeFactory.CreateScope(_container, this, _resolverFactory);
+        return _scopeFactory.CreateScope(_container, this);
     }
 
     public void Dispose() => DisposeCore(disposing: true);

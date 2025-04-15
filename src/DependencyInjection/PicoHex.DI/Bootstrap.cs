@@ -4,14 +4,17 @@ public static class Bootstrap
 {
     public static ISvcContainer CreateContainer()
     {
-        var container = new SvcContainerFactory(
-            new SvcProviderFactory(new SvcScopeFactory(), new SvcResolverFactory())
-        ).CreateContainer();
+        var svcResolverFactory = new SvcResolverFactory();
+        var svcScopeFactory = new SvcScopeFactory(svcResolverFactory);
+        var svcProviderFactory = new SvcProviderFactory(svcScopeFactory, svcResolverFactory);
+        var containerFactory = new SvcContainerFactory(svcProviderFactory);
+        var container = containerFactory.CreateContainer();
 
         return container
             .RegisterSingle<ISvcContainer>(container)
-            .RegisterSingle<ISvcProviderFactory, SvcProviderFactory>()
-            .RegisterSingle<ISvcScopeFactory, SvcScopeFactory>()
-            .RegisterSingle<ISvcProvider>(sp => sp.Resolve<ISvcContainer>().GetProvider());
+            .RegisterSingle<ISvcProviderFactory>(svcProviderFactory)
+            .RegisterSingle<ISvcScopeFactory>(svcScopeFactory)
+            .RegisterSingle<ISvcResolverFactory>(svcResolverFactory)
+            .RegisterSingle<ISvcProvider>(container.GetProvider());
     }
 }
