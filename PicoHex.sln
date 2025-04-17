@@ -47,6 +47,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Http.Sample"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log.Abstractions", "src\Logger\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj", "{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Configuration.Abstractions", "src\Configuration\PicoHex.Configuration.Abstractions\PicoHex.Configuration.Abstractions.csproj", "{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Web", "src\Server\PicoHex.Server.Web\PicoHex.Server.Web.csproj", "{F4B041E0-669D-4171-A2C3-4E669960CE7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Api", "src\Server\PicoHex.Server.Api\PicoHex.Server.Api.csproj", "{57853741-7611-4843-9381-C6A053FF8C7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,6 +82,9 @@ Global
 		{CBD72553-A10B-4887-A310-6CC96CFEFC90} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
 		{B8D59AD8-C82D-482A-9E95-44C0CD6EE1E8} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
 		{6097958D-DA9E-4EB6-BFDD-B65E15F5890E} = {A228EA57-278D-4EE1-B8ED-87CDDC480C1A}
+		{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75} = {F23CF46D-24E7-4801-BFB5-092DACEA1BF1}
+		{F4B041E0-669D-4171-A2C3-4E669960CE7C} = {502E65DB-9F00-4F77-813F-9C21D4BDE936}
+		{57853741-7611-4843-9381-C6A053FF8C7D} = {502E65DB-9F00-4F77-813F-9C21D4BDE936}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{ED5C39D8-2365-493C-94E8-8D23BA6A626D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -142,5 +151,17 @@ Global
 		{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4B041E0-669D-4171-A2C3-4E669960CE7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4B041E0-669D-4171-A2C3-4E669960CE7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4B041E0-669D-4171-A2C3-4E669960CE7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4B041E0-669D-4171-A2C3-4E669960CE7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57853741-7611-4843-9381-C6A053FF8C7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57853741-7611-4843-9381-C6A053FF8C7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57853741-7611-4843-9381-C6A053FF8C7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57853741-7611-4843-9381-C6A053FF8C7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
