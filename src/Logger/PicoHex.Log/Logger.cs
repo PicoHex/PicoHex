@@ -4,7 +4,8 @@ public sealed class Logger<TCategory>(ILoggerFactory factory) : ILogger<TCategor
 {
     private readonly ILogger _innerLogger = factory.CreateLogger(typeof(TCategory).FullName!);
 
-    public IDisposable BeginScope<TState>(TState state) => _innerLogger.BeginScope(state);
+    public IDisposable BeginScope<TState>(TState state)
+        where TState : notnull => _innerLogger.BeginScope(state);
 
     public void Log(LogLevel logLevel, string message, Exception? exception = null) =>
         _innerLogger.Log(logLevel, message, exception);
