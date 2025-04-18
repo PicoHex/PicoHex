@@ -1,37 +1,55 @@
 namespace PicoHex.Protocols.HTTP;
 
-public class HttpResponse
+public class HttpResponse : HttpMessage
 {
-    public string ProtocolVersion { get; set; } = "HTTP/1.1";
     public int StatusCode { get; set; } = 200;
     public string StatusDescription { get; set; } = "OK";
-    public Dictionary<string, string> Headers { get; } = new();
-    public byte[]? Body { get; set; }
 
     public byte[] BuildResponseBytes()
     {
-        var headerBuilder = new StringBuilder();
-        headerBuilder.Append($"HTTP/1.1 {StatusCode} {StatusDescription}\r\n");
+        using var headerStream = new MemoryStream();
+        // 构建响应头
+        var statusLine = $"HTTP/1.1 {StatusCode} {StatusDescription}\r\n";
+        headerStream.Write(Encoding.ASCII.GetBytes(statusLine));
 
-        // 自动设置 Content-Length
-        if (Body != null && !Headers.ContainsKey("Content-Length"))
+        // 自动计算 Content-Length
+        if (BodyStream != null && !Headers.ContainsKey("Content-Length"))
         {
-            Headers["Content-Length"] = Body.Length.ToString();
+            if (BodyStream.CanSeek)
+            {
+                Headers["Content-Length"] = BodyStream.Length.ToString();
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "Cannot determine Content-Length for non-seekable streams"
+                );
+            }
         }
 
+        // 写入头信息
         foreach (var header in Headers)
         {
-            headerBuilder.Append($"{header.Key}: {header.Value}\r\n");
+            var line = $"{header.Key}: {header.Value}\r\n";
+            headerStream.Write(Encoding.ASCII.GetBytes(line));
         }
-        headerBuilder.Append("\r\n");
+        headerStream.Write(Encoding.ASCII.GetBytes("\r\n"));
 
-        var headerBytes = Encoding.ASCII.GetBytes(headerBuilder.ToString());
-        var responseBytes = new byte[headerBytes.Length + (Body?.Length ?? 0)];
-        Buffer.BlockCopy(headerBytes, 0, responseBytes, 0, headerBytes.Length);
-        if (Body != null)
-        {
-            Buffer.BlockCopy(Body, 0, responseBytes, headerBytes.Length, Body.Length);
-        }
-        return responseBytes;
+        // 合并头与正文
+        if (BodyStream == null)
+            return headerStream.ToArray();
+
+        if (!BodyStream.CanRead)
+            throw new InvalidOperationException("Body stream is not readable");
+
+        // 重置流位置以确保完整读取
+        if (BodyStream.CanSeek)
+            BodyStream.Position = 0;
+
+        using var responseStream = new MemoryStream();
+        headerStream.WriteTo(responseStream);
+        BodyStream.CopyTo(responseStream);
+
+        return responseStream.ToArray();
     }
 }
