@@ -10,7 +10,7 @@ public class MqttConnectPacket : MqttPacket
 
     public override void Parse(byte[] data)
     {
-        int offset = 0;
+        var offset = 0;
 
         // 解析固定头
         PacketType = (MqttPacketType)(data[0] >> 4);
@@ -22,14 +22,14 @@ public class MqttConnectPacket : MqttPacket
         offset += bytesRead;
 
         // 解析协议名（UTF-8字符串，长度前缀为2字节）
-        ushort protocolNameLength = (ushort)((data[offset] << 8) | data[offset + 1]);
+        var protocolNameLength = (ushort)((data[offset] << 8) | data[offset + 1]);
         offset += 2;
         ProtocolName = Encoding.UTF8.GetString(data, offset, protocolNameLength);
         offset += protocolNameLength;
 
         // 协议级别和标志位
         ProtocolLevel = data[offset++];
-        byte connectFlags = data[offset++];
+        var connectFlags = data[offset++];
         CleanSession = (connectFlags & 0x02) != 0;
 
         // 心跳间隔（2字节）
@@ -37,7 +37,7 @@ public class MqttConnectPacket : MqttPacket
         offset += 2;
 
         // 客户端ID（UTF-8字符串）
-        ushort clientIdLength = (ushort)((data[offset] << 8) | data[offset + 1]);
+        var clientIdLength = (ushort)((data[offset] << 8) | data[offset + 1]);
         offset += 2;
         ClientId = Encoding.UTF8.GetString(data, offset, clientIdLength);
     }
@@ -47,15 +47,15 @@ public class MqttConnectPacket : MqttPacket
         var stream = new MemoryStream();
 
         // 固定头（报文类型 + 标志位）
-        byte fixedHeader = (byte)((byte)MqttPacketType.CONNECT << 4);
+        var fixedHeader = (byte)((byte)MqttPacketType.CONNECT << 4);
         stream.WriteByte(fixedHeader);
 
         // 可变头 + 载荷的二进制数据
         var variableHeader = new List<byte>();
 
         // 协议名（MQTT）
-        byte[] protocolNameBytes = Encoding.UTF8.GetBytes(ProtocolName);
-        variableHeader.AddRange(new byte[] { 0x00, (byte)protocolNameBytes.Length });
+        var protocolNameBytes = Encoding.UTF8.GetBytes(ProtocolName);
+        variableHeader.AddRange([0x00, (byte)protocolNameBytes.Length]);
         variableHeader.AddRange(protocolNameBytes);
 
         // 协议级别和标志位
@@ -68,8 +68,8 @@ public class MqttConnectPacket : MqttPacket
         variableHeader.Add((byte)KeepAlive);
 
         // 客户端ID
-        byte[] clientIdBytes = Encoding.UTF8.GetBytes(ClientId);
-        variableHeader.AddRange(new byte[] { (byte)(clientIdBytes.Length >> 8), (byte)clientIdBytes.Length });
+        var clientIdBytes = Encoding.UTF8.GetBytes(ClientId);
+        variableHeader.AddRange([(byte)(clientIdBytes.Length >> 8), (byte)clientIdBytes.Length]);
         variableHeader.AddRange(clientIdBytes);
 
         // 编码剩余长度并写入

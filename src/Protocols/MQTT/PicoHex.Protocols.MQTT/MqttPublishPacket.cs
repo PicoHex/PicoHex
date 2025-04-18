@@ -13,7 +13,7 @@ public class MqttPublishPacket : MqttPacket
 
     public override void Parse(byte[] data)
     {
-        int offset = 0;
+        var offset = 0;
 
         // 固定头
         PacketType = (MqttPacketType)(data[0] >> 4);
@@ -25,7 +25,7 @@ public class MqttPublishPacket : MqttPacket
         offset += bytesRead;
 
         // 主题名（UTF-8字符串）
-        ushort topicLength = (ushort)((data[offset] << 8) | data[offset + 1]);
+        var topicLength = (ushort)((data[offset] << 8) | data[offset + 1]);
         offset += 2;
         Topic = Encoding.UTF8.GetString(data, offset, topicLength);
         offset += topicLength;
@@ -49,15 +49,15 @@ public class MqttPublishPacket : MqttPacket
         var stream = new MemoryStream();
 
         // 固定头（QoS=0）
-        byte fixedHeader = (byte)((byte)MqttPacketType.PUBLISH << 4);
+        var fixedHeader = (byte)((byte)MqttPacketType.PUBLISH << 4);
         stream.WriteByte(fixedHeader);
 
         // 可变头 + 载荷
         var variableHeader = new List<byte>();
 
         // 主题名
-        byte[] topicBytes = Encoding.UTF8.GetBytes(Topic);
-        variableHeader.AddRange(new byte[] { (byte)(topicBytes.Length >> 8), (byte)topicBytes.Length });
+        var topicBytes = Encoding.UTF8.GetBytes(Topic);
+        variableHeader.AddRange([(byte)(topicBytes.Length >> 8), (byte)topicBytes.Length]);
         variableHeader.AddRange(topicBytes);
 
         // 载荷

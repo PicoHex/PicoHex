@@ -12,15 +12,15 @@ public class CoapRequest
     }
 
     public Method RequestMethod { get; set; }
-    public string Uri { get; set; }            // 请求的URI（如 "coap://example.com/sensor"）
-    public byte[] Payload { get; set; }        // 请求负载（可选）
-    public List<CoapOption> Options { get; }   // CoAP 选项（如 Uri-Path、Content-Format）
-    public byte[] Token { get; set; }          // Token（用于匹配响应）
+    public string Uri { get; set; } // 请求的URI（如 "coap://example.com/sensor"）
+    public byte[] Payload { get; set; } // 请求负载（可选）
+    public List<CoapOption> Options { get; } // CoAP 选项（如 Uri-Path、Content-Format）
+    public byte[] Token { get; set; } // Token（用于匹配响应）
 
     public CoapRequest()
     {
-        Options = new List<CoapOption>();
-        Token = GenerateRandomToken(4);        // 默认生成4字节随机Token
+        Options = [];
+        Token = GenerateRandomToken(4); // 默认生成4字节随机Token
     }
 
     /// <summary>
@@ -68,12 +68,13 @@ public class CoapRequest
     private static byte[] GenerateRandomToken(int length)
     {
         var random = new Random();
-        byte[] token = new byte[length];
+        var token = new byte[length];
         random.NextBytes(token);
         return token;
     }
 
     // 生成消息ID（简化示例：递增计数器）
-    private static ushort _messageIdCounter = 0;
+    private static ushort _messageIdCounter;
+
     private static ushort GenerateMessageId() => _messageIdCounter++;
 }

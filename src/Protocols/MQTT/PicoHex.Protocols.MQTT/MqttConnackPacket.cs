@@ -14,7 +14,7 @@ public class MqttConnackPacket : MqttPacket
     public override byte[] Serialize()
     {
         var stream = new MemoryStream();
-        stream.WriteByte((byte)((byte)MqttPacketType.CONNACK << 4));
+        stream.WriteByte((byte)MqttPacketType.CONNACK << 4);
         stream.WriteByte(0x02); // 剩余长度=2
         stream.WriteByte(0x00); // 确认标志
         stream.WriteByte(ReturnCode);

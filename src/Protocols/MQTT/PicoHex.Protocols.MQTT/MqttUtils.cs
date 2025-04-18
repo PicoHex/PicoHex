@@ -8,9 +8,10 @@ public static class MqttUtils
         var buffer = new List<byte>();
         do
         {
-            byte digit = (byte)(length % 128);
+            var digit = (byte)(length % 128);
             length /= 128;
-            if (length > 0) digit |= 0x80;
+            if (length > 0)
+                digit |= 0x80;
             buffer.Add(digit);
         } while (length > 0);
         return (buffer.ToArray(), buffer.Count);
@@ -19,9 +20,9 @@ public static class MqttUtils
     // 解码剩余长度（返回剩余长度和消耗的字节数）
     public static (int, int) DecodeRemainingLength(byte[] data, int offset)
     {
-        int multiplier = 1;
-        int value = 0;
-        int bytesRead = 0;
+        var multiplier = 1;
+        var value = 0;
+        var bytesRead = 0;
         do
         {
             value += (data[offset + bytesRead] & 0x7F) * multiplier;

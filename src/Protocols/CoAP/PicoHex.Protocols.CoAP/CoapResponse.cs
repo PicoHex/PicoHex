@@ -5,19 +5,19 @@ public class CoapResponse
     // CoAP 响应状态码（参考 RFC7252 12.1.2节）
     public enum StatusCode
     {
-        Created = 65,          // 2.01 Created
-        Deleted = 66,          // 2.02 Deleted
-        Valid = 67,            // 2.03 Valid
-        Changed = 68,          // 2.04 Changed
-        Content = 69,          // 2.05 Content
-        BadRequest = 128,      // 4.00 Bad Request
-        NotFound = 132,        // 4.04 Not Found
-        InternalError = 160    // 5.00 Internal Server Error
+        Created = 65, // 2.01 Created
+        Deleted = 66, // 2.02 Deleted
+        Valid = 67, // 2.03 Valid
+        Changed = 68, // 2.04 Changed
+        Content = 69, // 2.05 Content
+        BadRequest = 128, // 4.00 Bad Request
+        NotFound = 132, // 4.04 Not Found
+        InternalError = 160 // 5.00 Internal Server Error
     }
 
     public StatusCode Code { get; set; }
     public byte[] Payload { get; set; }
-    public List<CoapOption> Options { get; set; } = new List<CoapOption>();
+    public List<CoapOption> Options { get; set; } = [];
 
     /// <summary>
     /// 从 CoapMessage 解析响应
