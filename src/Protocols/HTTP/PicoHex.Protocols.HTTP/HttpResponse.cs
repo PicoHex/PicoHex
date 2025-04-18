@@ -2,6 +2,7 @@ namespace PicoHex.Protocols.HTTP;
 
 public class HttpResponse
 {
+    public string ProtocolVersion { get; set; } = "HTTP/1.1";
     public int StatusCode { get; set; } = 200;
     public string StatusDescription { get; set; } = "OK";
     public Dictionary<string, string> Headers { get; } = new();
