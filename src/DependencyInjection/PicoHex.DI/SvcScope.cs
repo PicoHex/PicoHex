@@ -36,10 +36,11 @@ public sealed class SvcScope : ISvcScope
             SvcLifetime.Scoped
                 => _scopedInstances.GetOrAdd(
                     serviceType,
-                    new Lazy<object>(
-                        () => _resolver.Resolve(serviceType),
-                        LazyThreadSafetyMode.ExecutionAndPublication
-                    ).Value
+                    _ =>
+                        new Lazy<object>(
+                            () => _resolver.Resolve(serviceType),
+                            LazyThreadSafetyMode.ExecutionAndPublication
+                        ).Value
                 ),
             _ => _resolver.Resolve(serviceType)
         };
