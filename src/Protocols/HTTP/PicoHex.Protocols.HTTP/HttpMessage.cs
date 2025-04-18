@@ -28,7 +28,7 @@ public abstract class HttpMessage : IDisposable, IAsyncDisposable
         return ms.ToArray();
     }
 
-    public virtual void Dispose()
+    public void Dispose()
     {
         if (_disposed)
             return;
