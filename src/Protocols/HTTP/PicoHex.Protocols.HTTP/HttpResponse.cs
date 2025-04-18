@@ -28,12 +28,11 @@ public class HttpResponse : HttpMessage
         }
 
         // 写入头信息
-        foreach (var header in Headers)
+        foreach (var line in Headers.Select(header => $"{header.Key}: {header.Value}\r\n"))
         {
-            var line = $"{header.Key}: {header.Value}\r\n";
             headerStream.Write(Encoding.ASCII.GetBytes(line));
         }
-        headerStream.Write(Encoding.ASCII.GetBytes("\r\n"));
+        headerStream.Write("\r\n"u8);
 
         // 合并头与正文
         if (BodyStream == null)

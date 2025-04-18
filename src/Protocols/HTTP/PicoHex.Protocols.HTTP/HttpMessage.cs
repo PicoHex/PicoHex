@@ -1,7 +1,8 @@
 ﻿namespace PicoHex.Protocols.HTTP;
 
-public abstract class HttpMessage : IDisposable
+public abstract class HttpMessage : IDisposable, IAsyncDisposable
 {
+    private bool _disposed;
     public string ProtocolVersion { get; set; } = "HTTP/1.1";
     public Dictionary<string, string> Headers { get; } = new();
     private Stream? _bodyStream;
@@ -11,15 +12,14 @@ public abstract class HttpMessage : IDisposable
         get => _bodyStream;
         set
         {
-            _bodyStream?.Dispose(); // 释放旧流
+            _bodyStream?.Dispose();
             _bodyStream = value;
         }
     }
 
-    // 快捷访问方法（可选）
     public byte[]? GetBodyBytes()
     {
-        if (_bodyStream == null)
+        if (_bodyStream is null)
             return null;
         if (_bodyStream.CanSeek)
             _bodyStream.Position = 0;
@@ -30,7 +30,20 @@ public abstract class HttpMessage : IDisposable
 
     public virtual void Dispose()
     {
+        if (_disposed)
+            return;
+        _disposed = true;
         _bodyStream?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+        _disposed = true;
+        if (_bodyStream != null)
+            await _bodyStream.DisposeAsync();
         GC.SuppressFinalize(this);
     }
 }

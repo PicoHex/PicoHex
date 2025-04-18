@@ -3,7 +3,7 @@
 public static class HttpParser
 {
     private const int BufferSize = 4096;
-    private static readonly byte[] HeaderEndMarker = "\r\n\r\n"u8.ToArray();
+    private static readonly byte[] HeaderEndMarker = Encoding.ASCII.GetBytes("\r\n\r\n");
 
     public static HttpRequest ParseRequest(Stream stream)
     {
@@ -11,25 +11,47 @@ public static class HttpParser
         var headerBuffer = new MemoryStream();
         var headerEndFound = false;
 
-        // 流式读取直到找到头结束标记
         while (!headerEndFound)
         {
             var buffer = new byte[BufferSize];
             var bytesRead = stream.Read(buffer, 0, BufferSize);
-            if (bytesRead == 0)
+            if (bytesRead is 0)
                 break;
 
             headerBuffer.Write(buffer, 0, bytesRead);
             headerEndFound = FindHeaderEnd(headerBuffer);
         }
 
-        // 处理头信息
         ProcessHeaders(headerBuffer, request);
-
-        // 处理正文
         ProcessBody(stream, headerBuffer, request);
+
         return request;
     }
+
+    public static HttpResponse ParseResponse(Stream stream)
+    {
+        var response = new HttpResponse();
+        var headerBuffer = new MemoryStream();
+        var headerEndFound = false;
+
+        while (!headerEndFound)
+        {
+            var buffer = new byte[BufferSize];
+            var bytesRead = stream.Read(buffer, 0, BufferSize);
+            if (bytesRead is 0)
+                break;
+
+            headerBuffer.Write(buffer, 0, bytesRead);
+            headerEndFound = FindHeaderEnd(headerBuffer);
+        }
+
+        ProcessResponseHeaders(headerBuffer, response);
+        ProcessResponseBody(stream, headerBuffer, response);
+
+        return response;
+    }
+
+    #region Private Methods
 
     private static bool FindHeaderEnd(MemoryStream buffer)
     {
@@ -38,7 +60,7 @@ public static class HttpParser
         {
             if (!HeaderEndMarker.SequenceEqual(data.Skip(i).Take(HeaderEndMarker.Length)))
                 continue;
-            buffer.SetLength(i + HeaderEndMarker.Length); // 截断到头部结束
+            buffer.SetLength(i + HeaderEndMarker.Length);
             return true;
         }
         return false;
@@ -55,11 +77,10 @@ public static class HttpParser
                 detectEncodingFromByteOrderMarks: false
             );
 
-            // 读取请求行
             var requestLine = reader.ReadLine();
             if (!string.IsNullOrEmpty(requestLine))
             {
-                var requestParts = requestLine.Split(new[] { ' ' }, 3);
+                var requestParts = requestLine.Split([' '], 3);
                 if (requestParts.Length >= 3)
                 {
                     request.Method = requestParts[0];
@@ -68,23 +89,61 @@ public static class HttpParser
                 }
             }
 
-            // 读取头字段
             string? headerLine;
             while (!string.IsNullOrEmpty(headerLine = reader.ReadLine()))
             {
                 var colonIndex = headerLine.IndexOf(':');
-                if (colonIndex > 0)
-                {
-                    var key = headerLine.Substring(0, colonIndex).Trim();
-                    var value = headerLine.Substring(colonIndex + 1).Trim();
-                    request.Headers[key] = value;
-                }
+                if (colonIndex <= 0)
+                    continue;
+                var key = headerLine[..colonIndex].Trim();
+                var value = headerLine[(colonIndex + 1)..].Trim();
+                request.Headers[key] = value;
             }
         }
         finally
         {
-            headerBuffer.Position = 0; // 重置流位置
+            headerBuffer.Position = 0;
         }
+    }
+
+    private static void ProcessResponseHeaders(MemoryStream headerBuffer, HttpResponse response)
+    {
+        headerBuffer.Position = 0;
+        using var reader = new StreamReader(headerBuffer, Encoding.ASCII);
+
+        // 解析状态行
+        var statusLine = reader.ReadLine();
+        if (!string.IsNullOrEmpty(statusLine))
+        {
+            var parts = statusLine.Split([' '], 3);
+            if (parts.Length >= 2)
+            {
+                response.ProtocolVersion = parts[0];
+                response.StatusCode = int.Parse(parts[1]);
+                response.StatusDescription = parts.Length > 2 ? parts[2] : string.Empty;
+            }
+        }
+
+        // 解析头部字段
+        string? headerLine;
+        while (!string.IsNullOrEmpty(headerLine = reader.ReadLine()))
+        {
+            var colonIndex = headerLine.IndexOf(':');
+            if (colonIndex <= 0)
+                continue;
+            var key = headerLine[..colonIndex].Trim();
+            var value = headerLine[(colonIndex + 1)..].Trim();
+            response.Headers[key] = value;
+        }
+    }
+
+    private static void ProcessResponseBody(
+        Stream sourceStream,
+        MemoryStream headerBuffer,
+        HttpResponse response
+    )
+    {
+        // 实现与请求正文类似的流处理逻辑
     }
 
     private static void ProcessBody(
@@ -93,9 +152,8 @@ public static class HttpParser
         HttpRequest request
     )
     {
-        // 已读取的正文部分
         var bodyStart = headerBuffer.Length;
-        var initialBodyLength = headerBuffer.Capacity - (int)bodyStart; // 安全转换
+        var initialBodyLength = headerBuffer.Capacity - (int)bodyStart;
 
         if (initialBodyLength > 0)
         {
@@ -106,11 +164,10 @@ public static class HttpParser
             );
         }
 
-        // 读取剩余正文（修正类型转换）
         if (!request.Headers.TryGetValue("Content-Length", out var contentLengthStr))
             return;
 
-        var contentLength = long.Parse(contentLengthStr); // 使用long类型
+        var contentLength = long.Parse(contentLengthStr);
         var remaining = contentLength - (headerBuffer.Length - bodyStart);
         ReadRemainingBody(sourceStream, request, remaining);
     }
@@ -125,7 +182,7 @@ public static class HttpParser
 
         while (remaining > 0)
         {
-            var readSize = (int)Math.Min(remaining, BufferSize); // 安全转换为int
+            var readSize = (int)Math.Min(remaining, BufferSize);
             var bytesRead = sourceStream.Read(buffer, 0, readSize);
             if (bytesRead == 0)
                 break;
@@ -137,4 +194,6 @@ public static class HttpParser
         bodyStream.Position = 0;
         request.BodyStream = bodyStream;
     }
+
+    #endregion
 }
