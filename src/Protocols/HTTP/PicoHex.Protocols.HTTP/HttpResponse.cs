@@ -1,48 +1,36 @@
 namespace PicoHex.Protocols.HTTP;
 
-public class HttpResponse : HttpMessage
+public class HttpResponse
 {
-    public int StatusCode { get; set; } // 如 200
-    public string StatusText { get; set; } = string.Empty; // 如 "OK"
+    public int StatusCode { get; set; } = 200;
+    public string StatusDescription { get; set; } = "OK";
+    public Dictionary<string, string> Headers { get; } = new();
+    public byte[]? Body { get; set; }
 
-    public override void Parse(byte[] rawData)
+    public byte[] BuildResponseBytes()
     {
-        var text = Encoding.UTF8.GetString(rawData);
-        var parts = text.Split(["\r\n\r\n"], 2, StringSplitOptions.None);
-        var lines = parts[0].Split(["\r\n"], StringSplitOptions.None);
+        var headerBuilder = new StringBuilder();
+        headerBuilder.Append($"HTTP/1.1 {StatusCode} {StatusDescription}\r\n");
 
-        // 解析状态行（如 "HTTP/1.1 200 OK"）
-        var statusLine = lines[0].Split([' '], 3);
-        Version = statusLine[0];
-        StatusCode = int.Parse(statusLine[1]);
-        StatusText = statusLine[2];
-
-        // 解析头部
-        for (var i = 1; i < lines.Length; i++)
+        // 自动设置 Content-Length
+        if (Body != null && !Headers.ContainsKey("Content-Length"))
         {
-            var header = lines[i].Split([": "], 2, StringSplitOptions.None);
-            if (header.Length == 2)
-                Headers[header[0]] = header[1];
+            Headers["Content-Length"] = Body.Length.ToString();
         }
 
-        // 解析正文
-        if (parts.Length > 1)
-            Body = Encoding.UTF8.GetBytes(parts[1]);
-    }
-
-    public override byte[] Serialize()
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine($"{Version} {StatusCode} {StatusText}");
-
         foreach (var header in Headers)
-            sb.AppendLine($"{header.Key}: {header.Value}");
+        {
+            headerBuilder.Append($"{header.Key}: {header.Value}\r\n");
+        }
+        headerBuilder.Append("\r\n");
 
-        sb.AppendLine();
-        var headerBytes = Encoding.UTF8.GetBytes(sb.ToString());
-
-        return Body != null ? CombineBytes(headerBytes, Body) : headerBytes;
+        var headerBytes = Encoding.ASCII.GetBytes(headerBuilder.ToString());
+        var responseBytes = new byte[headerBytes.Length + (Body?.Length ?? 0)];
+        Buffer.BlockCopy(headerBytes, 0, responseBytes, 0, headerBytes.Length);
+        if (Body != null)
+        {
+            Buffer.BlockCopy(Body, 0, responseBytes, headerBytes.Length, Body.Length);
+        }
+        return responseBytes;
     }
-
-    private static byte[] CombineBytes(byte[] a, byte[] b) => HttpRequest.CombineBytes(a, b); // 复用请求类的合并方法
 }

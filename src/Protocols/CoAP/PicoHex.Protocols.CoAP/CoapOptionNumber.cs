@@ -1,9 +1,8 @@
-namespace PicoHex.Protocols.CoAP;
+﻿namespace PicoHex.Protocols.CoAP;
 
-public enum CoapOptionNumber : ushort
+public enum CoapOptionNumber : int
 {
-    UriPath = 11,        // URI路径（分段）
-    ContentFormat = 12,  // 内容格式（如 0=text/plain, 40=application/json）
-    UriQuery = 15,       // URI查询参数（如 "temperature=25"）
-    Observe = 6          // 观察模式（注册/取消）
+    UriPath = 11,
+    ContentFormat = 12,
+    UriQuery = 15
 }
