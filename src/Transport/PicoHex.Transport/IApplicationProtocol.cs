@@ -1,6 +1,10 @@
 ﻿namespace PicoHex.Transport;
 
-public class IApplicationProtocol
+public interface IApplicationProtocol
 {
-    
+    ProtocolVersion Version { get; }
+    Task ActivateAsync();
+    Task DeactivateAsync();
 }
+
+public record struct ProtocolVersion(int Major, int Minor);
