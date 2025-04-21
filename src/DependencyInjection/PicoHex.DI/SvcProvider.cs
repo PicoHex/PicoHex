@@ -34,10 +34,11 @@ public sealed class SvcProvider : ISvcProvider
             SvcLifetime.Singleton
                 => _singletonInstances.GetOrAdd(
                     serviceType,
-                    new Lazy<object>(
-                        () => _resolver.Resolve(serviceType),
-                        LazyThreadSafetyMode.ExecutionAndPublication
-                    ).Value
+                    _ =>
+                        new Lazy<object>(
+                            () => _resolver.Resolve(serviceType),
+                            LazyThreadSafetyMode.ExecutionAndPublication
+                        ).Value
                 ),
             SvcLifetime.Scoped
                 => throw new InvalidOperationException(
