@@ -3,14 +3,13 @@ namespace PicoHex.DI.Abstractions;
 public interface ISvcResolver
 {
     object Resolve(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType
     );
 }
 
 public static class SvcResolverExtensions
 {
-    public static T Resolve<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T
-    >(this ISvcResolver resolver) => (T)resolver.Resolve(typeof(T));
+    public static T Resolve<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] T>(
+        this ISvcResolver resolver
+    ) => (T)resolver.Resolve(typeof(T));
 }

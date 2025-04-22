@@ -20,8 +20,7 @@ public sealed class SvcProvider : ISvcProvider
     }
 
     public object Resolve(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType
     )
     {
         EnsureNotDisposed();

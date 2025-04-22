@@ -13,15 +13,14 @@ public static partial class SvcContainerExtensions
 
     public static ISvcContainer Register(
         this ISvcContainer registry,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type implementationType,
         SvcLifetime lifecycle
     ) => registry.Register(new SvcDescriptor(serviceType, implementationType, lifecycle));
 
     public static ISvcContainer Register<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService
     >(
         this ISvcContainer registry,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -35,7 +34,7 @@ public static partial class SvcContainerExtensions
         registry.Register(typeof(TService), lifecycle);
 
     public static ISvcContainer Register<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
     >(this ISvcContainer registry, SvcLifetime lifecycle)
@@ -48,19 +47,18 @@ public static partial class SvcContainerExtensions
 
     public static ISvcContainer Register(
         this ISvcContainer registry,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
         Func<ISvcProvider, object> factory,
         SvcLifetime lifetime
     ) => registry.Register(new SvcDescriptor(serviceType, factory, lifetime));
 
     public static ISvcContainer Register<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService
     >(this ISvcContainer registry, Func<ISvcProvider, TService> factory, SvcLifetime lifetime)
         where TService : class => registry.Register(typeof(TService), factory, lifetime);
 
     public static ISvcContainer Register<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
     >(

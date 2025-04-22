@@ -2,7 +2,7 @@
 
 public sealed class SvcDescriptor
 {
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)]
     public Type ServiceType { get; }
 
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -12,8 +12,7 @@ public sealed class SvcDescriptor
     public SvcLifetime Lifetime { get; }
 
     public SvcDescriptor(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type implementationType,
         SvcLifetime lifetime
@@ -24,8 +23,7 @@ public sealed class SvcDescriptor
     }
 
     public SvcDescriptor(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
         object singleInstance
     )
         : this(serviceType, SvcLifetime.Singleton)
@@ -35,8 +33,7 @@ public sealed class SvcDescriptor
     }
 
     public SvcDescriptor(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
         Func<ISvcProvider, object> factory,
         SvcLifetime lifetime
     )
