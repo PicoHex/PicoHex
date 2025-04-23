@@ -5,18 +5,10 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <PublishAOT>true</PublishAOT>
-        <TrimMode>partial</TrimMode>
-        <PublishAot>true</PublishAot>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         
-        <!-- 启用严格修剪分析 -->
-        <IsTrimmable>true</IsTrimmable>
-        <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-
-        <!-- 显式声明 AOT 需求 -->
-        <IlcDisableReflection>false</IlcDisableReflection>
-        <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
+        <PublishAOT>true</PublishAOT>
+        <StripSymbols>false</StripSymbols>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
 
     <ItemGroup>
