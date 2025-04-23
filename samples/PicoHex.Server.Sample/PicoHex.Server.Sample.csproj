@@ -5,12 +5,19 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+
+        <PublishAOT>true</PublishAOT>
+        <StripSymbols>false</StripSymbols>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj" />
+        <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" />
         <ProjectReference Include="..\..\src\Logger\PicoHex.Log\PicoHex.Log.csproj" />
+        <ProjectReference Include="..\..\src\Logger\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj" />
         <ProjectReference Include="..\..\src\Server\PicoHex.Server\PicoHex.Server.csproj" />
+        <ProjectReference Include="..\..\src\Server\PicoHex.Server.Abstractions\PicoHex.Server.Abstractions.csproj" />
     </ItemGroup>
 
 </Project>
