@@ -6,12 +6,13 @@ public static partial class SvcContainerExtensions
 
     public static ISvcContainer RegisterSingle(
         this ISvcContainer container,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
         object instance
     ) => container.Register(new SvcDescriptor(serviceType, instance));
 
     public static ISvcContainer RegisterSingle<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
     >(this ISvcContainer container, object instance) =>
         container.Register(new SvcDescriptor(typeof(TService), instance));
 
@@ -27,13 +28,14 @@ public static partial class SvcContainerExtensions
 
     public static ISvcContainer RegisterSingle(
         this ISvcContainer container,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type implementationType
     ) => container.Register(serviceType, implementationType, SvcLifetime.Singleton);
 
     public static ISvcContainer RegisterSingle<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService
     >(
         this ISvcContainer container,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
@@ -45,7 +47,7 @@ public static partial class SvcContainerExtensions
     >(this ISvcContainer container) => container.Register<TService>(SvcLifetime.Singleton);
 
     public static ISvcContainer RegisterSingle<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
     >(this ISvcContainer container)
@@ -58,7 +60,8 @@ public static partial class SvcContainerExtensions
 
     public static ISvcContainer RegisterSingle(
         this ISvcContainer container,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
         Func<ISvcProvider, object> factory
     ) => container.Register(serviceType, factory, SvcLifetime.Singleton);
 
@@ -68,7 +71,7 @@ public static partial class SvcContainerExtensions
         where TService : class => container.Register(factory, SvcLifetime.Singleton);
 
     public static ISvcContainer RegisterSingle<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             TImplementation
     >(this ISvcContainer container, Func<ISvcProvider, TImplementation> factory)

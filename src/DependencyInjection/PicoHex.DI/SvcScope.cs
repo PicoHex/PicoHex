@@ -21,7 +21,8 @@ public sealed class SvcScope : ISvcScope
     }
 
     public object Resolve(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
     )
     {
         if (_disposed)

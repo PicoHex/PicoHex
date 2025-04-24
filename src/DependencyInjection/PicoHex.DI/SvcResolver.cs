@@ -3,7 +3,8 @@ namespace PicoHex.DI;
 public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcResolver
 {
     public object Resolve(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
     ) =>
         IsEnumerableRequest(serviceType, out var elementType)
             ? ResolveAllServices(elementType)
@@ -12,7 +13,8 @@ public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcR
     #region private
 
     private static bool IsEnumerableRequest(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
             out Type elementType
     )
