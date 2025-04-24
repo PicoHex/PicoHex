@@ -34,8 +34,7 @@ internal static class SvcFactory
         var providerParam = Expression.Parameter(typeof(ISvcProvider), "sp");
 
         var resolveMethod =
-            typeof(ISvcResolver) // 注意基接口
-            .GetMethod(nameof(ISvcResolver.Resolve), [typeof(Type)])
+            typeof(ISvcResolver).GetMethod(nameof(ISvcResolver.Resolve), [typeof(Type)])
             ?? throw new MissingMethodException("ISvcResolver.Resolve(Type) not found.");
 
         var args = parameters
