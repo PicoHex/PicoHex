@@ -20,7 +20,7 @@ internal sealed class InternalLogger : ILogger, IDisposable, IAsyncDisposable
         );
         _processingTask = Task.Run(ProcessEntries);
         _defaultSink =
-            _sinksArray.FirstOrDefault(p => p is ConsoleLogSink)
+            _sinksArray.FirstOrDefault(p => p is ConsoleSink)
             ?? throw new InvalidOperationException("No ConsoleLogSink registered");
     }
 

@@ -1,6 +1,6 @@
 ﻿namespace PicoHex.Log;
 
-public sealed class ConsoleLogFormatter : ILogFormatter
+public sealed class ConsoleFormatter : ILogFormatter
 {
     public string Format(LogEntry entry)
     {
