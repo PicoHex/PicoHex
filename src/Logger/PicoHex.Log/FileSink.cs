@@ -43,11 +43,6 @@ public sealed class FileSink : ILogSink
             await _writer.WriteLineAsync(message);
             await _writer.FlushAsync(cancellationToken);
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Log write failed: {ex}");
-            throw;
-        }
         finally
         {
             _semaphore.Release();
