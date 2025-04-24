@@ -20,7 +20,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" />
+      <ProjectReference Include="..\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" >
+          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+          <Private>false</Private>
+      </ProjectReference>
     </ItemGroup>
 
 </Project>

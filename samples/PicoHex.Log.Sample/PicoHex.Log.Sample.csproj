@@ -12,8 +12,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" />
-        <ProjectReference Include="..\..\src\Logger\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj" />
         <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj" />
         <ProjectReference Include="..\..\src\Logger\PicoHex.Log\PicoHex.Log.csproj" />
     </ItemGroup>

@@ -8,7 +8,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj" />
-      <ProjectReference Include="..\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj" />
+      <ProjectReference Include="..\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj"  >
+          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+          <Private>false</Private>
+      </ProjectReference>
     </ItemGroup>
 
 </Project>

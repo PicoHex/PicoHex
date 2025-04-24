@@ -13,7 +13,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj"  />
-        <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj"  />
     </ItemGroup>
 
 </Project>
