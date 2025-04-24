@@ -7,8 +7,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Abstractions\" />
-      <Folder Include="Extensions\" />
+      <ProjectReference Include="..\PicoHex.Configuration.Abstractions\PicoHex.Configuration.Abstractions.csproj" >
+          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+          <Private>false</Private>
+      </ProjectReference>
     </ItemGroup>
 
 </Project>
