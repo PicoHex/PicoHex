@@ -12,5 +12,5 @@ public interface IConfigurationDataProvider : IDisposable
     IConfigurationNode GetData();
 
     // 监听数据变更（基于事件或 Reactive 流）
-    IObservable<ConfigurationReloadEvent> Reloaded { get; }
+    IObservable<ConfigurationChangedEvent> Reloaded { get; }
 }
