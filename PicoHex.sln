@@ -71,6 +71,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Transport", "Transport", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Transport", "src\Transport\PicoHex.Transport\PicoHex.Transport.csproj", "{D4D108D9-FEE8-412C-A897-5417E831C09D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Configuration.Sample", "samples\PicoHex.Configuration.Sample\PicoHex.Configuration.Sample.csproj", "{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,7 @@ Global
 		{730D2F7F-162F-4F8C-95B8-EFB36A344550} = {B54BC822-1B2C-4A93-BED9-A4780ADE5639}
 		{18000952-7038-4817-92AF-3AF477D7BB59} = {104C8CCD-3086-4733-92B1-DD464C61B0AB}
 		{D4D108D9-FEE8-412C-A897-5417E831C09D} = {18000952-7038-4817-92AF-3AF477D7BB59}
+		{29FFCC78-5622-4ABD-B515-B1A8348EE2CF} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{ED5C39D8-2365-493C-94E8-8D23BA6A626D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -201,5 +204,9 @@ Global
 		{D4D108D9-FEE8-412C-A897-5417E831C09D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4D108D9-FEE8-412C-A897-5417E831C09D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4D108D9-FEE8-412C-A897-5417E831C09D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
