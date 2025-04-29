@@ -1,9 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-// 示例1：直接使用字符串
-
-using PicoHex.Configuration.Extensions;
-
 var builder = Cfg.CreateBuilder();
 
 builder
