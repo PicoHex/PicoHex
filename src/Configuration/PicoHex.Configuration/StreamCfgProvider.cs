@@ -11,7 +11,7 @@ public class StreamCfgProvider(Func<Stream> streamFactory) : ICfgProvider
         using var reader = new StreamReader(stream);
 
         var newData = new Dictionary<string, string>();
-        while (!reader.EndOfStream)
+        while (!(reader.EndOfStream))
         {
             var line = await reader.ReadLineAsync(ct);
             if (string.IsNullOrWhiteSpace(line))
@@ -33,7 +33,9 @@ public class StreamCfgProvider(Func<Stream> streamFactory) : ICfgProvider
         return ValueTask.FromResult(_configData.GetValueOrDefault(key));
     }
 
-    public async IAsyncEnumerable<ICfgNode> GetChildrenAsync(CancellationToken ct = default)
+    public async IAsyncEnumerable<ICfgNode> GetChildrenAsync(
+        [EnumeratorCancellation] CancellationToken ct = default
+    )
     {
         await Task.CompletedTask;
         yield break;

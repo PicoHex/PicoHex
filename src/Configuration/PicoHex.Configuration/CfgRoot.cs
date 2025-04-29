@@ -2,7 +2,7 @@ namespace PicoHex.Configuration;
 
 internal class CfgRoot(IEnumerable<ICfgProvider> providers) : ICfgRoot
 {
-    private readonly List<ICfgProvider> _providers = [..providers];
+    private readonly List<ICfgProvider> _providers = [.. providers];
     private readonly Lock _syncRoot = new();
     private CompositeChangeToken _currentChangeToken = new([]);
 
@@ -67,15 +67,11 @@ internal class CfgRoot(IEnumerable<ICfgProvider> providers) : ICfgRoot
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             var tasks = new List<Task> { Task.Delay(Timeout.Infinite, cts.Token) };
-
-            foreach (var token in tokens)
-            {
-                tasks.Add(token.WaitForChangeAsync(cts.Token).AsTask());
-            }
+            tasks.AddRange(tokens.Select(token => token.WaitForChangeAsync(cts.Token).AsTask()));
 
             var completedTask = await Task.WhenAny(tasks);
-            await cts.CancelAsync(); // 取消其他未完成的任务
-            await completedTask; // 显式等待以传播异常
+            await cts.CancelAsync();
+            await completedTask;
         }
     }
 }

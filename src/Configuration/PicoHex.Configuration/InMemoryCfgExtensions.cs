@@ -1,9 +1,7 @@
 namespace PicoHex.Configuration;
 
-// 硬编码配置扩展
 public static class InMemoryCfgExtensions
 {
-    // 直接通过字符串添加配置
     public static ICfgBuilder AddInMemoryString(
         this ICfgBuilder builder,
         string configContent,
@@ -22,7 +20,6 @@ public static class InMemoryCfgExtensions
         });
     }
 
-    // 通过字典添加配置
     public static ICfgBuilder AddInMemoryDictionary(
         this ICfgBuilder builder,
         IDictionary<string, string> configData
@@ -32,7 +29,6 @@ public static class InMemoryCfgExtensions
         return builder.AddInMemoryString(configContent);
     }
 
-    // 直接添加流配置源
     public static ICfgBuilder AddInMemoryStream(
         this ICfgBuilder builder,
         Action<Stream> writeAction

@@ -2,7 +2,7 @@ namespace PicoHex.Configuration;
 
 internal class CfgBuilder : ICfgBuilder
 {
-    private readonly List<ICfgSource> _sources = new();
+    private readonly List<ICfgSource> _sources = [];
 
     public ICfgBuilder AddSource(ICfgSource source)
     {
