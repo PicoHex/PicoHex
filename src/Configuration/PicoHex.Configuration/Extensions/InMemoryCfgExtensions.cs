@@ -1,4 +1,4 @@
-namespace PicoHex.Configuration;
+namespace PicoHex.Configuration.Extensions;
 
 public static class InMemoryCfgExtensions
 {

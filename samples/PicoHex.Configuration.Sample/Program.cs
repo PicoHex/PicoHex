@@ -1,12 +1,15 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 // 示例1：直接使用字符串
+
+using PicoHex.Configuration.Extensions;
+
 var builder = Cfg.CreateBuilder()
     .AddInMemoryString(
         """
-                       Database.ConnectionString=localhost:3306
-                       FeatureFlags.EnableNewUI=true
-                       """
+        Database.ConnectionString=localhost:3306
+        FeatureFlags.EnableNewUI=true
+        """
     );
 
 // 示例2：使用字典
