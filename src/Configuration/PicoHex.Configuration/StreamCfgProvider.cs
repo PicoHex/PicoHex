@@ -11,27 +11,22 @@ public class StreamCfgProvider(Func<Stream> streamFactory) : ICfgProvider
         using var reader = new StreamReader(stream);
 
         var newData = new Dictionary<string, string>();
-        while (!(reader.EndOfStream))
+        while (await reader.ReadLineAsync(ct) is { } line)
         {
-            var line = await reader.ReadLineAsync(ct);
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
             var pair = line.Split('=', 2);
-            if (pair.Length == 2)
-            {
+            if (pair.Length is 2)
                 newData[pair[0].Trim()] = pair[1].Trim();
-            }
         }
 
         _configData = newData;
         _changeToken.NotifyChanged();
     }
 
-    public ValueTask<string?> GetValueAsync(string key, CancellationToken ct = default)
-    {
-        return ValueTask.FromResult(_configData.GetValueOrDefault(key));
-    }
+    public ValueTask<string?> GetValueAsync(string key, CancellationToken ct = default) =>
+        ValueTask.FromResult(_configData.GetValueOrDefault(key));
 
     public async IAsyncEnumerable<ICfgNode> GetChildrenAsync(
         [EnumeratorCancellation] CancellationToken ct = default
@@ -41,8 +36,6 @@ public class StreamCfgProvider(Func<Stream> streamFactory) : ICfgProvider
         yield break;
     }
 
-    public ValueTask<IAsyncChangeToken> WatchAsync(CancellationToken ct = default)
-    {
-        return ValueTask.FromResult<IAsyncChangeToken>(_changeToken);
-    }
+    public ValueTask<IAsyncChangeToken> WatchAsync(CancellationToken ct = default) =>
+        ValueTask.FromResult<IAsyncChangeToken>(_changeToken);
 }

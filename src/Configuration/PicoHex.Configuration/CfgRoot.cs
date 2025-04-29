@@ -11,9 +11,7 @@ internal class CfgRoot(IEnumerable<ICfgProvider> providers) : ICfgRoot
     public async ValueTask ReloadAsync(CancellationToken ct = default)
     {
         foreach (var provider in _providers)
-        {
             await provider.LoadAsync(ct);
-        }
         UpdateChangeToken();
     }
 
@@ -33,27 +31,27 @@ internal class CfgRoot(IEnumerable<ICfgProvider> providers) : ICfgRoot
     )
     {
         foreach (var provider in _providers)
-        {
-            await foreach (var child in provider.GetChildrenAsync(ct))
-            {
-                yield return child;
-            }
-        }
+        await foreach (var child in provider.GetChildrenAsync(ct))
+            yield return child;
     }
 
     public ValueTask<IAsyncChangeToken> WatchAsync(CancellationToken ct = default)
     {
         lock (_syncRoot)
-        {
             return ValueTask.FromResult<IAsyncChangeToken>(_currentChangeToken);
-        }
     }
 
     private void UpdateChangeToken()
     {
         lock (_syncRoot)
         {
-            var tokens = _providers.Select(p => p.WatchAsync().Result).ToList();
+            var tokens = new List<IAsyncChangeToken>();
+            foreach (var watchTask in _providers.Select(provider => provider.WatchAsync()))
+            {
+                if (!watchTask.IsCompleted)
+                    watchTask.AsTask().Wait();
+                tokens.Add(watchTask.Result);
+            }
 
             _currentChangeToken = new CompositeChangeToken(tokens);
         }

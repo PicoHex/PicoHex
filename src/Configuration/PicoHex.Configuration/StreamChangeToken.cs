@@ -6,10 +6,8 @@ public class StreamChangeToken : IAsyncChangeToken
 
     public bool HasChanged => _tcs.Task.IsCompleted;
 
-    public ValueTask WaitForChangeAsync(CancellationToken ct = default)
-    {
-        return new ValueTask(_tcs.Task.WaitAsync(ct));
-    }
+    public ValueTask WaitForChangeAsync(CancellationToken ct = default) =>
+        new ValueTask(_tcs.Task.WaitAsync(ct));
 
     public void NotifyChanged()
     {

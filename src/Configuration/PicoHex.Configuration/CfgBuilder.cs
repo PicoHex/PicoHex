@@ -14,9 +14,7 @@ internal class CfgBuilder : ICfgBuilder
     {
         var providers = new List<ICfgProvider>();
         foreach (var source in _sources)
-        {
             providers.Add(await source.BuildProviderAsync(ct));
-        }
         return new CfgRoot(providers);
     }
 }
