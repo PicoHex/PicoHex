@@ -1,8 +1,8 @@
 ﻿// Global using directives
 
 global using System.Diagnostics;
-global using PicoHex.DI;
-global using PicoHex.DI.Abstractions;
-global using PicoHex.Log;
-global using PicoHex.Log.Abstractions;
-global using PicoHex.Log.Extensions;
+global using Pico.DI;
+global using Pico.DI.Abstractions;
+global using Pico.Log;
+global using Pico.Log.Abstractions;
+global using Pico.Log.Extensions;

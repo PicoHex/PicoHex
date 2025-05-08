@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\DependencyInjection\Pico.DI.Abstractions\Pico.DI.Abstractions.csproj" />
+      <ProjectReference Include="..\Pico.Log.Abstractions\Pico.Log.Abstractions.csproj">
+          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+          <Private>false</Private>
+      </ProjectReference>
+    </ItemGroup>
+
+</Project>

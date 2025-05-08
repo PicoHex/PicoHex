@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Logger\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj" />
+      <ProjectReference Include="..\..\Logger\Pico.Log.Abstractions\Pico.Log.Abstractions.csproj" />
     </ItemGroup>
 
 </Project>

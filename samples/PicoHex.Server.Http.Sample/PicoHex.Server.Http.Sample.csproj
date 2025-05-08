@@ -13,8 +13,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Server\PicoHex.Server.Abstractions\PicoHex.Server.Abstractions.csproj" />
-        <ProjectReference Include="..\..\src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj" />
-        <ProjectReference Include="..\..\src\Logger\PicoHex.Log\PicoHex.Log.csproj" />
+        <ProjectReference Include="..\..\src\DependencyInjection\Pico.DI\Pico.DI.csproj" />
+        <ProjectReference Include="..\..\src\Logger\Pico.Log\Pico.Log.csproj" />
         <ProjectReference Include="..\..\src\Server\PicoHex.Server.Http\PicoHex.Server.Http.csproj" />
         <ProjectReference Include="..\..\src\Server\PicoHex.Server\PicoHex.Server.csproj" />
     </ItemGroup>

@@ -21,23 +21,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Abstractions
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Logger", "Logger", "{A228EA57-278D-4EE1-B8ED-87CDDC480C1A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log", "src\Logger\PicoHex.Log\PicoHex.Log.csproj", "{1B2AB72D-FEB3-4DDB-96BA-CE4CDDD1C5E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Log", "src\Logger\Pico.Log\Pico.Log.csproj", "{1B2AB72D-FEB3-4DDB-96BA-CE4CDDD1C5E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DI", "src\DependencyInjection\PicoHex.DI\PicoHex.DI.csproj", "{4EAD0A83-F011-41B6-AAC1-704D4EBF0454}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI", "src\DependencyInjection\Pico.DI\Pico.DI.csproj", "{4EAD0A83-F011-41B6-AAC1-704D4EBF0454}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Core", "src\PicoHex.Core\PicoHex.Core.csproj", "{880B0DC7-A859-424D-A21B-2C1DC7F61A7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DI.Test", "tests\PicoHex.DI.Test\PicoHex.DI.Test.csproj", "{4E47A2ED-E4BF-488A-A83C-0A2A2E8EC48B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Test", "tests\Pico.DI.Test\Pico.DI.Test.csproj", "{4E47A2ED-E4BF-488A-A83C-0A2A2E8EC48B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DI.Abstractions", "src\DependencyInjection\PicoHex.DI.Abstractions\PicoHex.DI.Abstractions.csproj", "{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Abstractions", "src\DependencyInjection\Pico.DI.Abstractions\Pico.DI.Abstractions.csproj", "{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{F23CF46D-24E7-4801-BFB5-092DACEA1BF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Configuration", "src\Configuration\PicoHex.Configuration\PicoHex.Configuration.csproj", "{B1759FE0-C63B-41EF-8326-B9048E7DD3DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Cfg", "src\Configuration\Pico.Cfg\Pico.Cfg.csproj", "{B1759FE0-C63B-41EF-8326-B9048E7DD3DD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{E263D174-B02C-42A8-BEDE-4C73FD74C73C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.DI.Sample", "samples\PicoHex.DI.Sample\PicoHex.DI.Sample.csproj", "{3B1B8CCD-41D9-46A4-AC21-0D4B5EBB551E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Sample", "samples\Pico.DI.Sample\Pico.DI.Sample.csproj", "{3B1B8CCD-41D9-46A4-AC21-0D4B5EBB551E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log.Sample", "samples\PicoHex.Log.Sample\PicoHex.Log.Sample.csproj", "{5E91FF99-6610-40E9-B75D-CC9924276C6B}"
 EndProject
@@ -45,15 +45,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Sample", "sa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Http.Sample", "samples\PicoHex.Server.Http.Sample\PicoHex.Server.Http.Sample.csproj", "{B8D59AD8-C82D-482A-9E95-44C0CD6EE1E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log.Abstractions", "src\Logger\PicoHex.Log.Abstractions\PicoHex.Log.Abstractions.csproj", "{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Log.Abstractions", "src\Logger\Pico.Log.Abstractions\Pico.Log.Abstractions.csproj", "{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Configuration.Abstractions", "src\Configuration\PicoHex.Configuration.Abstractions\PicoHex.Configuration.Abstractions.csproj", "{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Cfg.Abstractions", "src\Configuration\Pico.Cfg.Abstractions\Pico.Cfg.Abstractions.csproj", "{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Web", "src\Server\PicoHex.Server.Web\PicoHex.Server.Web.csproj", "{F4B041E0-669D-4171-A2C3-4E669960CE7C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Api", "src\Server\PicoHex.Server.Api\PicoHex.Server.Api.csproj", "{57853741-7611-4843-9381-C6A053FF8C7D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Protocols", "Protocols", "{48A02B54-649A-4069-9D6A-2366DEE229C3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Proto", "Proto", "{48A02B54-649A-4069-9D6A-2366DEE229C3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HTTP", "HTTP", "{7121347F-FD6F-48F0-8A6A-538FC934D407}"
 EndProject
@@ -61,23 +61,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoAP", "CoAP", "{F8A8F499-3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MQTT", "MQTT", "{B54BC822-1B2C-4A93-BED9-A4780ADE5639}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Protocols.CoAP", "src\Protocols\CoAP\PicoHex.Protocols.CoAP\PicoHex.Protocols.CoAP.csproj", "{F6C2EF86-0347-414B-8067-55DFD854F218}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Proto.CoAP", "src\Proto\CoAP\PicoHex.Proto.CoAP\PicoHex.Proto.CoAP.csproj", "{F6C2EF86-0347-414B-8067-55DFD854F218}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Protocols.HTTP", "src\Protocols\HTTP\PicoHex.Protocols.HTTP\PicoHex.Protocols.HTTP.csproj", "{251790A6-82B2-4AC1-825D-501A6D501F9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Proto.HTTP", "src\Proto\HTTP\PicoHex.Proto.HTTP\PicoHex.Proto.HTTP.csproj", "{251790A6-82B2-4AC1-825D-501A6D501F9A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Protocols.MQTT", "src\Protocols\MQTT\PicoHex.Protocols.MQTT\PicoHex.Protocols.MQTT.csproj", "{730D2F7F-162F-4F8C-95B8-EFB36A344550}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Proto.MQTT", "src\Proto\MQTT\PicoHex.Proto.MQTT\PicoHex.Proto.MQTT.csproj", "{730D2F7F-162F-4F8C-95B8-EFB36A344550}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Transport", "Transport", "{18000952-7038-4817-92AF-3AF477D7BB59}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Transport", "src\Transport\PicoHex.Transport\PicoHex.Transport.csproj", "{D4D108D9-FEE8-412C-A897-5417E831C09D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Configuration.Sample", "samples\PicoHex.Configuration.Sample\PicoHex.Configuration.Sample.csproj", "{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Cfg.Sample", "samples\Pico.Cfg.Sample\Pico.Cfg.Sample.csproj", "{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Serializer", "Serializer", "{FAB86DD6-5098-4335-B03E-FB592147BC84}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Json", "src\Serializer\Pico.Json\Pico.Json.csproj", "{5203FC96-D664-4FA6-AEA2-AC0327E71DDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Json.Generator", "src\Serializer\Pico.Json.Generator\Pico.Json.Generator.csproj", "{B79EFF29-6140-484B-BCF2-241CA67E6DD8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Json.Generators", "src\Serializer\Pico.Json.Generators\Pico.Json.Generators.csproj", "{B79EFF29-6140-484B-BCF2-241CA67E6DD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
