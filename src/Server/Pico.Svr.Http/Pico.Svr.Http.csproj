@@ -7,10 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Pico.Cfg.Abs\Pico.Cfg.Abs.csproj">
-          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-          <Private>false</Private>
-      </ProjectReference>
+        <ProjectReference Include="..\..\Logger\Pico.Log.Abs\Pico.Log.Abs.csproj" />
+        <ProjectReference Include="..\Pico.Svr.Abs\Pico.Svr.Abs.csproj" />
     </ItemGroup>
 
 </Project>

@@ -20,7 +20,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Pico.DI.Abstractions\Pico.DI.Abstractions.csproj">
+      <ProjectReference Include="..\Pico.DI.Abs\Pico.DI.Abs.csproj">
           <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
           <Private>false</Private>
       </ProjectReference>

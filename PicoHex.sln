@@ -7,17 +7,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{104C8CCD-308
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{CFA28591-5073-41BB-8E43-BDD020D72BF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Test", "tests\PicoHex.Server.Test\PicoHex.Server.Test.csproj", "{ED5C39D8-2365-493C-94E8-8D23BA6A626D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr.Test", "tests\Pico.Svr.Test\Pico.Svr.Test.csproj", "{ED5C39D8-2365-493C-94E8-8D23BA6A626D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DependencyInjection", "DependencyInjection", "{8BB4AACE-572F-4370-9383-A2D84FF73DEB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{502E65DB-9F00-4F77-813F-9C21D4BDE936}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server", "src\Server\PicoHex.Server\PicoHex.Server.csproj", "{39661750-C427-4995-9003-408EDBD85675}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr", "src\Server\Pico.Svr\Pico.Svr.csproj", "{39661750-C427-4995-9003-408EDBD85675}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Http", "src\Server\PicoHex.Server.Http\PicoHex.Server.Http.csproj", "{FA841F50-BC71-4BD5-83D0-0C51FBA8562B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr.Http", "src\Server\Pico.Svr.Http\Pico.Svr.Http.csproj", "{FA841F50-BC71-4BD5-83D0-0C51FBA8562B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Abstractions", "src\Server\PicoHex.Server.Abstractions\PicoHex.Server.Abstractions.csproj", "{50555E58-CB77-414B-ABD3-2346FFA39EF7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr.Abs", "src\Server\Pico.Svr.Abs\Pico.Svr.Abs.csproj", "{50555E58-CB77-414B-ABD3-2346FFA39EF7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Logger", "Logger", "{A228EA57-278D-4EE1-B8ED-87CDDC480C1A}"
 EndProject
@@ -29,7 +29,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Core", "src\PicoHex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Test", "tests\Pico.DI.Test\Pico.DI.Test.csproj", "{4E47A2ED-E4BF-488A-A83C-0A2A2E8EC48B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Abstractions", "src\DependencyInjection\Pico.DI.Abstractions\Pico.DI.Abstractions.csproj", "{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Abs", "src\DependencyInjection\Pico.DI.Abs\Pico.DI.Abs.csproj", "{7694BC0F-A331-4D39-AB1D-7C7B8FE1EC8A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{F23CF46D-24E7-4801-BFB5-092DACEA1BF1}"
 EndProject
@@ -39,19 +39,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{E263
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Sample", "samples\Pico.DI.Sample\Pico.DI.Sample.csproj", "{3B1B8CCD-41D9-46A4-AC21-0D4B5EBB551E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Log.Sample", "samples\PicoHex.Log.Sample\PicoHex.Log.Sample.csproj", "{5E91FF99-6610-40E9-B75D-CC9924276C6B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr.Sample", "samples\Pico.Svr.Sample\Pico.Svr.Sample.csproj", "{CBD72553-A10B-4887-A310-6CC96CFEFC90}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Sample", "samples\PicoHex.Server.Sample\PicoHex.Server.Sample.csproj", "{CBD72553-A10B-4887-A310-6CC96CFEFC90}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr.Http.Sample", "samples\Pico.Svr.Http.Sample\Pico.Svr.Http.Sample.csproj", "{B8D59AD8-C82D-482A-9E95-44C0CD6EE1E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Http.Sample", "samples\PicoHex.Server.Http.Sample\PicoHex.Server.Http.Sample.csproj", "{B8D59AD8-C82D-482A-9E95-44C0CD6EE1E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Log.Abs", "src\Logger\Pico.Log.Abs\Pico.Log.Abs.csproj", "{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Log.Abstractions", "src\Logger\Pico.Log.Abstractions\Pico.Log.Abstractions.csproj", "{6097958D-DA9E-4EB6-BFDD-B65E15F5890E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Cfg.Abs", "src\Configuration\Pico.Cfg.Abs\Pico.Cfg.Abs.csproj", "{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Cfg.Abstractions", "src\Configuration\Pico.Cfg.Abstractions\Pico.Cfg.Abstractions.csproj", "{DE10DB0E-CC7B-4323-A1B4-A34D0D4E4A75}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr.Web", "src\Server\Pico.Svr.Web\Pico.Svr.Web.csproj", "{F4B041E0-669D-4171-A2C3-4E669960CE7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Web", "src\Server\PicoHex.Server.Web\PicoHex.Server.Web.csproj", "{F4B041E0-669D-4171-A2C3-4E669960CE7C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Server.Api", "src\Server\PicoHex.Server.Api\PicoHex.Server.Api.csproj", "{57853741-7611-4843-9381-C6A053FF8C7D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Svr.Api", "src\Server\Pico.Svr.Api\Pico.Svr.Api.csproj", "{57853741-7611-4843-9381-C6A053FF8C7D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Proto", "Proto", "{48A02B54-649A-4069-9D6A-2366DEE229C3}"
 EndProject
@@ -61,15 +59,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoAP", "CoAP", "{F8A8F499-3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MQTT", "MQTT", "{B54BC822-1B2C-4A93-BED9-A4780ADE5639}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Proto.CoAP", "src\Proto\CoAP\PicoHex.Proto.CoAP\PicoHex.Proto.CoAP.csproj", "{F6C2EF86-0347-414B-8067-55DFD854F218}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Proto.CoAP", "src\Proto\CoAP\Pico.Proto.CoAP\Pico.Proto.CoAP.csproj", "{F6C2EF86-0347-414B-8067-55DFD854F218}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Proto.HTTP", "src\Proto\HTTP\PicoHex.Proto.HTTP\PicoHex.Proto.HTTP.csproj", "{251790A6-82B2-4AC1-825D-501A6D501F9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Proto.HTTP", "src\Proto\HTTP\Pico.Proto.HTTP\Pico.Proto.HTTP.csproj", "{251790A6-82B2-4AC1-825D-501A6D501F9A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Proto.MQTT", "src\Proto\MQTT\PicoHex.Proto.MQTT\PicoHex.Proto.MQTT.csproj", "{730D2F7F-162F-4F8C-95B8-EFB36A344550}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Proto.MQTT", "src\Proto\MQTT\Pico.Proto.MQTT\Pico.Proto.MQTT.csproj", "{730D2F7F-162F-4F8C-95B8-EFB36A344550}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Transport", "Transport", "{18000952-7038-4817-92AF-3AF477D7BB59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Transport", "src\Transport\PicoHex.Transport\PicoHex.Transport.csproj", "{D4D108D9-FEE8-412C-A897-5417E831C09D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Trsp", "src\Transport\Pico.Trsp\Pico.Trsp.csproj", "{D4D108D9-FEE8-412C-A897-5417E831C09D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Cfg.Sample", "samples\Pico.Cfg.Sample\Pico.Cfg.Sample.csproj", "{29FFCC78-5622-4ABD-B515-B1A8348EE2CF}"
 EndProject
@@ -78,6 +76,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Json", "src\Serializer\Pico.Json\Pico.Json.csproj", "{5203FC96-D664-4FA6-AEA2-AC0327E71DDF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Json.Generators", "src\Serializer\Pico.Json.Generators\Pico.Json.Generators.csproj", "{B79EFF29-6140-484B-BCF2-241CA67E6DD8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Log.Sample", "samples\Pico.Log.Sample\Pico.Log.Sample.csproj", "{83A4C697-1A56-42AC-BC54-278ECE70839F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,7 +103,6 @@ Global
 		{F23CF46D-24E7-4801-BFB5-092DACEA1BF1} = {104C8CCD-3086-4733-92B1-DD464C61B0AB}
 		{B1759FE0-C63B-41EF-8326-B9048E7DD3DD} = {F23CF46D-24E7-4801-BFB5-092DACEA1BF1}
 		{3B1B8CCD-41D9-46A4-AC21-0D4B5EBB551E} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
-		{5E91FF99-6610-40E9-B75D-CC9924276C6B} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
 		{CBD72553-A10B-4887-A310-6CC96CFEFC90} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
 		{B8D59AD8-C82D-482A-9E95-44C0CD6EE1E8} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
 		{6097958D-DA9E-4EB6-BFDD-B65E15F5890E} = {A228EA57-278D-4EE1-B8ED-87CDDC480C1A}
@@ -123,6 +122,7 @@ Global
 		{FAB86DD6-5098-4335-B03E-FB592147BC84} = {104C8CCD-3086-4733-92B1-DD464C61B0AB}
 		{5203FC96-D664-4FA6-AEA2-AC0327E71DDF} = {FAB86DD6-5098-4335-B03E-FB592147BC84}
 		{B79EFF29-6140-484B-BCF2-241CA67E6DD8} = {FAB86DD6-5098-4335-B03E-FB592147BC84}
+		{83A4C697-1A56-42AC-BC54-278ECE70839F} = {E263D174-B02C-42A8-BEDE-4C73FD74C73C}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{ED5C39D8-2365-493C-94E8-8D23BA6A626D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -169,10 +169,6 @@ Global
 		{3B1B8CCD-41D9-46A4-AC21-0D4B5EBB551E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B1B8CCD-41D9-46A4-AC21-0D4B5EBB551E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B1B8CCD-41D9-46A4-AC21-0D4B5EBB551E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5E91FF99-6610-40E9-B75D-CC9924276C6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5E91FF99-6610-40E9-B75D-CC9924276C6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5E91FF99-6610-40E9-B75D-CC9924276C6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5E91FF99-6610-40E9-B75D-CC9924276C6B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CBD72553-A10B-4887-A310-6CC96CFEFC90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CBD72553-A10B-4887-A310-6CC96CFEFC90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBD72553-A10B-4887-A310-6CC96CFEFC90}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -225,5 +221,9 @@ Global
 		{B79EFF29-6140-484B-BCF2-241CA67E6DD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B79EFF29-6140-484B-BCF2-241CA67E6DD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B79EFF29-6140-484B-BCF2-241CA67E6DD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83A4C697-1A56-42AC-BC54-278ECE70839F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83A4C697-1A56-42AC-BC54-278ECE70839F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83A4C697-1A56-42AC-BC54-278ECE70839F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83A4C697-1A56-42AC-BC54-278ECE70839F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
