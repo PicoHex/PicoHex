@@ -25,7 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Log", "src\Logger\Pico
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI", "src\DependencyInjection\Pico.DI\Pico.DI.csproj", "{4EAD0A83-F011-41B6-AAC1-704D4EBF0454}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PicoHex.Core", "src\PicoHex.Core\PicoHex.Core.csproj", "{880B0DC7-A859-424D-A21B-2C1DC7F61A7C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.Core", "src\Pico.Core\Pico.Core.csproj", "{880B0DC7-A859-424D-A21B-2C1DC7F61A7C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico.DI.Test", "tests\Pico.DI.Test\Pico.DI.Test.csproj", "{4E47A2ED-E4BF-488A-A83C-0A2A2E8EC48B}"
 EndProject
