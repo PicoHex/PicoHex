@@ -8,11 +8,10 @@ public sealed class ConsoleSink(ILogFormatter formatter) : ILogSink
         return ValueTask.CompletedTask;
     }
 
-    private void WriteColoredLog(LogLevel level, string message)
+    private static void WriteColoredLog(LogLevel level, string message)
     {
         var originalColor = Console.ForegroundColor;
 
-        // 根据日志级别设置颜色
         Console.ForegroundColor = level switch
         {
             LogLevel.Trace => ConsoleColor.Gray,
@@ -24,12 +23,11 @@ public sealed class ConsoleSink(ILogFormatter formatter) : ILogSink
             LogLevel.Critical => ConsoleColor.DarkRed,
             LogLevel.Alert => ConsoleColor.Magenta,
             LogLevel.Emergency => ConsoleColor.DarkMagenta,
-            LogLevel.None => originalColor,
             _ => originalColor
         };
 
         Console.WriteLine(message);
-        Console.ForegroundColor = originalColor; // 恢复原始颜色
+        Console.ForegroundColor = originalColor;
     }
 
     public void Dispose() { }
