@@ -27,4 +27,8 @@ var conStr = await configRoot.GetValueAsync("Database.ConnectionString");
 var timeout = await configRoot.GetValueAsync("Cache:Timeout");
 var appName = await configRoot.GetValueAsync("AppName");
 
+Console.WriteLine(conStr);
+Console.WriteLine(timeout);
+Console.WriteLine(appName);
+
 Console.ReadLine();
