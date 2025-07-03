@@ -2,19 +2,13 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-
-        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-        <IsRoslynComponent>true</IsRoslynComponent>
-
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-
-        <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Pico.DI.Abs\Pico.DI.Abs.csproj">
+      <ProjectReference Include="..\..\DependencyInjection\Pico.IoC.Abs\Pico.IoC.Abs.csproj" />
+      <ProjectReference Include="..\Pico.Logger.Abs\Pico.Logger.Abs.csproj">
           <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
           <Private>false</Private>
       </ProjectReference>
