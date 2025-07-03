@@ -1,4 +1,4 @@
-﻿namespace Pico.DI.Test;
+﻿namespace Pico.IoC.Test;
 
 public class DependencyInjectionLifecycleTests : IDisposable
 {

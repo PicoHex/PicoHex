@@ -26,8 +26,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Logger\Pico.Log\Pico.Log.csproj" />
-      <ProjectReference Include="..\..\src\Server\Pico.Svr\Pico.Svr.csproj" />
+      <ProjectReference Include="..\..\src\Logger\Pico.Logger\Pico.Logger.csproj" />
+      <ProjectReference Include="..\..\src\Server\Pico.SVR\Pico.SVR.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace Pico.Log;
+﻿namespace Pico.Logger;
 
 public sealed class Logger<TCategory>(ILoggerFactory factory) : ILogger<TCategory>
 {

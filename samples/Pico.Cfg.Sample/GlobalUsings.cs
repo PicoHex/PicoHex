@@ -1,4 +1,4 @@
 // Global using directives
 
-global using Pico.Cfg;
-global using Pico.Cfg.Extensions;
+global using Pico.CFG;
+global using Pico.CFG.Extensions;

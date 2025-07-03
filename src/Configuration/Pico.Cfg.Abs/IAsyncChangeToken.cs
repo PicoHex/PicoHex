@@ -1,4 +1,4 @@
-namespace Pico.Cfg.Abs;
+namespace Pico.CFG.Abs;
 
 public interface IAsyncChangeToken
 {

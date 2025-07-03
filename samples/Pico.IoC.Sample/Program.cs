@@ -1,4 +1,4 @@
-﻿namespace Pico.DI.Sample;
+﻿namespace Pico.IoC.Sample;
 
 public static class IocTests
 {

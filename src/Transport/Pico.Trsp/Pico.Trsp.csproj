@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Logger\Pico.Log.Abs\Pico.Log.Abs.csproj" />
+      <ProjectReference Include="..\..\Logger\Pico.Logger.Abs\Pico.Logger.Abs.csproj" />
     </ItemGroup>
 
 </Project>

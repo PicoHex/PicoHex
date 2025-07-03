@@ -1,0 +1,49 @@
+﻿<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples\Pico.CFG.Sample\Pico.CFG.Sample.csproj" Type="Classic C#" />
+    <Project Path="samples\Pico.IoC.Sample\Pico.IoC.Sample.csproj" Type="Classic C#" />
+    <Project Path="samples\Pico.Logger.Sample\Pico.Logger.Sample.csproj" Type="Classic C#" />
+    <Project Path="samples\Pico.SVR.Http.Sample\Pico.SVR.Http.Sample.csproj" Type="Classic C#" />
+    <Project Path="samples\Pico.SVR.Sample\Pico.SVR.Sample.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src\Pico.Core\Pico.Core.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Configuration/">
+    <Project Path="src\Configuration\Pico.CFG.Abs\Pico.CFG.Abs.csproj" Type="Classic C#" />
+    <Project Path="src\Configuration\Pico.CFG\Pico.CFG.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/DependencyInjection/">
+    <Project Path="src\DependencyInjection\Pico.IoC.Abs\Pico.IoC.Abs.csproj" Type="Classic C#" />
+    <Project Path="src\DependencyInjection\Pico.IoC\Pico.IoC.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Logger/">
+    <Project Path="src\Logger\Pico.Logger.Abs\Pico.Logger.Abs.csproj" Type="Classic C#" />
+    <Project Path="src\Logger\Pico.Logger\Pico.Logger.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Proto/" />
+  <Folder Name="/src/Proto/CoAP/">
+    <Project Path="src\Proto\CoAP\Pico.Proto.CoAP\Pico.Proto.CoAP.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Proto/HTTP/">
+    <Project Path="src\Proto\HTTP\Pico.Proto.HTTP\Pico.Proto.HTTP.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Proto/MQTT/">
+    <Project Path="src\Proto\MQTT\Pico.Proto.MQTT\Pico.Proto.MQTT.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Serializer/" />
+  <Folder Name="/src/Server/">
+    <Project Path="src\Server\Pico.SVR.Abs\Pico.SVR.Abs.csproj" Type="Classic C#" />
+    <Project Path="src\Server\Pico.SVR.Api\Pico.SVR.Api.csproj" Type="Classic C#" />
+    <Project Path="src\Server\Pico.SVR.Http\Pico.SVR.Http.csproj" Type="Classic C#" />
+    <Project Path="src\Server\Pico.SVR.Web\Pico.SVR.Web.csproj" Type="Classic C#" />
+    <Project Path="src\Server\Pico.SVR\Pico.SVR.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Transport/">
+    <Project Path="src\Transport\Pico.Trsp\Pico.Trsp.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests\Pico.IoC.Test\Pico.IoC.Test.csproj" Type="Classic C#" />
+    <Project Path="tests\Pico.SVR.Test\Pico.SVR.Test.csproj" Type="Classic C#" />
+  </Folder>
+</Solution>

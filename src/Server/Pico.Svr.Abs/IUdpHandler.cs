@@ -1,4 +1,4 @@
-﻿namespace Pico.Svr.Abs;
+﻿namespace Pico.SVR.Abs;
 
 public interface IUdpHandler
 {

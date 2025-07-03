@@ -1,6 +1,6 @@
-using Pico.DI.Internal;
+using Pico.IoC.Internal;
 
-namespace Pico.DI;
+namespace Pico.IoC;
 
 public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcResolver
 {

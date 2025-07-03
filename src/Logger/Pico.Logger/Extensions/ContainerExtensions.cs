@@ -1,4 +1,4 @@
-﻿namespace Pico.Log.Extensions;
+﻿namespace Pico.Logger.Extensions;
 
 public static class ContainerExtensions
 {

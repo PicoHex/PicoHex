@@ -12,11 +12,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Server\Pico.Svr.Abs\Pico.Svr.Abs.csproj" />
-        <ProjectReference Include="..\..\src\DependencyInjection\Pico.DI\Pico.DI.csproj" />
-        <ProjectReference Include="..\..\src\Logger\Pico.Log\Pico.Log.csproj" />
-        <ProjectReference Include="..\..\src\Server\Pico.Svr.Http\Pico.Svr.Http.csproj" />
-        <ProjectReference Include="..\..\src\Server\Pico.Svr\Pico.Svr.csproj" />
+        <ProjectReference Include="..\..\src\Server\Pico.SVR.Abs\Pico.SVR.Abs.csproj" />
+        <ProjectReference Include="..\..\src\DependencyInjection\Pico.IoC\Pico.IoC.csproj" />
+        <ProjectReference Include="..\..\src\Logger\Pico.Logger\Pico.Logger.csproj" />
+        <ProjectReference Include="..\..\src\Server\Pico.SVR.Http\Pico.SVR.Http.csproj" />
+        <ProjectReference Include="..\..\src\Server\Pico.SVR\Pico.SVR.csproj" />
     </ItemGroup>
 
 </Project>

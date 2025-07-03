@@ -1,4 +1,4 @@
-namespace Pico.DI;
+namespace Pico.IoC;
 
 public sealed class SvcScopeFactory(ISvcResolverFactory resolverFactory) : ISvcScopeFactory
 {

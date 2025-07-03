@@ -1,3 +1,3 @@
-﻿namespace Pico.Svr.Api;
+﻿namespace Pico.SVR.Api;
 
 public class Class1 { }

@@ -1,12 +1,12 @@
-namespace Pico.Cfg.Extensions;
+namespace Pico.CFG.Extensions;
 
-public static class StreamCfgExtensions
+public static class StreamCFGExtensions
 {
-    public static ICfgBuilder Add(this ICfgBuilder builder, Func<Stream> streamFactory) =>
-        builder.AddSource(new StreamCfgSource(streamFactory));
+    public static ICFGBuilder Add(this ICFGBuilder builder, Func<Stream> streamFactory) =>
+        builder.AddSource(new StreamCFGSource(streamFactory));
 
-    public static ICfgBuilder Add(
-        this ICfgBuilder builder,
+    public static ICFGBuilder Add(
+        this ICFGBuilder builder,
         string configContent,
         Encoding? encoding = null
     ) =>
@@ -20,8 +20,8 @@ public static class StreamCfgExtensions
             return stream;
         });
 
-    public static ICfgBuilder Add(
-        this ICfgBuilder builder,
+    public static ICFGBuilder Add(
+        this ICFGBuilder builder,
         IDictionary<string, string> configData
     ) => builder.Add(string.Join("\n", configData.Select(kv => $"{kv.Key}={kv.Value}")));
 }

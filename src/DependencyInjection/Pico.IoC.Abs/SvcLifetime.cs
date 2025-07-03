@@ -1,4 +1,4 @@
-﻿namespace Pico.DI.Abs;
+﻿namespace Pico.IoC.Abs;
 
 public enum SvcLifetime : byte
 {

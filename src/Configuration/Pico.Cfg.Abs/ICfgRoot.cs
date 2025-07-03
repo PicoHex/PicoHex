@@ -1,7 +1,7 @@
-namespace Pico.Cfg.Abs;
+namespace Pico.CFG.Abs;
 
-public interface ICfgRoot : ICfgNode
+public interface ICFGRoot : ICFGNode
 {
     ValueTask ReloadAsync(CancellationToken ct = default);
-    IReadOnlyList<ICfgProvider> Providers { get; }
+    IReadOnlyList<ICFGProvider> Providers { get; }
 }

@@ -1,4 +1,4 @@
-﻿namespace Pico.Log.Abs;
+﻿namespace Pico.Logger.Abs;
 
 public static class LoggerExtensions
 {

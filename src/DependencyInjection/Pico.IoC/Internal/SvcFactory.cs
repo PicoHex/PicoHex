@@ -1,4 +1,4 @@
-namespace Pico.DI.Internal;
+namespace Pico.IoC.Internal;
 
 internal static class SvcFactory
 {

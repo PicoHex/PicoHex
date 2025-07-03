@@ -1,4 +1,4 @@
-﻿namespace Pico.Svr;
+﻿namespace Pico.SVR;
 
 public class UdpServer : IDisposable, IAsyncDisposable
 {
