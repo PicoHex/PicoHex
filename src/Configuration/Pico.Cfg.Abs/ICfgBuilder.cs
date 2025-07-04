@@ -1,7 +1,7 @@
-namespace Pico.Cfg.Abs;
+namespace Pico.CFG.Abs;
 
-public interface ICfgBuilder
+public interface ICFGBuilder
 {
-    ICfgBuilder AddSource(ICfgSource source);
-    ValueTask<ICfgRoot> BuildAsync(CancellationToken ct = default);
+    ICFGBuilder AddSource(ICFGSource source);
+    ValueTask<ICFGRoot> BuildAsync(CancellationToken ct = default);
 }

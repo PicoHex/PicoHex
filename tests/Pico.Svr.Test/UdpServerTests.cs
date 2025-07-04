@@ -1,4 +1,4 @@
-﻿namespace Pico.Svr.Test;
+namespace Pico.SVR.Test;
 
 public class UdpServerTests
 {
@@ -12,12 +12,13 @@ public class UdpServerTests
         var mockLogger = new Mock<ILogger<UdpServer>>();
 
         mockHandler
-            .Setup(h =>
-                h.HandleAsync(
-                    It.IsAny<byte[]>(),
-                    It.IsAny<EndPoint>(),
-                    It.IsAny<CancellationToken>()
-                )
+            .Setup(
+                h =>
+                    h.HandleAsync(
+                        It.IsAny<byte[]>(),
+                        It.IsAny<EndPoint>(),
+                        It.IsAny<CancellationToken>()
+                    )
             )
             .Returns(ValueTask.CompletedTask);
 

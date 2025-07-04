@@ -1,4 +1,4 @@
-﻿namespace Pico.Svr.Sample;
+namespace Pico.SVR.Sample;
 
 public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
 {

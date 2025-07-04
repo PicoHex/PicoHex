@@ -1,4 +1,4 @@
-namespace Pico.Svr.Http;
+namespace Pico.SVR.Http;
 
 public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
 {
@@ -32,7 +32,7 @@ public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
                     StatusCode = 500,
                     StatusDescription = "Internal Server Error",
                     Headers = { ["Content-Length"] = "0" },
-                    Body = []
+                    Body =  []
                 };
                 await WriteResponseAsync(stream, errorResponse, cancellationToken);
             }
@@ -71,7 +71,7 @@ public class RestfulHandler(ILogger<RestfulHandler> logger) : ITcpHandler
                 StatusCode = 500,
                 StatusDescription = "Internal Server Error",
                 Headers = { ["Content-Length"] = "0" },
-                Body = []
+                Body =  []
             };
         }
     }

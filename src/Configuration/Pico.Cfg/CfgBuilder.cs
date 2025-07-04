@@ -1,20 +1,20 @@
-namespace Pico.Cfg;
+namespace Pico.CFG;
 
-internal class CfgBuilder : ICfgBuilder
+internal class CFGBuilder : ICFGBuilder
 {
-    private readonly List<ICfgSource> _sources = [];
+    private readonly List<ICFGSource> _sources = [];
 
-    public ICfgBuilder AddSource(ICfgSource source)
+    public ICFGBuilder AddSource(ICFGSource source)
     {
         _sources.Add(source);
         return this;
     }
 
-    public async ValueTask<ICfgRoot> BuildAsync(CancellationToken ct = default)
+    public async ValueTask<ICFGRoot> BuildAsync(CancellationToken ct = default)
     {
-        var providers = new List<ICfgProvider>();
+        var providers = new List<ICFGProvider>();
         foreach (var source in _sources)
             providers.Add(await source.BuildProviderAsync(ct));
-        return new CfgRoot(providers);
+        return new CFGRoot(providers);
     }
 }

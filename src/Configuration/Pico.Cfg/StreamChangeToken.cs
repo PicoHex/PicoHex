@@ -1,4 +1,4 @@
-namespace Pico.Cfg;
+namespace Pico.CFG;
 
 public class StreamChangeToken : IAsyncChangeToken
 {

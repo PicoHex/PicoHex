@@ -1,6 +1,6 @@
-namespace Pico.Cfg.Abs;
+namespace Pico.CFG.Abs;
 
-public interface ICfgSource
+public interface ICFGSource
 {
-    ValueTask<ICfgProvider> BuildProviderAsync(CancellationToken ct = default);
+    ValueTask<ICFGProvider> BuildProviderAsync(CancellationToken ct = default);
 }

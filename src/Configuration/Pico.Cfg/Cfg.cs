@@ -1,6 +1,6 @@
-namespace Pico.Cfg;
+namespace Pico.CFG;
 
-public static class Cfg
+public static class CFG
 {
-    public static ICfgBuilder CreateBuilder() => new CfgBuilder();
+    public static ICFGBuilder CreateBuilder() => new CFGBuilder();
 }

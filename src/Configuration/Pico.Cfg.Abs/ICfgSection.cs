@@ -1,6 +1,6 @@
-namespace Pico.Cfg.Abs;
+namespace Pico.CFG.Abs;
 
-public interface ICfgSection : ICfg
+public interface ICFGSection : ICFG
 {
     string Path { get; }
     string Key { get; }

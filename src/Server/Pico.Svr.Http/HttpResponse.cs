@@ -1,4 +1,4 @@
-﻿namespace Pico.Svr.Http;
+namespace Pico.SVR.Http;
 
 public class HttpResponse
 {
