@@ -1,4 +1,4 @@
-﻿namespace Pico.Svr.Test;
+﻿namespace Pico.SVR.Test;
 
 public class UdpServerTests
 {
