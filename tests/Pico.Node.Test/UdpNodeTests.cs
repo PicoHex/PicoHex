@@ -1,6 +1,6 @@
 namespace Pico.Node.Test;
 
-public class UdpServerTests
+public class UdpNodeTests
 {
     [Fact]
     public async Task UdpServer_Should_Handle_Received_Datagram()
@@ -9,20 +9,19 @@ public class UdpServerTests
         var ipAddress = IPAddress.Loopback;
         ushort port = 5001;
         var mockHandler = new Mock<IUdpHandler>();
-        var mockLogger = new Mock<ILogger<UdpServer>>();
+        var mockLogger = new Mock<ILogger<UdpNode>>();
 
         mockHandler
-            .Setup(
-                h =>
-                    h.HandleAsync(
-                        It.IsAny<byte[]>(),
-                        It.IsAny<EndPoint>(),
-                        It.IsAny<CancellationToken>()
-                    )
+            .Setup(h =>
+                h.HandleAsync(
+                    It.IsAny<byte[]>(),
+                    It.IsAny<EndPoint>(),
+                    It.IsAny<CancellationToken>()
+                )
             )
             .Returns(ValueTask.CompletedTask);
 
-        var server = new UdpServer(ipAddress, port, () => mockHandler.Object, mockLogger.Object);
+        var server = new UdpNode(ipAddress, port, () => mockHandler.Object, mockLogger.Object);
 
         var cts = new CancellationTokenSource();
         var serverTask = server.StartAsync(cts.Token);
