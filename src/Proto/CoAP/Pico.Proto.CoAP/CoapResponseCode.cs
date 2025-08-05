@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Protocols.CoAP;
+﻿namespace Pico.Proto.CoAP;
 
 public enum CoapResponseCode : byte
 {

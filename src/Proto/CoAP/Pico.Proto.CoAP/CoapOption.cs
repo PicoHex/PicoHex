@@ -1,4 +1,6 @@
-﻿namespace PicoHex.Protocols.CoAP;
+﻿using PicoHex.Protocols.CoAP;
+
+namespace Pico.Proto.CoAP;
 
 public class CoapOption
 {

@@ -1,4 +1,6 @@
-﻿namespace PicoHex.Protocols.CoAP;
+﻿using Pico.Proto.CoAP;
+
+namespace PicoHex.Protocols.CoAP;
 
 public static class CoapParser
 {

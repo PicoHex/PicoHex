@@ -1,6 +1,6 @@
-﻿namespace PicoHex.Protocols.CoAP;
+﻿namespace Pico.Proto.CoAP;
 
-public enum CoapOptionNumber : int
+public enum CoapOptionNumber
 {
     UriPath = 11,
     ContentFormat = 12,

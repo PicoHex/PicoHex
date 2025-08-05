@@ -1,4 +1,4 @@
-namespace PicoHex.Protocols.HTTP;
+namespace Pico.Proto.HTTP;
 
 public class HttpRequest : HttpMessage
 {
