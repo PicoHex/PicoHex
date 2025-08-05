@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Protocols.MQTT;
+﻿namespace Pico.Proto.MQTT;
 
 // MQTT 响应生成器
 public static class MqttResponseBuilder

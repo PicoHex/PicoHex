@@ -1,4 +1,4 @@
-﻿namespace PicoHex.Protocols.MQTT;
+﻿namespace Pico.Proto.MQTT;
 
 public class Subscription
 {
