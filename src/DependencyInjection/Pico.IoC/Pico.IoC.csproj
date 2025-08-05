@@ -14,10 +14,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Pico.IoC.Abs\Pico.IoC.Abs.csproj">
-          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-          <Private>false</Private>
-      </ProjectReference>
+      <ProjectReference Include="..\Pico.IoC.Abs\Pico.IoC.Abs.csproj" />
     </ItemGroup>
 
 </Project>

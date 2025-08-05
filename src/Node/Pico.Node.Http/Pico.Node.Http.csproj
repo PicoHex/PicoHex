@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\DependencyInjection\Pico.IoC.Abs\Pico.IoC.Abs.csproj" />
-      <ProjectReference Include="..\Pico.Logger.Abs\Pico.Logger.Abs.csproj"/>
+        <ProjectReference Include="..\..\Logger\Pico.Logger.Abs\Pico.Logger.Abs.csproj" />
+        <ProjectReference Include="..\Pico.Node.Abs\Pico.Node.Abs.csproj" />
     </ItemGroup>
 
 </Project>
