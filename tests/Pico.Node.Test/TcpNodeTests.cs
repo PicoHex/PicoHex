@@ -1,6 +1,6 @@
 namespace Pico.Node.Test;
 
-public class TcpServerTests
+public class TcpNodeTests
 {
     [Fact]
     public async Task TcpServer_Should_Handle_Client_Connection()
@@ -9,13 +9,13 @@ public class TcpServerTests
         var ipAddress = IPAddress.Loopback;
         const ushort port = 5000;
         var mockHandler = new Mock<ITcpHandler>();
-        var mockLogger = new Mock<ILogger<TcpServer>>();
+        var mockLogger = new Mock<ILogger<TcpNode>>();
 
         mockHandler
             .Setup(h => h.HandleAsync(It.IsAny<NetworkStream>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
 
-        var server = new TcpServer(
+        var server = new TcpNode(
             ipAddress,
             port,
             () => mockHandler.Object,

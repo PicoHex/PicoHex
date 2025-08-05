@@ -6,23 +6,20 @@ var svcRegistry = Bootstrap.CreateContainer();
 const int tcpPort = 8080;
 svcRegistry
     // .AddLogging(builder => builder.AddConsole())
-    .RegisterTransient<ITcpHandler, RestfulHandler>()
+    .RegisterTransient<ITcpHandler, HttpHandler>()
     .RegisterTransient<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>)
-    .RegisterSingle<TcpServer>(
-        sp =>
-            new TcpServer(
-                IPAddress.Any,
-                tcpPort,
-                sp.Resolve<Func<ITcpHandler>>(),
-                sp.Resolve<ILogger<TcpServer>>()
-            )
-    );
+    .RegisterSingle<TcpNode>(sp => new TcpNode(
+        IPAddress.Any,
+        tcpPort,
+        sp.Resolve<Func<ITcpHandler>>(),
+        sp.Resolve<ILogger<TcpNode>>()
+    ));
 
 svcRegistry.RegisterLogger();
 
 var svcProvider = svcRegistry.GetProvider();
 
-var tcpServer = svcProvider.Resolve<TcpServer>();
+var tcpServer = svcProvider.Resolve<TcpNode>();
 
 var logger = svcProvider.Resolve<ILogger<Program>>();
 

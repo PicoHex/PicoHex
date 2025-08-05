@@ -1,20 +1,20 @@
 ﻿namespace Pico.Node;
 
-public class UdpServer : IDisposable, IAsyncDisposable
+public class UdpNode : IDisposable, IAsyncDisposable
 {
     private readonly IPAddress _ipAddress;
     private readonly ushort _port;
     private readonly Func<IUdpHandler> _udpHandlerFactory;
-    private readonly ILogger<UdpServer> _logger;
+    private readonly ILogger<UdpNode> _logger;
     private readonly ArrayPool<byte> _bufferPool;
     private readonly UdpClient _udpClient;
     private bool _isDisposed;
 
-    public UdpServer(
+    public UdpNode(
         IPAddress ipAddress,
         ushort port,
         Func<IUdpHandler> udpHandlerFactory,
-        ILogger<UdpServer> logger
+        ILogger<UdpNode> logger
     )
     {
         _ipAddress = ipAddress ?? throw new ArgumentNullException(nameof(ipAddress));
