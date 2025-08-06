@@ -7,6 +7,18 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
     private readonly ILogger<HttpHandler> _logger =
         logger ?? throw new ArgumentNullException(nameof(logger));
 
+    // Route definitions with parameter support
+    private readonly Dictionary<string, Func<HttpRequest, HttpResponse, ValueTask>> _routes =
+        new()
+        {
+            { "GET /", HandleRootRequest },
+            { "GET /time", HandleTimeRequest },
+            { "GET /echo/{message}", HandleEchoRequest },
+            { "POST /echo", HandleEchoRequest },
+            { "GET /user/{id}", HandleUserRequest },
+            { "PUT /user/{id}", HandleUserRequest }
+        };
+
     public async ValueTask HandleAsync(
         NetworkStream stream,
         CancellationToken cancellationToken = default
@@ -21,78 +33,24 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
                 cancellationToken
             );
 
-            // Use a MemoryStream to buffer the entire request
-            using var requestBuffer = new MemoryStream(4096);
-            var headerEndFound = false;
-            var buffer = new byte[4096];
-
-            // Read until we find the end of headers (CRLFCRLF)
-            while (!headerEndFound)
+            // Read request headers
+            var (requestLine, headers) = await ReadHeadersAsync(stream, cancellationToken);
+            if (requestLine == null)
             {
-                int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
-                if (bytesRead == 0)
-                    break; // Client disconnected
-
-                // Write to our buffer
-                await requestBuffer.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
-
-                // Check if we have the full headers
-                headerEndFound = ContainsSequence(
-                    requestBuffer.GetBuffer(),
-                    (int)requestBuffer.Position,
-                    "\r\n\r\n"u8.ToArray()
-                ); // \r\n\r\n
-            }
-
-            if (requestBuffer.Position == 0)
-            {
-                await _logger.WarningAsync(
-                    $"Empty request from {clientEndpoint}",
-                    cancellationToken: cancellationToken
-                );
                 await WriteResponseAsync(
                     stream,
                     400,
                     "Bad Request",
-                    "Empty request",
+                    "Invalid request",
                     cancellationToken
                 );
                 return;
             }
 
-            // Convert buffer to string for processing
-            var requestText = Encoding.UTF8.GetString(
-                requestBuffer.GetBuffer(),
-                0,
-                (int)requestBuffer.Position
-            );
-            var requestLines = requestText.Split("\r\n");
-
-            // First line is the request line
-            if (requestLines.Length == 0)
-            {
-                await _logger.WarningAsync(
-                    $"Invalid request from {clientEndpoint}: No request line",
-                    cancellationToken: cancellationToken
-                );
-                await WriteResponseAsync(
-                    stream,
-                    400,
-                    "Bad Request",
-                    "Invalid request line",
-                    cancellationToken
-                );
-                return;
-            }
-
-            var requestLine = requestLines[0];
-            var requestParts = requestLine.Split(' ');
+            // Parse request line
+            var requestParts = requestLine.Split(' ', 3);
             if (requestParts.Length < 3)
             {
-                await _logger.WarningAsync(
-                    $"Invalid request line from {clientEndpoint}: {requestLine}",
-                    cancellationToken: cancellationToken
-                );
                 await WriteResponseAsync(
                     stream,
                     400,
@@ -112,44 +70,53 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
                 cancellationToken
             );
 
-            switch (path)
+            // Read request body if exists
+            var body = string.Empty;
+            if (
+                headers.TryGetValue("Content-Length", out var contentLengthValue)
+                && int.TryParse(contentLengthValue, out var contentLength)
+                && contentLength > 0
+            )
             {
-                // Handle request based on path
-                case "/":
-                    await HandleRootRequest(stream, method, clientEndpoint, cancellationToken);
-                    break;
-                case "/time":
-                    await HandleTimeRequest(stream, clientEndpoint, cancellationToken);
-                    break;
-                default:
-                {
-                    if (path.StartsWith("/echo/"))
-                    {
-                        await HandleEchoRequest(
-                            stream,
-                            path[6..],
-                            clientEndpoint,
-                            cancellationToken
-                        );
-                    }
-                    else
-                    {
-                        await _logger.WarningAsync(
-                            $"Path not found: {path} from {clientEndpoint}",
-                            cancellationToken: cancellationToken
-                        );
-                        await WriteResponseAsync(
-                            stream,
-                            404,
-                            "Not Found",
-                            "Resource not found",
-                            cancellationToken
-                        );
-                    }
-
-                    break;
-                }
+                body = await ReadBodyAsync(stream, contentLength, cancellationToken);
             }
+
+            // Create request context
+            var request = new HttpRequest
+            {
+                Method = method,
+                Path = path,
+                Protocol = protocol,
+                Headers = headers,
+                Body = body,
+                ClientEndpoint = clientEndpoint
+            };
+
+            // Create response context
+            var response = new HttpResponse();
+
+            // Find matching route
+            var routeHandler = FindRouteHandler(request.Method, request.Path);
+            if (routeHandler != null)
+            {
+                await routeHandler(request, response);
+            }
+            else
+            {
+                response.StatusCode = 404;
+                response.StatusText = "Not Found";
+                response.Body = "Resource not found";
+            }
+
+            // Send response
+            await WriteResponseAsync(
+                stream,
+                response.StatusCode,
+                response.StatusText,
+                response.Body,
+                cancellationToken,
+                response.ContentType
+            );
         }
         catch (OperationCanceledException)
         {
@@ -191,84 +158,275 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         }
     }
 
-    // Helper to check for byte sequence in buffer
-    private static bool ContainsSequence(byte[] buffer, int length, byte[] sequence)
+    private async Task<(string? RequestLine, Dictionary<string, string> Headers)> ReadHeadersAsync(
+        NetworkStream stream,
+        CancellationToken ct
+    )
     {
-        if (length < sequence.Length)
+        using var buffer = new MemoryStream(4096);
+        var headerEndFound = false;
+        var tempBuffer = new byte[4096];
+        var headerBytes = new List<byte>();
+
+        // Read until end of headers
+        while (!headerEndFound)
+        {
+            int bytesRead = await stream.ReadAsync(tempBuffer, ct);
+            if (bytesRead == 0)
+                break;
+
+            await buffer.WriteAsync(tempBuffer.AsMemory(0, bytesRead), ct);
+            headerBytes.AddRange(tempBuffer.Take(bytesRead));
+
+            // Check for end of headers
+            if (ContainsSequence(headerBytes, "\r\n\r\n"u8.ToArray()))
+            {
+                headerEndFound = true;
+            }
+        }
+
+        if (buffer.Length == 0)
+            return (null, new Dictionary<string, string>());
+
+        // Convert to string for parsing
+        var headerText = Encoding.UTF8.GetString(headerBytes.ToArray());
+        var headerLines = headerText.Split("\r\n");
+
+        if (headerLines.Length == 0)
+            return (null, new Dictionary<string, string>());
+
+        // Parse headers
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 1; i < headerLines.Length; i++)
+        {
+            if (string.IsNullOrEmpty(headerLines[i]))
+                break;
+
+            var separatorIndex = headerLines[i].IndexOf(':');
+            if (separatorIndex > 0)
+            {
+                var key = headerLines[i][..separatorIndex].Trim();
+                var value = headerLines[i][(separatorIndex + 1)..].Trim();
+                headers[key] = value;
+            }
+        }
+
+        return (headerLines[0], headers);
+    }
+
+    private async Task<string> ReadBodyAsync(
+        NetworkStream stream,
+        int contentLength,
+        CancellationToken ct
+    )
+    {
+        var bodyBytes = new byte[contentLength];
+        int bytesRead = 0;
+
+        while (bytesRead < contentLength)
+        {
+            int chunkSize = await stream.ReadAsync(
+                bodyBytes.AsMemory(bytesRead, contentLength - bytesRead),
+                ct
+            );
+
+            if (chunkSize == 0)
+                break;
+            bytesRead += chunkSize;
+        }
+
+        return Encoding.UTF8.GetString(bodyBytes);
+    }
+
+    private Func<HttpRequest, HttpResponse, ValueTask>? FindRouteHandler(string method, string path)
+    {
+        foreach (var route in _routes)
+        {
+            var routeParts = route.Key.Split(' ', 2);
+            var routeMethod = routeParts[0];
+            var routePathPattern = routeParts[1];
+
+            // Skip if method doesn't match
+            if (
+                !string.Equals(routeMethod, method, StringComparison.OrdinalIgnoreCase)
+                && routeMethod != "*"
+            )
+                continue;
+
+            // Try to match path pattern with parameters
+            var (isMatch, parameters) = MatchPath(routePathPattern, path);
+            if (isMatch)
+            {
+                // Return handler with parameters bound
+                return (request, response) =>
+                {
+                    request.RouteParameters = parameters;
+                    return route.Value(request, response);
+                };
+            }
+        }
+        return null;
+    }
+
+    private (bool isMatch, Dictionary<string, string> parameters) MatchPath(
+        string pattern,
+        string actualPath
+    )
+    {
+        var parameters = new Dictionary<string, string>();
+        var patternSegments = pattern.Split('/');
+        var actualSegments = actualPath.Split('/');
+
+        if (patternSegments.Length != actualSegments.Length)
+            return (false, parameters);
+
+        for (int i = 0; i < patternSegments.Length; i++)
+        {
+            if (patternSegments[i].StartsWith('{') && patternSegments[i].EndsWith('}'))
+            {
+                // Extract parameter name
+                var paramName = patternSegments[i][1..^1];
+                parameters[paramName] = Uri.UnescapeDataString(actualSegments[i]);
+            }
+            else if (
+                !string.Equals(
+                    patternSegments[i],
+                    actualSegments[i],
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return (false, parameters);
+            }
+        }
+
+        return (true, parameters);
+    }
+
+    // Helper to check for byte sequence in buffer
+    private bool ContainsSequence(IList<byte> buffer, byte[] sequence)
+    {
+        if (buffer.Count < sequence.Length)
             return false;
 
-        for (var i = 0; i <= length - sequence.Length; i++)
+        for (var i = 0; i <= buffer.Count - sequence.Length; i++)
         {
-            var match = !sequence.Where((t, j) => buffer[i + j] != t).Any();
+            bool match = true;
+            for (var j = 0; j < sequence.Length; j++)
+            {
+                if (buffer[i + j] != sequence[j])
+                {
+                    match = false;
+                    break;
+                }
+            }
             if (match)
                 return true;
         }
         return false;
     }
 
-    private async ValueTask HandleRootRequest(
-        NetworkStream stream,
-        string method,
-        string clientEndpoint,
-        CancellationToken ct
-    )
+    // Route handlers
+    private static async ValueTask HandleRootRequest(HttpRequest request, HttpResponse response)
     {
-        if (method != "GET")
+        if (request.Method != "GET")
         {
-            await _logger.WarningAsync(
-                $"Method not allowed from {clientEndpoint}: {method}",
-                cancellationToken: ct
-            );
-
-            await WriteResponseAsync(
-                stream,
-                405,
-                "Method Not Allowed",
-                "Only GET is supported",
-                ct
-            );
+            response.StatusCode = 405;
+            response.StatusText = "Method Not Allowed";
+            response.Body = "Only GET is supported";
             return;
         }
 
         const string htmlContent = """
-
-                        <html>
-                            <head><title>Pico HTTP Server</title></head>
-                            <body>
-                                <h1>Welcome to Pico.Node HTTP Server</h1>
-                                <p>Try these endpoints:</p>
-                                <ul>
-                                    <li><a href='/echo/hello'>/echo/hello</a></li>
-                                    <li><a href='/time'>/time</a></li>
-                                </ul>
-                            </body>
-                        </html>
+            <html>
+                <head><title>Pico HTTP Server</title></head>
+                <body>
+                    <h1>Welcome to Pico.Node HTTP Server</h1>
+                    <p>Try these endpoints:</p>
+                    <ul>
+                        <li><a href='/echo/hello'>GET /echo/hello</a></li>
+                        <li><a href='/time'>GET /time</a></li>
+                        <li>POST /echo (with body)</li>
+                        <li><a href='/user/123'>GET /user/{id}</a></li>
+                    </ul>
+                </body>
+            </html>
             """;
 
-        await _logger.DebugAsync($"Serving root page to {clientEndpoint}", ct);
-        await WriteResponseAsync(stream, 200, "OK", htmlContent, ct, "text/html");
+        response.StatusCode = 200;
+        response.StatusText = "OK";
+        response.Body = htmlContent;
+        response.ContentType = "text/html";
     }
 
-    private async ValueTask HandleEchoRequest(
-        NetworkStream stream,
-        string message,
-        string clientEndpoint,
-        CancellationToken ct
-    )
+    private static ValueTask HandleEchoRequest(HttpRequest request, HttpResponse response)
     {
-        await _logger.DebugAsync($"Echo request from {clientEndpoint}: {message}", ct);
-        await WriteResponseAsync(stream, 200, "OK", $"You said: {message}", ct);
+        string message;
+
+        switch (request.Method)
+        {
+            case "GET" when request.RouteParameters.TryGetValue("message", out var pathMessage):
+                message = pathMessage;
+                break;
+            case "POST":
+                message = request.Body;
+                break;
+            default:
+                response.StatusCode = 400;
+                response.StatusText = "Bad Request";
+                response.Body = "Invalid echo request";
+                return ValueTask.CompletedTask;
+        }
+
+        response.StatusCode = 200;
+        response.StatusText = "OK";
+        response.Body = $"You said: {message}";
+        return ValueTask.CompletedTask;
     }
 
-    private async ValueTask HandleTimeRequest(
-        NetworkStream stream,
-        string clientEndpoint,
-        CancellationToken ct
-    )
+    private static ValueTask HandleTimeRequest(HttpRequest request, HttpResponse response)
     {
-        var currentTime = DateTime.UtcNow.ToString("O");
-        await _logger.DebugAsync($"Time request from {clientEndpoint}: {currentTime}", ct);
-        await WriteResponseAsync(stream, 200, "OK", $"Current server time: {currentTime}", ct);
+        response.StatusCode = 200;
+        response.StatusText = "OK";
+        response.Body = $"Current server time: {DateTime.UtcNow:O}";
+        return ValueTask.CompletedTask;
+    }
+
+    private static ValueTask HandleUserRequest(HttpRequest request, HttpResponse response)
+    {
+        if (
+            !request.RouteParameters.TryGetValue("id", out var userId)
+            || !int.TryParse(userId, out _)
+        )
+        {
+            response.StatusCode = 400;
+            response.StatusText = "Bad Request";
+            response.Body = "Invalid user ID";
+            return ValueTask.CompletedTask;
+        }
+
+        switch (request.Method)
+        {
+            case "GET":
+                response.StatusCode = 200;
+                response.StatusText = "OK";
+                response.Body = $"User details for ID: {userId}";
+                break;
+
+            case "PUT":
+                response.StatusCode = 200;
+                response.StatusText = "OK";
+                response.Body = $"Updated user with ID: {userId}\nRequest body: {request.Body}";
+                break;
+
+            default:
+                response.StatusCode = 405;
+                response.StatusText = "Method Not Allowed";
+                response.Body = $"Unsupported method: {request.Method}";
+                break;
+        }
+
+        return ValueTask.CompletedTask;
     }
 
     private async ValueTask WriteResponseAsync(
@@ -283,63 +441,47 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         try
         {
             var bodyBytes = Encoding.UTF8.GetBytes(body);
+            var responseBuilder = new StringBuilder();
 
-            var headers = new Dictionary<string, string>
-            {
-                ["Date"] = DateTime.UtcNow.ToString("R"),
-                ["Content-Type"] = contentType,
-                ["Content-Length"] = bodyBytes.Length.ToString(),
-                ["Connection"] = "close",
-                ["Server"] = "Pico.Node/1.0"
-            };
+            // Build status line
+            responseBuilder.Append($"HTTP/1.1 {statusCode} {statusText}\r\n");
 
-            var statusLine = $"HTTP/1.1 {statusCode} {statusText}\r\n";
-            var statusLineBytes = Encoding.UTF8.GetBytes(statusLine);
+            // Build headers
+            responseBuilder.Append($"Date: {DateTime.UtcNow:R}\r\n");
+            responseBuilder.Append($"Content-Type: {contentType}\r\n");
+            responseBuilder.Append($"Content-Length: {bodyBytes.Length}\r\n");
+            responseBuilder.Append("Connection: close\r\n");
+            responseBuilder.Append("Server: Pico.Node/1.0\r\n");
+            responseBuilder.Append("\r\n"); // End of headers
 
-            // Check cancellation before each write
+            // Convert headers to bytes
+            var headerBytes = Encoding.UTF8.GetBytes(responseBuilder.ToString());
+
+            // Write headers
             ct.ThrowIfCancellationRequested();
-            await stream.WriteAsync(statusLineBytes, ct);
+            await stream.WriteAsync(headerBytes, ct);
 
-            foreach (var header in headers)
-            {
-                ct.ThrowIfCancellationRequested();
-                await stream.WriteAsync(Encoding.UTF8.GetBytes(header.Key), ct);
-                await stream.WriteAsync(HeaderSeparator, ct);
-                await stream.WriteAsync(Encoding.UTF8.GetBytes(header.Value), ct);
-                await stream.WriteAsync(NewLine, ct);
-            }
-
-            ct.ThrowIfCancellationRequested();
-            await stream.WriteAsync(NewLine, ct);
-
+            // Write body
             ct.ThrowIfCancellationRequested();
             await stream.WriteAsync(bodyBytes, ct);
 
             ct.ThrowIfCancellationRequested();
             await stream.FlushAsync(ct);
-
-            await _logger.DebugAsync(
-                $"Sent response to {stream.Socket.RemoteEndPoint}: {statusCode} {statusText} "
-                    + $"[Length: {bodyBytes.Length} bytes]",
-                ct
-            );
         }
         catch (OperationCanceledException)
         {
-            // Normal cancellation - no need to log as error
-            await _logger.DebugAsync("Response writing canceled by client request", ct);
+            // Normal cancellation
         }
         catch (IOException ex)
             when (ex.InnerException
                     is SocketException { SocketErrorCode: SocketError.ConnectionAborted }
             )
         {
-            // Client disconnected before response completed
-            await _logger.DebugAsync("Client aborted connection during response writing", ct);
+            // Client disconnected
         }
         catch (SocketException ex) when (ex.SocketErrorCode == SocketError.ConnectionAborted)
         {
-            await _logger.DebugAsync("Client aborted connection during response writing", ct);
+            // Client disconnected
         }
         catch (Exception ex)
         {

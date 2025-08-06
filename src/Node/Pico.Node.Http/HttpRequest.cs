@@ -1,10 +1,12 @@
-namespace Pico.Node.Http;
+﻿namespace Pico.Node.Http;
 
-public class HttpRequest
+internal class HttpRequest
 {
-    public string Method { get; set; }
-    public string Path { get; set; }
-    public string ProtocolVersion { get; set; }
-    public Dictionary<string, string> Headers { get; set; } = new();
-    public byte[] Body { get; set; }
+    public required string Method { get; set; }
+    public required string Path { get; set; }
+    public required string Protocol { get; set; }
+    public required Dictionary<string, string> Headers { get; set; }
+    public string Body { get; set; } = string.Empty;
+    public required string ClientEndpoint { get; set; }
+    public Dictionary<string, string> RouteParameters { get; set; } = new();
 }

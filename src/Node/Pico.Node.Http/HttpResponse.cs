@@ -1,10 +1,9 @@
-namespace Pico.Node.Http;
+﻿namespace Pico.Node.Http;
 
-public class HttpResponse
+internal class HttpResponse
 {
-    public string ProtocolVersion { get; set; } = "HTTP/1.1";
-    public int StatusCode { get; set; }
-    public string StatusDescription { get; set; }
-    public Dictionary<string, string> Headers { get; set; } = new();
-    public byte[] Body { get; set; }
+    public int StatusCode { get; set; } = 200;
+    public string StatusText { get; set; } = "OK";
+    public string Body { get; set; } = string.Empty;
+    public string ContentType { get; set; } = "text/plain";
 }
