@@ -2,22 +2,9 @@
 
 public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
 {
-    private static readonly byte[] NewLine = "\r\n"u8.ToArray();
-    private static readonly byte[] HeaderSeparator = ": "u8.ToArray();
-    private readonly ILogger<HttpHandler> _logger =
-        logger ?? throw new ArgumentNullException(nameof(logger));
-
-    // Route definitions with parameter support
-    private readonly Dictionary<string, Func<HttpRequest, HttpResponse, ValueTask>> _routes =
-        new()
-        {
-            { "GET /", HandleRootRequest },
-            { "GET /time", HandleTimeRequest },
-            { "GET /echo/{message}", HandleEchoRequest },
-            { "POST /echo", HandleEchoRequest },
-            { "GET /user/{id}", HandleUserRequest },
-            { "PUT /user/{id}", HandleUserRequest }
-        };
+    // Supported HTTP methods
+    private static readonly HashSet<string> SupportedMethods =
+        new(StringComparer.OrdinalIgnoreCase) { "GET", "POST", "PUT", "DELETE" };
 
     public async ValueTask HandleAsync(
         NetworkStream stream,
@@ -28,20 +15,24 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         try
         {
             clientEndpoint = stream.Socket.RemoteEndPoint?.ToString() ?? "unknown";
-            await _logger.InfoAsync(
+            await logger.InfoAsync(
                 $"HTTP connection started from {clientEndpoint}",
                 cancellationToken
             );
 
-            // Read request headers
-            var (requestLine, headers) = await ReadHeadersAsync(stream, cancellationToken);
+            // Parse request headers
+            var (headers, requestLine, buffer, bytesRead) = await ParseHeadersAsync(
+                stream,
+                cancellationToken
+            );
+
             if (requestLine == null)
             {
                 await WriteResponseAsync(
                     stream,
                     400,
                     "Bad Request",
-                    "Invalid request",
+                    "Invalid request line",
                     cancellationToken
                 );
                 return;
@@ -55,7 +46,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
                     stream,
                     400,
                     "Bad Request",
-                    "Invalid request line",
+                    "Invalid request line format",
                     cancellationToken
                 );
                 return;
@@ -65,20 +56,43 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
             var path = requestParts[1];
             var protocol = requestParts[2];
 
-            await _logger.InfoAsync(
+            // Validate HTTP method
+            if (!SupportedMethods.Contains(method))
+            {
+                await WriteResponseAsync(
+                    stream,
+                    405,
+                    "Method Not Allowed",
+                    $"Unsupported method: {method}",
+                    cancellationToken,
+                    headers: new Dictionary<string, string>
+                    {
+                        ["Allow"] = string.Join(", ", SupportedMethods)
+                    }
+                );
+                return;
+            }
+
+            await logger.InfoAsync(
                 $"Request from {clientEndpoint}: {method} {path} {protocol}",
                 cancellationToken
             );
 
-            // Read request body if exists
-            var body = string.Empty;
+            // Read request body if present
+            var requestBody = string.Empty;
             if (
                 headers.TryGetValue("Content-Length", out var contentLengthValue)
                 && int.TryParse(contentLengthValue, out var contentLength)
                 && contentLength > 0
             )
             {
-                body = await ReadBodyAsync(stream, contentLength, cancellationToken);
+                requestBody = await ReadRequestBodyAsync(
+                    stream,
+                    buffer,
+                    bytesRead,
+                    contentLength,
+                    cancellationToken
+                );
             }
 
             // Create request context
@@ -86,47 +100,39 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
             {
                 Method = method,
                 Path = path,
-                Protocol = protocol,
                 Headers = headers,
-                Body = body,
+                Body = requestBody,
                 ClientEndpoint = clientEndpoint
             };
 
-            // Create response context
-            var response = new HttpResponse();
+            // Route handling with parameter support
+            var routeParams = new Dictionary<string, string>();
+            var handler = FindRouteHandler(path, routeParams);
 
-            // Find matching route
-            var routeHandler = FindRouteHandler(request.Method, request.Path);
-            if (routeHandler != null)
+            if (handler != null)
             {
-                await routeHandler(request, response);
+                await handler(stream, request, routeParams, cancellationToken);
             }
             else
             {
-                response.StatusCode = 404;
-                response.StatusText = "Not Found";
-                response.Body = "Resource not found";
+                await WriteResponseAsync(
+                    stream,
+                    404,
+                    "Not Found",
+                    "Resource not found",
+                    cancellationToken
+                );
             }
-
-            // Send response
-            await WriteResponseAsync(
-                stream,
-                response.StatusCode,
-                response.StatusText,
-                response.Body,
-                cancellationToken,
-                response.ContentType
-            );
         }
         catch (OperationCanceledException)
         {
-            await _logger.InfoAsync($"Request canceled for {clientEndpoint}", cancellationToken);
+            await logger.InfoAsync($"Request canceled for {clientEndpoint}", cancellationToken);
         }
         catch (Exception ex)
         {
             try
             {
-                await _logger.ErrorAsync(
+                await logger.ErrorAsync(
                     $"Processing error for {clientEndpoint}: {ex.Message}",
                     ex,
                     cancellationToken: cancellationToken
@@ -142,7 +148,7 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
             }
             catch (Exception innerEx)
             {
-                await _logger.ErrorAsync(
+                await logger.ErrorAsync(
                     $"Secondary error while handling failure for {clientEndpoint}: {innerEx.Message}",
                     innerEx,
                     cancellationToken: cancellationToken
@@ -151,189 +157,177 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         }
         finally
         {
-            await _logger.InfoAsync(
+            await logger.InfoAsync(
                 $"HTTP connection completed for {clientEndpoint}",
                 cancellationToken
             );
         }
     }
 
-    private async Task<(string? RequestLine, Dictionary<string, string> Headers)> ReadHeadersAsync(
-        NetworkStream stream,
-        CancellationToken ct
-    )
+    private async Task<(
+        Dictionary<string, string> Headers,
+        string? RequestLine,
+        byte[] Buffer,
+        int TotalBytes
+    )> ParseHeadersAsync(NetworkStream stream, CancellationToken ct)
     {
-        using var buffer = new MemoryStream(4096);
+        using var headerBuffer = new MemoryStream(4096);
+        var buffer = new byte[4096];
         var headerEndFound = false;
-        var tempBuffer = new byte[4096];
-        var headerBytes = new List<byte>();
+        var totalBytes = 0;
 
-        // Read until end of headers
         while (!headerEndFound)
         {
-            int bytesRead = await stream.ReadAsync(tempBuffer, ct);
+            var bytesRead = await stream.ReadAsync(buffer, ct);
             if (bytesRead == 0)
                 break;
 
-            await buffer.WriteAsync(tempBuffer.AsMemory(0, bytesRead), ct);
-            headerBytes.AddRange(tempBuffer.Take(bytesRead));
+            totalBytes += bytesRead;
+            await headerBuffer.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
 
-            // Check for end of headers
-            if (ContainsSequence(headerBytes, "\r\n\r\n"u8.ToArray()))
-            {
-                headerEndFound = true;
-            }
+            headerEndFound = ContainsSequence(
+                headerBuffer.GetBuffer(),
+                (int)headerBuffer.Position,
+                "\r\n\r\n"u8.ToArray()
+            );
         }
 
-        if (buffer.Length == 0)
-            return (null, new Dictionary<string, string>());
+        if (headerBuffer.Position == 0)
+            return (new Dictionary<string, string>(), null, buffer, totalBytes);
 
-        // Convert to string for parsing
-        var headerText = Encoding.UTF8.GetString(headerBytes.ToArray());
-        var headerLines = headerText.Split("\r\n");
+        var headerText = Encoding.UTF8.GetString(
+            headerBuffer.GetBuffer(),
+            0,
+            (int)headerBuffer.Position
+        );
 
-        if (headerLines.Length == 0)
-            return (null, new Dictionary<string, string>());
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        using var reader = new StringReader(headerText);
+
+        // Parse request line
+        var requestLine = await reader.ReadLineAsync(ct);
+        if (string.IsNullOrEmpty(requestLine))
+            return (headers, null, buffer, totalBytes);
 
         // Parse headers
-        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        for (int i = 1; i < headerLines.Length; i++)
+        string? line;
+        while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync(ct)))
         {
-            if (string.IsNullOrEmpty(headerLines[i]))
-                break;
+            var separatorIndex = line.IndexOf(':');
+            if (separatorIndex <= 0)
+                continue;
 
-            var separatorIndex = headerLines[i].IndexOf(':');
-            if (separatorIndex > 0)
+            var key = line[..separatorIndex].Trim();
+            var value = line[(separatorIndex + 1)..].Trim();
+
+            if (!string.IsNullOrEmpty(key))
             {
-                var key = headerLines[i][..separatorIndex].Trim();
-                var value = headerLines[i][(separatorIndex + 1)..].Trim();
                 headers[key] = value;
             }
         }
 
-        return (headerLines[0], headers);
+        return (headers, requestLine, buffer, totalBytes);
     }
 
-    private async Task<string> ReadBodyAsync(
+    private async Task<string> ReadRequestBodyAsync(
         NetworkStream stream,
+        byte[] buffer,
+        int alreadyRead,
         int contentLength,
         CancellationToken ct
     )
     {
-        var bodyBytes = new byte[contentLength];
-        int bytesRead = 0;
+        using var bodyBuffer = new MemoryStream(contentLength);
 
-        while (bytesRead < contentLength)
+        // Write already buffered data (if any)
+        if (alreadyRead > 0)
         {
-            int chunkSize = await stream.ReadAsync(
-                bodyBytes.AsMemory(bytesRead, contentLength - bytesRead),
-                ct
-            );
+            var remainingInBuffer = Math.Min(alreadyRead, contentLength);
+            await bodyBuffer.WriteAsync(buffer.AsMemory(0, remainingInBuffer), ct);
+        }
 
-            if (chunkSize == 0)
+        // Read remaining content
+        var remaining = contentLength - (int)bodyBuffer.Length;
+        while (remaining > 0)
+        {
+            var bytesToRead = Math.Min(buffer.Length, remaining);
+            var bytesRead = await stream.ReadAsync(buffer, 0, bytesToRead, ct);
+            if (bytesRead == 0)
                 break;
-            bytesRead += chunkSize;
+
+            await bodyBuffer.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
+            remaining -= bytesRead;
         }
 
-        return Encoding.UTF8.GetString(bodyBytes);
+        return Encoding.UTF8.GetString(bodyBuffer.GetBuffer(), 0, (int)bodyBuffer.Position);
     }
 
-    private Func<HttpRequest, HttpResponse, ValueTask>? FindRouteHandler(string method, string path)
+    private delegate ValueTask RouteHandler(
+        NetworkStream stream,
+        HttpRequest request,
+        Dictionary<string, string> routeParams,
+        CancellationToken ct
+    );
+
+    private RouteHandler? FindRouteHandler(string path, Dictionary<string, string> routeParams)
     {
-        foreach (var route in _routes)
+        switch (path)
         {
-            var routeParts = route.Key.Split(' ', 2);
-            var routeMethod = routeParts[0];
-            var routePathPattern = routeParts[1];
-
-            // Skip if method doesn't match
-            if (
-                !string.Equals(routeMethod, method, StringComparison.OrdinalIgnoreCase)
-                && routeMethod != "*"
-            )
-                continue;
-
-            // Try to match path pattern with parameters
-            var (isMatch, parameters) = MatchPath(routePathPattern, path);
-            if (isMatch)
-            {
-                // Return handler with parameters bound
-                return (request, response) =>
-                {
-                    request.RouteParameters = parameters;
-                    return route.Value(request, response);
-                };
-            }
-        }
-        return null;
-    }
-
-    private (bool isMatch, Dictionary<string, string> parameters) MatchPath(
-        string pattern,
-        string actualPath
-    )
-    {
-        var parameters = new Dictionary<string, string>();
-        var patternSegments = pattern.Split('/');
-        var actualSegments = actualPath.Split('/');
-
-        if (patternSegments.Length != actualSegments.Length)
-            return (false, parameters);
-
-        for (int i = 0; i < patternSegments.Length; i++)
-        {
-            if (patternSegments[i].StartsWith('{') && patternSegments[i].EndsWith('}'))
-            {
-                // Extract parameter name
-                var paramName = patternSegments[i][1..^1];
-                parameters[paramName] = Uri.UnescapeDataString(actualSegments[i]);
-            }
-            else if (
-                !string.Equals(
-                    patternSegments[i],
-                    actualSegments[i],
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return (false, parameters);
-            }
+            // Root endpoint
+            case "/":
+                return HandleRootRequest;
+            // Time endpoint
+            case "/time":
+                return HandleTimeRequest;
         }
 
-        return (true, parameters);
+        // Echo endpoint with parameter
+        if (path.StartsWith("/echo/", StringComparison.Ordinal))
+        {
+            routeParams["message"] = path.Substring(6);
+            return HandleEchoRequest;
+        }
+
+        // User creation endpoint
+        if (!path.StartsWith("/users/", StringComparison.Ordinal) || path.Length <= 7)
+            return null;
+        routeParams["userId"] = path[7..];
+        return HandleUserRequest;
     }
 
     // Helper to check for byte sequence in buffer
-    private bool ContainsSequence(IList<byte> buffer, byte[] sequence)
+    private static bool ContainsSequence(byte[] buffer, int length, byte[] sequence)
     {
-        if (buffer.Count < sequence.Length)
+        if (length < sequence.Length)
             return false;
 
-        for (var i = 0; i <= buffer.Count - sequence.Length; i++)
+        for (var i = 0; i <= length - sequence.Length; i++)
         {
-            bool match = true;
-            for (var j = 0; j < sequence.Length; j++)
-            {
-                if (buffer[i + j] != sequence[j])
-                {
-                    match = false;
-                    break;
-                }
-            }
+            var match = !sequence.Where((t, j) => buffer[i + j] != t).Any();
             if (match)
                 return true;
         }
         return false;
     }
 
-    // Route handlers
-    private static async ValueTask HandleRootRequest(HttpRequest request, HttpResponse response)
+    private async ValueTask HandleRootRequest(
+        NetworkStream stream,
+        HttpRequest request,
+        Dictionary<string, string> routeParams,
+        CancellationToken ct
+    )
     {
-        if (request.Method != "GET")
+        // Only GET allowed for root
+        if (!request.Method.Equals("GET", StringComparison.OrdinalIgnoreCase))
         {
-            response.StatusCode = 405;
-            response.StatusText = "Method Not Allowed";
-            response.Body = "Only GET is supported";
+            await WriteResponseAsync(
+                stream,
+                405,
+                "Method Not Allowed",
+                "Only GET is supported for this resource",
+                ct,
+                headers: new Dictionary<string, string> { ["Allow"] = "GET" }
+            );
             return;
         }
 
@@ -346,87 +340,99 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
                     <ul>
                         <li><a href='/echo/hello'>GET /echo/hello</a></li>
                         <li><a href='/time'>GET /time</a></li>
-                        <li>POST /echo (with body)</li>
-                        <li><a href='/user/123'>GET /user/{id}</a></li>
+                        <li>POST /users/{id} (with JSON body)</li>
                     </ul>
                 </body>
             </html>
             """;
 
-        response.StatusCode = 200;
-        response.StatusText = "OK";
-        response.Body = htmlContent;
-        response.ContentType = "text/html";
+        await WriteResponseAsync(stream, 200, "OK", htmlContent, ct, "text/html");
     }
 
-    private static ValueTask HandleEchoRequest(HttpRequest request, HttpResponse response)
+    private async ValueTask HandleEchoRequest(
+        NetworkStream stream,
+        HttpRequest request,
+        Dictionary<string, string> routeParams,
+        CancellationToken ct
+    )
     {
-        string message;
+        // All methods allowed for echo
+        var message = routeParams.TryGetValue("message", out var msg) ? msg : string.Empty;
+        var response = $"Method: {request.Method}\nPath: {request.Path}\nMessage: {message}";
+        await WriteResponseAsync(stream, 200, "OK", response, ct);
+    }
 
-        switch (request.Method)
+    private async ValueTask HandleTimeRequest(
+        NetworkStream stream,
+        HttpRequest request,
+        Dictionary<string, string> routeParams,
+        CancellationToken ct
+    )
+    {
+        // Only GET allowed for time
+        if (!request.Method.Equals("GET", StringComparison.OrdinalIgnoreCase))
         {
-            case "GET" when request.RouteParameters.TryGetValue("message", out var pathMessage):
-                message = pathMessage;
-                break;
-            case "POST":
-                message = request.Body;
-                break;
-            default:
-                response.StatusCode = 400;
-                response.StatusText = "Bad Request";
-                response.Body = "Invalid echo request";
-                return ValueTask.CompletedTask;
+            await WriteResponseAsync(
+                stream,
+                405,
+                "Method Not Allowed",
+                "Only GET is supported for this resource",
+                ct,
+                headers: new Dictionary<string, string> { ["Allow"] = "GET" }
+            );
+            return;
         }
 
-        response.StatusCode = 200;
-        response.StatusText = "OK";
-        response.Body = $"You said: {message}";
-        return ValueTask.CompletedTask;
+        var currentTime = DateTime.UtcNow.ToString("O");
+        await WriteResponseAsync(stream, 200, "OK", currentTime, ct);
     }
 
-    private static ValueTask HandleTimeRequest(HttpRequest request, HttpResponse response)
+    private async ValueTask HandleUserRequest(
+        NetworkStream stream,
+        HttpRequest request,
+        Dictionary<string, string> routeParams,
+        CancellationToken ct
+    )
     {
-        response.StatusCode = 200;
-        response.StatusText = "OK";
-        response.Body = $"Current server time: {DateTime.UtcNow:O}";
-        return ValueTask.CompletedTask;
-    }
-
-    private static ValueTask HandleUserRequest(HttpRequest request, HttpResponse response)
-    {
-        if (
-            !request.RouteParameters.TryGetValue("id", out var userId)
-            || !int.TryParse(userId, out _)
-        )
+        if (!routeParams.TryGetValue("userId", out var userId))
         {
-            response.StatusCode = 400;
-            response.StatusText = "Bad Request";
-            response.Body = "Invalid user ID";
-            return ValueTask.CompletedTask;
+            await WriteResponseAsync(stream, 400, "Bad Request", "Missing user ID", ct);
+            return;
         }
 
-        switch (request.Method)
+        switch (request.Method.ToUpperInvariant())
         {
             case "GET":
-                response.StatusCode = 200;
-                response.StatusText = "OK";
-                response.Body = $"User details for ID: {userId}";
+                await WriteResponseAsync(stream, 200, "OK", $"User details for {userId}", ct);
                 break;
 
+            case "POST":
             case "PUT":
-                response.StatusCode = 200;
-                response.StatusText = "OK";
-                response.Body = $"Updated user with ID: {userId}\nRequest body: {request.Body}";
+                await WriteResponseAsync(
+                    stream,
+                    200,
+                    "OK",
+                    $"Updated user {userId} with data: {request.Body}",
+                    ct,
+                    "application/json"
+                );
+                break;
+
+            case "DELETE":
+                await WriteResponseAsync(stream, 200, "OK", $"Deleted user {userId}", ct);
                 break;
 
             default:
-                response.StatusCode = 405;
-                response.StatusText = "Method Not Allowed";
-                response.Body = $"Unsupported method: {request.Method}";
+                await WriteResponseAsync(
+                    stream,
+                    405,
+                    "Method Not Allowed",
+                    $"Unsupported method: {request.Method}",
+                    ct,
+                    headers: new Dictionary<string, string> { ["Allow"] = "GET, POST, PUT, DELETE" }
+                );
                 break;
         }
-
-        return ValueTask.CompletedTask;
     }
 
     private async ValueTask WriteResponseAsync(
@@ -435,37 +441,41 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         string statusText,
         string body,
         CancellationToken ct,
-        string contentType = "text/plain"
+        string contentType = "text/plain",
+        Dictionary<string, string>? headers = null
     )
     {
         try
         {
             var bodyBytes = Encoding.UTF8.GetBytes(body);
-            var responseBuilder = new StringBuilder();
+            var headerDict = headers ?? new Dictionary<string, string>();
 
-            // Build status line
-            responseBuilder.Append($"HTTP/1.1 {statusCode} {statusText}\r\n");
+            // Use StringBuilder for efficient header construction
+            var headerBuilder = new StringBuilder();
+            headerBuilder.Append($"HTTP/1.1 {statusCode} {statusText}\r\n");
 
-            // Build headers
-            responseBuilder.Append($"Date: {DateTime.UtcNow:R}\r\n");
-            responseBuilder.Append($"Content-Type: {contentType}\r\n");
-            responseBuilder.Append($"Content-Length: {bodyBytes.Length}\r\n");
-            responseBuilder.Append("Connection: close\r\n");
-            responseBuilder.Append("Server: Pico.Node/1.0\r\n");
-            responseBuilder.Append("\r\n"); // End of headers
+            // Standard headers
+            headerBuilder.Append($"Date: {DateTime.UtcNow.ToString("R")}\r\n");
+            headerBuilder.Append($"Content-Type: {contentType}\r\n");
+            headerBuilder.Append($"Content-Length: {bodyBytes.Length}\r\n");
+            headerBuilder.Append("Connection: close\r\n");
+            headerBuilder.Append("Server: Pico.Node/2.0\r\n");
 
-            // Convert headers to bytes
-            var headerBytes = Encoding.UTF8.GetBytes(responseBuilder.ToString());
+            // Custom headers
+            foreach (var header in headerDict)
+            {
+                headerBuilder.Append($"{header.Key}: {header.Value}\r\n");
+            }
 
-            // Write headers
+            // End of headers
+            headerBuilder.Append("\r\n");
+
+            var headerBytes = Encoding.UTF8.GetBytes(headerBuilder.ToString());
+
+            // Write headers and body
             ct.ThrowIfCancellationRequested();
             await stream.WriteAsync(headerBytes, ct);
-
-            // Write body
-            ct.ThrowIfCancellationRequested();
             await stream.WriteAsync(bodyBytes, ct);
-
-            ct.ThrowIfCancellationRequested();
             await stream.FlushAsync(ct);
         }
         catch (OperationCanceledException)
@@ -485,8 +495,18 @@ public class HttpHandler(ILogger<HttpHandler> logger) : ITcpHandler
         }
         catch (Exception ex)
         {
-            await _logger.ErrorAsync($"Error writing response: {ex.Message}", ex, ct);
+            await logger.ErrorAsync($"Error writing response: {ex.Message}", ex, ct);
             throw;
         }
     }
+}
+
+// Encapsulates HTTP request data
+public class HttpRequest
+{
+    public required string Method { get; set; }
+    public required string Path { get; set; }
+    public required Dictionary<string, string> Headers { get; set; }
+    public string Body { get; set; } = string.Empty;
+    public required string ClientEndpoint { get; set; }
 }

@@ -12,7 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\DependencyInjection\Pico.IoC\Pico.IoC.csproj" />
+        <ProjectReference Include="..\..\src\DependencyInjection\Pico.DI\Pico.DI.csproj" />
         <ProjectReference Include="..\..\src\Logger\Pico.Logger\Pico.Logger.csproj" />
     </ItemGroup>
 
