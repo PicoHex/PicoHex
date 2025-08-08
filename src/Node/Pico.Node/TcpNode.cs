@@ -2,22 +2,30 @@
 
 public sealed class TcpNode : INode
 {
-    // Server configuration parameters
+    // Server configuration
     private readonly IPAddress _ipAddress;
     private readonly ushort _port;
     private readonly ILogger<TcpNode> _logger;
     private readonly SemaphoreSlim _connectionSemaphore;
     private readonly TcpListener _listener;
     private readonly Func<ITcpHandler> _tcpHandlerFactory;
+    private readonly Action<Exception, string>? _exceptionHandler;
 
-    // Runtime state management
+    // Runtime state
     private readonly ConcurrentDictionary<Task, bool> _activeTasks = new();
     private volatile bool _isDisposed;
     private readonly CancellationTokenSource _serverCts = new();
+    private readonly Lock _stateLock = new();
+    private bool _isRunning;
 
-    // Cleanup and error handling configuration
-    private readonly TimeSpan _disposeTimeout;
-    private readonly Action<Exception, string>? _exceptionHandler;
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_stateLock)
+                return _isRunning;
+        }
+    }
 
     public TcpNode(
         IPAddress ipAddress,
@@ -25,11 +33,9 @@ public sealed class TcpNode : INode
         Func<ITcpHandler> tcpHandlerFactory,
         ILogger<TcpNode> logger,
         int maxConcurrentConnections = 100,
-        TimeSpan? disposeTimeout = null,
         Action<Exception, string>? exceptionHandler = null
     )
     {
-        // Validate required dependencies
         ArgumentNullException.ThrowIfNull(ipAddress);
         ArgumentNullException.ThrowIfNull(tcpHandlerFactory);
         ArgumentNullException.ThrowIfNull(logger);
@@ -40,13 +46,18 @@ public sealed class TcpNode : INode
         _logger = logger;
         _connectionSemaphore = new SemaphoreSlim(maxConcurrentConnections);
         _listener = new TcpListener(_ipAddress, _port);
-        _disposeTimeout = disposeTimeout ?? TimeSpan.FromSeconds(5);
         _exceptionHandler = exceptionHandler;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        // Combine server lifetime token with external cancellation token
+        lock (_stateLock)
+        {
+            if (_isRunning)
+                return;
+            _isRunning = true;
+        }
+
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             _serverCts.Token
@@ -58,16 +69,13 @@ public sealed class TcpNode : INode
 
         try
         {
-            // Main server loop - runs until cancellation is requested
             while (!serverToken.IsCancellationRequested)
             {
-                // Throttle connections using semaphore
                 await _connectionSemaphore.WaitAsync(serverToken).ConfigureAwait(false);
                 TcpClient? client = null;
 
                 try
                 {
-                    // Accept incoming client connection
                     client = await _listener
                         .AcceptTcpClientAsync(serverToken)
                         .ConfigureAwait(false);
@@ -77,15 +85,11 @@ public sealed class TcpNode : INode
                         serverToken
                     );
 
-                    // Create and track client processing task
                     var clientTask = ProcessClientAsync(client, serverToken)
                         .ContinueWith(
                             t =>
                             {
-                                // Cleanup task tracking
                                 _activeTasks.TryRemove(t, out _);
-
-                                // Handle unobserved task exceptions
                                 if (t is { IsFaulted: true, Exception: not null })
                                 {
                                     _logger
@@ -101,27 +105,56 @@ public sealed class TcpNode : INode
                             TaskContinuationOptions.ExecuteSynchronously
                         );
 
-                    // Register client task for lifecycle management
                     _activeTasks.TryAdd(clientTask, true);
                 }
                 catch (Exception ex)
                 {
-                    // Handle connection acceptance errors asynchronously
                     _ = HandleAcceptExceptionAsync(ex, client, serverToken);
                 }
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // Log fatal server errors
             await _logger.ErrorAsync("TCP server fatal error", ex, cancellationToken: serverToken);
             throw;
         }
         finally
         {
-            // Graceful shutdown sequence
-            Stop();
+            StopServer();
+            lock (_stateLock)
+                _isRunning = false;
             await _logger.InfoAsync("TCP server stopped", serverToken);
+        }
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        StopServer();
+
+        if (!_activeTasks.IsEmpty)
+        {
+            await Task.WhenAll(_activeTasks.Keys)
+                .WaitAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    private void StopServer()
+    {
+        lock (_stateLock)
+        {
+            if (!_isRunning)
+                return;
+
+            if (_listener.Server.IsBound)
+            {
+                _listener.Stop();
+            }
+
+            if (!_serverCts.IsCancellationRequested)
+            {
+                _serverCts.Cancel();
+            }
         }
     }
 
@@ -131,17 +164,14 @@ public sealed class TcpNode : INode
         CancellationToken token
     )
     {
-        // Cleanup resources
         client?.Dispose();
         _connectionSemaphore.Release();
 
         switch (ex)
         {
             case OperationCanceledException:
-                return; // Normal cancellation during shutdown
-
+                return;
             case SocketException socketEx:
-                // Determine if socket error is critical
                 if (IsCriticalSocketError(socketEx.SocketErrorCode))
                 {
                     await _logger.CriticalAsync(
@@ -149,15 +179,13 @@ public sealed class TcpNode : INode
                         socketEx,
                         token
                     );
-                    // Initiate server shutdown for unrecoverable errors
-                    await _serverCts.CancelAsync();
+                    StopServer();
                 }
                 else
                 {
                     await _logger.WarningAsync("Non-critical socket exception", socketEx, token);
                 }
                 break;
-
             default:
                 await _logger.ErrorAsync(
                     "Error accepting client connection",
@@ -178,7 +206,6 @@ public sealed class TcpNode : INode
             using (client)
             await using (var stream = client.GetStream())
             {
-                // Create protocol handler for this connection
                 var handler = _tcpHandlerFactory();
                 await handler.HandleAsync(stream, cancellationToken).ConfigureAwait(false);
             }
@@ -200,53 +227,50 @@ public sealed class TcpNode : INode
                 cancellationToken: cancellationToken
             );
 
-            // Invoke custom exception handler if configured
             if (endpoint != null)
                 _exceptionHandler?.Invoke(ex, endpoint);
         }
         finally
         {
-            // Ensure semaphore slot is released
             _connectionSemaphore.Release();
         }
     }
 
-    /// <summary>
-    /// Determines if a socket error is critical and requires server shutdown
-    /// </summary>
-    /// <param name="error">Socket error code</param>
-    /// <returns>True if error is critical, false otherwise</returns>
     private static bool IsCriticalSocketError(SocketError error) =>
         error switch
         {
-            SocketError.AccessDenied => true, // Permission issues
-            SocketError.AddressAlreadyInUse => true, // Port conflict
-            SocketError.AddressNotAvailable => true, // Invalid binding
-            SocketError.InvalidArgument => true, // Configuration errors
-            _ => false // Non-critical errors (timeouts, resets, etc)
+            SocketError.AccessDenied => true,
+            SocketError.AddressAlreadyInUse => true,
+            SocketError.AddressNotAvailable => true,
+            SocketError.InvalidArgument => true,
+            _ => false
         };
 
-    /// <summary>
-    /// Stops accepting new connections and signals cancellation
-    /// </summary>
-    private void Stop()
+    public async ValueTask DisposeAsync()
     {
-        if (_listener.Server.IsBound)
+        if (_isDisposed)
+            return;
+
+        try
         {
-            _listener.Stop();
+            // Stop server if still running
+            StopServer();
+
+            // Gracefully wait for active tasks to complete
+            if (!_activeTasks.IsEmpty)
+            {
+                await Task.WhenAll(_activeTasks.Keys).ConfigureAwait(false);
+            }
         }
-        _serverCts.Cancel();
-    }
-
-    public async Task StopAsync(TimeSpan? timeout = null)
-    {
-        Stop();
-        var waitTimeout = timeout ?? TimeSpan.FromSeconds(10);
-
-        // Wait for active client tasks to complete
-        if (!_activeTasks.IsEmpty)
+        finally
         {
-            await Task.WhenAll(_activeTasks.Keys).WaitAsync(waitTimeout).ConfigureAwait(false);
+            if (!_isDisposed)
+            {
+                _connectionSemaphore.Dispose();
+                _serverCts.Dispose();
+                _listener.Server.Dispose();
+                _isDisposed = true;
+            }
         }
     }
 
@@ -257,44 +281,23 @@ public sealed class TcpNode : INode
 
         try
         {
-            Stop();
-            // Wait for active tasks with timeout
-            Task.WaitAll(_activeTasks.Keys.ToArray(), _disposeTimeout);
-        }
-        finally
-        {
-            // Cleanup managed resources
-            _connectionSemaphore.Dispose();
-            _serverCts.Dispose();
-            _listener.Server.Dispose();
-            _isDisposed = true;
-        }
-    }
+            StopServer();
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_isDisposed)
-            return;
-
-        try
-        {
-            Stop();
-
-            // Async wait for client tasks with timeout
+            // Synchronous wait for active tasks
             if (!_activeTasks.IsEmpty)
             {
-                await Task.WhenAll(_activeTasks.Keys)
-                    .WaitAsync(_disposeTimeout)
-                    .ConfigureAwait(false);
+                Task.WaitAll(_activeTasks.Keys.ToArray());
             }
         }
         finally
         {
-            // Cleanup resources
-            _connectionSemaphore.Dispose();
-            _serverCts.Dispose();
-            _listener.Server.Dispose();
-            _isDisposed = true;
+            if (!_isDisposed)
+            {
+                _connectionSemaphore.Dispose();
+                _serverCts.Dispose();
+                _listener.Server.Dispose();
+                _isDisposed = true;
+            }
         }
     }
 }

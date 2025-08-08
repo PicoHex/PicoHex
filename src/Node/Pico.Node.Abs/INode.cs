@@ -1,7 +1,7 @@
 ﻿namespace Pico.Node.Abs;
 
-public interface INode : IDisposable, IAsyncDisposable
+public interface INode : IAsyncDisposable
 {
     Task StartAsync(CancellationToken cancellationToken = default);
-    Task StopAsync(TimeSpan? timeout = null);
+    Task StopAsync(CancellationToken cancellationToken = default);
 }

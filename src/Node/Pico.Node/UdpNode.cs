@@ -1,325 +1,271 @@
 ﻿namespace Pico.Node;
 
-/// <summary>
-/// 端点比较器（支持各种EndPoint类型）
-/// </summary>
-public sealed class EndPointComparer : IEqualityComparer<EndPoint>
-{
-    public bool Equals(EndPoint? x, EndPoint? y)
-    {
-        if (ReferenceEquals(x, y))
-            return true;
-        if (x is null || y is null)
-            return false;
-
-        return x switch
-        {
-            IPEndPoint ipX when y is IPEndPoint ipY
-                => ipX.Address.Equals(ipY.Address) && ipX.Port == ipY.Port,
-            DnsEndPoint dnsX when y is DnsEndPoint dnsY
-                => dnsX.Host == dnsY.Host && dnsX.Port == dnsY.Port,
-            _ => x.Equals(y)
-        };
-    }
-
-    public int GetHashCode(EndPoint obj)
-    {
-        return obj switch
-        {
-            IPEndPoint ip => HashCode.Combine(ip.Address, ip.Port),
-            DnsEndPoint dns => HashCode.Combine(dns.Host, dns.Port),
-            _ => obj.GetHashCode()
-        };
-    }
-}
-
-/// <summary>
-/// UDP节点实现（优化修复版）
-/// </summary>
 public sealed class UdpNode : INode
 {
-    private readonly int _maxConcurrency;
-    private readonly Func<IUdpHandler> _handlerFactory;
-    private readonly SemaphoreSlim _concurrencyLimiter;
+    // Server configuration
+    private readonly IPAddress _ipAddress;
+    private readonly ushort _port;
+    private readonly ILogger<UdpNode> _logger;
+    private readonly Func<IUdpHandler> _udpHandlerFactory;
+    private readonly Action<Exception, string>? _exceptionHandler;
 
-    private readonly ConcurrentDictionary<EndPoint, SemaphoreSlim> _endpointSendLocks;
-    private readonly EndPointComparer _endpointComparer = new();
-
-    private Socket? _socket;
-    private CancellationTokenSource? _cts;
-    private Task? _receiveTask;
-    private bool _disposed;
-
-    // 活动任务跟踪
+    // Runtime state
     private readonly ConcurrentDictionary<Task, bool> _activeTasks = new();
-    private readonly Lock _taskTrackingLock = new();
+    private volatile bool _isDisposed;
+    private readonly CancellationTokenSource _serverCts = new();
+    private readonly Lock _stateLock = new();
+    private bool _isRunning;
+    private UdpClient? _udpClient;
 
-    private readonly IPAddress _listenAddress;
-    private readonly int _port;
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_stateLock)
+                return _isRunning;
+        }
+    }
 
     public UdpNode(
-        IPAddress listenAddress,
-        int port,
-        Func<IUdpHandler> handlerFactory,
-        int maxConcurrency = 1000
+        IPAddress ipAddress,
+        ushort port,
+        Func<IUdpHandler> udpHandlerFactory,
+        ILogger<UdpNode> logger,
+        Action<Exception, string>? exceptionHandler = null
     )
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxConcurrency);
+        ArgumentNullException.ThrowIfNull(ipAddress);
+        ArgumentNullException.ThrowIfNull(udpHandlerFactory);
+        ArgumentNullException.ThrowIfNull(logger);
 
-        _maxConcurrency = maxConcurrency;
-        _handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
-        _concurrencyLimiter = new SemaphoreSlim(maxConcurrency, maxConcurrency);
-        _endpointSendLocks = new ConcurrentDictionary<EndPoint, SemaphoreSlim>(_endpointComparer);
-
-        _listenAddress = listenAddress;
+        _ipAddress = ipAddress;
         _port = port;
+        _udpHandlerFactory = udpHandlerFactory;
+        _logger = logger;
+        _exceptionHandler = exceptionHandler;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        if (_receiveTask != null)
-            throw new InvalidOperationException("Node already started");
+        lock (_stateLock)
+        {
+            if (_isRunning)
+                return;
+            _isRunning = true;
+            _udpClient = new UdpClient(new IPEndPoint(_ipAddress, _port));
+        }
 
-        _cts = new CancellationTokenSource();
-        var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-            _cts.Token,
-            cancellationToken
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            _serverCts.Token
         );
+
+        var serverToken = linkedCts.Token;
+        await _logger.InfoAsync($"UDP server started on {_ipAddress}:{_port}", serverToken);
 
         try
         {
-            // 根据IP地址类型创建正确的Socket
-            _socket = new Socket(_listenAddress.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-
-            // 修复绑定问题：使用正确的IPEndPoint
-            _socket.Bind(new IPEndPoint(_listenAddress, _port));
-
-            _receiveTask = RunReceiveLoop(linkedCts.Token);
-            await Task.Yield();
-        }
-        catch
-        {
-            CleanupResources();
-            throw;
-        }
-    }
-
-    private async Task RunReceiveLoop(CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            // 使用内存池租用缓冲区
-            using var bufferOwner = MemoryPool<byte>.Shared.Rent(65507);
-            var memory = bufferOwner.Memory;
-
-            // 根据监听地址类型创建正确的端点
-            EndPoint remoteEndPoint =
-                _listenAddress.AddressFamily == AddressFamily.InterNetworkV6
-                    ? new IPEndPoint(IPAddress.IPv6Any, 0)
-                    : new IPEndPoint(IPAddress.Any, 0);
-
-            try
+            while (!serverToken.IsCancellationRequested)
             {
-                var result = await _socket!.ReceiveFromAsync(
-                    memory,
-                    SocketFlags.None,
-                    remoteEndPoint,
-                    cancellationToken
-                );
-
-                // 获取信号量（控制并发）
-                await _concurrencyLimiter.WaitAsync(cancellationToken);
-
-                // 切片实际数据（零拷贝）
-                var receivedData = memory[..result.ReceivedBytes];
-
-                // 启动处理任务（跟踪活动任务）
-                var processTask = ProcessDatagram(
-                    bufferOwner,
-                    receivedData,
-                    result.RemoteEndPoint,
-                    cancellationToken
-                );
-
-                TrackTask(processTask);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.OperationAborted)
-            {
-                break;
-            }
-            catch (ObjectDisposedException)
-            {
-                break;
-            }
-            finally
-            {
-                // 在异常情况下确保释放缓冲区
-                if (!cancellationToken.IsCancellationRequested)
-                    bufferOwner.Dispose();
-            }
-        }
-    }
-
-    private void TrackTask(Task task)
-    {
-        lock (_taskTrackingLock)
-        {
-            _activeTasks[task] = true;
-            task.ContinueWith(
-                t =>
+                try
                 {
-                    lock (_taskTrackingLock)
-                    {
-                        _activeTasks.TryRemove(t, out _);
-                    }
-                },
-                TaskScheduler.Default
-            );
+                    // Receive UDP datagram asynchronously
+                    var receiveResult = await _udpClient
+                        .ReceiveAsync(serverToken)
+                        .ConfigureAwait(false);
+
+                    // Create and track processing task
+                    var processTask = ProcessDatagramAsync(
+                            receiveResult.Buffer,
+                            receiveResult.RemoteEndPoint,
+                            serverToken
+                        )
+                        .ContinueWith(
+                            t =>
+                            {
+                                _activeTasks.TryRemove(t, out _);
+                                if (t is { IsFaulted: true, Exception: not null })
+                                {
+                                    _logger
+                                        .ErrorAsync(
+                                            "Unhandled exception in UDP processing task",
+                                            t.Exception,
+                                            cancellationToken: serverToken
+                                        )
+                                        .GetAwaiter()
+                                        .GetResult();
+                                }
+                            },
+                            TaskContinuationOptions.ExecuteSynchronously
+                        );
+
+                    _activeTasks.TryAdd(processTask, true);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Normal shutdown
+                }
+                catch (SocketException ex)
+                {
+                    await HandleSocketExceptionAsync(ex, serverToken);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Shutting down
+                }
+                catch (Exception ex)
+                {
+                    await _logger.ErrorAsync(
+                        "UDP server receive error",
+                        ex,
+                        cancellationToken: serverToken
+                    );
+                }
+            }
+        }
+        finally
+        {
+            StopServer();
+            lock (_stateLock)
+                _isRunning = false;
+            await _logger.InfoAsync("UDP server stopped", serverToken);
         }
     }
 
-    private async Task ProcessDatagram(
-        IMemoryOwner<byte> bufferOwner, // 保持缓冲区所有权
-        ReadOnlyMemory<byte> data,
-        EndPoint remoteEndPoint,
+    private async Task ProcessDatagramAsync(
+        byte[] datagram,
+        IPEndPoint remoteEndpoint,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            var handler = _handlerFactory();
-
-            // 获取端点级发送锁
-            var sendLock = _endpointSendLocks.GetOrAdd(
-                remoteEndPoint,
-                _ => new SemaphoreSlim(1, 1)
+            var handler = _udpHandlerFactory();
+            await handler
+                .HandleAsync(datagram, remoteEndpoint, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal cancellation
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync(
+                $"Error processing UDP datagram from {remoteEndpoint}",
+                ex,
+                cancellationToken: cancellationToken
             );
 
-            // 响应发送函数（端点级锁）
-            async ValueTask SendResponse(ReadOnlyMemory<byte> responseData)
-            {
-                await sendLock.WaitAsync(cancellationToken);
-                try
-                {
-                    await _socket!.SendToAsync(
-                        responseData,
-                        SocketFlags.None,
-                        remoteEndPoint,
-                        cancellationToken
-                    );
-                }
-                finally
-                {
-                    sendLock.Release();
-                }
-            }
+            _exceptionHandler?.Invoke(ex, remoteEndpoint.ToString());
+        }
+    }
 
-            try
-            {
-                // 修复接口匹配问题
-                await handler.HandleAsync(data, remoteEndPoint, SendResponse, cancellationToken);
-            }
-            finally
-            {
-                // 释放处理器资源
-                if (handler is IDisposable disposable)
-                    disposable.Dispose();
-                if (handler is IAsyncDisposable asyncDisposable)
-                    await asyncDisposable.DisposeAsync();
+    private async Task HandleSocketExceptionAsync(SocketException ex, CancellationToken token)
+    {
+        if (IsCriticalSocketError(ex.SocketErrorCode))
+        {
+            await _logger.CriticalAsync(
+                $"Critical UDP socket error: {ex.SocketErrorCode}",
+                ex,
+                token
+            );
+            StopServer();
+        }
+        else
+        {
+            await _logger.WarningAsync(
+                $"Non-critical UDP socket error: {ex.SocketErrorCode}",
+                ex,
+                token
+            );
+        }
+    }
 
-                // 显式释放缓冲区
-                bufferOwner.Dispose();
+    public async Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        StopServer();
+
+        if (!_activeTasks.IsEmpty)
+        {
+            await Task.WhenAll(_activeTasks.Keys)
+                .WaitAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    private void StopServer()
+    {
+        lock (_stateLock)
+        {
+            if (!_isRunning)
+                return;
+
+            _serverCts.Cancel();
+            _udpClient?.Close();
+            _udpClient = null;
+        }
+    }
+
+    private static bool IsCriticalSocketError(SocketError error) =>
+        error switch
+        {
+            SocketError.AccessDenied => true,
+            SocketError.AddressAlreadyInUse => true,
+            SocketError.AddressNotAvailable => true,
+            SocketError.InvalidArgument => true,
+            SocketError.Shutdown => true,
+            SocketError.ConnectionReset => true,
+            _ => false
+        };
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_isDisposed)
+            return;
+
+        try
+        {
+            StopServer();
+
+            if (!_activeTasks.IsEmpty)
+            {
+                await Task.WhenAll(_activeTasks.Keys).ConfigureAwait(false);
             }
         }
         finally
         {
-            _concurrencyLimiter.Release();
-        }
-    }
-
-    public async Task StopAsync(TimeSpan? timeout = null)
-    {
-        if (_receiveTask == null)
-            return;
-
-        // 触发取消
-        await _cts?.CancelAsync()!;
-
-        // 等待接收循环停止
-        var timeoutValue = timeout ?? TimeSpan.FromSeconds(5);
-        await _receiveTask.WaitAsync(timeoutValue).ConfigureAwait(false);
-
-        // 等待所有处理任务完成
-        Task[] tasksToWait;
-        lock (_taskTrackingLock)
-        {
-            tasksToWait = _activeTasks.Keys.ToArray();
-        }
-
-        if (tasksToWait.Length > 0)
-        {
-            await Task.WhenAll(tasksToWait).WaitAsync(timeoutValue).ConfigureAwait(false);
-        }
-
-        CleanupResources();
-    }
-
-    private void CleanupResources()
-    {
-        // 清理发送锁资源
-        foreach (var semaphore in _endpointSendLocks.Values)
-        {
-            try
+            if (!_isDisposed)
             {
-                semaphore.Dispose();
-            }
-            catch
-            { /* 忽略处置异常 */
+                _udpClient?.Dispose();
+                _serverCts.Dispose();
+                _isDisposed = true;
             }
         }
-        _endpointSendLocks.Clear();
-
-        // 清理核心资源
-        _socket?.Dispose();
-        _socket = null;
-        _cts?.Dispose();
-        _cts = null;
-        _receiveTask = null;
     }
 
     public void Dispose()
     {
-        if (_disposed)
+        if (_isDisposed)
             return;
 
         try
         {
-            StopAsync().GetAwaiter().GetResult();
+            StopServer();
+
+            if (!_activeTasks.IsEmpty)
+            {
+                Task.WaitAll(_activeTasks.Keys.ToArray(), TimeSpan.FromSeconds(5));
+            }
         }
         finally
         {
-            _concurrencyLimiter.Dispose();
-            _disposed = true;
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_disposed)
-            return;
-
-        try
-        {
-            await StopAsync().ConfigureAwait(false);
-        }
-        finally
-        {
-            _concurrencyLimiter.Dispose();
-            _disposed = true;
+            if (!_isDisposed)
+            {
+                _udpClient?.Dispose();
+                _serverCts.Dispose();
+                _isDisposed = true;
+            }
         }
     }
 }
