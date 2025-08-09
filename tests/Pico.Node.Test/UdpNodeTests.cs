@@ -12,12 +12,13 @@ public class UdpNodeTests
         var mockLogger = new Mock<ILogger<UdpNode>>();
 
         mockHandler
-            .Setup(h =>
-                h.HandleAsync(
-                    It.IsAny<byte[]>(),
-                    It.IsAny<EndPoint>(),
-                    It.IsAny<CancellationToken>()
-                )
+            .Setup(
+                h =>
+                    h.HandleAsync(
+                        It.IsAny<ReadOnlyMemory<byte>>(),
+                        It.IsAny<EndPoint>(),
+                        It.IsAny<CancellationToken>()
+                    )
             )
             .Returns(ValueTask.CompletedTask);
 
@@ -39,7 +40,7 @@ public class UdpNodeTests
         mockHandler.Verify(
             h =>
                 h.HandleAsync(
-                    It.IsAny<byte[]>(),
+                    It.IsAny<ReadOnlyMemory<byte>>(),
                     It.IsAny<EndPoint>(),
                     It.IsAny<CancellationToken>()
                 ),
