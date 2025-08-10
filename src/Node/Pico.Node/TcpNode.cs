@@ -18,15 +18,6 @@ public sealed class TcpNode : INode
     private readonly Lock _stateLock = new();
     private bool _isRunning;
 
-    public bool IsRunning
-    {
-        get
-        {
-            lock (_stateLock)
-                return _isRunning;
-        }
-    }
-
     public TcpNode(
         IPAddress ipAddress,
         ushort port,
@@ -76,40 +67,62 @@ public sealed class TcpNode : INode
 
                 try
                 {
+                    // Accept new client connection (blocking call)
                     client = await _listener
                         .AcceptTcpClientAsync(serverToken)
                         .ConfigureAwait(false);
 
+                    // Safe endpoint retrieval with null propagation
+                    var endpoint = client.Client.RemoteEndPoint?.ToString() ?? "unknown";
+
                     await _logger.InfoAsync(
-                        $"Accepted new client connection {client.Client.RemoteEndPoint}",
+                        $"Accepted new client connection {endpoint}",
                         serverToken
                     );
 
-                    var clientTask = ProcessClientAsync(client, serverToken)
-                        .ContinueWith(
-                            t =>
-                            {
-                                _activeTasks.TryRemove(t, out _);
-                                if (t is { IsFaulted: true, Exception: not null })
-                                {
-                                    _logger
-                                        .ErrorAsync(
-                                            "Unhandled exception in client task",
-                                            t.Exception,
-                                            cancellationToken: serverToken
-                                        )
-                                        .GetAwaiter()
-                                        .GetResult();
-                                }
-                            },
-                            TaskContinuationOptions.ExecuteSynchronously
-                        );
+                    // Create client processing task with atomic dictionary registration
+                    var clientTask = ProcessClientAsync(client, serverToken);
 
-                    _activeTasks.TryAdd(clientTask, true);
+                    // Add to tracking BEFORE starting continuation to prevent race conditions
+                    if (!_activeTasks.TryAdd(clientTask, true))
+                    {
+                        // Fallback: Dispose client if tracking fails
+                        client.Dispose();
+                        _connectionSemaphore.Release();
+                        await _logger.ErrorAsync(
+                            "Failed to register client task",
+                            cancellationToken: serverToken
+                        );
+                        continue;
+                    }
+
+                    // Register cleanup handler with synchronous execution
+                    clientTask.ContinueWith(
+                        t =>
+                        {
+                            // Atomic removal from tracking
+                            _activeTasks.TryRemove(t, out _);
+
+                            // Log unhandled exceptions from task
+                            if (t is { IsFaulted: true, Exception: not null })
+                            {
+                                _logger
+                                    .ErrorAsync(
+                                        "Unhandled exception in client task",
+                                        t.Exception,
+                                        cancellationToken: serverToken
+                                    )
+                                    .GetAwaiter()
+                                    .GetResult();
+                            }
+                        },
+                        TaskContinuationOptions.ExecuteSynchronously
+                    );
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    _ = HandleAcceptExceptionAsync(ex, client, serverToken);
+                    // Handle accept failures safely
+                    await HandleAcceptExceptionAsync(ex, client, serverToken);
                 }
             }
         }
@@ -133,6 +146,7 @@ public sealed class TcpNode : INode
 
         if (!_activeTasks.IsEmpty)
         {
+            // Wait with cancellation support
             await Task.WhenAll(_activeTasks.Keys)
                 .WaitAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -148,11 +162,13 @@ public sealed class TcpNode : INode
 
             if (_listener.Server.IsBound)
             {
+                // Graceful listener shutdown
                 _listener.Stop();
             }
 
             if (!_serverCts.IsCancellationRequested)
             {
+                // Signal cancellation to all operations
                 _serverCts.Cancel();
             }
         }
@@ -164,12 +180,16 @@ public sealed class TcpNode : INode
         CancellationToken token
     )
     {
+        // Ensure client disposal in all exception cases
         client?.Dispose();
+
+        // Always release semaphore on accept failure
         _connectionSemaphore.Release();
 
         switch (ex)
         {
             case OperationCanceledException:
+                // Normal shutdown path, no logging needed
                 return;
             case SocketException socketEx:
                 if (IsCriticalSocketError(socketEx.SocketErrorCode))
@@ -179,7 +199,7 @@ public sealed class TcpNode : INode
                         socketEx,
                         token
                     );
-                    StopServer();
+                    StopServer(); // Stop server on critical errors
                 }
                 else
                 {
@@ -203,6 +223,7 @@ public sealed class TcpNode : INode
         {
             endpoint = client.Client.RemoteEndPoint?.ToString() ?? "unknown";
 
+            // Guaranteed disposal of client and stream
             using (client)
             await using (var stream = client.GetStream())
             {
@@ -227,11 +248,13 @@ public sealed class TcpNode : INode
                 cancellationToken: cancellationToken
             );
 
+            // Optional external exception handling
             if (endpoint != null)
                 _exceptionHandler?.Invoke(ex, endpoint);
         }
         finally
         {
+            // Single-point semaphore release
             _connectionSemaphore.Release();
         }
     }
@@ -266,33 +289,7 @@ public sealed class TcpNode : INode
         {
             if (!_isDisposed)
             {
-                _connectionSemaphore.Dispose();
-                _serverCts.Dispose();
-                _listener.Server.Dispose();
-                _isDisposed = true;
-            }
-        }
-    }
-
-    public void Dispose()
-    {
-        if (_isDisposed)
-            return;
-
-        try
-        {
-            StopServer();
-
-            // Synchronous wait for active tasks
-            if (!_activeTasks.IsEmpty)
-            {
-                Task.WaitAll(_activeTasks.Keys.ToArray());
-            }
-        }
-        finally
-        {
-            if (!_isDisposed)
-            {
+                // Resource cleanup sequence
                 _connectionSemaphore.Dispose();
                 _serverCts.Dispose();
                 _listener.Server.Dispose();

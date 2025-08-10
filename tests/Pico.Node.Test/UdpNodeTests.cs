@@ -16,7 +16,7 @@ public class UdpNodeTests
                 h =>
                     h.HandleAsync(
                         It.IsAny<ReadOnlyMemory<byte>>(),
-                        It.IsAny<EndPoint>(),
+                        It.IsAny<IPEndPoint>(),
                         It.IsAny<CancellationToken>()
                     )
             )
@@ -41,7 +41,7 @@ public class UdpNodeTests
             h =>
                 h.HandleAsync(
                     It.IsAny<ReadOnlyMemory<byte>>(),
-                    It.IsAny<EndPoint>(),
+                    It.IsAny<IPEndPoint>(),
                     It.IsAny<CancellationToken>()
                 ),
             Times.Once

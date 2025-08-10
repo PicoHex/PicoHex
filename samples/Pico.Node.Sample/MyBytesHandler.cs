@@ -7,15 +7,13 @@ public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
 
     public async ValueTask HandleAsync(
         ReadOnlyMemory<byte> data,
-        EndPoint remoteEndPoint,
+        IPEndPoint remoteEndPoint,
         CancellationToken cancellationToken = default
     )
     {
         try
         {
-            var remoteIp = remoteEndPoint is IPEndPoint ipEndPoint
-                ? ipEndPoint.ToString()
-                : remoteEndPoint.ToString();
+            var remoteIp = remoteEndPoint.ToString();
 
             await _logger.InfoAsync(
                 $"Received {data.Length} bytes from {remoteIp}",

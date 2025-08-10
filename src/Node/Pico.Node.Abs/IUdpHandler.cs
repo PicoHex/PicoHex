@@ -1,10 +1,11 @@
-﻿namespace Pico.Node.Abs;
+﻿// Updated handler interface
+namespace Pico.Node.Abs;
 
 public interface IUdpHandler
 {
     ValueTask HandleAsync(
         ReadOnlyMemory<byte> data,
-        EndPoint remoteEndPoint,
+        IPEndPoint remoteEndPoint, // More specific type
         CancellationToken cancellationToken = default
     );
 }
