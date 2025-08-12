@@ -9,17 +9,17 @@ public sealed class TcpNode : INode
     private readonly SemaphoreSlim _connectionSemaphore;
     private readonly TcpListener _listener;
     private readonly Func<ITcpHandler> _tcpHandlerFactory;
-
-    // The exception handler now receives a rich IPEndPoint object
     private readonly Action<Exception, IPEndPoint>? _exceptionHandler;
 
     // Runtime state
-    private readonly ConcurrentDictionary<Task, bool> _activeTasks = new();
+    private readonly ConcurrentBag<Task> _activeTasks = new();
     private volatile bool _isDisposed;
     private readonly CancellationTokenSource _serverCts = new();
     private readonly Lock _stateLock = new();
     private bool _isRunning;
-    private Task? _serverTask; // Task to run the main server loop
+    private Task? _serverTask;
+    private readonly TaskCompletionSource _serverReadyTcs =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public TcpNode(
         IPAddress ipAddress,
@@ -27,7 +27,6 @@ public sealed class TcpNode : INode
         Func<ITcpHandler> tcpHandlerFactory,
         ILogger<TcpNode> logger,
         int maxConcurrentConnections = 100,
-        // The exception handler signature is improved to use IPEndPoint
         Action<Exception, IPEndPoint>? exceptionHandler = null
     )
     {
@@ -45,38 +44,37 @@ public sealed class TcpNode : INode
     }
 
     /// <summary>
-    /// Starts the TCP server as a background operation.
-    /// This method returns immediately after initiating the server startup.
+    /// Starts the TCP server. Returns a task that completes when the server is ready.
     /// </summary>
     public Task StartAsync(CancellationToken cancellationToken = default)
     {
         lock (_stateLock)
         {
             if (_isRunning)
-                return Task.CompletedTask;
+                return _serverReadyTcs.Task;
 
             try
             {
                 _listener.Start();
                 _isRunning = true;
-
-                // Start the server loop as a background task and store it
                 _serverTask = RunServerAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.CriticalAsync("Failed to initialize TCP listener.", ex, cancellationToken);
-                _isRunning = false; // Ensure state is reverted on failure
+                // Ensure log is written before throwing
+                _ = _logger.CriticalAsync(
+                    "Failed to start TCP listener",
+                    ex,
+                    cancellationToken: cancellationToken
+                );
+                _isRunning = false;
+                _serverReadyTcs.TrySetException(ex); // Propagate error
                 throw;
             }
         }
-
-        return Task.CompletedTask;
+        return _serverReadyTcs.Task;
     }
 
-    /// <summary>
-    /// The main server loop for accepting new client connections.
-    /// </summary>
     private async Task RunServerAsync(CancellationToken cancellationToken)
     {
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -85,235 +83,165 @@ public sealed class TcpNode : INode
         );
         var serverToken = linkedCts.Token;
 
-        await _logger.InfoAsync($"TCP server started on {_ipAddress}:{_port}", serverToken);
-
         try
         {
+            await _logger.InfoAsync($"TCP server started on {_ipAddress}:{_port}", serverToken);
+            _serverReadyTcs.TrySetResult(); // Signal server is ready
+
             while (!serverToken.IsCancellationRequested)
             {
-                // Wait for an available connection slot before accepting a new client
                 await _connectionSemaphore.WaitAsync(serverToken).ConfigureAwait(false);
-
                 var client = await _listener
                     .AcceptTcpClientAsync(serverToken)
                     .ConfigureAwait(false);
 
-                // Create a task to process the client connection
                 var clientTask = ProcessClientAsync(client, serverToken);
-
-                // Track the task for graceful shutdown
-                _activeTasks.TryAdd(clientTask, true);
-
-                // Attach a continuation to clean up the task from the tracking dictionary upon completion.
-                // This runs in the background and does not block the accept loop.
-                _ = clientTask.ContinueWith(
-                    t =>
-                    {
-                        _activeTasks.TryRemove(t, out _);
-                    },
-                    TaskContinuationOptions.ExecuteSynchronously
-                );
+                _activeTasks.Add(clientTask);
             }
         }
         catch (OperationCanceledException)
-        {
-            // This is expected during a normal shutdown.
+        { /* Normal shutdown */
         }
         catch (Exception ex)
         {
-            // A fatal error occurred in the server loop itself
-            await _logger.CriticalAsync(
-                "TCP server accept loop fatal error. The server is stopping.",
-                ex,
-                CancellationToken.None
-            );
-            StopServer(); // Trigger a full stop
+            await _logger.CriticalAsync("Server loop fatal error", ex, CancellationToken.None);
+            StopServer();
         }
         finally
         {
             lock (_stateLock)
-            {
                 _isRunning = false;
-            }
-            await _logger.InfoAsync("TCP server loop has stopped.", CancellationToken.None);
+            await _logger.InfoAsync("Server stopped", CancellationToken.None);
         }
     }
 
-    /// <summary>
-    /// Stops the TCP server gracefully.
-    /// </summary>
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
         StopServer();
 
         if (!_activeTasks.IsEmpty)
         {
-            var shutdownTimeout = TimeSpan.FromSeconds(5);
-            using var timeoutCts = new CancellationTokenSource(shutdownTimeout);
-            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                 cancellationToken,
                 timeoutCts.Token
             );
 
             try
             {
-                await Task.WhenAll(_activeTasks.Keys)
-                    .WaitAsync(combinedCts.Token)
-                    .ConfigureAwait(false);
+                await Task.WhenAll(_activeTasks).WaitAsync(linkedCts.Token);
             }
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
             {
                 await _logger.WarningAsync(
-                    $"Timeout waiting for {_activeTasks.Count} active client tasks to complete during shutdown.",
-                    cancellationToken: CancellationToken.None
+                    $"Timeout waiting for {_activeTasks.Count} tasks",
+                    cancellationToken: linkedCts.Token
                 );
-            }
-            catch (OperationCanceledException)
-            {
-                // Shutdown was cancelled by the external token, which is fine.
             }
         }
     }
 
-    /// <summary>
-    /// Atomically initiates the server shutdown process.
-    /// </summary>
     private void StopServer()
     {
         lock (_stateLock)
         {
-            // StopServer can be called multiple times from StopAsync and DisposeAsync,
-            // so we check if it's already in the process of stopping.
-            if (!_serverCts.IsCancellationRequested)
-            {
-                // Signal cancellation to all operations (accept loop, client handlers).
-                _serverCts.Cancel();
-            }
+            if (_serverCts.IsCancellationRequested)
+                return;
+            _serverCts.Cancel();
 
-            // Stopping the listener will cause AcceptTcpClientAsync to throw an exception,
-            // effectively unblocking the server loop.
             try
             {
-                if (_listener.Server.IsBound)
-                {
-                    _listener.Stop();
-                }
-            }
+                _listener.Stop();
+            } // Safe even if not bound
             catch (Exception ex)
             {
-                _logger.WarningAsync(
-                    "Exception while stopping TCP listener, this may happen during shutdown.",
-                    ex
-                );
+                _ = _logger.WarningAsync("Error stopping listener", ex);
             }
         }
     }
 
-    /// <summary>
-    /// Handles a single client connection from start to finish.
-    /// </summary>
     private async Task ProcessClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
-        // Use IPEndPoint for richer data
-        var remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
-        var endpointString = remoteEndPoint?.ToString() ?? "unknown";
+        var remoteEndPoint = (client.Client.RemoteEndPoint as IPEndPoint)?.ToString() ?? "unknown";
 
         try
         {
             await _logger.DebugAsync(
-                $"Accepted new client connection from {endpointString}",
+                $"Accepted connection from {remoteEndPoint}",
                 cancellationToken
             );
-
-            // Using 'using' statements ensures the client and stream are always disposed
             using (client)
             await using (var stream = client.GetStream())
             {
-                var handler = _tcpHandlerFactory();
-                await handler.HandleAsync(stream, cancellationToken).ConfigureAwait(false);
+                await _tcpHandlerFactory().HandleAsync(stream, cancellationToken);
             }
-
-            await _logger.DebugAsync(
-                $"Client {endpointString} disconnected gracefully.",
-                cancellationToken
-            );
+            await _logger.DebugAsync($"Client {remoteEndPoint} disconnected", cancellationToken);
         }
         catch (OperationCanceledException)
         {
-            // This is an expected exception when the server is shutting down.
-            await _logger.InfoAsync(
-                $"Client {endpointString} connection canceled.",
-                cancellationToken
-            );
+            await _logger.InfoAsync($"Client {remoteEndPoint} canceled", cancellationToken);
         }
         catch (Exception ex)
         {
-            await _logger.ErrorAsync(
-                $"An error occurred while processing client {endpointString}.",
-                ex,
-                cancellationToken
-            );
-
-            // Invoke the external exception handler if it's provided
-            if (remoteEndPoint != null)
+            await _logger.ErrorAsync($"Client {remoteEndPoint} error", ex, cancellationToken);
+            if (client.Client.RemoteEndPoint is IPEndPoint ipEp)
             {
-                _exceptionHandler?.Invoke(ex, remoteEndPoint);
+                try
+                {
+                    _exceptionHandler?.Invoke(ex, ipEp);
+                }
+                catch (Exception handlerEx)
+                {
+                    await _logger.ErrorAsync(
+                        "Exception handler failed",
+                        handlerEx,
+                        cancellationToken
+                    );
+                }
             }
         }
         finally
         {
-            // CRITICAL: Always release the semaphore slot to allow another client to connect.
             _connectionSemaphore.Release();
+            _activeTasks.TryTake(out _); // Remove self from tracking
         }
     }
 
-    /// <summary>
-    /// Disposes all managed and unmanaged resources.
-    /// </summary>
     public async ValueTask DisposeAsync()
     {
         if (_isDisposed)
             return;
-
         _isDisposed = true;
 
-        // Initiate shutdown
         StopServer();
 
-        // Wait for the main server task to complete with a timeout
+        // Wait for main server loop
         if (_serverTask != null)
         {
             try
             {
-                await _serverTask.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+                await _serverTask.WaitAsync(TimeSpan.FromSeconds(2));
             }
             catch (TimeoutException)
             {
-                await _logger.WarningAsync(
-                    "Timeout waiting for server loop to exit during disposal."
-                );
+                await _logger.WarningAsync("Timeout waiting for server loop");
             }
         }
 
-        // Wait for active client tasks to complete with a timeout
+        // Wait for client tasks
         if (!_activeTasks.IsEmpty)
         {
             try
             {
-                await Task.WhenAll(_activeTasks.Keys)
-                    .WaitAsync(TimeSpan.FromSeconds(5))
-                    .ConfigureAwait(false);
+                await Task.WhenAll(_activeTasks).WaitAsync(TimeSpan.FromSeconds(5));
             }
             catch (TimeoutException)
             {
-                await _logger.WarningAsync(
-                    "Timeout waiting for active tasks to complete during disposal."
-                );
+                await _logger.WarningAsync("Timeout waiting for client tasks");
             }
         }
 
-        // Final resource cleanup
-        _connectionSemaphore.Dispose();
         _serverCts.Dispose();
+        _connectionSemaphore.Dispose(); // Safe after all tasks complete
     }
 }
