@@ -30,3 +30,7 @@ AppDomain.CurrentDomain.ProcessExit += (_, _) => cts.Cancel();
 Console.CancelKeyPress += (_, _) => cts.Cancel();
 
 await tcpServer.StartAsync(cts.Token);
+
+Console.ReadLine();
+await tcpServer.StopAsync(cts.Token);
+await tcpServer.DisposeAsync();

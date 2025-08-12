@@ -7,7 +7,7 @@
         private readonly ushort _port;
         private readonly ILogger<UdpNode> _logger;
         private readonly Func<IUdpHandler> _udpHandlerFactory;
-        private readonly Action<Exception, string>? _exceptionHandler;
+        private readonly Action<Exception, IPEndPoint>? _exceptionHandler;
         private readonly Action<UdpClient>? _configureUdpClient;
         private readonly SemaphoreSlim _concurrencyLimiter;
 
@@ -25,7 +25,7 @@
             ushort port,
             Func<IUdpHandler> udpHandlerFactory,
             ILogger<UdpNode> logger,
-            Action<Exception, string>? exceptionHandler = null,
+            Action<Exception, IPEndPoint>? exceptionHandler = null,
             int maxConcurrency = 1000,
             Action<UdpClient>? configureUdpClient = null
         )
@@ -129,7 +129,7 @@
 
                         // Track task and set up cleanup
                         _activeTasks.TryAdd(processTask, true);
-                        await processTask.ContinueWith(
+                        _ = processTask.ContinueWith(
                             t => _activeTasks.TryRemove(t, out _),
                             TaskContinuationOptions.ExecuteSynchronously
                         );
@@ -206,7 +206,7 @@
                     cancellationToken
                 );
 
-                _exceptionHandler?.Invoke(ex, remoteEndpoint.ToString());
+                _exceptionHandler?.Invoke(ex, remoteEndpoint);
             }
         }
 
