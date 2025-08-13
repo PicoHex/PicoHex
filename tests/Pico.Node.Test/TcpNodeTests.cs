@@ -15,13 +15,13 @@ public class TcpNodeTests
             .Setup(h => h.HandleAsync(It.IsAny<NetworkStream>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
 
-        var server = new TcpNode(
-            ipAddress,
-            port,
-            () => mockHandler.Object,
-            mockLogger.Object,
-            maxConcurrentConnections: 1
-        );
+        var tcpOption = new TcpNodeOptions
+        {
+            IpAddress = ipAddress,
+            Port = port,
+            MaxConcurrentConnections = 1
+        };
+        var server = new TcpNode(tcpOption, () => mockHandler.Object, mockLogger.Object);
 
         var cts = new CancellationTokenSource();
         var serverTask = server.StartAsync(cts.Token);

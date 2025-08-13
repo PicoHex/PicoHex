@@ -7,22 +7,22 @@ public class UdpNodeTests
     {
         // Arrange
         var ipAddress = IPAddress.Loopback;
-        ushort port = 5001;
+        const ushort port = 5001;
         var mockHandler = new Mock<IUdpHandler>();
         var mockLogger = new Mock<ILogger<UdpNode>>();
 
         mockHandler
-            .Setup(
-                h =>
-                    h.HandleAsync(
-                        It.IsAny<ReadOnlyMemory<byte>>(),
-                        It.IsAny<IPEndPoint>(),
-                        It.IsAny<CancellationToken>()
-                    )
+            .Setup(h =>
+                h.HandleAsync(
+                    It.IsAny<ReadOnlyMemory<byte>>(),
+                    It.IsAny<IPEndPoint>(),
+                    It.IsAny<CancellationToken>()
+                )
             )
             .Returns(ValueTask.CompletedTask);
 
-        var server = new UdpNode(ipAddress, port, () => mockHandler.Object, mockLogger.Object);
+        var udpOption = new UdpNodeOptions { IpAddress = ipAddress, Port = port };
+        var server = new UdpNode(udpOption, () => mockHandler.Object, mockLogger.Object);
 
         var cts = new CancellationTokenSource();
         var serverTask = server.StartAsync(cts.Token);

@@ -3,14 +3,13 @@
 // Step 1: Create the IoC container
 
 var svcRegistry = Bootstrap.CreateContainer();
-const int tcpPort = 8080;
+var tcpOption = new TcpNodeOptions { IpAddress = IPAddress.Any, Port = 8080 };
 svcRegistry
     // .AddLogging(builder => builder.AddConsole())
     .RegisterTransient<ITcpHandler, HttpHandler>()
     .RegisterTransient<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>)
     .RegisterSingle<TcpNode>(sp => new TcpNode(
-        IPAddress.Any,
-        tcpPort,
+        tcpOption,
         sp.Resolve<Func<ITcpHandler>>(),
         sp.Resolve<ILogger<TcpNode>>()
     ));
@@ -23,7 +22,7 @@ var tcpServer = svcProvider.Resolve<TcpNode>();
 
 var logger = svcProvider.Resolve<ILogger<Program>>();
 
-await logger.InfoAsync($"Starting TCP server on http://localhost:{tcpPort}...");
+await logger.InfoAsync($"Starting TCP server on http://localhost:{tcpOption.Port}...");
 var cts = new CancellationTokenSource();
 
 AppDomain.CurrentDomain.ProcessExit += (_, _) => cts.Cancel();

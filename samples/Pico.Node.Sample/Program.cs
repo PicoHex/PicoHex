@@ -12,17 +12,17 @@ svcRegistry.RegisterSingle<IUdpHandler, MyBytesHandler>();
 // Registering servers
 svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
 svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
-const int tcpPort = 12345;
-const int udpPort = 12346;
+
+var tcpOption = new TcpNodeOptions { IpAddress = IPAddress.Any, Port = 12345 };
 svcRegistry.RegisterSingle<TcpNode>(sp => new TcpNode(
-    IPAddress.Any,
-    tcpPort,
+    tcpOption,
     sp.Resolve<Func<ITcpHandler>>(),
     sp.Resolve<ILogger<TcpNode>>()
 ));
+
+var udpOption = new UdpNodeOptions { IpAddress = IPAddress.Any, Port = 12346 };
 svcRegistry.RegisterSingle<UdpNode>(sp => new UdpNode(
-    IPAddress.Any,
-    udpPort,
+    udpOption,
     sp.Resolve<Func<IUdpHandler>>(),
     sp.Resolve<ILogger<UdpNode>>()
 ));
