@@ -1,12 +1,16 @@
-﻿namespace Pico.Node;
+namespace Pico.Node;
 
-public sealed class TcpNodeV2 : INode
+/// <summary>
+/// A high-performance TCP server implementation using raw Sockets and System.IO.Pipelines,
+/// based on a producer-consumer pattern with backpressure.
+/// </summary>
+public sealed class TcpNodeV4 : INode
 {
     // Dependencies and Configuration
-    private readonly TcpNodeOptionsV2 _options;
-    private readonly ILogger<TcpNodeV2> _logger;
+    private readonly TcpNodeOptionsV4 _options;
+    private readonly ILogger<TcpNodeV4> _logger;
     private readonly Func<IPipelineHandler> _handlerFactory;
-    private readonly TcpListener _listener;
+    private readonly Socket _serverSocket; // Replaced TcpListener with raw Socket
 
     // State Management
     private readonly CancellationTokenSource _serverCts = new();
@@ -19,27 +23,37 @@ public sealed class TcpNodeV2 : INode
     private Task? _acceptorTask;
     private readonly List<Task> _workerTasks = [];
 
-    public TcpNodeV2(
-        TcpNodeOptionsV2 options,
+    /// <summary>
+    /// Initializes a new instance of the TcpNodeV4 class.
+    /// </summary>
+    /// <param name="options">Configuration options for the TCP node.</param>
+    /// <param name="handlerFactory">A factory function to create IPipelineHandler instances for each connection.</param>
+    /// <param name="logger">Logger instance for logging server events.</param>
+    public TcpNodeV4(
+        TcpNodeOptionsV4 options,
         Func<IPipelineHandler> handlerFactory,
-        ILogger<TcpNodeV2> logger
+        ILogger<TcpNodeV4> logger
     )
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _listener = new TcpListener(_options.IpAddress, _options.Port);
+        // Initialize the raw server socket
+        _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
         // Enable port reuse for faster restarts, a professional touch.
         try
         {
-            _listener
-                .Server
-                .SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            _serverSocket.SetSocketOption(
+                SocketOptionLevel.Socket,
+                SocketOptionName.ReuseAddress,
+                true
+            );
         }
         catch (Exception ex)
         {
+            // Log a warning if setting the option fails, but don't block startup.
             _logger
                 .WarningAsync("Setting ReuseAddress socket option failed.", ex)
                 .ConfigureAwait(false);
@@ -70,7 +84,11 @@ public sealed class TcpNodeV2 : INode
                     }
                 );
 
-                _listener.Start();
+                // Bind the socket to the specified IP address and port
+                _serverSocket.Bind(new IPEndPoint(_options.IpAddress, _options.Port));
+                // Start listening for incoming connections with a specified backlog
+                _serverSocket.Listen(_options.ListenBacklog);
+
                 _isRunning = true;
 
                 // Link the external cancellation token with the internal one.
@@ -85,6 +103,13 @@ public sealed class TcpNodeV2 : INode
                 {
                     _workerTasks.Add(RunWorkerAsync(i, linkedCts.Token));
                 }
+
+                _logger
+                    .InfoAsync(
+                        $"TCP server started on {_options.IpAddress}:{_options.Port} (Max connections: {_options.MaxConcurrentConnections}, Channel capacity: {_options.ChannelCapacity}, Listen backlog: {_options.ListenBacklog}).",
+                        cancellationToken: linkedCts.Token
+                    )
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -116,9 +141,13 @@ public sealed class TcpNodeV2 : INode
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                // Asynchronously accept a client and wait to write it to the channel.
-                // If the channel is full, this await will pause, providing backpressure.
-                var client = await _listener.AcceptTcpClientAsync(cancellationToken);
+                // Asynchronously accept a client socket.
+                // If the channel is full, the subsequent WriteAsync will pause, providing backpressure.
+                Socket acceptedSocket = await _serverSocket.AcceptAsync(cancellationToken);
+
+                // Wrap the accepted Socket into a TcpClient to maintain compatibility with existing handlers.
+                var client = new TcpClient { Client = acceptedSocket };
+
                 await _connectionChannel!.Writer.WriteAsync(client, cancellationToken);
             }
         }
@@ -199,7 +228,7 @@ public sealed class TcpNodeV2 : INode
     /// </summary>
     private async Task ProcessConnectionAsync(TcpClient client, CancellationToken cancellationToken)
     {
-        using (client)
+        using (client) // Ensure TcpClient (and its underlying Socket) is disposed
         {
             var remoteEndPoint = SafeGetIpEndPoint(client);
             await _logger.DebugAsync(
@@ -207,7 +236,9 @@ public sealed class TcpNodeV2 : INode
                 cancellationToken: cancellationToken
             );
 
+            // Get the NetworkStream from the TcpClient
             var stream = client.GetStream();
+            // Create PipeReader and PipeWriter from the NetworkStream
             var reader = PipeReader.Create(stream);
             var writer = PipeWriter.Create(stream);
 
@@ -264,7 +295,7 @@ public sealed class TcpNodeV2 : INode
             {
                 return;
             }
-            StopServer();
+            StopServer(); // Initiate cancellation and stop listening
         }
 
         var allTasks = new List<Task>();
@@ -299,18 +330,28 @@ public sealed class TcpNodeV2 : INode
         }
     }
 
+    /// <summary>
+    /// Private method to perform the non-async part of server shutdown.
+    /// </summary>
     private void StopServer()
     {
-        // This private method contains the non-async part of the shutdown.
-        // It can be called safely from StopAsync and DisposeAsync.
         lock (_stateLock)
         {
             if (!_isRunning)
                 return;
 
             _isRunning = false;
-            _serverCts.Cancel();
-            _listener.Stop();
+            _serverCts.Cancel(); // Signal all tasks to cancel
+
+            try
+            {
+                // Close the server socket to stop accepting new connections
+                _serverSocket.Close();
+            }
+            catch (Exception ex)
+            {
+                _logger.WarningAsync("Error closing server socket.", ex).ConfigureAwait(false);
+            }
         }
     }
 
@@ -325,13 +366,18 @@ public sealed class TcpNodeV2 : INode
         }
         _isDisposed = true;
 
+        // Ensure the server is stopped before disposing resources
         await StopAsync(CancellationToken.None);
 
         _serverCts.Dispose();
-        // The TcpListener itself does not implement IDisposable, but its underlying socket does.
-        // Stop() is sufficient to release the socket.
+        _serverSocket.Dispose(); // Dispose the raw socket
     }
 
+    /// <summary>
+    /// Safely retrieves the IPEndPoint of a TcpClient.
+    /// </summary>
+    /// <param name="client">The TcpClient instance.</param>
+    /// <returns>The IPEndPoint or null if it cannot be retrieved.</returns>
     private static IPEndPoint? SafeGetIpEndPoint(TcpClient client)
     {
         try
@@ -340,8 +386,49 @@ public sealed class TcpNodeV2 : INode
         }
         catch
         {
-            // Can throw if the socket is already closed.
+            // Can throw if the socket is already closed or disposed.
             return null;
         }
     }
+}
+
+public sealed class TcpNodeOptionsV4
+{
+    /// <summary>
+    /// The IP address the server will listen on.
+    /// </summary>
+    public IPAddress IpAddress { get; set; } = IPAddress.Any;
+
+    /// <summary>
+    /// The port the server will listen on.
+    /// </summary>
+    public int Port { get; set; } = 8080;
+
+    /// <summary>
+    /// The maximum number of concurrent connections the server can handle.
+    /// This also determines the number of worker tasks.
+    /// </summary>
+    public int MaxConcurrentConnections { get; set; } = Environment.ProcessorCount;
+
+    /// <summary>
+    /// The capacity of the internal channel for accepted connections.
+    /// This acts as a buffer for backpressure.
+    /// </summary>
+    public int ChannelCapacity { get; set; } = 1000;
+
+    /// <summary>
+    /// The maximum length of the pending connections queue.
+    /// This is passed to Socket.Listen().
+    /// </summary>
+    public int ListenBacklog { get; set; } = 100; // Default backlog
+
+    /// <summary>
+    /// Timeout for graceful shutdown of all tasks.
+    /// </summary>
+    public TimeSpan StopTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Optional exception handler for unhandled exceptions during connection processing.
+    /// </summary>
+    public Action<Exception, IPEndPoint?>? ExceptionHandler { get; set; }
 }
