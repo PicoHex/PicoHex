@@ -4,16 +4,16 @@
 
 var svcRegistry = Bootstrap.CreateContainer();
 
-var tcpOption = new TcpNodeOptions { IpAddress = IPAddress.Any, Port = 8080 };
-svcRegistry
-    // .AddLogging(builder => builder.AddConsole())
-    .RegisterTransient<ITcpHandler, HttpHandler>()
-    .RegisterTransient<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>)
-    .RegisterSingle<TcpNode>(sp => new TcpNode(
-        tcpOption,
-        sp.Resolve<Func<ITcpHandler>>(),
-        sp.Resolve<ILogger<TcpNode>>()
-    ));
+// var tcpOption = new TcpNodeOptions { IpAddress = IPAddress.Any, Port = 8080 };
+// svcRegistry
+//     // .AddLogging(builder => builder.AddConsole())
+//     .RegisterTransient<ITcpHandler, HttpHandler>()
+//     .RegisterTransient<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>)
+//     .RegisterSingle<TcpNode>(sp => new TcpNode(
+//         tcpOption,
+//         sp.Resolve<Func<ITcpHandler>>(),
+//         sp.Resolve<ILogger<TcpNode>>()
+//     ));
 
 var tcpOptionV2 = new TcpNodeOptionsV2 { IpAddress = IPAddress.Any, Port = 8081 };
 svcRegistry
@@ -35,7 +35,6 @@ var tcpServerV2 = svcProvider.Resolve<TcpNodeV2>();
 
 var logger = svcProvider.Resolve<ILogger<Program>>();
 
-await logger.InfoAsync($"Starting TCP server on http://localhost:{tcpOption.Port}...");
 var cts = new CancellationTokenSource();
 
 AppDomain.CurrentDomain.ProcessExit += (_, _) => cts.Cancel();
