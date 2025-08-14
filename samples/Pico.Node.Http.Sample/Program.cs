@@ -15,38 +15,31 @@ var svcRegistry = Bootstrap.CreateContainer();
 //         sp.Resolve<ILogger<TcpNode>>()
 //     ));
 
-var tcpOptionV2 = new TcpNodeOptionsV2 { IpAddress = IPAddress.Any, Port = 8081 };
+var tcpOptionV6 = new TcpNodeOptions { IpAddress = IPAddress.Any, Port = 8081 };
 svcRegistry
     // .AddLogging(builder => builder.AddConsole())
     .RegisterTransient<IPipelineHandler, HttpHandlerV2>()
     .RegisterTransient<Func<IPipelineHandler>>(sp => sp.Resolve<IPipelineHandler>)
-    .RegisterSingle<TcpNodeV2>(sp => new TcpNodeV2(
-        tcpOptionV2,
+    .RegisterSingle<TcpNode>(sp => new TcpNode(
+        tcpOptionV6,
         sp.Resolve<Func<IPipelineHandler>>(),
-        sp.Resolve<ILogger<TcpNodeV2>>()
+        sp.Resolve<ILogger<TcpNode>>()
     ));
 
 svcRegistry.RegisterLogger();
 
 var svcProvider = svcRegistry.GetProvider();
 
-var tcpServer = svcProvider.Resolve<TcpNode>();
-var tcpServerV2 = svcProvider.Resolve<TcpNodeV2>();
-
-var logger = svcProvider.Resolve<ILogger<Program>>();
+var tcpServerV6 = svcProvider.Resolve<TcpNode>();
 
 var cts = new CancellationTokenSource();
 
 AppDomain.CurrentDomain.ProcessExit += (_, _) => cts.Cancel();
 Console.CancelKeyPress += (_, _) => cts.Cancel();
 
-await tcpServer.StartAsync(cts.Token);
-await tcpServerV2.StartAsync(cts.Token);
+await tcpServerV6.StartAsync(cts.Token);
 
 Console.ReadLine();
 
-await tcpServer.StopAsync(cts.Token);
-await tcpServer.DisposeAsync();
-
-await tcpServerV2.StopAsync(cts.Token);
-await tcpServerV2.DisposeAsync();
+await tcpServerV6.StopAsync(cts.Token);
+await tcpServerV6.DisposeAsync();
