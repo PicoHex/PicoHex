@@ -2,4 +2,4 @@
 
 global using System.Runtime.CompilerServices;
 global using System.Text;
-global using Pico.CFG.Abs;
+global using Pico.Cfg.Abs;

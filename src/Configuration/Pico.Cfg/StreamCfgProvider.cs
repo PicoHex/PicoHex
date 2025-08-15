@@ -1,6 +1,6 @@
-namespace Pico.CFG;
+namespace Pico.Cfg;
 
-public class StreamCFGProvider(Func<Stream> streamFactory) : ICFGProvider
+public class StreamCfgProvider(Func<Stream> streamFactory) : ICfgProvider
 {
     private Dictionary<string, string> _configData = new();
     private readonly StreamChangeToken _changeToken = new();
@@ -28,7 +28,7 @@ public class StreamCFGProvider(Func<Stream> streamFactory) : ICFGProvider
     public ValueTask<string?> GetValueAsync(string key, CancellationToken ct = default) =>
         ValueTask.FromResult(_configData.GetValueOrDefault(key));
 
-    public async IAsyncEnumerable<ICFGNode> GetChildrenAsync(
+    public async IAsyncEnumerable<ICfgNode> GetChildrenAsync(
         [EnumeratorCancellation] CancellationToken ct = default
     )
     {

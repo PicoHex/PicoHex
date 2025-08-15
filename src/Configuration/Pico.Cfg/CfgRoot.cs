@@ -1,12 +1,12 @@
-namespace Pico.CFG;
+namespace Pico.Cfg;
 
-internal class CFGRoot(IEnumerable<ICFGProvider> providers) : ICFGRoot
+internal class CfgRoot(IEnumerable<ICfgProvider> providers) : ICfgRoot
 {
-    private readonly List<ICFGProvider> _providers = [.. providers];
+    private readonly List<ICfgProvider> _providers = [.. providers];
     private readonly Lock _syncRoot = new();
     private CompositeChangeToken _currentChangeToken = new([]);
 
-    public IReadOnlyList<ICFGProvider> Providers => _providers;
+    public IReadOnlyList<ICfgProvider> Providers => _providers;
 
     public async ValueTask ReloadAsync(CancellationToken ct = default)
     {
@@ -26,7 +26,7 @@ internal class CFGRoot(IEnumerable<ICFGProvider> providers) : ICFGRoot
         return null;
     }
 
-    public async IAsyncEnumerable<ICFGNode> GetChildrenAsync(
+    public async IAsyncEnumerable<ICfgNode> GetChildrenAsync(
         [EnumeratorCancellation] CancellationToken ct = default
     )
     {

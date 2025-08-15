@@ -1,6 +1,6 @@
 // See https://aka.ms/new-console-template for more information
 
-var builder = CFG.CreateBuilder();
+var builder = Cfg.CreateBuilder();
 
 builder
     .Add(

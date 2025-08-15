@@ -1,8 +1,8 @@
-﻿namespace Pico.CFG.Abs;
+﻿namespace Pico.Cfg.Abs;
 
-public interface ICFG
+public interface ICfg
 {
     string? this[string key] { get; set; }
-    IEnumerable<ICFGSection> GetChildren();
-    ICFGSection GetSection(string key);
+    IEnumerable<ICfgSection> GetChildren();
+    ICfgSection GetSection(string key);
 }

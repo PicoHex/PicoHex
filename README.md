@@ -8,7 +8,7 @@ A fully asynchronous edge computing MVP (Minimum Viable Product) built on AOT (A
 
 AOT-compatible IoC container supporting **Transient/Scoped/Singleton** lifetimes with circular dependency detection. Future implementation will utilize a source generator.
 
-## Pico.CFG
+## Pico.Cfg
 
 Stream-based configuration framework.
 

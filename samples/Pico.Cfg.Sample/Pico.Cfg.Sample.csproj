@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Configuration\Pico.CFG\Pico.CFG.csproj" />
+        <ProjectReference Include="..\..\src\Configuration\Pico.Cfg\Pico.Cfg.csproj" />
     </ItemGroup>
 
 </Project>

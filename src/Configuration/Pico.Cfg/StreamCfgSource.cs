@@ -1,10 +1,10 @@
-namespace Pico.CFG;
+namespace Pico.Cfg;
 
-public class StreamCFGSource(Func<Stream> streamFactory) : ICFGSource
+public class StreamCfgSource(Func<Stream> streamFactory) : ICfgSource
 {
-    public async ValueTask<ICFGProvider> BuildProviderAsync(CancellationToken ct = default)
+    public async ValueTask<ICfgProvider> BuildProviderAsync(CancellationToken ct = default)
     {
-        var provider = new StreamCFGProvider(streamFactory);
+        var provider = new StreamCfgProvider(streamFactory);
         await provider.LoadAsync(ct);
         return provider;
     }
