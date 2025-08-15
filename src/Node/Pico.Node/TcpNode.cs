@@ -20,7 +20,7 @@ public sealed class TcpNode : INode
     private readonly List<Task> _workerTasks = [];
 
     /// <summary>
-    /// Initializes a new instance of the TcpNodeV6 class.
+    /// Initializes a new instance of the TcpNode class.
     /// </summary>
     /// <param name="options">Configuration options for the TCP node.</param>
     /// <param name="handlerFactory">A factory function to create IPipelineHandler instances for each connection.</param>
@@ -35,7 +35,7 @@ public sealed class TcpNode : INode
         _handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        // Initialize the raw server socket, supporting IPv4 or IPv6 based on the IPAddress provided (V3's advantage)
+        // Initialize the raw server socket, supporting IPv4 or IPv6 based on the IPAddress provided
         _serverSocket = new Socket(
             _options.IpAddress.AddressFamily, // Use AddressFamily from options for IPv4/IPv6 flexibility
             SocketType.Stream, // For TCP, we use Stream sockets
@@ -101,7 +101,7 @@ public sealed class TcpNode : INode
                     _workerTasks.Add(RunWorkerAsync(i, linkedCts.Token));
                 }
 
-                // Log detailed startup information (V4's advantage)
+                // Log detailed startup information
                 _logger.Info(
                     $"TCP server started on {_options.IpAddress}:{_options.Port} (Max connections: {_options.MaxConcurrentConnections}, Channel capacity: {_options.ChannelCapacity}, Listen backlog: {_options.ListenBacklog})."
                 );
@@ -146,7 +146,7 @@ public sealed class TcpNode : INode
         }
         catch (SocketException sex) when (sex.SocketErrorCode == SocketError.OperationAborted)
         {
-            // Expected when the listening socket is closed (e.g., by StopServer) (V3's advantage)
+            // Expected when the listening socket is closed (e.g., by StopServer)
         }
         catch (Exception ex)
         {
