@@ -1,4 +1,4 @@
-﻿namespace Pico.Node.Abs;
+﻿namespace Pico.Node.Core;
 
 public interface INode : IAsyncDisposable
 {

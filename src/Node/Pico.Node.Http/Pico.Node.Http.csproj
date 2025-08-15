@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Logger\Pico.Logger.Abs\Pico.Logger.Abs.csproj" />
-        <ProjectReference Include="..\Pico.Node.Abs\Pico.Node.Abs.csproj" />
+        <ProjectReference Include="..\Pico.Node.Core\Pico.Node.Core.csproj" />
     </ItemGroup>
 
 </Project>

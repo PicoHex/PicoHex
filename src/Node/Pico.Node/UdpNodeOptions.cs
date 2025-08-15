@@ -1,14 +1,15 @@
 ﻿namespace Pico.Node;
 
-public sealed class UdpNodeOptions
+public class UdpNodeOptions
 {
-    public required IPAddress IpAddress { get; init; }
-    public required ushort Port { get; init; }
-    public Action<Exception, IPEndPoint>? ExceptionHandler { get; init; }
-    public int MaxConcurrency { get; init; } = 1000;
-    public Action<UdpClient>? ConfigureUdpClient { get; init; }
-    public int MaxQueueSize { get; init; } = 5000;
-    public TimeSpan StopTasksTimeout { get; init; } = TimeSpan.FromSeconds(5);
-    public TimeSpan DisposeServerTaskTimeout { get; init; } = TimeSpan.FromSeconds(5);
-    public TimeSpan DisposeProcessingTasksTimeout { get; init; } = TimeSpan.FromSeconds(5);
+    public IPAddress IpAddress { get; init; } = IPAddress.Any;
+    public int Port { get; init; } = 1337;
+    public int MaxConcurrency { get; set; } = Math.Max(4, Environment.ProcessorCount * 2);
+    public int MaxQueueSize { get; set; } = 1024;
+    public TimeSpan StopTasksTimeout { get; set; } = TimeSpan.FromSeconds(5);
+    public TimeSpan DisposeServerTaskTimeout { get; set; } = TimeSpan.FromSeconds(5);
+    public TimeSpan DisposeProcessingTasksTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    public Action<Socket>? ConfigureSocket { get; set; }
+    public int ReceiveBufferSize { get; set; } = 65536;
+    public Action<Exception, IPEndPoint>? ExceptionHandler { get; set; }
 }

@@ -15,7 +15,7 @@
         <ProjectReference Include="..\..\src\DependencyInjection\Pico.DI\Pico.DI.csproj" />
         <ProjectReference Include="..\..\src\Logger\Pico.Logger\Pico.Logger.csproj" />
         <ProjectReference Include="..\..\src\Node\Pico.Node\Pico.Node.csproj" />
-        <ProjectReference Include="..\..\src\Node\Pico.Node.Abs\Pico.Node.Abs.csproj" />
+        <ProjectReference Include="..\..\src\Node\Pico.Node.Core\Pico.Node.Core.csproj" />
     </ItemGroup>
 
 </Project>

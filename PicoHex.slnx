@@ -22,7 +22,7 @@
     <Project Path="src\Logger\Pico.Logger\Pico.Logger.csproj" Type="Classic C#" />
   </Folder>
   <Folder Name="/src/Node/">
-    <Project Path="src\Node\Pico.Node.Abs\Pico.Node.Abs.csproj" Type="Classic C#" />
+    <Project Path="src\Node\Pico.Node.Core\Pico.Node.Core.csproj" Type="Classic C#" />
     <Project Path="src\Node\Pico.Node.Http\Pico.Node.Http.csproj" Type="Classic C#" />
     <Project Path="src\Node\Pico.Node\Pico.Node.csproj" Type="Classic C#" />
   </Folder>

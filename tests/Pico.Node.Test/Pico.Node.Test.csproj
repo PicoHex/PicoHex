@@ -27,7 +27,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Logger\Pico.Logger\Pico.Logger.csproj" />
-        <ProjectReference Include="..\..\src\Node\Pico.Node.Abs\Pico.Node.Abs.csproj" />
+        <ProjectReference Include="..\..\src\Node\Pico.Node.Core\Pico.Node.Core.csproj" />
         <ProjectReference Include="..\..\src\Node\Pico.Node\Pico.Node.csproj" />
     </ItemGroup>
 

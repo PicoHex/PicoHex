@@ -12,13 +12,7 @@ public class UdpNodeTests
         var mockLogger = new Mock<ILogger<UdpNode>>();
 
         mockHandler
-            .Setup(h =>
-                h.HandleAsync(
-                    It.IsAny<ReadOnlyMemory<byte>>(),
-                    It.IsAny<IPEndPoint>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(h => h.HandleAsync(It.IsAny<PooledUdpMessage>(), It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
 
         var udpOption = new UdpNodeOptions { IpAddress = ipAddress, Port = port };
@@ -38,12 +32,7 @@ public class UdpNodeTests
 
         // Assert
         mockHandler.Verify(
-            h =>
-                h.HandleAsync(
-                    It.IsAny<ReadOnlyMemory<byte>>(),
-                    It.IsAny<IPEndPoint>(),
-                    It.IsAny<CancellationToken>()
-                ),
+            h => h.HandleAsync(It.IsAny<PooledUdpMessage>(), It.IsAny<CancellationToken>()),
             Times.Once
         );
 

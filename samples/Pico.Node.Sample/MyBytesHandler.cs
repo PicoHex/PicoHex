@@ -6,33 +6,32 @@ public class MyBytesHandler(ILogger<MyBytesHandler> logger) : IUdpHandler
         logger ?? throw new ArgumentNullException(nameof(logger));
 
     public async ValueTask HandleAsync(
-        ReadOnlyMemory<byte> data,
-        IPEndPoint remoteEndPoint,
+        PooledUdpMessage message,
         CancellationToken cancellationToken = default
     )
     {
         try
         {
-            var remoteIp = remoteEndPoint.ToString();
+            var remoteIp = message.RemoteEndPoint.ToString();
 
             await _logger.InfoAsync(
-                $"Received {data.Length} bytes from {remoteIp}",
+                $"Received {message.Data.Length} bytes from {remoteIp}",
                 cancellationToken
             );
 
-            var (hexDump, textDump) = FormatData(data);
+            var (hexDump, textDump) = FormatData(message.Data);
 
             await _logger.DebugAsync(
                 $"Data details from {remoteIp}:\n Hex: {hexDump}\n Text: {textDump}",
                 cancellationToken: cancellationToken
             );
 
-            ProcessPayload(data.Span);
+            ProcessPayload(message.Data.Span);
         }
         catch (Exception ex)
         {
             await _logger.ErrorAsync(
-                $"Error processing UDP data from {remoteEndPoint}",
+                $"Error processing UDP data from {message.RemoteEndPoint}",
                 ex,
                 cancellationToken
             );
