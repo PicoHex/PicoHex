@@ -1,6 +1,6 @@
 namespace Pico.Node;
 
-public sealed class TcpNode : INode
+public sealed class TcpNode : IAsyncDisposable
 {
     // Dependencies and Configuration
     private readonly TcpNodeOptions _options;
@@ -10,12 +10,12 @@ public sealed class TcpNode : INode
 
     // State Management
     private readonly CancellationTokenSource _serverCts = new();
-    private readonly Lock _stateLock = new(); // Assuming Lock is a simple object for locking
+    private readonly Lock _stateLock = new(); // Standard lock object
     private bool _isRunning;
     private bool _isDisposed;
 
     // Core Architecture Components
-    private Channel<TcpClient>? _connectionChannel;
+    private Channel<Socket>? _connectionChannel; // Changed from TcpClient to Socket
     private Task? _acceptorTask;
     private readonly List<Task> _workerTasks = [];
 
@@ -71,8 +71,8 @@ public sealed class TcpNode : INode
 
             try
             {
-                // Create the bounded channel to hold accepted client connections.
-                _connectionChannel = Channel.CreateBounded<TcpClient>(
+                // Create the bounded channel to hold accepted client sockets.
+                _connectionChannel = Channel.CreateBounded<Socket>(
                     new BoundedChannelOptions(_options.ChannelCapacity)
                     {
                         FullMode = BoundedChannelFullMode.Wait, // Wait for space, creating natural backpressure.
@@ -124,7 +124,7 @@ public sealed class TcpNode : INode
     {
         await _logger.InfoAsync(
             $"TCP Acceptor started on {_options.IpAddress}:{_options.Port}.",
-            cancellationToken: cancellationToken
+            cancellationToken
         );
         try
         {
@@ -134,10 +134,8 @@ public sealed class TcpNode : INode
                 // If the channel is full, the subsequent WriteAsync will pause, providing backpressure.
                 var acceptedSocket = await _serverSocket.AcceptAsync(cancellationToken);
 
-                // Wrap the accepted Socket in a TcpClient to maintain compatibility with ProcessConnectionAsync
-                var client = new TcpClient { Client = acceptedSocket };
-
-                await _connectionChannel!.Writer.WriteAsync(client, cancellationToken);
+                // Enqueue the raw socket directly for a worker to process.
+                await _connectionChannel!.Writer.WriteAsync(acceptedSocket, cancellationToken);
             }
         }
         catch (OperationCanceledException)
@@ -153,14 +151,14 @@ public sealed class TcpNode : INode
             await _logger.CriticalAsync(
                 "Acceptor loop encountered a fatal error.",
                 ex,
-                cancellationToken: cancellationToken
+                cancellationToken
             );
         }
         finally
         {
             // Mark the channel as complete, signaling to workers that no more items will be added.
             _connectionChannel?.Writer.Complete();
-            await _logger.InfoAsync("TCP Acceptor stopped.", cancellationToken: cancellationToken);
+            await _logger.InfoAsync("TCP Acceptor stopped.", cancellationToken);
         }
     }
 
@@ -169,28 +167,25 @@ public sealed class TcpNode : INode
     /// </summary>
     private async Task RunWorkerAsync(int workerId, CancellationToken cancellationToken)
     {
-        await _logger.InfoAsync(
-            $"Worker #{workerId} started.",
-            cancellationToken: cancellationToken
-        );
+        await _logger.InfoAsync($"Worker #{workerId} started.", cancellationToken);
         try
         {
             // This will loop until the channel is marked as complete and is empty.
-            await foreach (var client in _connectionChannel!.Reader.ReadAllAsync(cancellationToken))
+            await foreach (var socket in _connectionChannel!.Reader.ReadAllAsync(cancellationToken))
             {
                 // Process one client connection. A try/catch ensures that one failed client
                 // does not terminate the entire worker.
                 try
                 {
-                    await ProcessConnectionAsync(client, cancellationToken);
+                    await ProcessConnectionAsync(socket, cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    var remoteEndPoint = SafeGetIpEndPoint(client);
+                    var remoteEndPoint = SafeGetIpEndPoint(socket);
                     await _logger.ErrorAsync(
                         $"Unhandled exception in connection processing for '{remoteEndPoint}'. Worker continues.",
                         ex,
-                        cancellationToken: cancellationToken
+                        cancellationToken
                     );
                 }
             }
@@ -204,33 +199,32 @@ public sealed class TcpNode : INode
             await _logger.CriticalAsync(
                 $"Worker #{workerId} encountered a fatal error.",
                 ex,
-                cancellationToken: cancellationToken
+                cancellationToken
             );
         }
         finally
         {
-            await _logger.InfoAsync(
-                $"Worker #{workerId} stopped.",
-                cancellationToken: cancellationToken
-            );
+            await _logger.InfoAsync($"Worker #{workerId} stopped.", cancellationToken);
         }
     }
 
     /// <summary>
     /// Handles the lifecycle of a single client connection using System.IO.Pipelines.
     /// </summary>
-    private async Task ProcessConnectionAsync(TcpClient client, CancellationToken cancellationToken)
+    private async Task ProcessConnectionAsync(Socket socket, CancellationToken cancellationToken)
     {
-        using (client) // Ensure TcpClient (and its underlying Socket) is disposed
+        using (socket) // Ensure the socket is disposed when we are done.
         {
-            var remoteEndPoint = SafeGetIpEndPoint(client);
+            var remoteEndPoint = SafeGetIpEndPoint(socket);
             await _logger.DebugAsync(
                 $"Processing connection from: {remoteEndPoint}",
-                cancellationToken: cancellationToken
+                cancellationToken
             );
 
-            // Get the NetworkStream from the TcpClient
-            var stream = client.GetStream();
+            // Create a NetworkStream from the socket.
+            // We specify `ownsSocket: false` because the `using(socket)` block is already responsible for its disposal.
+            await using var stream = new NetworkStream(socket, ownsSocket: false);
+
             // Create PipeReader and PipeWriter from the NetworkStream
             var reader = PipeReader.Create(stream);
             var writer = PipeWriter.Create(stream);
@@ -243,14 +237,14 @@ public sealed class TcpNode : INode
             }
             catch (OperationCanceledException)
             {
-                // Normal cancellation
+                // Normal cancellation during graceful shutdown.
             }
             catch (Exception ex)
             {
                 await _logger.ErrorAsync(
                     $"Error processing connection from {remoteEndPoint}.",
                     ex,
-                    cancellationToken: cancellationToken
+                    cancellationToken
                 );
                 _options.ExceptionHandler?.Invoke(ex, remoteEndPoint);
             }
@@ -271,7 +265,7 @@ public sealed class TcpNode : INode
                 }
                 await _logger.DebugAsync(
                     $"Finished connection from: {remoteEndPoint}",
-                    cancellationToken: cancellationToken
+                    cancellationToken
                 );
             }
         }
@@ -305,6 +299,7 @@ public sealed class TcpNode : INode
                 timeoutCts.Token
             );
             await Task.WhenAll(allTasks).WaitAsync(linkedCts.Token);
+            await _logger.InfoAsync("Server stopped gracefully.", linkedCts.Token);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -318,7 +313,7 @@ public sealed class TcpNode : INode
             await _logger.WarningAsync(
                 $"Graceful shutdown timed out or failed after {_options.StopTimeout.TotalSeconds} seconds.",
                 ex,
-                cancellationToken: cancellationToken
+                cancellationToken
             );
         }
     }
@@ -341,9 +336,9 @@ public sealed class TcpNode : INode
                 // Close the server socket to stop accepting new connections
                 _serverSocket.Close();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _logger.Warning("Error closing server socket.");
+                _logger.Warning("Error closing server socket.", ex);
             }
         }
     }
@@ -367,15 +362,15 @@ public sealed class TcpNode : INode
     }
 
     /// <summary>
-    /// Safely retrieves the IPEndPoint of a TcpClient.
+    /// Safely retrieves the IPEndPoint of a Socket.
     /// </summary>
-    /// <param name="client">The TcpClient instance.</param>
+    /// <param name="socket">The Socket instance.</param>
     /// <returns>The IPEndPoint or null if it cannot be retrieved.</returns>
-    private static IPEndPoint? SafeGetIpEndPoint(TcpClient client)
+    private static IPEndPoint? SafeGetIpEndPoint(Socket socket)
     {
         try
         {
-            return client.Client.RemoteEndPoint as IPEndPoint;
+            return socket.RemoteEndPoint as IPEndPoint;
         }
         catch
         {

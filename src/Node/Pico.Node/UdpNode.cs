@@ -1,5 +1,9 @@
 ﻿namespace Pico.Node;
 
+/// <summary>
+/// A high-performance UDP server node that orchestrates receiving and processing datagrams.
+/// It uses a UdpListener for data production and a bounded channel with a semaphore for consumption.
+/// </summary>
 public sealed class UdpNode : INode
 {
     private readonly UdpNodeOptions _options;
@@ -7,15 +11,15 @@ public sealed class UdpNode : INode
     private readonly Func<IUdpHandler> _udpHandlerFactory;
     private readonly SemaphoreSlim _concurrencyLimiter;
 
+    private UdpListener? _listener;
+
     private volatile bool _isDisposed;
     private readonly CancellationTokenSource _serverCts = new();
-    private readonly Lock _stateLock = new(); // 锁对象
+    private readonly Lock _stateLock = new();
     private bool _isRunning;
-    private Socket? _socket;
+
     private Task? _receiverTask;
     private Task? _processorTask;
-
-    // 核心改动：Channel 的类型变更为 PooledUdpMessage
     private Channel<PooledUdpMessage>? _processingQueue;
     private readonly ConcurrentDictionary<Task, bool> _activeTasks = new();
 
@@ -59,15 +63,9 @@ public sealed class UdpNode : INode
 
             try
             {
-                _socket = new Socket(
-                    AddressFamily.InterNetwork,
-                    SocketType.Dgram,
-                    ProtocolType.Udp
-                );
-                _socket.Bind(new IPEndPoint(_options.IpAddress, _options.Port));
-                _options.ConfigureSocket?.Invoke(_socket);
+                // Create the UdpListener which will handle all socket operations.
+                _listener = new UdpListener(_options, _logger);
 
-                // 核心改动：创建存储 PooledUdpMessage 的 Channel
                 _processingQueue = Channel.CreateBounded<PooledUdpMessage>(
                     new BoundedChannelOptions(_options.MaxQueueSize)
                     {
@@ -79,8 +77,8 @@ public sealed class UdpNode : INode
             }
             catch (Exception ex)
             {
-                _logger.CriticalAsync("Failed to initialize UDP server", ex, cancellationToken);
-                _socket?.Dispose();
+                _logger.CriticalAsync("Failed to initialize UdpNode", ex, cancellationToken);
+                _listener?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(1), cancellationToken); // Best effort cleanup
                 throw;
             }
 
@@ -90,6 +88,10 @@ public sealed class UdpNode : INode
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// The "Producer" part of the pipeline. Consumes the async stream from UdpListener
+    /// and writes messages into the processing channel.
+    /// </summary>
     private async Task RunReceiverAsync(CancellationToken externalToken)
     {
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -98,87 +100,48 @@ public sealed class UdpNode : INode
         );
         var serverToken = linkedCts.Token;
 
-        await SafeLogAsync(
-            () =>
-                _logger.InfoAsync(
-                    $"UDP receiver started on {_options.IpAddress}:{_options.Port}",
-                    serverToken
-                ),
-            serverToken
-        );
-
-        EndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
+        await _logger.InfoAsync("UdpNode message producer started", serverToken);
 
         try
         {
-            while (!serverToken.IsCancellationRequested)
+            // Consume the async stream of messages from the listener.
+            await foreach (var message in _listener!.ListenAsync(serverToken))
             {
-                // 核心改动：从内存池租用缓冲区
-                var rentedBuffer = ArrayPool<byte>.Shared.Rent(_options.ReceiveBufferSize);
-                try
-                {
-                    var receiveResult = await _socket!.ReceiveFromAsync(
-                        rentedBuffer,
-                        SocketFlags.None,
-                        remoteEndPoint,
-                        serverToken
-                    );
+                if (_processingQueue!.Writer.TryWrite(message))
+                    continue;
+                // If the queue is full, the message is dropped.
+                // We must dispose it to return the buffer to the pool.
+                message.Dispose();
 
-                    var message = new PooledUdpMessage(
-                        rentedBuffer,
-                        receiveResult.ReceivedBytes,
-                        (IPEndPoint)receiveResult.RemoteEndPoint
-                    );
-
-                    if (!_processingQueue!.Writer.TryWrite(message))
-                    {
-                        // 如果队列已满，消息被丢弃，必须立即归还缓冲区以防泄漏
-                        message.Dispose();
-                        await SafeLogAsync(
-                            () =>
-                                _logger.WarningAsync(
-                                    "UDP processing queue full, datagram dropped",
-                                    cancellationToken: serverToken
-                                ),
-                            serverToken
-                        );
-                    }
-                }
-                catch (OperationCanceledException) when (serverToken.IsCancellationRequested)
-                {
-                    ArrayPool<byte>.Shared.Return(rentedBuffer); // 取消时也要归还
-                    break;
-                }
-                catch (SocketException ex)
-                {
-                    ArrayPool<byte>.Shared.Return(rentedBuffer); // 异常时也要归还
-                    await HandleSocketExceptionAsync(ex, serverToken);
-                }
-                catch (ObjectDisposedException)
-                {
-                    ArrayPool<byte>.Shared.Return(rentedBuffer); // 正常停止时归还
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    ArrayPool<byte>.Shared.Return(rentedBuffer); // 其他异常时归还
-                    await SafeLogAsync(
-                        () => _logger.ErrorAsync("UDP receiver error", ex, serverToken),
-                        serverToken
-                    );
-                }
+                await _logger.WarningAsync(
+                    "UDP processing queue full; datagram dropped",
+                    cancellationToken: serverToken
+                );
             }
+        }
+        catch (OperationCanceledException)
+        { /* Normal shutdown */
+        }
+        catch (Exception ex)
+        {
+            await _logger.CriticalAsync(
+                "UdpNode message producer failed critically",
+                ex,
+                serverToken
+            );
+            StopServer(); // Trigger a shutdown of the entire node
         }
         finally
         {
             _processingQueue?.Writer.Complete();
-            await SafeLogAsync(
-                () => _logger.InfoAsync("UDP receiver stopped", CancellationToken.None),
-                CancellationToken.None
-            );
+            await _logger.InfoAsync("UdpNode message producer stopped", CancellationToken.None);
         }
     }
 
+    /// <summary>
+    /// The "Consumer" part of the pipeline. Reads from the channel and dispatches
+    /// messages to concurrent processing tasks.
+    /// </summary>
     private async Task RunProcessorAsync(CancellationToken externalToken)
     {
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -187,21 +150,17 @@ public sealed class UdpNode : INode
         );
         var serverToken = linkedCts.Token;
 
-        await SafeLogAsync(
-            () => _logger.InfoAsync("UDP processor started", serverToken),
-            serverToken
-        );
+        await _logger.InfoAsync("UdpNode processor started", serverToken);
         if (_processingQueue == null)
             return;
 
         try
         {
-            // 核心改动：从队列读取 PooledUdpMessage
             await foreach (var message in _processingQueue.Reader.ReadAllAsync(serverToken))
             {
                 if (serverToken.IsCancellationRequested)
                 {
-                    message.Dispose(); // 确保未处理的消息也被释放
+                    message.Dispose(); // Ensure unprocessed messages are disposed
                     break;
                 }
 
@@ -211,7 +170,6 @@ public sealed class UdpNode : INode
                         try
                         {
                             await _concurrencyLimiter.WaitAsync(serverToken);
-                            // 核心改动：将 message 传递给处理方法
                             await ProcessDatagramAsync(message, serverToken);
                         }
                         finally
@@ -234,27 +192,24 @@ public sealed class UdpNode : INode
         }
         catch (Exception ex)
         {
-            await SafeLogAsync(
-                () => _logger.ErrorAsync("UDP processor error", ex, serverToken),
-                serverToken
-            );
+            await _logger.ErrorAsync("UdpNode processor error", ex, serverToken);
         }
         finally
         {
-            await SafeLogAsync(
-                () => _logger.InfoAsync("UDP processor stopped", CancellationToken.None),
-                CancellationToken.None
-            );
+            await _logger.InfoAsync("UdpNode processor stopped", CancellationToken.None);
         }
     }
 
-    // 核心改动：方法签名和实现已更新
+    /// <summary>
+    /// Processes a single datagram by invoking the provided handler.
+    /// Ensures the message buffer is returned to the pool.
+    /// </summary>
     private async Task ProcessDatagramAsync(
         PooledUdpMessage message,
         CancellationToken cancellationToken
     )
     {
-        // 使用 using 语句确保无论如何缓冲区都会被归还给内存池
+        // The 'using' statement ensures message.Dispose() is called, returning the buffer to the pool.
         using (message)
         {
             IUdpHandler? handler = null;
@@ -268,13 +223,9 @@ public sealed class UdpNode : INode
             }
             catch (Exception ex)
             {
-                await SafeLogAsync(
-                    () =>
-                        _logger.ErrorAsync(
-                            $"Error processing UDP datagram from {message.RemoteEndPoint}",
-                            ex,
-                            cancellationToken
-                        ),
+                await _logger.ErrorAsync(
+                    $"Error processing datagram from {message.RemoteEndPoint}",
+                    ex,
                     cancellationToken
                 );
                 try
@@ -283,13 +234,9 @@ public sealed class UdpNode : INode
                 }
                 catch (Exception handlerEx)
                 {
-                    await SafeLogAsync(
-                        () =>
-                            _logger.ErrorAsync(
-                                "Exception handler failed",
-                                handlerEx,
-                                cancellationToken
-                            ),
+                    await _logger.ErrorAsync(
+                        "Exception handler failed",
+                        handlerEx,
                         cancellationToken
                     );
                 }
@@ -309,38 +256,6 @@ public sealed class UdpNode : INode
         }
     }
 
-    // --- 其余方法 (HandleSocketExceptionAsync, StopAsync, DisposeAsync, etc.) 保持不变 ---
-    // --- 因为它们不直接处理数据缓冲区，所以无需修改。为保持完整性，在此全部包含。 ---
-
-    private async Task HandleSocketExceptionAsync(SocketException ex, CancellationToken token)
-    {
-        if (IsCriticalSocketError(ex.SocketErrorCode))
-        {
-            await SafeLogAsync(
-                () =>
-                    _logger.CriticalAsync(
-                        $"Critical UDP socket error: {ex.SocketErrorCode}",
-                        ex,
-                        token
-                    ),
-                token
-            );
-            StopServer();
-        }
-        else
-        {
-            await SafeLogAsync(
-                () =>
-                    _logger.WarningAsync(
-                        $"Non-critical UDP socket error: {ex.SocketErrorCode}",
-                        ex,
-                        token
-                    ),
-                token
-            );
-        }
-    }
-
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
         StopServer();
@@ -354,13 +269,9 @@ public sealed class UdpNode : INode
             }
             catch (TimeoutException)
             {
-                await SafeLogAsync(
-                    () =>
-                        _logger.WarningAsync(
-                            "Timeout waiting for tasks during shutdown",
-                            cancellationToken: cancellationToken
-                        ),
-                    CancellationToken.None
+                await _logger.WarningAsync(
+                    "Timeout waiting for tasks during shutdown",
+                    cancellationToken: cancellationToken
                 );
             }
             catch (OperationCanceledException)
@@ -368,14 +279,10 @@ public sealed class UdpNode : INode
             }
             catch (AggregateException ae)
             {
-                await SafeLogAsync(
-                    () =>
-                        _logger.ErrorAsync(
-                            "Errors during task shutdown",
-                            ae.Flatten(),
-                            cancellationToken
-                        ),
-                    CancellationToken.None
+                await _logger.ErrorAsync(
+                    "Errors during task shutdown",
+                    ae.Flatten(),
+                    cancellationToken
                 );
             }
         }
@@ -388,21 +295,8 @@ public sealed class UdpNode : INode
             if (!_isRunning)
                 return;
 
-            _serverCts.Cancel();
+            _serverCts.Cancel(); // This cancellation signal propagates to the listener and processor.
             _isRunning = false;
-
-            try
-            {
-                _socket?.Close();
-            }
-            catch (Exception ex)
-            {
-                _logger.WarningAsync("Error closing UDP socket", ex);
-            }
-            finally
-            {
-                _socket = null;
-            }
         }
     }
 
@@ -425,6 +319,11 @@ public sealed class UdpNode : INode
                 "processor",
                 _options.DisposeServerTaskTimeout
             );
+
+            if (_listener != null)
+            {
+                await _listener.DisposeAsync();
+            }
 
             if (!_activeTasks.IsEmpty)
             {
@@ -454,7 +353,6 @@ public sealed class UdpNode : INode
             {
                 if (!_isDisposed)
                 {
-                    _socket?.Dispose();
                     _serverCts.Dispose();
                     _concurrencyLimiter.Dispose();
                     _isDisposed = true;
@@ -480,40 +378,4 @@ public sealed class UdpNode : INode
             await _logger.WarningAsync($"{taskName} task error during disposal", ex);
         }
     }
-
-    private async ValueTask SafeLogAsync(
-        Func<ValueTask> logAction,
-        CancellationToken cancellationToken
-    )
-    {
-        if (cancellationToken.IsCancellationRequested)
-            return;
-        try
-        {
-            await logAction();
-        }
-        catch (Exception ex)
-        {
-            try
-            {
-                await _logger.WarningAsync("Failed to write log message", ex, cancellationToken);
-            }
-            catch
-            { /* Final fallback - ignore */
-            }
-        }
-    }
-
-    private static bool IsCriticalSocketError(SocketError error) =>
-        error switch
-        {
-            SocketError.AccessDenied
-            or SocketError.AddressAlreadyInUse
-            or SocketError.AddressNotAvailable
-            or SocketError.InvalidArgument
-            or SocketError.Shutdown
-            or SocketError.ConnectionReset
-                => true,
-            _ => false
-        };
 }

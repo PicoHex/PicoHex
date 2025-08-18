@@ -1,5 +1,9 @@
 namespace Pico.Node.Core;
 
+/// <summary>
+/// Represents a UDP message with a buffer rented from the shared ArrayPool.
+/// This struct MUST be disposed to return the buffer to the pool.
+/// </summary>
 public readonly struct PooledUdpMessage(
     byte[] rentedBuffer,
     int dataLength,
@@ -7,23 +11,20 @@ public readonly struct PooledUdpMessage(
 ) : IDisposable
 {
     /// <summary>
-    /// 包含接收到的数据的内存段。
+    /// A memory segment representing the received datagram.
     /// </summary>
     public ReadOnlyMemory<byte> Data { get; } = new(rentedBuffer, 0, dataLength);
 
     /// <summary>
-    /// 发送数据的远程终结点。
+    /// The remote endpoint from which the datagram was received.
     /// </summary>
     public IPEndPoint RemoteEndPoint { get; } = remoteEndPoint;
 
     /// <summary>
-    /// 将内部缓冲区归还给内存池。
+    /// Returns the internal buffer to the ArrayPool.
     /// </summary>
     public void Dispose()
     {
-        if (rentedBuffer != null)
-        {
-            ArrayPool<byte>.Shared.Return(rentedBuffer);
-        }
+        ArrayPool<byte>.Shared.Return(rentedBuffer);
     }
 }
