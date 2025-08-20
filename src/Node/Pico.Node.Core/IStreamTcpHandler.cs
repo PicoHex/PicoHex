@@ -1,20 +1,18 @@
 ﻿namespace Pico.Node.Core;
 
 /// <summary>
-/// High-performance TCP handler interface
+/// Stream-based TCP handler interface (compatibility mode)
 /// </summary>
-public interface ITcpHandler
+public interface IStreamTcpHandler
 {
     /// <summary>
-    /// Handles TCP connection (based on PipeReader/PipeWriter)
+    /// Handles TCP connection (based on Stream)
     /// </summary>
-    /// <param name="reader">Data reader</param>
-    /// <param name="writer">Data writer</param>
+    /// <param name="stream">Network stream</param>
     /// <param name="remoteEndPoint">Remote endpoint</param>
     /// <param name="cancellationToken">Cancellation token</param>
     ValueTask HandleAsync(
-        PipeReader reader,
-        PipeWriter writer,
+        Stream stream,
         IPEndPoint remoteEndPoint,
         CancellationToken cancellationToken = default
     );

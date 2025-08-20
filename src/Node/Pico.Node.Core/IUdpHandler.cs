@@ -1,15 +1,22 @@
-﻿// Updated handler interface
-namespace Pico.Node.Core;
+﻿namespace Pico.Node.Core;
 
+/// <summary>
+/// High-performance UDP handler interface
+/// </summary>
 public interface IUdpHandler
 {
     /// <summary>
-    /// 异步处理一个 UDP 消息。
+    /// Handles received UDP data (zero-copy version)
     /// </summary>
-    /// <param name="message">包含数据和来源的池化消息对象。</param>
-    /// <param name="cancellationToken">取消令牌。</param>
+    /// <param name="data">Received data (memory segment)</param>
+    /// <param name="remoteEndPoint">Remote endpoint</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <remarks>
-    /// 实现者不需要手动 Dispose message 对象，UdpNode 会在使用后自动处理。
+    /// Implementations should not hold references to data for extended periods as the underlying buffer may be reused
     /// </remarks>
-    ValueTask HandleAsync(PooledUdpMessage message, CancellationToken cancellationToken);
+    ValueTask HandleAsync(
+        ReadOnlyMemory<byte> data,
+        IPEndPoint remoteEndPoint,
+        CancellationToken cancellationToken = default
+    );
 }

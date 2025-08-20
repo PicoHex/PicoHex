@@ -1,6 +1,6 @@
 namespace Pico.Node.Sample;
 
-public class SimpleStreamHandler : ITcpHandler
+public class SimpleStreamHandler : IStreamTcpHandler
 {
     public async ValueTask HandleAsync(NetworkStream stream, CancellationToken cancellationToken)
     {
