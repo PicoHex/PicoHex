@@ -3,12 +3,14 @@
 /// <summary>
 /// High-performance UDP node
 /// </summary>
-public class UdpNode : IDisposable
+public class UdpNode : INode
 {
     private readonly UdpSocket _udpSocket;
     private readonly IUdpHandler _handler;
+    private readonly IPEndPoint _localEndPoint;
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
+    private bool _started;
 
     /// <summary>
     /// Creates a high-performance UDP node
@@ -16,36 +18,39 @@ public class UdpNode : IDisposable
     public UdpNode(IUdpHandler handler, IPEndPoint localEndPoint)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        _localEndPoint = localEndPoint;
         _udpSocket = new UdpSocket();
+    }
 
-        // Bind to specified endpoint or random port
-        _udpSocket.Bind(localEndPoint);
+    /// <summary>
+    /// Asynchronously starts the node
+    /// </summary>
+    public ValueTask StartAsync(CancellationToken cancellationToken = default)
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(UdpNode));
+        if (_started)
+            throw new InvalidOperationException("Already started");
 
-        // Subscribe to data received event
+        _udpSocket.Bind(_localEndPoint);
         _udpSocket.DataReceived += OnDataReceived;
+        _started = true;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
-    /// Local endpoint
+    /// Asynchronously stops the node
     /// </summary>
-    public IPEndPoint LocalEndPoint => _udpSocket.LocalEndPoint;
-
-    /// <summary>
-    /// Asynchronously sends data (using memory pool)
-    /// </summary>
-    public ValueTask SendAsync(ReadOnlyMemory<byte> data, IPEndPoint remoteEndPoint)
+    public ValueTask StopAsync(CancellationToken cancellationToken = default)
     {
-        return _disposed
-            ? throw new ObjectDisposedException(nameof(UdpNode))
-            : _udpSocket.SendAsync(data, remoteEndPoint);
-    }
+        if (_disposed || !_started)
+            return ValueTask.CompletedTask;
 
-    /// <summary>
-    /// Asynchronously sends data (using memory pool)
-    /// </summary>
-    public ValueTask SendAsync(byte[] data, IPEndPoint remoteEndPoint)
-    {
-        return SendAsync(data.AsMemory(), remoteEndPoint);
+        _started = false;
+        _cts.Cancel();
+        _udpSocket.DataReceived -= OnDataReceived;
+        _udpSocket.Dispose();
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -53,7 +58,7 @@ public class UdpNode : IDisposable
     /// </summary>
     private async void OnDataReceived(ReadOnlyMemory<byte> data, EndPoint remoteEndPoint)
     {
-        if (_disposed || _cts.IsCancellationRequested)
+        if (_disposed || !_started || _cts.IsCancellationRequested)
             return;
 
         try
@@ -77,16 +82,15 @@ public class UdpNode : IDisposable
     }
 
     /// <summary>
-    /// Releases resources
+    /// Releases resources asynchronously
     /// </summary>
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
 
         _disposed = true;
-        _cts.Cancel();
-        _udpSocket.Dispose();
+        await StopAsync();
         _cts.Dispose();
         GC.SuppressFinalize(this);
     }

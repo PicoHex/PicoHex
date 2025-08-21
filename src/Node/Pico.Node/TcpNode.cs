@@ -3,10 +3,12 @@
 /// <summary>
 /// High-performance TCP node
 /// </summary>
-public class TcpNode : IDisposable
+public class TcpNode : INode
 {
     private readonly Socket _listenerSocket;
     private readonly ITcpHandler _handler;
+    private readonly IPEndPoint _localEndPoint;
+    private readonly int _backlog;
     private readonly CancellationTokenSource _cts = new();
     private readonly ConcurrentDictionary<Guid, TcpClientConnection> _connections = new();
     private bool _disposed;
@@ -15,9 +17,16 @@ public class TcpNode : IDisposable
     /// <summary>
     /// Creates a high-performance TCP node
     /// </summary>
-    public TcpNode(ITcpHandler handler, AddressFamily addressFamily = AddressFamily.InterNetwork)
+    public TcpNode(
+        ITcpHandler handler,
+        IPEndPoint localEndPoint,
+        int backlog = 100,
+        AddressFamily addressFamily = AddressFamily.InterNetwork
+    )
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        _localEndPoint = localEndPoint;
+        _backlog = backlog;
         _listenerSocket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
 
         // Configure high-performance options
@@ -26,9 +35,9 @@ public class TcpNode : IDisposable
     }
 
     /// <summary>
-    /// Starts listening
+    /// Asynchronously starts the node
     /// </summary>
-    public async Task StartAsync(IPEndPoint localEndPoint, int backlog = 100)
+    public ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(TcpNode));
@@ -37,20 +46,52 @@ public class TcpNode : IDisposable
 
         try
         {
-            _listenerSocket.Bind(localEndPoint);
-            _listenerSocket.Listen(backlog);
+            _listenerSocket.Bind(_localEndPoint);
+            _listenerSocket.Listen(_backlog);
             _listening = true;
 
             // Start accepting client connections
             _ = Task.Run(() => AcceptClientsAsync(_cts.Token), _cts.Token);
 
-            Console.WriteLine($"High-performance TCP server started on {localEndPoint}");
+            Console.WriteLine($"High-performance TCP server started on {_localEndPoint}");
+            return ValueTask.CompletedTask;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error starting TCP server: {ex.Message}");
             throw;
         }
+    }
+
+    /// <summary>
+    /// Asynchronously stops the node
+    /// </summary>
+    public ValueTask StopAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_listening)
+            return ValueTask.CompletedTask;
+
+        _listening = false;
+        _cts.Cancel();
+
+        // Close all connections
+        foreach (var connection in _connections.Values)
+        {
+            connection.Dispose();
+        }
+        _connections.Clear();
+
+        // Close listener socket
+        try
+        {
+            _listenerSocket.Close();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error stopping TCP server: {ex.Message}");
+        }
+
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -128,10 +169,10 @@ public class TcpNode : IDisposable
             try
             {
                 // Get memory from PipeWriter
-                Memory<byte> memory = writer.GetMemory(minimumBufferSize);
+                var memory = writer.GetMemory(minimumBufferSize);
 
                 // Read data from socket
-                int bytesRead = await socket.ReceiveAsync(
+                var bytesRead = await socket.ReceiveAsync(
                     memory,
                     SocketFlags.None,
                     cancellationToken
@@ -145,7 +186,7 @@ public class TcpNode : IDisposable
                 writer.Advance(bytesRead);
 
                 // Make data available to PipeReader
-                FlushResult result = await writer.FlushAsync(cancellationToken);
+                var result = await writer.FlushAsync(cancellationToken);
 
                 if (result.IsCompleted)
                 {
@@ -199,44 +240,15 @@ public class TcpNode : IDisposable
     }
 
     /// <summary>
-    /// Stops the server
+    /// Releases resources asynchronously
     /// </summary>
-    public void Stop()
-    {
-        if (!_listening)
-            return;
-
-        _listening = false;
-
-        // Close all connections
-        foreach (var connection in _connections.Values)
-        {
-            connection.Dispose();
-        }
-        _connections.Clear();
-
-        // Close listener socket
-        try
-        {
-            _listenerSocket.Close();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error stopping TCP server: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Releases resources
-    /// </summary>
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
 
         _disposed = true;
-        _cts.Cancel();
-        Stop();
+        await StopAsync();
         _cts.Dispose();
         _listenerSocket.Dispose();
         GC.SuppressFinalize(this);
