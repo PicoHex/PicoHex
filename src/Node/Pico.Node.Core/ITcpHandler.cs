@@ -1,17 +1,7 @@
 ﻿namespace Pico.Node.Core;
 
-/// <summary>
-/// High-performance TCP handler interface
-/// </summary>
 public interface ITcpHandler
 {
-    /// <summary>
-    /// Handles TCP connection (based on PipeReader/PipeWriter)
-    /// </summary>
-    /// <param name="reader">Data reader</param>
-    /// <param name="writer">Data writer</param>
-    /// <param name="remoteEndPoint">Remote endpoint</param>
-    /// <param name="cancellationToken">Cancellation token</param>
     ValueTask HandleAsync(
         PipeReader reader,
         PipeWriter writer,

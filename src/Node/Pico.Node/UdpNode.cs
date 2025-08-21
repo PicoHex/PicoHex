@@ -69,9 +69,9 @@ public class UdpNode : INode
             await _handler.HandleAsync(data, remoteIpEndPoint, _cts.Token);
 
             // If handler implements IPooledUdpHandler, notify it that processing is complete
-            if (_handler is IPooledUdpHandler pooledHandler)
+            if (_handler is IUdpHandler pooledHandler)
             {
-                pooledHandler.OnHandled();
+                pooledHandler.HandleAsync()
             }
         }
         catch (Exception ex)
