@@ -1,256 +1,256 @@
 ﻿namespace Pico.Node;
 
 /// <summary>
-/// High-performance TCP node
+/// TCP server node implementation using Pipe for stream processing
+/// and SemaphoreSlim for connection limiting
 /// </summary>
-public class TcpNode : INode
+public sealed class TcpNode : INode
 {
     private readonly Socket _listenerSocket;
-    private readonly ITcpHandler _handler;
-    private readonly IPEndPoint _localEndPoint;
-    private readonly int _backlog;
+    private readonly Func<ITcpHandler> _handlerFactory;
+    private readonly ILogger<TcpNode> _logger;
+    private readonly SemaphoreSlim _connectionLimiter;
+    private readonly int _backlogSize;
     private readonly CancellationTokenSource _cts = new();
-    private readonly ConcurrentDictionary<Guid, TcpClientConnection> _connections = new();
     private bool _disposed;
-    private bool _listening;
 
     /// <summary>
-    /// Creates a high-performance TCP node
+    /// Initializes a new instance of the TcpNode class
     /// </summary>
-    public TcpNode(
-        ITcpHandler handler,
-        IPEndPoint localEndPoint,
-        int backlog = 100,
-        AddressFamily addressFamily = AddressFamily.InterNetwork
-    )
+    public TcpNode(TcpNodeOptions options)
     {
-        _handler = handler ?? throw new ArgumentNullException(nameof(handler));
-        _localEndPoint = localEndPoint;
-        _backlog = backlog;
-        _listenerSocket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+        ArgumentNullException.ThrowIfNull(options);
+        if (options.Endpoint == null)
+            throw new ArgumentException("Endpoint is required", nameof(options));
 
-        // Configure high-performance options
-        _listenerSocket.NoDelay = true; // Disable Nagle's algorithm
-        _listenerSocket.LingerState = new LingerOption(false, 0); // Disable lingering close
+        _handlerFactory =
+            options.HandlerFactory
+            ?? throw new ArgumentException("Handler is required", nameof(options));
+        _listenerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        _logger = options.Logger;
+        _connectionLimiter = new SemaphoreSlim(options.MaxConnections, options.MaxConnections);
+        _backlogSize = options.BacklogSize;
+
+        // Configure socket options
+        _listenerSocket.NoDelay = options.NoDelay;
+        _listenerSocket.LingerState = options.LingerState;
+        _listenerSocket.Bind(options.Endpoint);
     }
 
     /// <summary>
-    /// Asynchronously starts the node
+    /// Starts the TCP server
     /// </summary>
-    public ValueTask StartAsync(CancellationToken cancellationToken = default)
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Task representing the server operation</returns>
+    public async ValueTask StartAsync(CancellationToken ct = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(TcpNode));
-        if (_listening)
-            throw new InvalidOperationException("Already listening");
+        await _logger.InfoAsync("Starting TCP server...", cancellationToken: ct);
+
+        // Combine the provided token with our internal token
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, _cts.Token);
+        var linkedToken = linkedCts.Token;
+
+        _listenerSocket.Listen(_backlogSize);
+
+        await _logger.InfoAsync(
+            $"TCP server started and listening on {_listenerSocket.LocalEndPoint}",
+            cancellationToken: linkedToken
+        );
 
         try
         {
-            _listenerSocket.Bind(_localEndPoint);
-            _listenerSocket.Listen(_backlog);
-            _listening = true;
-
-            // Start accepting client connections
-            _ = Task.Run(() => AcceptClientsAsync(_cts.Token), _cts.Token);
-
-            Console.WriteLine($"High-performance TCP server started on {_localEndPoint}");
-            return ValueTask.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error starting TCP server: {ex.Message}");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Asynchronously stops the node
-    /// </summary>
-    public ValueTask StopAsync(CancellationToken cancellationToken = default)
-    {
-        if (!_listening)
-            return ValueTask.CompletedTask;
-
-        _listening = false;
-        _cts.Cancel();
-
-        // Close all connections
-        foreach (var connection in _connections.Values)
-        {
-            connection.Dispose();
-        }
-        _connections.Clear();
-
-        // Close listener socket
-        try
-        {
-            _listenerSocket.Close();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error stopping TCP server: {ex.Message}");
-        }
-
-        return ValueTask.CompletedTask;
-    }
-
-    /// <summary>
-    /// Asynchronously accepts client connections
-    /// </summary>
-    private async Task AcceptClientsAsync(CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
+            // Main accept loop
+            while (!linkedToken.IsCancellationRequested)
             {
-                Socket clientSocket = await _listenerSocket.AcceptAsync(cancellationToken);
-
-                // Configure client socket
-                clientSocket.NoDelay = true;
-                clientSocket.LingerState = new LingerOption(false, 0);
-
-                // Create client connection and process
-                var connection = new TcpClientConnection(clientSocket);
-                if (_connections.TryAdd(connection.Id, connection))
+                try
                 {
-                    // Process connection in background
-                    _ = Task.Run(
-                        () => ProcessConnectionAsync(connection, cancellationToken),
-                        cancellationToken
+                    // Wait for a connection slot if we're at the limit
+                    await _connectionLimiter.WaitAsync(linkedToken);
+
+                    // Accept the next connection
+                    var clientSocket = await _listenerSocket.AcceptAsync(linkedToken);
+
+                    // Process the connection without awaiting (fire and forget)
+                    _ = ProcessClientAsync(clientSocket, linkedToken)
+                        .ContinueWith(
+                            async t =>
+                            {
+                                // Ensure the semaphore is released even if the task fails
+                                _connectionLimiter.Release();
+
+                                if (t.IsFaulted)
+                                {
+                                    await _logger.ErrorAsync(
+                                        "Error processing client connection",
+                                        t.Exception,
+                                        cancellationToken: linkedToken
+                                    );
+                                }
+                            },
+                            TaskScheduler.Default
+                        );
+                }
+                catch (OperationCanceledException) when (linkedToken.IsCancellationRequested)
+                {
+                    // Normal shutdown
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    await _logger.ErrorAsync(
+                        "Error accepting TCP connection",
+                        ex,
+                        cancellationToken: linkedToken
                     );
+                    await Task.Delay(1000, linkedToken); // Avoid tight loop on errors
                 }
             }
-            catch (OperationCanceledException)
-            {
-                // Normal cancellation
-                break;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error accepting client: {ex.Message}");
-            }
+        }
+        finally
+        {
+            await _logger.InfoAsync("TCP server stopped", cancellationToken: linkedToken);
         }
     }
 
     /// <summary>
-    /// Processes client connection (using System.IO.Pipelines)
+    /// Processes an individual client connection using Pipe for efficient stream processing
     /// </summary>
-    private async Task ProcessConnectionAsync(
-        TcpClientConnection connection,
-        CancellationToken cancellationToken
-    )
+    /// <param name="clientSocket">The client socket</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Task representing the client processing operation</returns>
+    private async Task ProcessClientAsync(Socket clientSocket, CancellationToken ct)
     {
-        // Create Pipe for efficient reading
+        var remoteEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint!;
+        await _logger.InfoAsync($"Client connected from {remoteEndPoint}", cancellationToken: ct);
+
+        // Create a pipe for efficient stream processing
         var pipe = new Pipe();
-        var writing = FillPipeAsync(connection.Socket, pipe.Writer, cancellationToken);
-        var reading = ReadPipeAsync(pipe.Reader, connection, cancellationToken);
 
-        // Wait for both reading and writing tasks to complete
-        await Task.WhenAll(reading, writing);
+        // Start both reading from socket and processing through the handler
+        var writing = FillPipeAsync(clientSocket, pipe.Writer, ct);
+        var reading = ProcessWithHandlerAsync(pipe.Reader, pipe.Writer, remoteEndPoint, ct);
 
-        // Clean up connection
-        _connections.TryRemove(connection.Id, out _);
-        connection.Dispose();
+        // Wait for both tasks to complete
+        await Task.WhenAll(writing, reading);
+
+        // Clean up the socket
+        try
+        {
+            clientSocket.Shutdown(SocketShutdown.Both);
+            clientSocket.Close();
+        }
+        catch (Exception ex)
+        {
+            await _logger.WarningAsync("Error closing client socket", ex, cancellationToken: ct);
+        }
+
+        await _logger.InfoAsync(
+            $"Client disconnected from {remoteEndPoint}",
+            cancellationToken: ct
+        );
     }
 
     /// <summary>
-    /// Reads data from socket and writes to Pipe
+    /// Fills the pipe with data from the socket
     /// </summary>
-    private async Task FillPipeAsync(
-        Socket socket,
-        PipeWriter writer,
-        CancellationToken cancellationToken
-    )
+    /// <param name="socket">The source socket</param>
+    /// <param name="writer">The pipe writer</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Task representing the fill operation</returns>
+    private async Task FillPipeAsync(Socket socket, PipeWriter writer, CancellationToken ct)
     {
-        const int minimumBufferSize = 4096;
+        const int minimumBufferSize = 512;
 
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            try
+            while (!ct.IsCancellationRequested)
             {
-                // Get memory from PipeWriter
+                // Allocate memory from the PipeWriter
                 var memory = writer.GetMemory(minimumBufferSize);
 
-                // Read data from socket
-                var bytesRead = await socket.ReceiveAsync(
-                    memory,
-                    SocketFlags.None,
-                    cancellationToken
-                );
+                // Read data from the socket
+                var bytesRead = await socket.ReceiveAsync(memory, SocketFlags.None, ct);
                 if (bytesRead == 0)
                 {
                     break; // Connection closed
                 }
 
-                // Tell PipeWriter how much data we've written
+                // Tell the PipeWriter how much was read
                 writer.Advance(bytesRead);
 
-                // Make data available to PipeReader
-                var result = await writer.FlushAsync(cancellationToken);
-
+                // Make the data available to the PipeReader
+                var result = await writer.FlushAsync(ct);
                 if (result.IsCompleted)
                 {
                     break;
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error reading from socket: {ex.Message}");
-                break;
-            }
-        }
-
-        // Tell PipeReader there's no more data
-        await writer.CompleteAsync();
-    }
-
-    /// <summary>
-    /// Reads data from Pipe and processes it
-    /// </summary>
-    private async Task ReadPipeAsync(
-        PipeReader reader,
-        TcpClientConnection connection,
-        CancellationToken cancellationToken
-    )
-    {
-        // Create a NetworkStream from the socket and then create a PipeWriter from the stream
-        await using var networkStream = new NetworkStream(connection.Socket, ownsSocket: false);
-        var pipeWriter = PipeWriter.Create(networkStream);
-
-        try
-        {
-            // Call handler to process connection
-            await _handler.HandleAsync(
-                reader,
-                pipeWriter,
-                connection.RemoteEndPoint,
-                cancellationToken
-            );
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error processing TCP connection: {ex.Message}");
+            await _logger.ErrorAsync("Error reading from socket", ex, cancellationToken: ct);
         }
         finally
         {
-            // Complete reading and writing
-            await reader.CompleteAsync();
-            await pipeWriter.CompleteAsync();
+            // Tell the PipeReader that we're done writing
+            await writer.CompleteAsync();
         }
     }
 
     /// <summary>
-    /// Releases resources asynchronously
+    /// Processes data using the TCP handler with both read and write capabilities
     /// </summary>
+    /// <param name="reader">The pipe reader</param>
+    /// <param name="writer">The pipe writer</param>
+    /// <param name="remoteEndPoint">The remote endpoint</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Task representing the processing operation</returns>
+    private async Task ProcessWithHandlerAsync(
+        PipeReader reader,
+        PipeWriter writer,
+        IPEndPoint remoteEndPoint,
+        CancellationToken ct
+    )
+    {
+        try
+        {
+            // Pass both reader and writer to the handler for bidirectional communication
+            await _handlerFactory().HandleAsync(reader, writer, remoteEndPoint, ct);
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync("Error in TCP handler", ex, cancellationToken: ct);
+        }
+        finally
+        {
+            // Mark both reader and writer as complete
+            await reader.CompleteAsync();
+            await writer.CompleteAsync();
+        }
+    }
+
+    /// <summary>
+    /// Stops the TCP server
+    /// </summary>
+    public ValueTask StopAsync(CancellationToken cancellationToken = default)
+    {
+        _cts.Cancel();
+        return ValueTask.CompletedTask;
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
-
         _disposed = true;
+
         await StopAsync();
-        _cts.Dispose();
+
+        // Dispose resources
         _listenerSocket.Dispose();
-        GC.SuppressFinalize(this);
+        _connectionLimiter.Dispose();
+        _cts.Dispose();
+
+        await Task.CompletedTask;
     }
 }

@@ -2,9 +2,9 @@
 
 public interface IUdpHandler
 {
-    ValueTask HandleAsync(
+    Task HandleAsync(
         ReadOnlyMemory<byte> datagram,
         IPEndPoint remoteEndPoint,
-        CancellationToken cancellationToken = default
+        CancellationToken ct
     );
 }
