@@ -4,6 +4,7 @@
 /// High-performance TCP server node implementation
 /// </summary>
 public sealed class TcpNode : INode
+public sealed class TcpNode : INode
 {
     private readonly Socket _listenerSocket;
     private readonly ITcpHandler _handler;
@@ -34,7 +35,7 @@ public sealed class TcpNode : INode
     public event EventHandler<ErrorEventArgs>? ErrorOccurred;
 
     /// <summary>
-    /// Creates a high-performance TCP node
+    /// Initializes a new instance of the TcpNode class
     /// </summary>
     /// <param name="handler">The TCP handler for processing connections</param>
     /// <param name="localEndPoint">The local endpoint to bind to</param>
@@ -168,7 +169,7 @@ public sealed class TcpNode : INode
         // Clear connections collection
         _connections.Clear();
 
-        // Close listener socket
+        // Clean up the socket
         try
         {
             _listenerSocket.Close();
@@ -330,13 +331,13 @@ public sealed class TcpNode : INode
         CancellationToken cancellationToken
     )
     {
-        const int minimumBufferSize = 4096;
+        const int minimumBufferSize = 512;
 
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            try
+            while (!ct.IsCancellationRequested)
             {
-                // Get memory from PipeWriter
+                // Allocate memory from the PipeWriter
                 var memory = writer.GetMemory(minimumBufferSize);
 
                 // Read data from socket
@@ -351,12 +352,11 @@ public sealed class TcpNode : INode
                     break; // Connection closed
                 }
 
-                // Tell PipeWriter how much data we've written
+                // Tell the PipeWriter how much was read
                 writer.Advance(bytesRead);
 
-                // Make data available to PipeReader
-                var result = await writer.FlushAsync(cancellationToken);
-
+                // Make the data available to the PipeReader
+                var result = await writer.FlushAsync(ct);
                 if (result.IsCompleted)
                 {
                     break;
@@ -380,9 +380,6 @@ public sealed class TcpNode : INode
                 break;
             }
         }
-
-        // Tell PipeReader there's no more data
-        await writer.CompleteAsync();
     }
 
     /// <summary>
@@ -393,8 +390,9 @@ public sealed class TcpNode : INode
     /// <param name="cancellationToken">Cancellation token to stop the operation</param>
     private async Task ReadPipeAsync(
         PipeReader reader,
-        TcpClientConnection connection,
-        CancellationToken cancellationToken
+        PipeWriter writer,
+        IPEndPoint remoteEndPoint,
+        CancellationToken ct
     )
     {
         try
@@ -568,16 +566,23 @@ public sealed class TcpNode : INode
     }
 
     /// <summary>
-    /// Releases resources asynchronously
+    /// Stops the TCP server
     /// </summary>
+    public ValueTask StopAsync(CancellationToken cancellationToken = default)
+    {
+        _cts.Cancel();
+        return ValueTask.CompletedTask;
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
-
         _disposed = true;
+
         await StopAsync();
-        _cts.Dispose();
+
+        // Dispose resources
         _listenerSocket.Dispose();
         GC.SuppressFinalize(this);
     }

@@ -6,8 +6,8 @@ var svcRegistry = Bootstrap.CreateContainer();
 svcRegistry.RegisterLogger();
 
 // Registering Handlers
-svcRegistry.RegisterSingle<ITcpHandler, MyStreamHandler>();
-svcRegistry.RegisterSingle<IUdpHandler, MyBytesHandler>();
+svcRegistry.RegisterSingle<ITcpHandler, EchoTcpHandler>();
+svcRegistry.RegisterSingle<IUdpHandler, EchoUdpHandler>();
 
 // Registering servers
 svcRegistry.RegisterSingle<Func<ITcpHandler>>(sp => sp.Resolve<ITcpHandler>);
@@ -19,9 +19,11 @@ svcRegistry.RegisterSingle<Func<IUdpHandler>>(sp => sp.Resolve<IUdpHandler>);
 // );
 
 var udpOption = new UdpNodeOptions { IpAddress = IPAddress.Any, Port = 12346 };
-svcRegistry.RegisterSingle<UdpNode>(
-    sp => new UdpNode(udpOption, sp.Resolve<Func<IUdpHandler>>(), sp.Resolve<ILogger<UdpNode>>())
-);
+svcRegistry.RegisterSingle<UdpNode>(sp => new UdpNode(
+    udpOption,
+    sp.Resolve<Func<IUdpHandler>>(),
+    sp.Resolve<ILogger<UdpNode>>()
+));
 
 var serviceProvider = svcRegistry.GetProvider();
 

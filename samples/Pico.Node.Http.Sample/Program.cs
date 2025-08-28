@@ -15,15 +15,18 @@ var svcRegistry = Bootstrap.CreateContainer();
 //         sp.Resolve<ILogger<TcpNode>>()
 //     ));
 
-var tcpOptionV6 = new TcpNodeOptions { IpAddress = IPAddress.Any, Port = 8081 };
 svcRegistry
     // .AddLogging(builder => builder.AddConsole())
-    .RegisterTransient<IPipelineHandler, HttpHandlerV2>()
-    .RegisterTransient<Func<IPipelineHandler>>(sp => sp.Resolve<IPipelineHandler>)
+    .RegisterTransient<ITcpHandler, HttpHandler>()
     .RegisterSingle<TcpNode>(sp => new TcpNode(
-        tcpOptionV6,
-        sp.Resolve<Func<IPipelineHandler>>(),
-        sp.Resolve<ILogger<TcpNode>>()
+        new TcpNodeOptions
+        {
+            Endpoint = new IPEndPoint(IPAddress.Any, 8080),
+            HandlerFactory = sp.Resolve<ITcpHandler>,
+            Logger = sp.Resolve<ILogger<TcpNode>>(),
+            MaxConnections = 500,
+            BacklogSize = 50
+        }
     ));
 
 svcRegistry.RegisterLogger();

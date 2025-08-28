@@ -2,10 +2,10 @@
 
 public interface ITcpHandler
 {
-    ValueTask HandleAsync(
+    Task HandleAsync(
         PipeReader reader,
         PipeWriter writer,
         IPEndPoint remoteEndPoint,
-        CancellationToken cancellationToken = default
+        CancellationToken ct
     );
 }
