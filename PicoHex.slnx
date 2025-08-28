@@ -2,6 +2,7 @@
   <Folder Name="/samples/">
     <Project Path="samples\Pico.Cfg.Sample\Pico.Cfg.Sample.csproj" Type="Classic C#" />
     <Project Path="samples\Pico.DI.Sample\Pico.DI.Sample.csproj" Type="Classic C#" />
+    <Project Path="samples\Pico.Html.Sample\Pico.Html.Sample.csproj" Type="Classic C#" />
     <Project Path="samples\Pico.Logger.Sample\Pico.Logger.Sample.csproj" Type="Classic C#" />
     <Project Path="samples\Pico.Node.Http.Sample\Pico.Node.Http.Sample.csproj" Type="Classic C#" />
     <Project Path="samples\Pico.Node.Sample\Pico.Node.Sample.csproj" Type="Classic C#" />
@@ -16,6 +17,9 @@
   <Folder Name="/src/DependencyInjection/">
     <Project Path="src\DependencyInjection\Pico.DI.Abs\Pico.DI.Abs.csproj" Type="Classic C#" />
     <Project Path="src\DependencyInjection\Pico.DI\Pico.DI.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Html/">
+    <Project Path="src\Html\Pico.Html\Pico.Html.csproj" Type="Classic C#" />
   </Folder>
   <Folder Name="/src/Logger/">
     <Project Path="src\Logger\Pico.Logger.Abs\Pico.Logger.Abs.csproj" Type="Classic C#" />

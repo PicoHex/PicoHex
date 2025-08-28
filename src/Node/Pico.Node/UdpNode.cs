@@ -92,7 +92,7 @@ public sealed class UdpNode : INode
         while (!ct.IsCancellationRequested)
         {
             // Rent a buffer from the ArrayPool
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(65527); // Max UDP datagram size
+            var buffer = ArrayPool<byte>.Shared.Rent(65527); // Max UDP datagram size
 
             try
             {
@@ -213,6 +213,8 @@ public sealed class UdpNode : INode
         if (_disposed)
             return;
         _disposed = true;
+
+        await StopAsync();
 
         await CastAndDispose(_socket);
         await CastAndDispose(_cts);
