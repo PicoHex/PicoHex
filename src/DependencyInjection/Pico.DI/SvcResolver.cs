@@ -60,13 +60,26 @@ public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcR
 
     private object ResolveInstance(SvcDescriptor descriptor)
     {
+        // 1) 单例缓存命中
         if (descriptor.Lifetime is SvcLifetime.Singleton && descriptor.SingleInstance is not null)
             return descriptor.SingleInstance;
-        if (descriptor.Factory is not null)
-            return descriptor.SingleInstance = descriptor.Factory!(provider);
-        lock (descriptor)
-            descriptor.Factory ??= SvcFactory.CreateAotFactory(descriptor);
-        return descriptor.SingleInstance = descriptor.Factory(provider);
+
+        // 2) 没有工厂就创建（优先 SourceGen）
+        if (descriptor.Factory is null)
+        {
+            lock (descriptor)
+            {
+                descriptor.Factory ??= SvcFactory.CreateAotFactory(descriptor);
+            }
+        }
+
+        var instance = descriptor.Factory!(provider);
+
+        // 3) 仅对 Singleton 回写 SingleInstance（修复泄漏）
+        if (descriptor.Lifetime is SvcLifetime.Singleton && descriptor.SingleInstance is null)
+            descriptor.SingleInstance = instance;
+
+        return instance;
     }
 
     #endregion
