@@ -82,8 +82,7 @@ public sealed class TcpNode : INode
     /// <returns>A ValueTask representing the asynchronous operation</returns>
     public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(TcpNode));
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_listening)
             throw new InvalidOperationException("Node is already listening");
