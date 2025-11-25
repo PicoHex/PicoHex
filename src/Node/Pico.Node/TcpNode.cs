@@ -4,7 +4,6 @@
 /// High-performance TCP server node implementation
 /// </summary>
 public sealed class TcpNode : INode
-public sealed class TcpNode : INode
 {
     private readonly Socket _listenerSocket;
     private readonly ITcpHandler _handler;
