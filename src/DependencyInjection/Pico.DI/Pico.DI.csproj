@@ -13,8 +13,9 @@
         <OutputType>Library</OutputType>
     </PropertyGroup>
 
-    <ItemGroup>
+        <ItemGroup>
       <ProjectReference Include="..\Pico.DI.Abs\Pico.DI.Abs.csproj" />
+      <ProjectReference Include="..\Pico.DI.SourceGen\Pico.DI.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>
