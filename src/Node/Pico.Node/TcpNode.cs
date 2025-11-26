@@ -4,7 +4,6 @@
 /// High-performance TCP server node implementation
 /// </summary>
 public sealed class TcpNode : INode
-public sealed class TcpNode : INode
 {
     private readonly Socket _listenerSocket;
     private readonly ITcpHandler _handler;
@@ -83,8 +82,7 @@ public sealed class TcpNode : INode
     /// <returns>A ValueTask representing the asynchronous operation</returns>
     public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(TcpNode));
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_listening)
             throw new InvalidOperationException("Node is already listening");

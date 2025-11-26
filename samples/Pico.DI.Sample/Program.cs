@@ -133,11 +133,11 @@ public interface ICircularB;
 
 public interface ICircularC;
 
-public class CircularA(ICircularB b) : ICircularA;
+public class CircularA(ICircularB _) : ICircularA;
 
-public class CircularB(ICircularC c) : ICircularB;
+public class CircularB(ICircularC _) : ICircularB;
 
-public class CircularC(ICircularA a) : ICircularC;
+public class CircularC(ICircularA _) : ICircularC;
 
 // Program entry point
 public class Program
