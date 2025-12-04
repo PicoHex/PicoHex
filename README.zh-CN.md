@@ -253,7 +253,7 @@ await tcpServer.StartAsync(cts.Token);
 ## 开发状态
 
 该项目目前处于 MVP（最小可行产品）阶段，核心功能已实现：
-- ✅ 依赖注入容器（含 AOT 支持）
+- ✅ 依赖注入容器 (含 AOT 支持)
 - ✅ 日志框架
 - ✅ 配置框架
 - ✅ TCP/UDP 网络通信
