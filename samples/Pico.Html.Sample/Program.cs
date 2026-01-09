@@ -355,7 +355,7 @@ doc.Body.AddChild(footer);
 
 // 添加底部JavaScript
 var bottomScript = new Script();
-bottomScript.SetCode(js);
+bottomScript.SetCode(js.ToString());
 doc.Body.AddBottomScript(bottomScript);
 
 // 输出 HTML

@@ -19,14 +19,9 @@ svcRegistry
     // .AddLogging(builder => builder.AddConsole())
     .RegisterTransient<ITcpHandler, HttpHandler>()
     .RegisterSingle<TcpNode>(sp => new TcpNode(
-        new TcpNodeOptions
-        {
-            Endpoint = new IPEndPoint(IPAddress.Any, 8080),
-            HandlerFactory = sp.Resolve<ITcpHandler>,
-            Logger = sp.Resolve<ILogger<TcpNode>>(),
-            MaxConnections = 500,
-            BacklogSize = 50
-        }
+        sp.Resolve<ITcpHandler>(),
+        new IPEndPoint(IPAddress.Any, 8080),
+        sp.Resolve<ILogger<TcpNode>>()
     ));
 
 svcRegistry.RegisterLogger();

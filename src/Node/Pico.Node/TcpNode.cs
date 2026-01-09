@@ -317,7 +317,7 @@ public sealed class TcpNode : INode
         connection.Dispose();
     }
 
-    /// <summary>
+        /// <summary>
     /// Reads data from socket and writes to Pipe
     /// </summary>
     /// <param name="socket">The socket to read from</param>
@@ -333,7 +333,7 @@ public sealed class TcpNode : INode
 
         try
         {
-            while (!ct.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 // Allocate memory from the PipeWriter
                 var memory = writer.GetMemory(minimumBufferSize);
@@ -354,33 +354,32 @@ public sealed class TcpNode : INode
                 writer.Advance(bytesRead);
 
                 // Make the data available to the PipeReader
-                var result = await writer.FlushAsync(ct);
+                var result = await writer.FlushAsync(cancellationToken);
                 if (result.IsCompleted)
                 {
                     break;
                 }
             }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (SocketException ex)
-                when (ex.SocketErrorCode
-                        is SocketError.ConnectionReset
-                            or SocketError.ConnectionAborted
-                )
-            {
-                break; // Connection closed by client
-            }
-            catch (Exception ex)
-            {
-                // Logging would happen at higher level
-                break;
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected during cancellation
+        }
+        catch (SocketException ex)
+            when (ex.SocketErrorCode
+                    is SocketError.ConnectionReset
+                        or SocketError.ConnectionAborted
+            )
+        {
+            // Connection closed by client
+        }
+        catch (Exception ex)
+        {
+            // Logging would happen at higher level
         }
     }
 
-    /// <summary>
+        /// <summary>
     /// Reads data from Pipe and processes it using the handler
     /// </summary>
     /// <param name="reader">The pipe reader to read from</param>
@@ -388,15 +387,15 @@ public sealed class TcpNode : INode
     /// <param name="cancellationToken">Cancellation token to stop the operation</param>
     private async Task ReadPipeAsync(
         PipeReader reader,
-        PipeWriter writer,
-        IPEndPoint remoteEndPoint,
-        CancellationToken ct
+        TcpClientConnection connection,
+        CancellationToken cancellationToken
     )
     {
         try
         {
-            // Create a PipeWriter directly from the socket for efficient writing
-            var writer = PipeWriter.Create(connection.Socket);
+                        // Create a NetworkStream from the socket for efficient writing
+            var networkStream = new NetworkStream(connection.Socket);
+            var writer = PipeWriter.Create(networkStream);
 
             // Start heartbeat monitoring
             using var heartbeat = StartHeartbeat(connection, writer, cancellationToken);
@@ -563,14 +562,7 @@ public sealed class TcpNode : INode
         ErrorOccurred?.Invoke(this, new ErrorEventArgs(exception, context));
     }
 
-    /// <summary>
-    /// Stops the TCP server
-    /// </summary>
-    public ValueTask StopAsync(CancellationToken cancellationToken = default)
-    {
-        _cts.Cancel();
-        return ValueTask.CompletedTask;
-    }
+    
 
     public async ValueTask DisposeAsync()
     {

@@ -33,6 +33,6 @@ public static class AotBootstrap
     /// </summary>
     public static ISvcContainer CreateCompileTimeContainer()
     {
-        return CompileTimeServiceRegistrations.CreateCompileTimeContainer();
+        return new AotSvcContainer();
     }
 }

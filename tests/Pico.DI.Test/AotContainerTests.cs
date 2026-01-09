@@ -82,12 +82,12 @@ public class AotContainerTests : IDisposable
     public void AotContainer_ShouldHandleCircularDependencies()
     {
         // Arrange
-        _container.RegisterTransient<ICircularA, CircularA>();
-        _container.RegisterTransient<ICircularB, CircularB>();
-        _container.RegisterTransient<ICircularC, CircularC>();
+        _container.RegisterTransient<INode1, Node1>();
+        _container.RegisterTransient<INode2, Node2>();
+        _container.RegisterTransient<INode3, Node3>();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _provider.Resolve<ICircularA>());
+        Assert.Throws<InvalidOperationException>(() => _provider.Resolve<INode1>());
     }
 
     [Fact]

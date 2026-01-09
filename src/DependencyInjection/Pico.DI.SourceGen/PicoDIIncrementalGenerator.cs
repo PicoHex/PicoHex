@@ -1,7 +1,3 @@
-using System.Text;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
-
 namespace Pico.DI.SourceGen;
 
 [Generator]
@@ -21,11 +17,17 @@ public class PicoDIIncrementalGenerator : IIncrementalGenerator
 
         // 生成编译时服务注册代码
         var registrationCode = GenerateCompileTimeRegistrationCode();
-        context.AddSource("Pico.DI.CompileTimeRegistration.g.cs", SourceText.From(registrationCode, Encoding.UTF8));
+        context.AddSource(
+            "Pico.DI.CompileTimeRegistration.g.cs",
+            SourceText.From(registrationCode, Encoding.UTF8)
+        );
 
         // 生成工厂方法代码
         var factoryCode = GenerateFactoryMethodsCode();
-        context.AddSource("Pico.DI.FactoryMethods.g.cs", SourceText.From(factoryCode, Encoding.UTF8));
+        context.AddSource(
+            "Pico.DI.FactoryMethods.g.cs",
+            SourceText.From(factoryCode, Encoding.UTF8)
+        );
     }
 
     private string GenerateAotSupportCode()

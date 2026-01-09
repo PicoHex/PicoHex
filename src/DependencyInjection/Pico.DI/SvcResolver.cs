@@ -1,5 +1,3 @@
-using Pico.DI.Internal;
-
 namespace Pico.DI;
 
 public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcResolver
@@ -60,11 +58,11 @@ public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcR
 
     private object ResolveInstance(SvcDescriptor descriptor)
     {
-        // 1) µ¥Àý»º´æÃüÖÐ
+        // 1) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (descriptor.Lifetime is SvcLifetime.Singleton && descriptor.SingleInstance is not null)
             return descriptor.SingleInstance;
 
-        // 2) Ã»ÓÐ¹¤³§¾Í´´½¨£¨ÓÅÏÈ SourceGen£©
+        // 2) Ã»ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ SourceGenï¿½ï¿½
         if (descriptor.Factory is null)
         {
             lock (descriptor)
@@ -75,7 +73,7 @@ public class SvcResolver(ISvcContainer container, ISvcProvider provider) : ISvcR
 
         var instance = descriptor.Factory!(provider);
 
-        // 3) ½ö¶Ô Singleton »ØÐ´ SingleInstance£¨ÐÞ¸´Ð¹Â©£©
+        // 3) ï¿½ï¿½ï¿½ï¿½ Singleton ï¿½ï¿½Ð´ SingleInstanceï¿½ï¿½ï¿½Þ¸ï¿½Ð¹Â©ï¿½ï¿½
         if (descriptor.Lifetime is SvcLifetime.Singleton && descriptor.SingleInstance is null)
             descriptor.SingleInstance = instance;
 

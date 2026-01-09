@@ -1,5 +1,3 @@
-using Pico.DI.Generated;
-
 namespace Pico.DI;
 
 /// <summary>
@@ -19,7 +17,7 @@ public sealed class AotSvcContainer : ISvcContainer
         );
 
         // Register compile-time services
-        this.RegisterCompileTimeServices();
+        this.RegisterAotServices();
     }
 
     public ISvcContainer Register(SvcDescriptor descriptor)
@@ -34,7 +32,9 @@ public sealed class AotSvcContainer : ISvcContainer
 
     public ISvcProvider GetProvider() => _lazyProvider.Value;
 
-    public List<SvcDescriptor> GetDescriptors(Type type)
+    public List<SvcDescriptor> GetDescriptors(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
+    )
     {
         var descriptors = _descriptors.GetValueOrDefault(type);
 
@@ -43,16 +43,16 @@ public sealed class AotSvcContainer : ISvcContainer
 
         // Try compile-time resolution
         var compileTimeDescriptor = GetCompileTimeDescriptor(type);
-        if (compileTimeDescriptor is not null)
-        {
-            Register(compileTimeDescriptor);
-            return _descriptors.GetValueOrDefault(type) ?? throw new ServiceNotRegisteredException(type);
-        }
-
-        throw new ServiceNotRegisteredException(type);
+        if (compileTimeDescriptor is null)
+            throw new ServiceNotRegisteredException(type);
+        Register(compileTimeDescriptor);
+        return _descriptors.GetValueOrDefault(type)
+            ?? throw new ServiceNotRegisteredException(type);
     }
 
-    public SvcDescriptor GetDescriptor(Type type) => GetDescriptors(type).Last();
+    public SvcDescriptor GetDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
+    ) => GetDescriptors(type).Last();
 
     private SvcDescriptor? GetCompileTimeDescriptor(Type type)
     {
@@ -65,41 +65,39 @@ public sealed class AotSvcContainer : ISvcContainer
 /// <summary>
 /// AOT-friendly service provider that uses compile-time generated factories
 /// </summary>
-public sealed class AotSvcProvider : ISvcProvider
+public sealed class AotSvcProvider(ISvcContainer container) : ISvcProvider
 {
     private readonly ConcurrentDictionary<Type, object> _singletonInstances = new();
-    private readonly ISvcContainer _container;
-    private readonly ISvcScopeFactory _scopeFactory;
+    private readonly ISvcScopeFactory _scopeFactory = new SvcScopeFactory(new SvcResolverFactory());
     private volatile bool _disposed;
 
-    public AotSvcProvider(ISvcContainer container)
-    {
-        _container = container;
-        _scopeFactory = new SvcScopeFactory(new SvcResolverFactory());
-    }
-
-    public object Resolve(Type serviceType)
+    public object Resolve(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType
+    )
     {
         EnsureNotDisposed();
 
         // Try compile-time resolution first
-        var compileTimeInstance = CompileTimeServiceFactories.ResolveService(serviceType, this);
+        var compileTimeInstance = AotServiceSupport.ResolveAotService(serviceType, this);
         if (compileTimeInstance is not null)
             return compileTimeInstance;
 
         // Fallback to runtime resolution
-        var descriptor = _container.GetDescriptor(serviceType);
+        var descriptor = container.GetDescriptor(serviceType);
 
         return descriptor.Lifetime switch
         {
             SvcLifetime.Transient => CreateServiceInstance(descriptor),
-            SvcLifetime.Singleton => _singletonInstances.GetOrAdd(
-                serviceType,
-                _ => CreateServiceInstance(descriptor)
-            ),
-            SvcLifetime.Scoped => throw new InvalidOperationException(
-                $"Cannot resolve {serviceType} as Scoped from root provider."
-            ),
+            SvcLifetime.Singleton
+                => _singletonInstances.GetOrAdd(
+                    serviceType,
+                    _ => CreateServiceInstance(descriptor)
+                ),
+            SvcLifetime.Scoped
+                => throw new InvalidOperationException(
+                    $"Cannot resolve {serviceType} as Scoped from root provider."
+                ),
             _ => throw new ArgumentOutOfRangeException(nameof(descriptor.Lifetime))
         };
     }
@@ -107,7 +105,7 @@ public sealed class AotSvcProvider : ISvcProvider
     public ISvcScope CreateScope()
     {
         EnsureNotDisposed();
-        return _scopeFactory.CreateScope(_container, this);
+        return _scopeFactory.CreateScope(container, this);
     }
 
     public void Dispose() => DisposeCore(disposing: true);
@@ -122,8 +120,9 @@ public sealed class AotSvcProvider : ISvcProvider
 
     private void EnsureNotDisposed()
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(AotSvcProvider));
+        if (!_disposed)
+            return;
+        throw new ObjectDisposedException(nameof(AotSvcProvider));
     }
 
     private void DisposeCore(bool disposing)
@@ -159,7 +158,7 @@ public sealed class AotSvcProvider : ISvcProvider
     private object CreateServiceInstance(SvcDescriptor descriptor)
     {
         // Try compile-time factory first
-        var compileTimeInstance = CompileTimeServiceFactories.CreateService(descriptor.ServiceType, this);
+        var compileTimeInstance = AotServiceSupport.CreateAotService(descriptor.ServiceType, this);
         if (compileTimeInstance is not null)
             return compileTimeInstance;
 

@@ -1,4 +1,5 @@
 using Pico.DI;
+using Pico.DI.Abs;
 
 namespace Pico.DI.Aot.Sample;
 
@@ -100,8 +101,8 @@ public static class Program
         Console.WriteLine($"Provider Type: {provider.GetType().Name}");
         Console.WriteLine("AOT optimization: Compile-time service discovery and factory generation");
 
-        Console.WriteLine("\nPress any key to exit...");
-        Console.ReadKey();
+        Console.WriteLine("\nPress Enter to exit...");
+        Console.ReadLine();
     }
 }
 
