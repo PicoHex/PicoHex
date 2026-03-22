@@ -1,0 +1,43 @@
+name: Tier3 Framework Example
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: PicoHex/.github/.github/workflows/picohex-dotnet-ci.yml@main
+    with:
+      dotnet-version: 10.0.x
+      runner-os-json: '["ubuntu-latest","windows-latest","macos-latest"]'
+      restore-command: dotnet restore PicoHex.slnx
+      build-command: dotnet build PicoHex.slnx --configuration Release --no-restore
+      test-command: dotnet test PicoHex.slnx --configuration Release --no-build --verbosity normal
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: ci
+    uses: PicoHex/.github/.github/workflows/picohex-dotnet-release.yml@main
+    with:
+      dotnet-version: 10.0.x
+      release-name-prefix: PicoHex
+      pack-command: |
+        dotnet pack src/DependencyInjection/Pico.DI.Abs/Pico.DI.Abs.csproj --configuration Release --output ./artifacts/nupkg -p:Version=$VERSION -p:UseProjectReferences=false
+        dotnet pack src/DependencyInjection/Pico.DI.SourceGen/Pico.DI.SourceGen.csproj --configuration Release --output ./artifacts/nupkg -p:Version=$VERSION -p:UseProjectReferences=false -p:RestoreAdditionalProjectSources=./artifacts/nupkg
+        dotnet pack src/DependencyInjection/Pico.DI/Pico.DI.csproj --configuration Release --output ./artifacts/nupkg -p:Version=$VERSION -p:UseProjectReferences=false -p:RestoreSources=./artifacts/nupkg
+    secrets:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+  aot:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: release
+    uses: PicoHex/.github/.github/workflows/picohex-dotnet-aot.yml@main
+    with:
+      dotnet-version: 10.0.x
+      runner-os-json: '["ubuntu-latest"]'
+      artifact-name-prefix: picohex-aot
+      aot-command: |
+        dotnet publish samples/Pico.DI.Aot.Sample/Pico.DI.Aot.Sample.csproj -c Release -r linux-x64 -p:PublishAot=true --self-contained -o ./artifacts/aot/linux-x64

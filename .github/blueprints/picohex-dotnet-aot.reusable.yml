@@ -1,0 +1,80 @@
+name: PicoHex Dotnet AOT Reusable
+
+on:
+  workflow_call:
+    inputs:
+      dotnet-version:
+        description: .NET SDK version or channel
+        required: false
+        default: 10.0.x
+        type: string
+      runner-os-json:
+        description: JSON array of GitHub runner labels
+        required: false
+        default: '["ubuntu-latest"]'
+        type: string
+      aot-command:
+        description: Shell command that publishes a representative AOT sample into ./artifacts/aot/<rid>
+        required: true
+        type: string
+      artifact-name-prefix:
+        description: Prefix for uploaded artifact names
+        required: false
+        default: aot-binaries
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: picohex-aot-${{ github.workflow_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  aot-validation:
+    name: AOT Validation (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(inputs.runner-os-json) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+          cache: true
+
+      - name: Setup Visual Studio environment
+        if: ${{ startsWith(matrix.os, 'windows-') }}
+        uses: seanmiddleditch/gha-setup-vsdevenv@master
+
+      - name: Install Linux AOT prerequisites
+        if: ${{ startsWith(matrix.os, 'ubuntu-') }}
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+
+      - name: Install macOS command line tools
+        if: ${{ startsWith(matrix.os, 'macos-') }}
+        shell: bash
+        run: xcode-select --install || true
+
+      - name: Publish representative AOT sample
+        shell: bash
+        run: ${{ inputs.aot-command }}
+
+      - name: Upload AOT artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name-prefix }}-${{ matrix.os }}
+          path: ./artifacts/aot
+          if-no-files-found: error

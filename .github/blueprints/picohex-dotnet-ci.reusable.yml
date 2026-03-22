@@ -1,0 +1,90 @@
+name: PicoHex Dotnet CI Reusable
+
+on:
+  workflow_call:
+    inputs:
+      dotnet-version:
+        description: .NET SDK version or channel
+        required: false
+        default: 10.0.x
+        type: string
+      runner-os-json:
+        description: JSON array of GitHub runner labels
+        required: false
+        default: '["ubuntu-latest"]'
+        type: string
+      restore-command:
+        description: Command used to restore dependencies
+        required: true
+        type: string
+      build-command:
+        description: Command used to build the repository in Release mode
+        required: true
+        type: string
+      test-command:
+        description: Command used to execute tests
+        required: true
+        type: string
+      format-command:
+        description: Optional formatting verification command
+        required: false
+        default: ''
+        type: string
+      warnaserror-command:
+        description: Optional warnings-as-errors build command
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: picohex-ci-${{ github.workflow_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build-and-test:
+    name: Build and Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(inputs.runner-os-json) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+          cache: true
+
+      - name: Restore
+        shell: bash
+        run: ${{ inputs.restore-command }}
+
+      - name: Build
+        shell: bash
+        run: ${{ inputs.build-command }}
+
+      - name: Test
+        shell: bash
+        run: ${{ inputs.test-command }}
+
+      - name: Verify formatting
+        if: ${{ inputs.format-command != '' }}
+        shell: bash
+        run: ${{ inputs.format-command }}
+
+      - name: Build with warnings as errors
+        if: ${{ inputs.warnaserror-command != '' }}
+        shell: bash
+        run: ${{ inputs.warnaserror-command }}

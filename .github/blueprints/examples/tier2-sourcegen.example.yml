@@ -1,0 +1,18 @@
+name: Tier2 Source Generator Release Example
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    uses: PicoHex/.github/.github/workflows/picohex-dotnet-release.yml@main
+    with:
+      dotnet-version: 10.0.x
+      release-name-prefix: Pico.DI
+      pack-command: |
+        dotnet pack src/DependencyInjection/Pico.DI.Abs/Pico.DI.Abs.csproj --configuration Release --output ./artifacts/nupkg -p:Version=$VERSION -p:UseProjectReferences=false
+        dotnet pack src/DependencyInjection/Pico.DI.SourceGen/Pico.DI.SourceGen.csproj --configuration Release --output ./artifacts/nupkg -p:Version=$VERSION -p:UseProjectReferences=false -p:RestoreAdditionalProjectSources=./artifacts/nupkg
+        dotnet pack src/DependencyInjection/Pico.DI/Pico.DI.csproj --configuration Release --output ./artifacts/nupkg -p:Version=$VERSION -p:UseProjectReferences=false -p:RestoreSources=./artifacts/nupkg
+    secrets:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

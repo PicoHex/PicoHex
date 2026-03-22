@@ -1,0 +1,17 @@
+name: Tier1 Library CI Example
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: PicoHex/.github/.github/workflows/picohex-dotnet-ci.yml@main
+    with:
+      dotnet-version: 10.0.x
+      runner-os-json: '["ubuntu-latest","windows-latest","macos-latest"]'
+      restore-command: dotnet restore src/Pico.Logger/Pico.Logger.csproj
+      build-command: dotnet build src/Pico.Logger/Pico.Logger.csproj --configuration Release --no-restore
+      test-command: dotnet test tests/Pico.Logger.Test/Pico.Logger.Test.csproj --configuration Release --no-build --verbosity normal
