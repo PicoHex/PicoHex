@@ -1,5 +1,0 @@
-namespace Pico.DI.Abs;
-
-public class ServiceNotRegisteredException(
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type
-) : InvalidOperationException($"Service of type {type.Name} not registered.");
