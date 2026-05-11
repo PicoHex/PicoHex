@@ -58,6 +58,11 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       # ---- PicoDI ----
+      - name: Run PicoDI tests
+        if: needs.identify.outputs.package == 'PicoDI'
+        shell: bash
+        run: dotnet test PicoDI/tests/PicoDI.Test/ --configuration Release
+
       - name: Pack PicoDI packages
         if: needs.identify.outputs.package == 'PicoDI'
         shell: bash
@@ -91,6 +96,14 @@ jobs:
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
       # ---- PicoCfg ----
+      - name: Run PicoCfg tests
+        if: needs.identify.outputs.package == 'PicoCfg'
+        shell: bash
+        run: |
+          dotnet test PicoCfg/tests/PicoCfg.Tests/ --configuration Release
+          dotnet test PicoCfg/tests/PicoCfg.Gen.Tests/ --configuration Release
+          dotnet test PicoCfg/tests/PicoCfg.DI.Tests/ --configuration Release
+
       - name: Pack PicoCfg packages
         if: needs.identify.outputs.package == 'PicoCfg'
         shell: bash
@@ -128,6 +141,11 @@ jobs:
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
       # ---- PicoLog ----
+      - name: Run PicoLog tests
+        if: needs.identify.outputs.package == 'PicoLog'
+        shell: bash
+        run: dotnet test PicoLog/tests/PicoLog.Tests/ --configuration Release
+
       - name: Pack PicoLog packages
         if: needs.identify.outputs.package == 'PicoLog'
         shell: bash

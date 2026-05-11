@@ -16,7 +16,7 @@
         <PackageReference Include="TUnit" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
         <PackageReference Include="PicoDI" Condition="'$(UseProjectReferences)' != 'true'" />
-        <ProjectReference Include="..\..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" Condition="'$(UseProjectReferences)' == 'true'" />
+        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" Condition="'$(UseProjectReferences)' == 'true'" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,12 +1,24 @@
 namespace PicoCfg;
 
+[RequiresUnreferencedCode("CfgValidator uses IValidatableObject-based validation. Types implementing IValidatableObject are compatible with Native AOT. DataAnnotations-based validation is not supported under trimming.")]
 public static class CfgValidator
 {
     public static List<ValidationResult> Validate<T>(T instance)
     {
         var results = new List<ValidationResult>();
-        var context = new ValidationContext(instance!, null, null);
-        Validator.TryValidateObject(instance!, context, results, validateAllProperties: true);
+        if (instance is IValidatableObject validatable)
+        {
+            var context = new ValidationContext(instance!, null, null);
+            var validationResults = validatable.Validate(context);
+            if (validationResults is not null)
+            {
+                foreach (var r in validationResults)
+                {
+                    if (r is not null && r != ValidationResult.Success)
+                        results.Add(r);
+                }
+            }
+        }
         return results;
     }
 

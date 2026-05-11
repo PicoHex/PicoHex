@@ -9,3 +9,4 @@ global using System.Runtime.ExceptionServices;
 global using System.Numerics;
 global using System.Text;
 global using PicoCfg.Abs;
+global using PicoCfg.Extensions;

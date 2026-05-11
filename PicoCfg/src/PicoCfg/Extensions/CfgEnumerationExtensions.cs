@@ -1,4 +1,4 @@
-namespace PicoCfg;
+namespace PicoCfg.Extensions;
 
 /// <summary>
 /// Extension methods for enumerating configuration key-value pairs from <see cref="ICfg"/> views.
@@ -26,6 +26,25 @@ public static class CfgEnumerationExtensions
 
             if (rootAccessor.CurrentSnapshot is CfgSnapshotComposer.CompositeCfgSnapshot rootComposite)
                 return rootComposite.GetAllValues();
+        }
+
+        if (cfg is CfgSection section)
+        {
+            var prefix = section.Path;
+            if (string.IsNullOrEmpty(prefix))
+                return section.Parent.GetAll();
+
+            var parentAll = section.Parent.GetAll();
+            var filtered = new Dictionary<string, string>(parentAll.Count);
+            var searchPrefix = prefix + ":";
+
+            foreach (var kvp in parentAll)
+            {
+                if (kvp.Key.StartsWith(searchPrefix, StringComparison.Ordinal))
+                    filtered[kvp.Key[searchPrefix.Length..]] = kvp.Value;
+            }
+
+            return filtered;
         }
 
         return new Dictionary<string, string>();

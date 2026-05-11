@@ -78,7 +78,7 @@ public class CmdLineCfgTests
             .AddCommandLine(["--App:Name=Pico", "--Db:Host=localhost"], "App:")
             .BuildAsync();
 
-        await Assert.That(root.GetValue("App:Name")).IsEqualTo("Pico");
+        await Assert.That(root.GetValue("Name")).IsEqualTo("Pico");
         await Assert.That(root.GetValue("Db:Host")).IsNull();
     }
 

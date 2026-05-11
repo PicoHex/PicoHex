@@ -120,7 +120,8 @@ internal sealed class OpenGenericScanner
                 lifetime,
                 namedServiceType.TypeParameters.Length,
                 openImplementationType.TypeParameters.Select(tp => tp.Name).ToImmutableArray(),
-                activation.ConstructorParameterTypes
+                activation.ConstructorParameterTypes,
+                activation.ConstructorParameterTypeSymbols
             ),
             Diagnostic: null
         );

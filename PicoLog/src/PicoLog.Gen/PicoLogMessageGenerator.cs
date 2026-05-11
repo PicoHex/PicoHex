@@ -5,7 +5,7 @@ namespace PicoLog.Gen;
 [Generator]
 public sealed class PicoLogMessageGenerator : IIncrementalGenerator
 {
-    private const string AttributeMetadataName = "PicoLog.Abs.PicoLogMessage";
+    private const string AttributeMetadataName = "PicoLog.Abs.PicoLogMessageAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -193,6 +193,12 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
         return "$\"" + sb + "\"";
     }
 
+    private static string StripFormatSpecifiers(string holeContent)
+    {
+        var idx = holeContent.IndexOfAny([':', ',']);
+        return idx >= 0 ? holeContent.Substring(0, idx) : holeContent;
+    }
+
     private static bool IsKnownHole(
         string template,
         int openIndex,
@@ -203,7 +209,7 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
         if (close < 0)
             return false;
         var name = template.Substring(openIndex + 1, close - openIndex - 1).Trim();
-        return knownParams.Contains(name);
+        return knownParams.Contains(StripFormatSpecifiers(name));
     }
 
     private static bool IsClosingKnownHole(
@@ -216,7 +222,7 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
         if (open < 0)
             return false;
         var name = template.Substring(open + 1, closeIndex - open - 1).Trim();
-        return knownParams.Contains(name);
+        return knownParams.Contains(StripFormatSpecifiers(name));
     }
 
     private static string LogLevelExpr(byte level) =>

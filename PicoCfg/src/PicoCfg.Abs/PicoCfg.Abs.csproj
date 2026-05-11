@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
@@ -9,6 +9,7 @@
         <PackageId>PicoCfg.Abs</PackageId>
         <Description>Abstractions for PicoCfg async-first configuration management.</Description>
         <MinVerTagPrefix>PicoCfg-</MinVerTagPrefix>
+        <PublishAot>false</PublishAot>
     </PropertyGroup>
 
     <ItemGroup>

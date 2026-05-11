@@ -164,7 +164,8 @@ internal static class OpenGenericMetadataContract
                         lifetime,
                         typeParameterCount,
                         typeParameterNames,
-                        constructorParameters
+                        constructorParameters,
+                        ImmutableArray<ITypeSymbol>.Empty
                     )
                 );
             }

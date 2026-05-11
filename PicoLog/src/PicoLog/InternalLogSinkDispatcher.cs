@@ -71,11 +71,19 @@ internal sealed class InternalLogSinkDispatcher
     private static ILogSink? ResolveLastRegisteredConsoleFallbackSink(ILogSink[] sinks) =>
         sinks.LastOrDefault(static sink => sink is IConsoleFallbackSink);
 
-    private static void WriteSinkFailureToDebug(LogEntry originalEntry, Exception exception) =>
+    private static void WriteSinkFailureToDebug(LogEntry originalEntry, Exception exception)
+    {
+#if DEBUG
         Debug.WriteLine($"Sink write error for '{originalEntry.Category}': {exception}");
+#endif
+    }
 
-    private static void WriteConsoleFallbackFailureToDebug(Exception fallbackException) =>
+    private static void WriteConsoleFallbackFailureToDebug(Exception fallbackException)
+    {
+#if DEBUG
         Debug.WriteLine($"Fallback sink write error: {fallbackException}");
+#endif
+    }
 
     private async Task WriteFailureToConsoleFallbackAsync(
         LogEntry originalEntry,

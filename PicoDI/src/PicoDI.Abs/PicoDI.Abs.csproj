@@ -28,9 +28,6 @@
       <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     </ItemGroup>
 
-    <ItemGroup>
-        <!-- Solely for SvcDescriptor.SingleInstance access from SvcRuntimeRegistration.Create; do not widen. -->
-        <InternalsVisibleTo Include="PicoDI" />
-    </ItemGroup>
+    <!-- InternalsVisibleTo removed: SvcDescriptor.SingleInstance is now public ([EditorBrowsable(Never)]). -->
 
 </Project>

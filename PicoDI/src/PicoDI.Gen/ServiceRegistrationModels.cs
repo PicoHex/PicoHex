@@ -22,7 +22,8 @@ internal record OpenGenericRegistration(
     string Lifetime,
     int TypeParameterCount,
     ImmutableArray<string> TypeParameterNames,
-    ImmutableArray<string> ConstructorParameters
+    ImmutableArray<string> ConstructorParameters,
+    ImmutableArray<ITypeSymbol> ConstructorParameterTypeSymbols
 );
 
 /// <summary>
@@ -31,5 +32,6 @@ internal record OpenGenericRegistration(
 internal record ClosedGenericUsage(
     string ClosedServiceTypeFullName,
     string OpenServiceTypeFullName,
-    ImmutableArray<string> TypeArgumentsFullNames
+    ImmutableArray<string> TypeArgumentsFullNames,
+    ImmutableArray<ITypeSymbol> TypeArgumentSymbols
 );

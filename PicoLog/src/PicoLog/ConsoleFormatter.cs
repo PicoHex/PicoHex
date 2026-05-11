@@ -32,7 +32,7 @@ public sealed class ConsoleFormatter : ILogFormatter
                 .Append("] ")
                 .Append(
                     entry.MessageArgs?.Count > 0 && entry.MessageTemplate is not null
-                        ? string.Format(entry.MessageTemplate, entry.MessageArgs.ToArray())
+                        ? string.Format(entry.MessageTemplate, (object?[])entry.MessageArgs)
                         : entry.Message
                 );
 

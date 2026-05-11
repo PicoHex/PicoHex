@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace PicoDI.Abs;
 
 /// <summary>
@@ -32,7 +34,7 @@ public static class SvcContainerHostingExtensions
         /// <param name="hostedServiceType">The hosted service type to register.</param>
         /// <returns>The <see cref="ISvcContainer"/> instance for chaining.</returns>
         /// <exception cref="HostedSvcRegistrationException">Thrown when <paramref name="hostedServiceType"/> does not implement <see cref="IHostedSvc"/>.</exception>
-        public ISvcContainer RegisterHostedSvc(Type hostedServiceType)
+        public ISvcContainer RegisterHostedSvc([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type hostedServiceType)
         {
             if (!typeof(IHostedSvc).IsAssignableFrom(hostedServiceType))
                 throw new HostedSvcRegistrationException(
@@ -48,7 +50,7 @@ public static class SvcContainerHostingExtensions
         /// <param name="factory">The factory delegate to create the hosted service instance.</param>
         /// <returns>The <see cref="ISvcContainer"/> instance for chaining.</returns>
         /// <exception cref="HostedSvcRegistrationException">Thrown when <paramref name="hostedServiceType"/> does not implement <see cref="IHostedSvc"/>.</exception>
-        public ISvcContainer RegisterHostedSvc(Type hostedServiceType, Func<ISvcScope, object> factory)
+        public ISvcContainer RegisterHostedSvc([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type hostedServiceType, Func<ISvcScope, object> factory)
         {
             if (!typeof(IHostedSvc).IsAssignableFrom(hostedServiceType))
                 throw new HostedSvcRegistrationException(

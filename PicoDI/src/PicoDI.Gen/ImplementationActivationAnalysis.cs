@@ -12,7 +12,8 @@ internal readonly record struct ImplementationActivationAnalysis(
     INamedTypeSymbol ImplementationType,
     ImplementationActivationStatus Status,
     IMethodSymbol? SelectedConstructor,
-    ImmutableArray<string> ConstructorParameterTypes
+    ImmutableArray<string> ConstructorParameterTypes,
+    ImmutableArray<ITypeSymbol> ConstructorParameterTypeSymbols
 )
 {
     public bool IsValid => Status == ImplementationActivationStatus.Valid;
@@ -92,7 +93,8 @@ internal static class ImplementationActivationAnalyzer
             implementationType,
             ImplementationActivationStatus.Valid,
             selectedConstructor,
-            GetConstructorParameterTypes(selectedConstructor)
+            GetConstructorParameterTypes(selectedConstructor),
+            GetConstructorParameterTypeSymbols(selectedConstructor)
         );
     }
 
@@ -105,7 +107,8 @@ internal static class ImplementationActivationAnalyzer
             implementationType,
             status,
             SelectedConstructor: null,
-            ConstructorParameterTypes: ImmutableArray<string>.Empty
+            ConstructorParameterTypes: ImmutableArray<string>.Empty,
+            ConstructorParameterTypeSymbols: ImmutableArray<ITypeSymbol>.Empty
         );
     }
 
@@ -118,6 +121,16 @@ internal static class ImplementationActivationAnalyzer
                 .. constructor.Parameters.Select(p =>
                     p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                 )
+            ];
+    }
+
+    private static ImmutableArray<ITypeSymbol> GetConstructorParameterTypeSymbols(IMethodSymbol? constructor)
+    {
+        return constructor is null
+            ? ImmutableArray<ITypeSymbol>.Empty
+            :
+            [
+                .. constructor.Parameters.Select(p => p.Type)
             ];
     }
 

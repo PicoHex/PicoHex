@@ -53,7 +53,12 @@ public sealed class SvcDescriptor(
     /// No concurrent access — all descriptor writes happen during registration
     /// under the container's registration lock.
     /// </summary>
-    internal object? SingleInstance { get; set; }
+    /// <summary>
+    /// Gets or sets the pre-existing singleton instance for this service.
+    /// Only for use by the PicoDI runtime — not intended for consumer code.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public object? SingleInstance { get; set; }
 
     /// <summary>
     /// Gets the factory function used to create service instances.

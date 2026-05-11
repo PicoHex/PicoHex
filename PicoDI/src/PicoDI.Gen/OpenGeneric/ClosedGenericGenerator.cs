@@ -42,25 +42,8 @@ internal sealed class ClosedGenericGenerator
                 usage.TypeArgumentsFullNames
             );
 
-            var typeParameterMap = new Dictionary<string, string>();
-            for (
-                var index = 0;
-                index < openGeneric.TypeParameterNames.Length
-                    && index < usage.TypeArgumentsFullNames.Length;
-                index++
-            )
-            {
-                typeParameterMap[openGeneric.TypeParameterNames[index]] =
-                    usage.TypeArgumentsFullNames[index];
-            }
-
-            var constructorParameters = openGeneric
-                .ConstructorParameters
-                .Select(
-                    typeFullName =>
-                        _substitutor.SubstituteTypeParameters(typeFullName, typeParameterMap)
-                )
-                .ToImmutableArray();
+            // Prefer Roslyn-based symbol substitution for accurate handling of nested generics
+            var constructorParameters = useSymbolSubstitution(openGeneric, usage);
 
             result.Add(
                 new ServiceRegistration(
@@ -76,5 +59,44 @@ internal sealed class ClosedGenericGenerator
         }
 
         return result;
+    }
+
+    private ImmutableArray<string> useSymbolSubstitution(
+        OpenGenericRegistration openGeneric,
+        ClosedGenericUsage usage
+    )
+    {
+        if (
+            !openGeneric.ConstructorParameterTypeSymbols.IsDefaultOrEmpty
+            && !usage.TypeArgumentSymbols.IsDefaultOrEmpty
+        )
+        {
+            return _substitutor.SubstituteTypeParametersWithSymbols(
+                openGeneric.ConstructorParameterTypeSymbols,
+                usage.TypeArgumentSymbols,
+                openGeneric.TypeParameterNames
+            );
+        }
+
+        // Fallback to string-based substitution when symbols are unavailable
+        // (e.g., when ClosedGenericUsage was parsed from a string representation)
+        var typeParameterMap = new Dictionary<string, string>();
+        for (
+            var index = 0;
+            index < openGeneric.TypeParameterNames.Length
+                && index < usage.TypeArgumentsFullNames.Length;
+            index++
+        )
+        {
+            typeParameterMap[openGeneric.TypeParameterNames[index]] =
+                usage.TypeArgumentsFullNames[index];
+        }
+
+        return openGeneric
+            .ConstructorParameters.Select(
+                typeFullName =>
+                    _substitutor.SubstituteTypeParameters(typeFullName, typeParameterMap)
+            )
+            .ToImmutableArray();
     }
 }

@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
@@ -20,6 +21,6 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-      <PackageReference Include="PicoLog.Abs" Version="$(Version)" />
+      <PackageReference Include="PicoLog.Abs" />
     </ItemGroup>
 </Project>

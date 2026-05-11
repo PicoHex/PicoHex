@@ -87,9 +87,11 @@ internal sealed class LoggerFactoryRuntime
             && (droppedCount == 1 || (droppedCount & (droppedCount - 1)) == 0)
         )
         {
+#if DEBUG
             Debug.WriteLine(
                 $"Dropped {droppedCount} log entr{(droppedCount == 1 ? "y" : "ies")} for '{categoryName}'."
             );
+#endif
         }
     }
 

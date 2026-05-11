@@ -42,10 +42,10 @@ internal sealed class TrackedScopeList
     {
         // Caller guarantees that scope is parented to the expected container/scope.
         // See DetachChildScope and DetachRootScope for the ReferenceEquals guard.
-        Debug.Assert(
-            scope.ParentScope != null || scope.OwningContainer != null,
-            $"Remove called on scope that is not parented to any container/scope."
-        );
+        if (scope.ParentScope is null && scope.OwningContainer is null)
+            throw new InvalidOperationException(
+                "Remove called on scope that is not parented to any container/scope."
+            );
 
         lock (_lock)
         {

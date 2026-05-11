@@ -286,20 +286,14 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
     private void CancelBatchDelayWait()
     {
-        CancellationTokenSource? source;
+        var cts = Interlocked.Exchange(ref _batchDelayCancellationSource, null);
 
-        lock (_batchDelayStateLock)
-        {
-            source = _batchDelayCancellationSource;
-            _batchDelayCancellationSource = null;
-        }
-
-        if (source is null)
+        if (cts is null)
             return;
 
         try
         {
-            source.Cancel();
+            cts.Cancel();
         }
         catch (ObjectDisposedException)
         {

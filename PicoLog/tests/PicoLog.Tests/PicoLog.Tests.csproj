@@ -2,7 +2,10 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
+        <PublishAot>true</PublishAot>
+        <TrimMode>full</TrimMode>
         <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
@@ -12,7 +15,7 @@
 
     <ItemGroup>
       <PackageReference Include="PicoDI" Condition="'$(UseProjectReferences)' != 'true'" />
-      <ProjectReference Include="..\..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" Condition="'$(UseProjectReferences)' == 'true'" />
+      <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" Condition="'$(UseProjectReferences)' == 'true'" />
       <PackageReference Include="TUnit" />
     </ItemGroup>
 

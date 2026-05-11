@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoCfg.Abs" Version="$(Version)" />
+        <PackageReference Include="PicoCfg.Abs" />
     </ItemGroup>
 
     <ItemGroup>

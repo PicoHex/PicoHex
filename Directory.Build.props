@@ -1,5 +1,7 @@
 <Project>
   <PropertyGroup>
+    <AnalysisLevel>latest</AnalysisLevel>
+
     <!-- Default: do not produce NuGet packages from every project in the repo -->
     <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
 

@@ -7,13 +7,23 @@ public sealed class CfgValidatorTests
     [Before(Class)]
     public static void SetupBinding() => CfgBindTestHelper.RegisterValidatableTargetBinding();
 
-    public sealed class ValidatableTarget
+    public sealed class ValidatableTarget : IValidatableObject
     {
-        [Required]
         public string? Name { get; set; }
-
-        [Range(1, 100)]
         public int Count { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var results = new List<ValidationResult>();
+
+            if (string.IsNullOrWhiteSpace(Name))
+                results.Add(new ValidationResult("Name is required.", [nameof(Name)]));
+
+            if (Count < 1 || Count > 100)
+                results.Add(new ValidationResult("Count must be between 1 and 100.", [nameof(Count)]));
+
+            return results;
+        }
     }
 
     [Test]

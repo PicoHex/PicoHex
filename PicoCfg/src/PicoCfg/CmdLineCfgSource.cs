@@ -60,6 +60,9 @@ internal sealed class CmdLineCfgProvider : ICfgProvider
             if (prefix is not null && !rawKey.StartsWith(prefix, StringComparison.Ordinal))
                 continue;
 
+            if (prefix is not null)
+                rawKey = rawKey[prefix.Length..];
+
             var eqIndex = rawKey.IndexOf('=');
             string key;
             string value;

@@ -46,7 +46,8 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
     /// Prefer calling <see cref="DisposeAsync"/> directly to avoid potential deadlocks
     /// in environments with a <see cref="System.Threading.SynchronizationContext"/>.
     /// </summary>
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+    public void Dispose() =>
+        Task.Run(() => DisposeAsync().AsTask()).GetAwaiter().GetResult();
 
     public async ValueTask FlushAsync(CancellationToken cancellationToken = default)
     {

@@ -124,7 +124,18 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
         if (Interlocked.Exchange(ref _disposed, 1) == 1)
             return;
 
-        _stoppingCts?.Cancel();
+        var cts = Interlocked.Exchange(ref _stoppingCts, null);
+        if (cts is not null)
+        {
+            try
+            {
+                cts.Cancel();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error cancelling background service: {ex}");
+            }
+        }
 
         if (Volatile.Read(ref _executingTask) is { } task)
         {
@@ -139,7 +150,7 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
             }
         }
 
-        _stoppingCts?.Dispose();
+        cts?.Dispose();
     }
 
     /// <summary>

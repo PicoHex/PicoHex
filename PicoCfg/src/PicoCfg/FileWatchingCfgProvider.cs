@@ -30,8 +30,13 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
             return;
 
         _watcher?.Dispose();
-        _debounceCts?.Cancel();
-        _debounceCts?.Dispose();
+        lock (_debounceLock)
+        {
+            _debounceCts?.Cancel();
+            _debounceCts?.Dispose();
+            _debounceCts = null;
+        }
+
         await _inner.DisposeAsync();
     }
 

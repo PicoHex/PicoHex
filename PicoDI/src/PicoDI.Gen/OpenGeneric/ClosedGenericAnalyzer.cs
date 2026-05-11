@@ -24,10 +24,13 @@ internal sealed class ClosedGenericAnalyzer
             .Select(t => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
             .ToImmutableArray();
 
+        var typeArgumentSymbols = namedType.TypeArguments.ToImmutableArray();
+
         return new ClosedGenericUsage(
             namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             openType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            typeArguments
+            typeArguments,
+            typeArgumentSymbols
         );
     }
 
@@ -111,7 +114,8 @@ internal sealed class ClosedGenericAnalyzer
         return new ClosedGenericUsage(
             typeFullName,
             $"{baseName}<{openGenericArityPlaceholder}>",
-            typeArguments
+            typeArguments,
+            ImmutableArray<ITypeSymbol>.Empty
         );
     }
 

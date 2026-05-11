@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
@@ -7,6 +7,7 @@
         <LangVersion>latest</LangVersion>
         <IsPackable>true</IsPackable>
         <MinVerTagPrefix>PicoLog-</MinVerTagPrefix>
+        <PublishAot>false</PublishAot>
     </PropertyGroup>
 
     <ItemGroup>

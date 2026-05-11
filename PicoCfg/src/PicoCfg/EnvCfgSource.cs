@@ -33,10 +33,12 @@ internal sealed class EnvCfgProvider : ICfgProvider
     {
         var vars = Environment.GetEnvironmentVariables();
         var newData = new Dictionary<string, string>(vars.Count);
+        var enumerator = vars.GetEnumerator();
 
-        foreach (var key in vars.Keys)
+        while (enumerator.MoveNext())
         {
-            var keyStr = (string)key;
+            var keyStr = (string)enumerator.Key;
+            var valueStr = (string?)enumerator.Value;
 
             if (_prefix is not null && !keyStr.StartsWith(_prefix, StringComparison.OrdinalIgnoreCase))
                 continue;
@@ -45,7 +47,7 @@ internal sealed class EnvCfgProvider : ICfgProvider
                 ? keyStr[_prefix.Length..].Replace("__", ":")
                 : keyStr.Replace("__", ":");
 
-            newData[configKey] = Environment.GetEnvironmentVariable(keyStr) ?? string.Empty;
+            newData[configKey] = valueStr ?? string.Empty;
         }
 
         return newData;

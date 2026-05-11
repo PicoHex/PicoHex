@@ -74,23 +74,28 @@ public static class SvcContainerExtensions
         }
     }
 
-    private static List<ILogSink> ResolveRegisteredSinks(ISvcScope scope)
+    private static IEnumerable<T> TryGetServices<T>(ISvcScope scope) where T : notnull
     {
+        ArgumentNullException.ThrowIfNull(scope);
+
         try
         {
-            return scope.GetServices<ILogSink>().Select(NonOwningLogSink.Wrap).ToList();
+            return scope.GetServices<T>();
         }
-        catch (PicoDiException ex) when (IsNotRegistered(ex))
+        catch (PicoDiException)
         {
+            // PicoDI.Abs does not expose an IsRegistered<T>() query API.
+            // Catching PicoDiException from GetServices<T>() is the only non-throwing
+            // path to detect unregistered service types at this layer.
             return [];
         }
     }
 
-    // FRAGILE: depends on PicoDiException.Message text matching.
-    // Replace when PicoDI provides TryGetServices<T>() or a dedicated
-    // ServiceNotRegisteredException subtype.
-    private static bool IsNotRegistered(PicoDiException ex) =>
-        ex.Message.Contains("is not registered", StringComparison.Ordinal);
+    private static List<ILogSink> ResolveRegisteredSinks(ISvcScope scope)
+    {
+        var sinks = TryGetServices<ILogSink>(scope);
+        return sinks.Select(NonOwningLogSink.Wrap).ToList();
+    }
 
     private static List<ILogSink> CreateOwnedSinks(LoggingOptions options)
     {

@@ -18,6 +18,8 @@ internal sealed class CfgSection : ICfgSection
         _path = path ?? string.Empty;
     }
 
+    internal ICfg Parent => _parent;
+
     public string Path => _path;
 
     public bool TryGetValue(string key, out string? value)

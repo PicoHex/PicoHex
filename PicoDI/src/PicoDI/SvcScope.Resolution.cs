@@ -27,6 +27,48 @@ public sealed partial class SvcScope
     }
 
     /// <inheritdoc />
+    public bool TryGetService(Type serviceType, [MaybeNullWhen(false)] out object? service)
+    {
+        ArgumentNullException.ThrowIfNull(serviceType);
+        DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
+
+        if (_singletonCache.TryGetValue(serviceType, out var singletonRegistration))
+        {
+            var instance = singletonRegistration.GetSingletonInstance();
+            service = instance ?? GetOrCreateSingletonSlow(serviceType, singletonRegistration);
+            return true;
+        }
+
+        if (!_registrationCache.TryGetValue(serviceType, out var registrations))
+        {
+            service = null;
+            return false;
+        }
+
+        var registration = registrations[^1];
+        service = ResolveByLifetime(serviceType, registration);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public bool TryGetServices(Type serviceType, [MaybeNullWhen(false)] out IReadOnlyList<object> services)
+    {
+        ArgumentNullException.ThrowIfNull(serviceType);
+        DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
+
+        if (!_registrationCache.TryGetValue(serviceType, out var registrations))
+        {
+            services = null;
+            return false;
+        }
+
+        services = registrations
+            .Select(registration => ResolveDescriptor(serviceType, registration))
+            .ToArray();
+        return true;
+    }
+
+    /// <inheritdoc />
     public IReadOnlyList<object> GetServices(Type serviceType)
     {
         ArgumentNullException.ThrowIfNull(serviceType);

@@ -77,14 +77,14 @@ internal static class CancellationAwaitExtensions
         var registration = ct.Register(
             static state =>
             {
-                var (source, shouldThrow, token) = ((TaskCompletionSource, bool, CancellationToken))
-                    state!;
+                var (source, shouldThrow, token) =
+                    (Tuple<TaskCompletionSource, bool, CancellationToken>)state!;
                 if (shouldThrow)
                     source.TrySetCanceled(token);
                 else
                     source.TrySetResult();
             },
-            (tcs, throwOnCancellation, ct)
+            Tuple.Create(tcs, throwOnCancellation, ct)
         );
 
         _ = tcs.Task.ContinueWith(

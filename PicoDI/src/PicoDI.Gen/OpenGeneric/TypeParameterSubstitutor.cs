@@ -42,6 +42,77 @@ internal sealed class TypeParameterSubstitutor
     }
 
     /// <summary>
+    /// Substitutes type parameters in constructor parameter types using Roslyn semantic model.
+    /// Resolves type parameters via <see cref="INamedTypeSymbol.Construct"/> for accurate
+    /// handling of nested generics (e.g., <c>Dictionary&lt;string, List&lt;T&gt;&gt;</c>)
+    /// which string-based substitution cannot handle correctly.
+    /// </summary>
+    /// <param name="parameterTypeSymbols">The constructor parameter type symbols (may contain type parameters).</param>
+    /// <param name="typeArgumentSymbols">The closed generic type arguments to substitute.</param>
+    /// <param name="typeParameterNames">The type parameter names of the open generic.</param>
+    /// <returns>The substituted constructor parameter type full names.</returns>
+    public ImmutableArray<string> SubstituteTypeParametersWithSymbols(
+        ImmutableArray<ITypeSymbol> parameterTypeSymbols,
+        ImmutableArray<ITypeSymbol> typeArgumentSymbols,
+        ImmutableArray<string> typeParameterNames
+    )
+    {
+        return parameterTypeSymbols
+            .Select(
+                paramType =>
+                    ResolveTypeParametersRecursive(
+                        paramType,
+                        typeArgumentSymbols,
+                        typeParameterNames
+                    )
+            )
+            .Select(resolved => resolved.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            .ToImmutableArray();
+    }
+
+    /// <summary>
+    /// Recursively resolves type parameters within an <see cref="ITypeSymbol"/> tree.
+    /// </summary>
+    private static ITypeSymbol ResolveTypeParametersRecursive(
+        ITypeSymbol type,
+        ImmutableArray<ITypeSymbol> typeArgumentSymbols,
+        ImmutableArray<string> typeParameterNames
+    )
+    {
+        if (type is ITypeParameterSymbol typeParam)
+        {
+            for (var i = 0; i < typeParameterNames.Length; i++)
+            {
+                if (string.Equals(typeParameterNames[i], typeParam.Name, StringComparison.Ordinal))
+                {
+                    if (i < typeArgumentSymbols.Length)
+                        return typeArgumentSymbols[i];
+                    break;
+                }
+            }
+            return type;
+        }
+
+        if (type is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
+        {
+            var resolvedArgs = namedType
+                .TypeArguments
+                .Select(
+                    ta => ResolveTypeParametersRecursive(
+                        ta,
+                        typeArgumentSymbols,
+                        typeParameterNames
+                    )
+                )
+                .ToArray();
+
+            return namedType.OriginalDefinition.Construct(resolvedArgs);
+        }
+
+        return type;
+    }
+
+    /// <summary>
     /// Builds a closed generic type name from an open generic type name and type arguments.
     /// </summary>
     /// <param name="openTypeFullName">The fully qualified open generic type name.</param>
