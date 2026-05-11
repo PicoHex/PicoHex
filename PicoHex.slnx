@@ -8,6 +8,11 @@
   <Folder Name="/PicoDI/tests/">
     <Project Path="../PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj" />
   </Folder>
+  <Folder Name="/PicoDI/samples/">
+    <Project Path="../PicoDI/samples/PicoDI.Sample.Host/PicoDI.Sample.Host.csproj" />
+    <Project Path="../PicoDI/samples/PicoDI.Sample/PicoDI.Sample.csproj" />
+    <Project Path="../PicoDI/samples/PicoDI.Sample.Services/PicoDI.Sample.Services.csproj" />
+  </Folder>
 
   <!-- PicoCfg -->
   <Folder Name="/PicoCfg/src/">
@@ -21,6 +26,11 @@
     <Project Path="PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj" />
     <Project Path="PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj" />
   </Folder>
+  <Folder Name="/PicoCfg/samples/">
+    <Project Path="PicoCfg/samples/PicoCfg.Sample/PicoCfg.Sample.csproj" />
+    <Project Path="PicoCfg/samples/PicoCfg.DI.Sample/PicoCfg.DI.Sample.csproj" />
+    <Project Path="PicoCfg/samples/PicoCfg.Gen.Sample/PicoCfg.Gen.Sample.csproj" />
+  </Folder>
 
   <!-- PicoLog -->
   <Folder Name="/PicoLog/src/">
@@ -31,5 +41,8 @@
   </Folder>
   <Folder Name="/PicoLog/tests/">
     <Project Path="../PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj" />
+  </Folder>
+  <Folder Name="/PicoLog/samples/">
+    <Project Path="../PicoLog/samples/PicoLog.Sample/PicoLog.Sample.csproj" />
   </Folder>
 </Solution>
