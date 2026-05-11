@@ -1,0 +1,824 @@
+namespace PicoDI.Test;
+
+/// <summary>
+/// Integration tests for the full hosting lifecycle.
+/// Verifies startup order, stop LIFO order, DI injection, exception isolation, and Dispose integration.
+/// </summary>
+public class HostingIntegrationTests
+{
+    #region Test Service Classes
+
+    // Unique marker interfaces so each hosted-service registration
+    // gets a distinct service type and does not collide during resolution.
+    private interface ISvcA : IHostedSvc { }
+
+    private interface ISvcB : IHostedSvc { }
+
+    private interface ISvcC : IHostedSvc { }
+
+    private sealed class OrderedSvc(List<string> log, string name) : ISvcA, ISvcB, ISvcC
+    {
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            log.Add($"Start:{name}");
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            log.Add($"Stop:{name}");
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FailingStartSvc : IHostedSvc
+    {
+        public Task StartAsync(CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Start failed");
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class FailingStopSvc : IHostedSvc
+    {
+        public bool Started { get; private set; }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            Started = true;
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Stop failed");
+    }
+
+    private sealed class DependentSvc : IHostedSvc
+    {
+        public ISimpleService Dep { get; }
+
+        public DependentSvc(ISimpleService dep) => Dep = dep;
+
+        public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class TrackingHostedSvc : IHostedSvc
+    {
+        public bool Started { get; private set; }
+        public bool Stopped { get; private set; }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            Started = true;
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            Stopped = true;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class TokenCapturingSvc : IHostedSvc
+    {
+        public CancellationToken? StartToken { get; private set; }
+        public CancellationToken? StopToken { get; private set; }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            StartToken = cancellationToken;
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            StopToken = cancellationToken;
+            return Task.CompletedTask;
+        }
+    }
+
+    #endregion
+
+    #region Startup Order Tests
+
+    [Test]
+    public async Task MultipleServices_StartInRegistrationOrder()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var log = new List<string>();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(ISvcA),
+                _ => (object)new OrderedSvc(log, "A"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(ISvcB),
+                _ => (object)new OrderedSvc(log, "B"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(ISvcC),
+                _ => (object)new OrderedSvc(log, "C"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act
+        await host.StartAsync();
+
+        // Assert
+        await Assert.That(log).IsEquivalentTo(["Start:A", "Start:B", "Start:C"]);
+    }
+
+    [Test]
+    public async Task MultipleServices_StopInReverseOrder()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var log = new List<string>();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(ISvcA),
+                _ => (object)new OrderedSvc(log, "A"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(ISvcB),
+                _ => (object)new OrderedSvc(log, "B"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(ISvcC),
+                _ => (object)new OrderedSvc(log, "C"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        // Act
+        await host.StopAsync();
+
+        // Assert — LIFO: C stops first, then B, then A
+        await Assert
+            .That(log)
+            .IsEquivalentTo(["Start:A", "Start:B", "Start:C", "Stop:C", "Stop:B", "Stop:A"]);
+    }
+
+    #endregion
+
+    #region DI Injection Test
+
+    [Test]
+    public async Task HostedService_InjectsOtherDI()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+
+        // Register the dependency that DependentSvc will inject
+        container.RegisterSingleton<ISimpleService>(static _ => new SimpleService());
+
+        // Register the hosted service whose constructor takes ISimpleService
+        container.Register(
+            new SvcDescriptor(
+                typeof(DependentSvc),
+                (Func<ISvcScope, object>)(
+                    scope => new DependentSvc(scope.GetService<ISimpleService>())
+                ),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act & Assert — should not throw
+        await host.StartAsync();
+    }
+
+    #endregion
+
+    #region Exception Isolation Tests
+
+    [Test]
+    public async Task StartAsync_ExceptionDoesNotBlockOthers()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var trackingSvc = new TrackingHostedSvc();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(FailingStartSvc),
+                _ => (object)new FailingStartSvc(),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(TrackingHostedSvc),
+                _ => (object)trackingSvc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act — should not throw (hosting catches per-service exceptions)
+        await host.StartAsync();
+
+        // Assert — normal service still started despite the failing one
+        await Assert.That(trackingSvc.Started).IsTrue();
+    }
+
+    [Test]
+    public async Task StopAsync_ExceptionDoesNotBlockOthers()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var trackingSvc = new TrackingHostedSvc();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(FailingStopSvc),
+                _ => (object)new FailingStopSvc(),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(TrackingHostedSvc),
+                _ => (object)trackingSvc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Materialize singletons first
+        await host.StartAsync();
+
+        // Act — should not throw (hosting catches per-service exceptions)
+        await host.StopAsync();
+
+        // Assert — normal service still stopped despite the failing one
+        await Assert.That(trackingSvc.Stopped).IsTrue();
+    }
+
+    #endregion
+
+    #region Dispose Integration Test
+
+    [Test]
+    public async Task DisposeAsync_CallsStopBeforeDispose()
+    {
+        // Arrange
+        var trackingSvc = new TrackingHostedSvc();
+
+        var container = new SvcContainer(autoConfigureFromGenerator: false);
+        container.Register(
+            new SvcDescriptor(
+                typeof(TrackingHostedSvc),
+                _ => (object)trackingSvc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Materialize the singleton
+        await host.StartAsync();
+        await Assert.That(trackingSvc.Started).IsTrue();
+
+        // Act — DisposeAsync must call StopAsync before cleaning up
+        await container.DisposeAsync();
+
+        // Assert — StopAsync was called as part of the disposal pipeline
+        await Assert.That(trackingSvc.Stopped).IsTrue();
+    }
+
+    #endregion
+
+    #region CancellationToken Propagation Test
+
+    [Test]
+    public async Task CancellationToken_PropagatedToHostedService()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var tokenSvc = new TokenCapturingSvc();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(TokenCapturingSvc),
+                _ => (object)tokenSvc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act — start with a specific token
+        using var startCts = new CancellationTokenSource();
+        await host.StartAsync(startCts.Token);
+
+        // Assert — token was propagated to the service
+        await Assert.That(tokenSvc.StartToken.HasValue).IsTrue();
+        await Assert.That(tokenSvc.StartToken!.Value.Equals(startCts.Token)).IsTrue();
+
+        // Act — stop with a specific token
+        using var stopCts = new CancellationTokenSource();
+        await host.StopAsync(stopCts.Token);
+
+        // Assert — token was propagated to StopAsync
+        await Assert.That(tokenSvc.StopToken.HasValue).IsTrue();
+        await Assert.That(tokenSvc.StopToken!.Value.Equals(stopCts.Token)).IsTrue();
+    }
+
+    #endregion
+
+    #region Lifecycle Service Test Helpers
+
+    private interface ILifecycleA : IHostedLifecycleSvc { }
+
+    private interface ILifecycleB : IHostedLifecycleSvc { }
+
+    private sealed class LifecycleTrackingSvc(List<string> log, string name)
+        : ILifecycleA,
+            ILifecycleB
+    {
+        public Task StartingAsync(CancellationToken ct)
+        {
+            log.Add($"Starting:{name}");
+            return Task.CompletedTask;
+        }
+
+        public Task StartAsync(CancellationToken ct)
+        {
+            log.Add($"Start:{name}");
+            return Task.CompletedTask;
+        }
+
+        public Task StartedAsync(CancellationToken ct)
+        {
+            log.Add($"Started:{name}");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppingAsync(CancellationToken ct)
+        {
+            log.Add($"Stopping:{name}");
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken ct)
+        {
+            log.Add($"Stop:{name}");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppedAsync(CancellationToken ct)
+        {
+            log.Add($"Stopped:{name}");
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class SlowStartingLifecycleSvc : IHostedLifecycleSvc
+    {
+        public bool Started { get; private set; }
+
+        public async Task StartingAsync(CancellationToken ct) => await Task.Delay(200, ct);
+
+        public async Task StartAsync(CancellationToken ct)
+        {
+            await Task.Delay(100, ct);
+            Started = true;
+        }
+
+        public Task StartedAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task StoppingAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task StoppedAsync(CancellationToken ct) => Task.CompletedTask;
+    }
+
+    private sealed class FailingLifecyclePhaseSvc(string failingPhase) : IHostedLifecycleSvc
+    {
+        public bool SubsequentPhaseRun { get; private set; }
+
+        public Task StartingAsync(CancellationToken ct) => FailIf("Starting");
+
+        public Task StartAsync(CancellationToken ct)
+        {
+            SubsequentPhaseRun = true;
+            return FailIf("Start");
+        }
+
+        public Task StartedAsync(CancellationToken ct) => FailIf("Started");
+
+        public Task StoppingAsync(CancellationToken ct) => FailIf("Stopping");
+
+        public Task StopAsync(CancellationToken ct) => FailIf("Stop");
+
+        public Task StoppedAsync(CancellationToken ct) => FailIf("Stopped");
+
+        private Task FailIf(string phase) =>
+            phase == failingPhase
+                ? throw new InvalidOperationException($"Fail:{phase}")
+                : Task.CompletedTask;
+    }
+
+    private sealed class TrackingLifecycleSvc : IHostedLifecycleSvc
+    {
+        public bool Started { get; private set; }
+        public bool Stopped { get; private set; }
+
+        public Task StartingAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task StartAsync(CancellationToken ct)
+        {
+            Started = true;
+            return Task.CompletedTask;
+        }
+
+        public Task StartedAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task StoppingAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task StopAsync(CancellationToken ct)
+        {
+            Stopped = true;
+            return Task.CompletedTask;
+        }
+
+        public Task StoppedAsync(CancellationToken ct) => Task.CompletedTask;
+    }
+
+    #endregion
+
+    #region Lifecycle Phase Ordering Tests
+
+    [Test]
+    public async Task LifecycleService_PhaseExecutionOrder()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var log = new List<string>();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(ILifecycleA),
+                _ => (object)new LifecycleTrackingSvc(log, "A"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act
+        await host.StartAsync();
+
+        // Assert — phases run in order: Starting → Start → Started
+        await Assert.That(log).IsEquivalentTo(["Starting:A", "Start:A", "Started:A"]);
+    }
+
+    [Test]
+    public async Task LifecycleService_StopPhaseExecutionOrder()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var log = new List<string>();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(ILifecycleA),
+                _ => (object)new LifecycleTrackingSvc(log, "A"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        // Act
+        await host.StopAsync();
+
+        // Assert — stop phases run in order: Stopping → Stop → Stopped
+        await Assert
+            .That(log)
+            .IsEquivalentTo(
+                ["Starting:A", "Start:A", "Started:A", "Stopping:A", "Stop:A", "Stopped:A"]
+            );
+    }
+
+    [Test]
+    public async Task MultipleLifecycleServices_StartInRegistrationOrder()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var log = new List<string>();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(ILifecycleA),
+                _ => (object)new LifecycleTrackingSvc(log, "A"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(ILifecycleB),
+                _ => (object)new LifecycleTrackingSvc(log, "B"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act
+        await host.StartAsync();
+
+        // Assert — A completes all phases before B starts
+        await Assert
+            .That(log)
+            .IsEquivalentTo(
+                ["Starting:A", "Start:A", "Started:A", "Starting:B", "Start:B", "Started:B"]
+            );
+    }
+
+    [Test]
+    public async Task MultipleLifecycleServices_StopInReverseOrder()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var log = new List<string>();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(ILifecycleA),
+                _ => (object)new LifecycleTrackingSvc(log, "A"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(ILifecycleB),
+                _ => (object)new LifecycleTrackingSvc(log, "B"),
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        // Act
+        await host.StopAsync();
+
+        // Assert — B stops first (LIFO), then A
+        await Assert
+            .That(log)
+            .IsEquivalentTo(
+
+                [
+                    "Starting:A",
+                    "Start:A",
+                    "Started:A",
+                    "Starting:B",
+                    "Start:B",
+                    "Started:B",
+                    "Stopping:B",
+                    "Stop:B",
+                    "Stopped:B",
+                    "Stopping:A",
+                    "Stop:A",
+                    "Stopped:A"
+                ]
+            );
+    }
+
+    #endregion
+
+    #region Start/Stop Completion Tests (Regression: async void + fire-and-forget)
+
+    [Test]
+    public async Task StartHostedServicesAsync_CompletesBeforeReturn()
+    {
+        // Arrange — a slow-starting lifecycle service
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new SlowStartingLifecycleSvc();
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(SlowStartingLifecycleSvc),
+                _ => (object)svc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act — StartAsync should not return until phases are complete
+        await host.StartAsync();
+
+        // Assert — the service's phases actually completed
+        await Assert.That(svc.Started).IsTrue();
+    }
+
+    [Test]
+    public async Task StartHostedServicesAsync_AwaitReturnsAfterStart()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new TrackingLifecycleSvc();
+
+        container.Register(
+            new SvcDescriptor(typeof(TrackingLifecycleSvc), _ => (object)svc, SvcLifetime.Singleton)
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act
+        await host.StartAsync();
+
+        // Assert — after StartAsync completes, Started is true
+        // (was broken when TryRunPhase was async void fire-and-forget)
+        await Assert.That(svc.Started).IsTrue();
+    }
+
+    [Test]
+    public async Task StopHostedServicesAsync_AwaitReturnsAfterStop()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new TrackingLifecycleSvc();
+
+        container.Register(
+            new SvcDescriptor(typeof(TrackingLifecycleSvc), _ => (object)svc, SvcLifetime.Singleton)
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        // Act
+        await host.StopAsync();
+
+        // Assert — after StopAsync completes, Stopped is true
+        await Assert.That(svc.Stopped).IsTrue();
+    }
+
+    [Test]
+    public async Task Dispose_WaitsForHostedServicesToStop()
+    {
+        // Arrange
+        var svc = new TrackingLifecycleSvc();
+        var container = new SvcContainer(autoConfigureFromGenerator: false);
+
+        container.Register(
+            new SvcDescriptor(typeof(TrackingLifecycleSvc), _ => (object)svc, SvcLifetime.Singleton)
+        );
+        container.Build();
+
+        await new SvcHost(container).StartAsync();
+        await Assert.That(svc.Started).IsTrue();
+
+        // Act — async Dispose must call StopAsync and actually wait for it
+        await container.DisposeAsync();
+
+        // Assert — after Dispose returns, the service has stopped
+        await Assert.That(svc.Stopped).IsTrue();
+    }
+
+    [Test]
+    public async Task DisposeAsync_WaitsForHostedServicesToStop()
+    {
+        // Arrange
+        var svc = new TrackingLifecycleSvc();
+        var container = new SvcContainer(autoConfigureFromGenerator: false);
+
+        container.Register(
+            new SvcDescriptor(typeof(TrackingLifecycleSvc), _ => (object)svc, SvcLifetime.Singleton)
+        );
+        container.Build();
+
+        await new SvcHost(container).StartAsync();
+        await Assert.That(svc.Started).IsTrue();
+
+        // Act — async Dispose must call StopAsync and actually wait for it
+        await container.DisposeAsync();
+
+        // Assert — after DisposeAsync returns, the service has stopped
+        await Assert.That(svc.Stopped).IsTrue();
+    }
+
+    #endregion
+
+    #region Lifecycle Exception Isolation Tests
+
+    [Test]
+    public async Task LifecycleService_ExceptionDoesNotBlockSubsequentPhases()
+    {
+        // Arrange — StartingAsync throws, but StartAsync should still run
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new FailingLifecyclePhaseSvc("Starting");
+
+        container.Register(
+            new SvcDescriptor(
+                typeof(FailingLifecyclePhaseSvc),
+                _ => (object)svc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act — should not throw
+        await host.StartAsync();
+
+        // Assert — subsequent phase (StartAsync) still ran
+        await Assert.That(svc.SubsequentPhaseRun).IsTrue();
+    }
+
+    [Test]
+    public async Task LifecycleService_ExceptionDoesNotBlockOtherServices()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var failingSvc = new FailingLifecyclePhaseSvc("Start");
+        var trackingSvc = new TrackingLifecycleSvc();
+
+        container.Register(
+            new SvcDescriptor(typeof(ILifecycleA), _ => (object)failingSvc, SvcLifetime.Singleton)
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(TrackingLifecycleSvc),
+                _ => (object)trackingSvc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        // Act — should not throw
+        await host.StartAsync();
+
+        // Assert — the second service started despite the first failing
+        await Assert.That(trackingSvc.Started).IsTrue();
+    }
+
+    [Test]
+    public async Task LifecycleService_StopExceptionDoesNotBlockOtherServices()
+    {
+        // Arrange
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var failingSvc = new FailingLifecyclePhaseSvc("Stop");
+        var trackingSvc = new TrackingLifecycleSvc();
+
+        container.Register(
+            new SvcDescriptor(typeof(ILifecycleA), _ => (object)failingSvc, SvcLifetime.Singleton)
+        );
+        container.Register(
+            new SvcDescriptor(
+                typeof(TrackingLifecycleSvc),
+                _ => (object)trackingSvc,
+                SvcLifetime.Singleton
+            )
+        );
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        // Act — should not throw
+        await host.StopAsync();
+
+        // Assert — the second service stopped despite the first failing
+        await Assert.That(trackingSvc.Stopped).IsTrue();
+    }
+
+    #endregion
+}

@@ -1,0 +1,248 @@
+namespace PicoDI.Test;
+
+public class LifecycleSvcTests
+{
+    private sealed class LifecycleTestSvc : IHostedLifecycleSvc
+    {
+        private readonly List<string> _calls = new();
+        public IReadOnlyList<string> Calls => _calls;
+
+        public Task StartingAsync(CancellationToken ct)
+        {
+            _calls.Add("Starting");
+            return Task.CompletedTask;
+        }
+
+        public Task StartAsync(CancellationToken ct)
+        {
+            _calls.Add("Start");
+            return Task.CompletedTask;
+        }
+
+        public Task StartedAsync(CancellationToken ct)
+        {
+            _calls.Add("Started");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppingAsync(CancellationToken ct)
+        {
+            _calls.Add("Stopping");
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken ct)
+        {
+            _calls.Add("Stop");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppedAsync(CancellationToken ct)
+        {
+            _calls.Add("Stopped");
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FaultyStartingLifecycleSvc : IHostedLifecycleSvc
+    {
+        private readonly List<string> _calls = new();
+        public IReadOnlyList<string> Calls => _calls;
+
+        public Task StartingAsync(CancellationToken ct)
+        {
+            _calls.Add("Starting");
+            throw new InvalidOperationException("StartingAsync failed on purpose");
+        }
+
+        public Task StartAsync(CancellationToken ct)
+        {
+            _calls.Add("Start");
+            return Task.CompletedTask;
+        }
+
+        public Task StartedAsync(CancellationToken ct)
+        {
+            _calls.Add("Started");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppingAsync(CancellationToken ct)
+        {
+            _calls.Add("Stopping");
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken ct)
+        {
+            _calls.Add("Stop");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppedAsync(CancellationToken ct)
+        {
+            _calls.Add("Stopped");
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class PlainHostedSvc : IHostedSvc
+    {
+        private readonly List<string> _calls = new();
+        public IReadOnlyList<string> Calls => _calls;
+
+        public Task StartAsync(CancellationToken ct)
+        {
+            _calls.Add("Start");
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken ct)
+        {
+            _calls.Add("Stop");
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class LifecycleTestSvcB : IHostedLifecycleSvc
+    {
+        private readonly List<string> _calls = new();
+        public IReadOnlyList<string> Calls => _calls;
+
+        public Task StartingAsync(CancellationToken ct)
+        {
+            _calls.Add("Starting");
+            return Task.CompletedTask;
+        }
+
+        public Task StartAsync(CancellationToken ct)
+        {
+            _calls.Add("Start");
+            return Task.CompletedTask;
+        }
+
+        public Task StartedAsync(CancellationToken ct)
+        {
+            _calls.Add("Started");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppingAsync(CancellationToken ct)
+        {
+            _calls.Add("Stopping");
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken ct)
+        {
+            _calls.Add("Stop");
+            return Task.CompletedTask;
+        }
+
+        public Task StoppedAsync(CancellationToken ct)
+        {
+            _calls.Add("Stopped");
+            return Task.CompletedTask;
+        }
+    }
+
+    [Test]
+    public async Task Lifecycle_StartAsync_CallsAllPhasesInOrder()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new LifecycleTestSvc();
+        container.RegisterHostedSvc<LifecycleTestSvc>(_ => svc);
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        await using var scope = container.CreateScope();
+        var resolved = scope.GetService<LifecycleTestSvc>();
+        await Assert.That(resolved!.Calls).IsEquivalentTo(new[] { "Starting", "Start", "Started" });
+    }
+
+    [Test]
+    public async Task Lifecycle_StopAsync_CallsAllPhasesInOrder()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new LifecycleTestSvc();
+        container.RegisterHostedSvc<LifecycleTestSvc>(_ => svc);
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+        await host.StopAsync();
+
+        await using var scope = container.CreateScope();
+        var resolved = scope.GetService<LifecycleTestSvc>();
+        await Assert
+            .That(resolved!.Calls)
+            .IsEquivalentTo(
+                new[] { "Starting", "Start", "Started", "Stopping", "Stop", "Stopped" }
+            );
+    }
+
+    [Test]
+    public async Task Lifecycle_ExceptionInStarting_StillCallsStart()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new FaultyStartingLifecycleSvc();
+        container.RegisterHostedSvc<FaultyStartingLifecycleSvc>(_ => svc);
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        await using var scope = container.CreateScope();
+        var resolved = scope.GetService<FaultyStartingLifecycleSvc>();
+
+        await Assert.That(resolved!.Calls).Contains("Start");
+        await Assert.That(resolved.Calls).Contains("Started");
+    }
+
+    [Test]
+    public async Task Lifecycle_PlainHostedSvc_DoesNotCallPhases()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svc = new PlainHostedSvc();
+        container.RegisterHostedSvc<PlainHostedSvc>(_ => svc);
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        await using var scope = container.CreateScope();
+        var resolved = scope.GetService<PlainHostedSvc>();
+
+        await Assert.That(resolved!.Calls).IsEquivalentTo(new[] { "Start" });
+    }
+
+    [Test]
+    public async Task Lifecycle_MultipleServices_CorrectOrder()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var svcA = new LifecycleTestSvc();
+        var svcB = new LifecycleTestSvcB();
+        container.RegisterHostedSvc<LifecycleTestSvc>(_ => svcA);
+        container.RegisterHostedSvc<LifecycleTestSvcB>(_ => svcB);
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+
+        await Assert.That(svcA.Calls).IsEquivalentTo(new[] { "Starting", "Start", "Started" });
+        await Assert.That(svcB.Calls).IsEquivalentTo(new[] { "Starting", "Start", "Started" });
+    }
+
+    [Test]
+    public async Task Lifecycle_EmptyContainer_NoPhases()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        container.Build();
+        var host = new SvcHost(container);
+
+        await host.StartAsync();
+        await host.StopAsync();
+    }
+}

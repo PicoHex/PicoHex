@@ -1,0 +1,92 @@
+namespace PicoDI;
+
+public sealed partial class SvcContainer
+{
+    /// <inheritdoc />
+    public ISvcContainer Register(SvcDescriptor descriptor)
+    {
+        DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcContainer));
+
+        var runtimeRegistration = SvcRuntimeRegistration.Create(descriptor);
+
+        lock (_registrationLock)
+        {
+            if (_frozenCache != null)
+                throw new InvalidOperationException(
+                    "Cannot register services after Build() has been called. "
+                        + "Register all services before calling Build()."
+                );
+
+            var cache =
+                _registrationCache
+                ?? throw new InvalidOperationException(
+                    "Cannot register services after the container has been finalized. "
+                        + "Register all services before calling Build()."
+                );
+
+            if (cache.TryGetValue(runtimeRegistration.ServiceType, out var existing))
+            {
+                existing.Add(runtimeRegistration);
+            }
+            else
+            {
+                cache[runtimeRegistration.ServiceType] =  [runtimeRegistration];
+            }
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Builds and optimizes the container for maximum performance.
+    /// </summary>
+    public void Build()
+    {
+        DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcContainer));
+
+        lock (_registrationLock)
+        {
+            if (_frozenCache != null)
+                return;
+
+            var cache =
+                _registrationCache
+                ?? throw new InvalidOperationException(
+                    "Cannot build after the container has been finalized. "
+                        + "Register all services before calling Build()."
+                );
+
+            // Validate before freezing so a failed Build can be retried.
+            TrackHostedServicesFromRegistrations(cache);
+
+            // Convert lists to arrays for frozen storage.
+            var frozenCache = cache.ToFrozenDictionary(
+                static kvp => kvp.Key,
+                static kvp => kvp.Value.ToArray()
+            );
+            Volatile.Write(ref _singletonCache, BuildSingletonCache(frozenCache));
+            // Write _frozenCache LAST — serves as the "both caches ready" signal.
+            // Readers only need to check _frozenCache; if non-null, _singletonCache
+            // is guaranteed to be visible.
+            Volatile.Write(ref _frozenCache, frozenCache);
+            Volatile.Write(ref _registrationCache, null);
+        }
+    }
+
+    private static FrozenDictionary<Type, SvcRuntimeRegistration> BuildSingletonCache(
+        FrozenDictionary<Type, SvcRuntimeRegistration[]> cache
+    )
+    {
+        var singletonDict = new Dictionary<Type, SvcRuntimeRegistration>();
+        foreach (var kvp in cache)
+        {
+            var lastRegistration = kvp.Value[^1];
+            if (lastRegistration.Lifetime == SvcLifetime.Singleton)
+            {
+                singletonDict[kvp.Key] = lastRegistration;
+            }
+        }
+
+        return singletonDict.ToFrozenDictionary();
+    }
+}

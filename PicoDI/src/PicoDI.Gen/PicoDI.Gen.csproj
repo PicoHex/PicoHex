@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <PublishAot>false</PublishAot>
+
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <IsRoslynComponent>true</IsRoslynComponent>
+
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+
+        <!-- Suppress release tracking warning -->
+        <NoWarn>$(NoWarn);RS2008;RS1041;NU5128</NoWarn>
+        
+        <IsPackable>true</IsPackable>
+        <DevelopmentDependency>false</DevelopmentDependency>
+        
+        <!-- Source Generator specific packaging -->
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <MinVerTagPrefix>PicoDI-</MinVerTagPrefix>
+    </PropertyGroup>
+
+    <!-- Prevent deps file generation for source generator -->
+    <PropertyGroup>
+        <GenerateDependencyFile>false</GenerateDependencyFile>
+        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+    
+    <!-- Suppress file copy warnings -->
+    <PropertyGroup>
+        <MSBuildWarningsAsMessages>MSB3026</MSBuildWarningsAsMessages>
+    </PropertyGroup>
+    
+    <!-- Prevent parallel build for this project to avoid file lock conflicts -->
+    <PropertyGroup>
+        <BuildInParallel>false</BuildInParallel>
+    </PropertyGroup>
+    
+    <!-- Completely disable copying of referenced assemblies -->
+    <Target Name="RemoveCopyLocalReferences" AfterTargets="ResolveAssemblyReferences">
+        <ItemGroup>
+            <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+        </ItemGroup>
+    </Target>
+
+    <!-- NuGet Package Metadata -->
+    <PropertyGroup>
+        <PackageId>PicoDI.Gen</PackageId>
+        <Description>Independent source generator for PicoDI - generates AOT-compatible service registrations and open generic metadata at compile time. Use this package when building DI extension libraries based on PicoDI.Abs.</Description>
+        <PackageTags>DI;IoC;AOT;Source Generator;Roslyn;Analyzer</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="" Visible="false" />
+    </ItemGroup>
+
+    <!--
+      Pack the generator under buildTransitive so direct and transitive consumers
+      can load it via MSBuild imports, while package dependencies remain the
+      source of truth for distribution.
+    -->
+    <ItemGroup>
+        <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="buildTransitive/PicoDI.Gen/analyzers/dotnet/cs" Visible="false" />
+        <None Include="buildTransitive\PicoDI.Gen.props" Pack="true" PackagePath="buildTransitive/PicoDI.Gen.props" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+        <ProjectReference Include="..\PicoDI.Abs\PicoDI.Abs.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+        <PackageReference Include="PicoDI.Abs" Version="$(PicoDiPackageVersion)" />
+    </ItemGroup>
+
+</Project>

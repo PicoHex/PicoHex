@@ -1,0 +1,8 @@
+<Project>
+  <!--
+    Build props for PicoDI package.
+    
+    The source generator analyzer is now provided by the PicoDI.Gen dependency
+    package and loaded automatically by NuGet. No manual analyzer include needed.
+  -->
+</Project>

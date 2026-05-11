@@ -1,0 +1,218 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'PicoDI-*'
+      - 'PicoCfg-*'
+      - 'PicoLog-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: 10.0.x
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  identify:
+    name: Identify release target
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.parse.outputs.package }}
+      version: ${{ steps.parse.outputs.version }}
+    steps:
+      - name: Parse tag
+        id: parse
+        shell: bash
+        run: |
+          ref_name="${GITHUB_REF_NAME}"
+          if [[ "$ref_name" =~ ^(PicoDI|PicoCfg|PicoLog)-(.*)$ ]]; then
+            echo "PACKAGE=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "VERSION=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unrecognized tag format: $ref_name" >&2
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Pack
+  # ---------------------------------------------------------------------------
+  pack:
+    name: Pack packages
+    needs: identify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # ---- PicoDI ----
+      - name: Pack PicoDI packages
+        if: needs.identify.outputs.package == 'PicoDI'
+        shell: bash
+        run: |
+          VERSION="${{ needs.identify.outputs.version }}"
+          NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/nupkg"
+          rm -rf ./artifacts/nupkg
+          mkdir -p ./artifacts/nupkg
+
+          dotnet pack PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:PicoDiPackageVersion="$VERSION"
+
+          dotnet pack PicoDI/src/PicoDI.Gen/PicoDI.Gen.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:PicoDiPackageVersion="$VERSION" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoDI/src/PicoDI/PicoDI.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:PicoDiPackageVersion="$VERSION" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+      # ---- PicoCfg ----
+      - name: Pack PicoCfg packages
+        if: needs.identify.outputs.package == 'PicoCfg'
+        shell: bash
+        run: |
+          VERSION="${{ needs.identify.outputs.version }}"
+          NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/nupkg"
+          rm -rf ./artifacts/nupkg
+          mkdir -p ./artifacts/nupkg
+
+          dotnet pack PicoCfg/src/PicoCfg.Abs/PicoCfg.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false
+
+          dotnet pack PicoCfg/src/PicoCfg/PicoCfg.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoCfg/src/PicoCfg.Gen/PicoCfg.Gen.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoCfg/src/PicoCfg.DI/PicoCfg.DI.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+      # ---- PicoLog ----
+      - name: Pack PicoLog packages
+        if: needs.identify.outputs.package == 'PicoLog'
+        shell: bash
+        run: |
+          VERSION="${{ needs.identify.outputs.version }}"
+          NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/nupkg"
+          rm -rf ./artifacts/nupkg
+          mkdir -p ./artifacts/nupkg
+
+          dotnet pack PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false
+
+          dotnet pack PicoLog/src/PicoLog/PicoLog.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoLog/src/PicoLog.Gen/PicoLog.Gen.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoLog/src/PicoLog.DI/PicoLog.DI.csproj \
+            --configuration Release \
+            --output ./artifacts/nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: |
+            ./artifacts/nupkg/*.nupkg
+            ./artifacts/nupkg/*.snupkg
+
+  # ---------------------------------------------------------------------------
+  # Publish
+  # ---------------------------------------------------------------------------
+  publish:
+    name: Publish ${{ needs.identify.outputs.package }} ${{ needs.identify.outputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [identify, pack]
+    environment: release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish packages to NuGet
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for file in *.nupkg; do
+            if [[ "$file" != *.snupkg ]] && [[ "$file" != *.symbols.nupkg ]]; then
+              dotnet nuget push "$file" \
+                --api-key "${{ secrets.NUGET_API_KEY }}" \
+                --source https://api.nuget.org/v3/index.json \
+                --skip-duplicate
+            fi
+          done
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ needs.identify.outputs.package }} ${{ needs.identify.outputs.version }}
+          generate_release_notes: true
+          files: |
+            *.nupkg
+            *.snupkg

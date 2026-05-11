@@ -1,33 +1,35 @@
-﻿<Solution>
-    <Folder Name="/samples/">
-    <Project Path="samples\Pico.Cfg.Sample\Pico.Cfg.Sample.csproj" />
-    <Project Path="samples\Pico.DI.Sample\Pico.DI.Sample.csproj" />
-    <Project Path="samples\Pico.DI.Aot.Sample\Pico.DI.Aot.Sample.csproj" />
-    <Project Path="samples\Pico.Html.Sample\Pico.Html.Sample.csproj" />
-    <Project Path="samples\Pico.Logger.Sample\Pico.Logger.Sample.csproj" />
-    <Project Path="samples\Pico.Node.Http.Sample\Pico.Node.Http.Sample.csproj" />
-    <Project Path="samples\Pico.Node.Sample\Pico.Node.Sample.csproj" />
+<Solution>
+  <!-- PicoDI -->
+  <Folder Name="/PicoDI/src/">
+    <Project Path="../PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj" />
+    <Project Path="../PicoDI/src/PicoDI/PicoDI.csproj" />
+    <Project Path="../PicoDI/src/PicoDI.Gen/PicoDI.Gen.csproj" />
   </Folder>
-  <Folder Name="/src/" />
-  <Folder Name="/src/Node/">
-    <Project Path="src\Node\Pico.Node.Http\Pico.Node.Http.csproj" />
+  <Folder Name="/PicoDI/tests/">
+    <Project Path="../PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj" />
   </Folder>
-  <Folder Name="/src/Proto/" />
-  <Folder Name="/src/Proto/CoAP/">
-    <Project Path="src\Proto\CoAP\Pico.Proto.CoAP\Pico.Proto.CoAP.csproj" />
+
+  <!-- PicoCfg -->
+  <Folder Name="/PicoCfg/src/">
+    <Project Path="PicoCfg/src/PicoCfg.Abs/PicoCfg.Abs.csproj" />
+    <Project Path="PicoCfg/src/PicoCfg/PicoCfg.csproj" />
+    <Project Path="PicoCfg/src/PicoCfg.DI/PicoCfg.DI.csproj" />
+    <Project Path="PicoCfg/src/PicoCfg.Gen/PicoCfg.Gen.csproj" />
   </Folder>
-  <Folder Name="/src/Proto/HTTP/">
-    <Project Path="src\Proto\HTTP\Pico.Proto.HTTP\Pico.Proto.HTTP.csproj" />
+  <Folder Name="/PicoCfg/tests/">
+    <Project Path="PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj" />
+    <Project Path="PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj" />
+    <Project Path="PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Proto/MQTT/">
-    <Project Path="src\Proto\MQTT\Pico.Proto.MQTT\Pico.Proto.MQTT.csproj" />
+
+  <!-- PicoLog -->
+  <Folder Name="/PicoLog/src/">
+    <Project Path="../PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj" />
+    <Project Path="../PicoLog/src/PicoLog/PicoLog.csproj" />
+    <Project Path="../PicoLog/src/PicoLog.DI/PicoLog.DI.csproj" />
+    <Project Path="../PicoLog/src/PicoLog.Gen/PicoLog.Gen.csproj" />
   </Folder>
-  <Folder Name="/src/Serializer/" />
-  <Folder Name="/src/Transport/">
-    <Project Path="src\Transport\Pico.Trsp\Pico.Trsp.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests\Pico.DI.Test\Pico.DI.Test.csproj" />
-    <Project Path="tests\Pico.Node.Test\Pico.Node.Test.csproj" />
+  <Folder Name="/PicoLog/tests/">
+    <Project Path="../PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj" />
   </Folder>
 </Solution>

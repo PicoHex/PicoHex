@@ -1,0 +1,255 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: 10.0.x
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      pico-di: ${{ steps.filter.outputs.pico-di }}
+      pico-cfg: ${{ steps.filter.outputs.pico-cfg }}
+      pico-log: ${{ steps.filter.outputs.pico-log }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            pico-di:
+              - 'PicoDI/**'
+            pico-cfg:
+              - 'PicoCfg/**'
+            pico-log:
+              - 'PicoLog/**'
+
+  # ---------------------------------------------------------------------------
+  # PicoDI
+  # ---------------------------------------------------------------------------
+  validate-picodi:
+    name: PicoDI (${{ matrix.logical-target }})
+    needs: changes
+    if: needs.changes.outputs.pico-di == 'true'
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - logical-target: win-x64
+            runs-on: windows-latest
+            rid: win-x64
+          - logical-target: win-arm64
+            runs-on: windows-11-arm
+            rid: win-arm64
+          - logical-target: linux-x64
+            runs-on: ubuntu-latest
+            rid: linux-x64
+          - logical-target: linux-arm64
+            runs-on: ubuntu-24.04-arm
+            rid: linux-arm64
+          - logical-target: osx-arm64
+            runs-on: macos-latest
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Linux AOT prerequisites
+        if: startsWith(matrix.rid, 'linux-')
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+          if [[ "${{ matrix.rid }}" == "linux-arm64" ]]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          fi
+
+      - name: Restore dependencies
+        run: dotnet restore PicoDI -p:UseProjectReferences=true
+
+      - name: Build
+        run: dotnet build PicoDI --configuration Release --no-restore -p:UseProjectReferences=true
+
+      - name: Run tests
+        run: dotnet test PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --collect "Code Coverage"
+
+  # ---------------------------------------------------------------------------
+  # PicoCfg
+  # ---------------------------------------------------------------------------
+  validate-picocfg:
+    name: PicoCfg (${{ matrix.logical-target }})
+    needs: changes
+    if: needs.changes.outputs.pico-cfg == 'true'
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - logical-target: win-x64
+            runs-on: windows-latest
+            rid: win-x64
+          - logical-target: win-arm64
+            runs-on: windows-11-arm
+            rid: win-arm64
+          - logical-target: linux-x64
+            runs-on: ubuntu-latest
+            rid: linux-x64
+          - logical-target: linux-arm64
+            runs-on: ubuntu-24.04-arm
+            rid: linux-arm64
+          - logical-target: osx-arm64
+            runs-on: macos-latest
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Linux AOT prerequisites
+        if: startsWith(matrix.rid, 'linux-')
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+          if [[ "${{ matrix.rid }}" == "linux-arm64" ]]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          fi
+
+      - name: Restore dependencies
+        run: dotnet restore PicoCfg -p:UseProjectReferences=true
+
+      - name: Build
+        run: dotnet build PicoCfg --configuration Release --no-restore -p:UseProjectReferences=true
+
+      - name: Run PicoCfg tests
+        run: dotnet test PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --collect "Code Coverage"
+
+      - name: Run PicoCfg.Gen tests
+        run: dotnet test PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --collect "Code Coverage"
+
+      - name: Run PicoCfg.DI tests
+        run: dotnet test PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --collect "Code Coverage"
+
+      - name: Pack CI packages (package-consumer validation)
+        shell: bash
+        run: |
+          rm -rf ./artifacts/ci-nupkg
+          rm -rf ./artifacts/ci-packages
+          mkdir -p ./artifacts/ci-nupkg
+          mkdir -p ./artifacts/ci-packages/abs ./artifacts/ci-packages/pico ./artifacts/ci-packages/gen ./artifacts/ci-packages/di
+
+          VERSION="0.0.0-ci"
+          NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/ci-nupkg"
+          NUGET_SOURCE="https://api.nuget.org/v3/index.json"
+
+          dotnet pack PicoCfg/src/PicoCfg.Abs/PicoCfg.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
+
+          dotnet pack PicoCfg/src/PicoCfg/PicoCfg.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/pico"
+
+          dotnet pack PicoCfg/src/PicoCfg.Gen/PicoCfg.Gen.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/gen"
+
+          dotnet pack PicoCfg/src/PicoCfg.DI/PicoCfg.DI.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/di"
+
+  # ---------------------------------------------------------------------------
+  # PicoLog
+  # ---------------------------------------------------------------------------
+  validate-picolog:
+    name: PicoLog (${{ matrix.logical-target }})
+    needs: changes
+    if: needs.changes.outputs.pico-log == 'true'
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - logical-target: win-x64
+            runs-on: windows-latest
+            rid: win-x64
+          - logical-target: win-arm64
+            runs-on: windows-11-arm
+            rid: win-arm64
+          - logical-target: linux-x64
+            runs-on: ubuntu-latest
+            rid: linux-x64
+          - logical-target: linux-arm64
+            runs-on: ubuntu-24.04-arm
+            rid: linux-arm64
+          - logical-target: osx-arm64
+            runs-on: macos-latest
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Linux AOT prerequisites
+        if: startsWith(matrix.rid, 'linux-')
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+          if [[ "${{ matrix.rid }}" == "linux-arm64" ]]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          fi
+
+      - name: Restore dependencies
+        run: dotnet restore PicoLog -p:UseProjectReferences=true
+
+      - name: Build
+        run: dotnet build PicoLog --configuration Release --no-restore -p:UseProjectReferences=true
+
+      - name: Run tests
+        run: dotnet test PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --collect "Code Coverage"

@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <IsPackable>true</IsPackable>
+        <MinVerTagPrefix>PicoDI-</MinVerTagPrefix>
+    </PropertyGroup>
+
+    <!-- NuGet Package Metadata -->
+    <PropertyGroup>
+        <PackageId>PicoDI</PackageId>
+        <Description>A lightweight, zero-reflection, AOT-compatible dependency injection container for .NET with compile-time source generation</Description>
+        <PackageTags>DI;IoC;AOT;Dependency Injection;Container;Source Generator</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+        <!--
+          Inner-loop development uses direct project references so changes in the
+          sibling projects are reflected immediately.
+        -->
+        <ProjectReference Include="..\PicoDI.Abs\PicoDI.Abs.csproj">
+        </ProjectReference>
+        <!--
+          Gen: loaded as Analyzer during development builds.
+        -->
+        <ProjectReference Include="..\PicoDI.Gen\PicoDI.Gen.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+        <PackageReference Include="PicoDI.Gen" Version="$(PicoDiPackageVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="PicoDI.Test" />
+    </ItemGroup>
+
+</Project>

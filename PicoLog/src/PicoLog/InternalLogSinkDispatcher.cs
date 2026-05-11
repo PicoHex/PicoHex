@@ -1,0 +1,109 @@
+namespace PicoLog;
+
+internal sealed class InternalLogSinkDispatcher
+{
+    private readonly ILogSink[] _sinks;
+    private readonly LoggerFactoryRuntime _runtime;
+    private readonly ILogSink? _consoleFallbackSink;
+    private CancellationToken _drainCancellationToken;
+
+    public InternalLogSinkDispatcher(LoggerFactoryRuntime runtime)
+    {
+        _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+        _sinks = _runtime.Sinks;
+        _consoleFallbackSink = ResolveLastRegisteredConsoleFallbackSink(_sinks);
+    }
+
+    public void BeginDrain(CancellationToken cancellationToken)
+    {
+        _drainCancellationToken = cancellationToken;
+    }
+
+    /// <summary>
+    /// Dispatches a log entry to all registered sinks sequentially.
+    /// A slow sink (e.g. a remote HTTP sink) will delay subsequent sinks
+    /// for the same entry. This is a deliberate design choice to avoid
+    /// unbounded concurrency per pipeline.
+    /// </summary>
+    internal async Task DispatchEntryAsync(LogEntry entry)
+    {
+        var token = _drainCancellationToken;
+
+        foreach (ILogSink sink in _sinks)
+            await WriteToSinkAsync(sink, entry, token).ConfigureAwait(false);
+    }
+
+    private async Task WriteToSinkAsync(
+        ILogSink sink,
+        LogEntry entry,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await sink.WriteAsync(entry, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _runtime.RecordSinkFailure();
+            await HandleSinkWriteFailureAsync(sink, entry, ex).ConfigureAwait(false);
+        }
+    }
+
+    private async Task HandleSinkWriteFailureAsync(
+        ILogSink failingSink,
+        LogEntry originalEntry,
+        Exception exception
+    )
+    {
+        if (!ShouldWriteFailureToConsoleFallback(failingSink))
+        {
+            WriteSinkFailureToDebug(originalEntry, exception);
+            return;
+        }
+
+        await WriteFailureToConsoleFallbackAsync(originalEntry, exception).ConfigureAwait(false);
+    }
+
+    private bool ShouldWriteFailureToConsoleFallback(ILogSink failingSink) =>
+        _consoleFallbackSink is not null && !ReferenceEquals(_consoleFallbackSink, failingSink);
+
+    private static ILogSink? ResolveLastRegisteredConsoleFallbackSink(ILogSink[] sinks) =>
+        sinks.LastOrDefault(static sink => sink is IConsoleFallbackSink);
+
+    private static void WriteSinkFailureToDebug(LogEntry originalEntry, Exception exception) =>
+        Debug.WriteLine($"Sink write error for '{originalEntry.Category}': {exception}");
+
+    private static void WriteConsoleFallbackFailureToDebug(Exception fallbackException) =>
+        Debug.WriteLine($"Fallback sink write error: {fallbackException}");
+
+    private async Task WriteFailureToConsoleFallbackAsync(
+        LogEntry originalEntry,
+        Exception exception
+    )
+    {
+        if (_consoleFallbackSink is not { } fallback)
+            return;
+
+        LogEntry errorEntry = CreateFallbackErrorEntry(originalEntry, exception);
+
+        try
+        {
+            await fallback.WriteAsync(errorEntry).ConfigureAwait(false);
+        }
+        catch (Exception fallbackException)
+        {
+            WriteConsoleFallbackFailureToDebug(fallbackException);
+        }
+    }
+
+    private LogEntry CreateFallbackErrorEntry(LogEntry originalEntry, Exception exception) =>
+        new()
+        {
+            Timestamp = _runtime.TimestampProvider.GetLocalNow(),
+            Level = LogLevel.Error,
+            Category = "PicoLog.SinkFailure",
+            Message = $"Failed to write log entry to sink: {originalEntry.Message}",
+            Exception = exception
+        };
+}

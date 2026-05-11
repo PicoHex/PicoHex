@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <PublishAot>false</PublishAot>
+        
+        <IsPackable>true</IsPackable>
+        <GenerateDepsFile>false</GenerateDepsFile>
+        <MinVerTagPrefix>PicoDI-</MinVerTagPrefix>
+    </PropertyGroup>
+
+    <!-- NuGet Package Metadata -->
+    <PropertyGroup>
+        <PackageId>PicoDI.Abs</PackageId>
+        <Description>Abstractions for PicoDI - a lightweight, zero-reflection, AOT-compatible dependency injection container</Description>
+        <PackageTags>DI;IoC;AOT;Dependency Injection;Abstractions</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Solely for SvcDescriptor.SingleInstance access from SvcRuntimeRegistration.Create; do not widen. -->
+        <InternalsVisibleTo Include="PicoDI" />
+    </ItemGroup>
+
+</Project>

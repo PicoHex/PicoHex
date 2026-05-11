@@ -1,0 +1,16 @@
+<Project>
+  <!--
+    Source generator distribution:
+    - Local development: each project that needs the generator has an explicit
+      ProjectReference to PicoDI.Gen with OutputItemType="Analyzer".
+    - NuGet consumers: the analyzer is distributed by the PicoDI.Gen package
+      via buildTransitive/PicoDI.Gen.props.
+      
+    A file-based <Analyzer> auto-import was previously here but removed because
+    it caused file lock contention (CS2012) during parallel builds on Windows:
+    the DLL was loaded as an analyzer by one MSBuild node while another tried
+    to rewrite it.
+  -->
+</Project>
+
+

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/testing-platform/main/src/TestPlatform/TestHostProvider/Resources/testconfigschema.json",
+  "testResult": {
+    "output": {
+      "format": {
+        "cobertura": {
+          "outputPath": "TestResults/TUnitCoverage/coverage.cobertura.xml",
+          "enableStaticNativeInstrumentation": true,
+          "enableStaticNativeInstrumentationRestore": true
+        }
+      }
+    }
+  }
+}

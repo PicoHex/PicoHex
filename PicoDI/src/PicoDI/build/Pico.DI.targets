@@ -1,0 +1,10 @@
+<Project>
+  <!--
+    Build targets for PicoDI package.
+    
+    This file can be used for post-build steps or customizations related to
+    the PicoDI source generator and runtime container.
+    
+    Currently empty - reserved for future extensions.
+  -->
+</Project>

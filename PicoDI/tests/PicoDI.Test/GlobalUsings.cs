@@ -1,0 +1,10 @@
+global using System.Collections.Frozen;
+global using System.Collections.Immutable;
+global using Microsoft.CodeAnalysis;
+global using Microsoft.CodeAnalysis.CSharp;
+global using Microsoft.CodeAnalysis.Diagnostics;
+global using PicoDI.Abs;
+global using PicoDI.Gen;
+global using TUnit.Assertions;
+global using TUnit.Assertions.Extensions;
+global using TUnit.Core;

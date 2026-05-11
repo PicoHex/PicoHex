@@ -1,0 +1,12 @@
+{
+  "sdk": {
+    "version": "10.0.x",
+    "rollForward": "latestFeature",
+    "allowPrerelease": false
+  },
+  "msbuild-sdks": {
+    "Microsoft.Testing.Platform": {
+      "runner": "Microsoft.Testing.Platform"
+    }
+  }
+}

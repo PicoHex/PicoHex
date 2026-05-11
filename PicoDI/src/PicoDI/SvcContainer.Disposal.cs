@@ -1,0 +1,165 @@
+namespace PicoDI;
+
+public sealed partial class SvcContainer
+{
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
+            return;
+
+        // Gracefully stop hosted services before disposal
+        await StopHostedServicesAsync();
+
+        await DisposeSingletonInstancesAsync();
+        await DisposeHostingScopeAsync();
+        await DisposeRootScopesAsync();
+    }
+
+    private async ValueTask DisposeHostingScopeAsync()
+    {
+        var scope = Interlocked.Exchange(ref _hostingScope, null);
+        if (scope is not null)
+        {
+            try
+            {
+                await scope.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error disposing hosting scope: {ex}");
+            }
+        }
+    }
+
+    private async ValueTask DisposeRootScopesAsync()
+    {
+        foreach (var scope in DetachAllRootScopes())
+        {
+            try
+            {
+                await scope.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error disposing root scope asynchronously: {ex}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Enumerates all singleton registrations across frozen and mutable caches.
+    /// Prefers the frozen cache when available; falls back to the mutable cache
+    /// when Dispose is called before any scope was created.
+    /// </summary>
+    private IEnumerable<SvcRuntimeRegistration> EnumerateSingletonStates()
+    {
+        var frozen = Volatile.Read(ref _frozenCache);
+        if (frozen is not null)
+        {
+            foreach (var kvp in frozen)
+            foreach (var reg in kvp.Value)
+                yield return reg;
+
+            yield break;
+        }
+
+        var cache = Volatile.Read(ref _registrationCache);
+        if (cache is not null)
+        {
+            foreach (var kvp in cache)
+            foreach (var reg in kvp.Value)
+                yield return reg;
+        }
+    }
+
+    private async ValueTask DisposeSingletonInstancesAsync()
+    {
+        var disposedInstances = new HashSet<object>();
+
+        // Seal all singleton states before the first pass so that in-flight
+        // scope resolutions cannot create new singletons that would be missed
+        // by both passes (the race window between the two passes).
+        foreach (var registration in EnumerateSingletonStates())
+            registration.SealSingletonState();
+
+        // Collect (CreationOrder, instance, registration) tuples so we can
+        // dispose container-owned singletons in reverse construction order.
+        // A singleton may use its dependencies inside Dispose; LIFO order
+        // guarantees those dependencies are still alive at that point.
+        // TakeSingletonInstanceUnderLock atomically reads and clears Instance
+        // under SyncLock, establishing happens-before with any in-flight
+        // GetOrCreateSingletonSlow that wrote the instance under the same lock.
+        var owned = new List<(long Order, object Instance)>();
+        foreach (var registration in EnumerateSingletonStates())
+        {
+            var instance = registration.TakeSingletonInstanceUnderLock();
+            if (instance is null)
+                continue;
+
+            // Skip user-supplied instances (Bug 9): caller retains ownership,
+            // matching Microsoft.Extensions.DependencyInjection semantics.
+            if (registration.SingletonState is { OwnsInstance: false })
+            {
+                disposedInstances.Add(instance);
+                continue;
+            }
+
+            // CreationOrder is 0 for entries that were never constructed by
+            // the slow path (defensive — should not happen for OwnsInstance=true
+            // when Instance is non-null, but treat them as oldest).
+            owned.Add((registration.SingletonState?.CreationOrder ?? 0, instance));
+        }
+
+        // Sort descending by CreationOrder so the most recently constructed
+        // singleton is disposed first.
+        owned.Sort(static (a, b) => b.Order.CompareTo(a.Order));
+
+        foreach (var (_, instance) in owned)
+        {
+            try
+            {
+                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances);
+            }
+            catch (Exception ex)
+            {
+                DisposalGuards.LogDisposeError(instance, ex);
+            }
+        }
+
+        // Second pass: catch singletons that were materialized during the first
+        // pass by in-flight factory calls from scopes being concurrently disposed.
+        // Same LIFO ordering applies.
+        var second = new List<(long Order, object Instance)>();
+        foreach (var registration in EnumerateSingletonStates())
+        {
+            var instance = registration.TakeSingletonInstanceUnderLock();
+            if (instance is null || !disposedInstances.Add(instance))
+                continue;
+
+            // Skip user-supplied instances (Bug 9).
+            if (registration.SingletonState is { OwnsInstance: false })
+                continue;
+
+            second.Add((registration.SingletonState?.CreationOrder ?? 0, instance));
+        }
+
+        second.Sort(static (a, b) => b.Order.CompareTo(a.Order));
+
+        foreach (var (_, instance) in second)
+        {
+            try
+            {
+                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances);
+            }
+            catch (Exception ex)
+            {
+                DisposalGuards.LogDisposeError(instance, ex);
+            }
+        }
+
+        Volatile.Write(ref _registrationCache, null);
+        Volatile.Write(ref _singletonCache, null);
+        Volatile.Write(ref _frozenCache, null);
+    }
+}

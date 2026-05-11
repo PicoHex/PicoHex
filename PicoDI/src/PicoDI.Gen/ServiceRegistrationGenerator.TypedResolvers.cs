@@ -1,0 +1,76 @@
+namespace PicoDI.Gen;
+
+internal static partial class ServiceRegistrationSourceEmitter
+{
+    /// <summary>
+    /// Generates typed resolver extension methods that bypass dictionary lookup.
+    /// These provide direct factory calls for maximum performance.
+    /// </summary>
+    private static void GenerateTypedResolvers(
+        StringBuilder sb,
+        ImmutableArray<ServiceRegistration> registrations,
+        Dictionary<string, ServiceRegistration> registrationLookup
+    )
+    {
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine("    /// High-performance typed resolvers that bypass dictionary lookup.");
+        sb.AppendLine("    /// Use these methods directly for maximum resolution speed.");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine("    public static class Resolve");
+        sb.AppendLine("    {");
+
+        var generatedMethods = new HashSet<string>();
+
+        foreach (var reg in registrations)
+        {
+            var methodName = GetResolverMethodName(reg.ServiceTypeFullName);
+            if (!generatedMethods.Add(methodName))
+                continue;
+
+            var effectiveRegistration = registrationLookup[reg.ServiceTypeFullName];
+            var serviceType = effectiveRegistration.ServiceTypeFullName;
+            sb.AppendLine(
+                $"        /// <summary>Resolves {effectiveRegistration.ServiceTypeName} with direct factory call.</summary>"
+            );
+            sb.AppendLine(
+                "        [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]"
+            );
+            sb.AppendLine(
+                $"        public static {serviceType} {methodName}(global::PicoDI.Abs.ISvcScope scope)"
+            );
+            sb.AppendLine("        {");
+
+            switch (effectiveRegistration.Lifetime)
+            {
+                case PicoDiNames.Transient:
+                    var transientFactory = GenerateInlinedFactory(
+                        effectiveRegistration,
+                        registrationLookup,
+                        [],
+                        0,
+                        "scope"
+                    );
+                    sb.AppendLine($"            return {transientFactory};");
+                    break;
+                case PicoDiNames.Singleton:
+                case PicoDiNames.Scoped:
+                    sb.AppendLine(
+                        $"            return ({serviceType})scope.GetService(typeof({serviceType}));"
+                    );
+                    break;
+            }
+
+            sb.AppendLine("        }");
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("    }");
+    }
+
+    private static string GetResolverMethodName(string serviceTypeFullName)
+    {
+        var name = serviceTypeFullName.Replace("global::", "");
+        name = name.Replace("<", "_").Replace(">", "").Replace(",", "_").Replace(" ", "");
+        return name.Replace(".", "_");
+    }
+}
