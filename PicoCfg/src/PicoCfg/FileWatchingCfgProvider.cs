@@ -10,6 +10,14 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
     private readonly Lock _debounceLock = new();
     private int _disposed;
 
+    /// <summary>
+    /// Optional callback for observing errors during fire-and-forget reload/cleanup.
+    /// Receives context string ("reload" or "cleanup") and the caught exception.
+    /// Expected exceptions include <see cref="IOException"/> (file locked/deleted),
+    /// <see cref="ObjectDisposedException"/> (provider already disposed), etc.
+    /// </summary>
+    internal static Action<string, Exception>? OnError;
+
     internal FileWatchingCfgProvider(ICfgProvider inner, string filePath, TimeSpan? debounceInterval = null)
     {
         ArgumentNullException.ThrowIfNull(inner);
@@ -74,9 +82,9 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
                         {
                             await _inner.ReloadAsync(CancellationToken.None);
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            /* swallow: don't crash watcher */
+                            OnError?.Invoke("reload", ex);
                         }
                     },
                     CancellationToken.None,
@@ -95,9 +103,9 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         {
             _watcher?.Dispose();
         }
-        catch
+        catch (Exception ex)
         {
-            /* best-effort cleanup */
+            OnError?.Invoke("cleanup", ex);
         }
 
         if (Volatile.Read(ref _disposed) == 1)

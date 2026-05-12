@@ -907,6 +907,7 @@ public sealed partial class PicoCfgBindGenerator
             ScalarKind.Guid
                 => $"global::PicoCfg.CfgBindRuntime.TryParseGuid({rawName}, out {(declareVariable ? "var " : "")}{valueName})",
             ScalarKind.Enum
+                // AOT-safe: delegates to Enum.Parse(typeof(TEnum), ...) + cast (no Enum.TryParse reflection)
                 => $"global::PicoCfg.CfgBindRuntime.TryParseEnum<{targetTypeName}>({rawName}, out {(declareVariable ? "var " : "")}{valueName})",
             ScalarKind.DateTime
                 => $"global::PicoCfg.CfgBindRuntime.TryParseDateTime({rawName}, out {(declareVariable ? "var " : "")}{valueName})",

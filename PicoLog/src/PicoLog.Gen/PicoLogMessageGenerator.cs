@@ -231,8 +231,56 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
 
     private static string StripFormatSpecifiers(string holeContent)
     {
-        var idx = holeContent.IndexOfAny([':', ',']);
-        return idx >= 0 ? holeContent.Substring(0, idx) : holeContent;
+        int parenDepth = 0;
+        int ternaryDepth = 0;
+
+        for (int i = 0; i < holeContent.Length; i++)
+        {
+            char c = holeContent[i];
+            switch (c)
+            {
+                case '(':
+                case '[':
+                    parenDepth++;
+                    break;
+                case ')':
+                case ']':
+                    if (parenDepth > 0) parenDepth--;
+                    break;
+                case '?':
+                    // Second '?' of '??' is not a ternary start
+                    if (i > 0 && holeContent[i - 1] == '?')
+                        break;
+                    // Null-conditional (?., ?[) and first '?' of '??' are not ternaries
+                    if (i + 1 < holeContent.Length)
+                    {
+                        char next = holeContent[i + 1];
+                        if (next == '.' || next == '[' || next == '?')
+                            break;
+                    }
+                    ternaryDepth++;
+                    break;
+                case ':':
+                    if (ternaryDepth > 0)
+                    {
+                        ternaryDepth--;
+                    }
+                    else if (parenDepth == 0)
+                    {
+                        // Top-level ':' is a format specifier delimiter
+                        return holeContent.Substring(0, i);
+                    }
+                    break;
+                case ',':
+                    if (parenDepth == 0 && ternaryDepth == 0)
+                    {
+                        // Top-level ',' is an alignment specifier
+                        return holeContent.Substring(0, i);
+                    }
+                    break;
+            }
+        }
+        return holeContent;
     }
 
     private static bool IsKnownHole(

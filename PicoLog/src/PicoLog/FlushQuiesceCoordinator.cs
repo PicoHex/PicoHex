@@ -12,6 +12,7 @@ internal sealed class FlushQuiesceCoordinator
     public void EnterWriteOperationSync(TimeSpan timeout)
     {
         var startTimestamp = Stopwatch.GetTimestamp();
+        var spinWait = new SpinWait();
 
         while (true)
         {
@@ -39,6 +40,8 @@ internal sealed class FlushQuiesceCoordinator
                 throw new TimeoutException(
                     "Timed out waiting to enter a write operation while a flush is in progress."
                 );
+
+            spinWait.SpinOnce();
         }
     }
 

@@ -50,8 +50,20 @@ partial class CfgBindRuntime
 
     public static bool TryParseGuid(string? raw, out Guid value) => Guid.TryParse(raw, out value);
 
-    public static bool TryParseEnum<TEnum>(string? raw, out TEnum value)
-        where TEnum : struct, Enum => Enum.TryParse(raw?.Trim(), ignoreCase: true, out value);
+    public static bool TryParseEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(string? raw, out TEnum value)
+        where TEnum : struct, Enum
+    {
+        try
+        {
+            value = (TEnum)Enum.Parse(typeof(TEnum), raw?.Trim()!, ignoreCase: true);
+            return true;
+        }
+        catch
+        {
+            value = default;
+            return false;
+        }
+    }
 
     public static bool TryParseDateTime(string? raw, out DateTime value) =>
         DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out value);

@@ -43,14 +43,16 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
 
     /// <summary>
     /// Synchronously disposes the factory by blocking on <see cref="DisposeAsync"/>.
-    /// Prefer calling <see cref="DisposeAsync"/> directly to avoid potential deadlocks
-    /// in environments with a <see cref="System.Threading.SynchronizationContext"/>.
+    /// All internal awaits use <see cref="System.Threading.Tasks.Task.ConfigureAwait(bool)"/>
+    /// with <c>false</c>, preventing <see cref="System.Threading.SynchronizationContext"/>-based
+    /// deadlocks. Prefer calling <see cref="DisposeAsync"/> directly.
     /// </summary>
-    public void Dispose() =>
-        Task.Run(() => DisposeAsync().AsTask()).GetAwaiter().GetResult();
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 
     public async ValueTask FlushAsync(CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposeState != 0, this);
+
         await _flushDisposeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         try

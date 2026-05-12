@@ -103,51 +103,36 @@ internal sealed class InternalLoggerQueue
 
     private LogWriteResult TryEnqueueSyncWithWait(LogEntry entry)
     {
+        if (_writer.TryWrite(entry))
+        {
+            _runtime.RecordEntryAccepted();
+            return LogWriteResult.Accepted;
+        }
+
         var startTimestamp = Stopwatch.GetTimestamp();
+        var backoffMs = 1;
+        const int maxBackoffMs = 100;
+        const int backoffFactor = 2;
 
         try
         {
             while (true)
             {
+                var remaining = _syncWriteTimeout - Stopwatch.GetElapsedTime(startTimestamp);
+                if (remaining <= TimeSpan.Zero)
+                    return LogWriteResult.DroppedNewWrite;
+
+                var sleepMs = (int)Math.Min(backoffMs, Math.Ceiling(remaining.TotalMilliseconds));
+                Thread.Sleep(Math.Max(1, sleepMs));
+
                 if (_writer.TryWrite(entry))
                 {
                     _runtime.RecordEntryAccepted();
                     return LogWriteResult.Accepted;
                 }
 
-                var remaining = _syncWriteTimeout - Stopwatch.GetElapsedTime(startTimestamp);
-
-                if (remaining <= TimeSpan.Zero)
-                    return LogWriteResult.DroppedNewWrite;
-
-                var waitOperation = _writer.WaitToWriteAsync();
-
-                if (waitOperation.IsCompletedSuccessfully)
-                {
-                    if (!waitOperation.Result)
-                        return DetermineFailedWriteResult();
-
-                    continue;
-                }
-
-                var waitTask = waitOperation.AsTask();
-
-                if (!waitTask.Wait(remaining))
-                    return LogWriteResult.DroppedNewWrite;
-
-                if (!waitTask.GetAwaiter().GetResult())
-                    return DetermineFailedWriteResult();
-
-                if (!_writer.TryWrite(entry))
-                    continue;
-
-                _runtime.RecordEntryAccepted();
-                return LogWriteResult.Accepted;
+                backoffMs = Math.Min(backoffMs * backoffFactor, maxBackoffMs);
             }
-        }
-        catch (AggregateException ex) when (ex.InnerException is ChannelClosedException)
-        {
-            return DetermineFailedWriteResult();
         }
         catch (ChannelClosedException)
         {
