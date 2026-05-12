@@ -39,35 +39,31 @@ Every application reads configuration, assembles its internals, and produces out
 
 ## Performance
 
-Benchmarks run on **.NET 10.0.5, Windows 10, X64, Native AOT, Release mode**.
+Benchmarks run on **.NET 10.0.5, Windows 10, X64, Release mode**.
 
 ### PicoDI vs Microsoft.Extensions.DependencyInjection
 
-**20/20 wins, average 2.83&times; faster, max 4.00&times; (DeepChain &times; Transient).**
+**10/20 wins, average 1.01&times; faster, max 1.94&times; (DeepChain &times; Singleton).**
 
 | Scenario | PicoDI (ns) | MsDI (ns) | Speedup |
 |---|---|---|---|
-| **DeepChain &times; Transient** | 156.7 | 626.9 | **4.00&times;** |
-| **NoDependency &times; Singleton** | 14.2 | 55.1 | **3.89&times;** |
-| **MultipleResolutions &times; Singleton** | 1,523.6 | 5,373.9 | **3.53&times;** |
-| **MultipleResolutions &times; Transient** | 4,672.4 | 16,402.1 | **3.51&times;** |
-| **NoDependency &times; Transient** | 27.7 | 97.1 | **3.50&times;** |
-| ContainerSetup | 739.9 | 1,919.1 | 2.59&times; |
-| SingleResolution &times; Transient | 55.3 | 187.8 | 3.39&times; |
-| ScopeCreation | 94.1 | 104.5 | 1.11&times; |
-
-**AOT binary: 3,087.5 KB**
+| DeepChain &times; Transient | 255.6 | 198.5 | 0.78&times; |
+| NoDependency &times; Singleton | 124.0 | 11.8 | 0.10&times; |
+| **MultipleResolutions &times; Transient** | 4,075.7 | 6,404.1 | **1.57&times;** |
+| **NoDependency &times; Transient** | 97.9 | 174.8 | **1.78&times;** |
+| MultipleResolutions &times; Singleton | 1,010.7 | 1,055.0 | 1.04&times; |
+| **ContainerSetup** | 1,774.8 | 2,799.4 | **1.58&times;** |
+| SingleResolution &times; Transient | 60.0 | 70.9 | 1.18&times; |
+| ScopeCreation | 384.5 | 58.1 | 0.15&times; |
 
 ### PicoCfg vs Microsoft.Extensions.Configuration
 
-**1.35&times;&ndash;1.57&times; faster on mixed workloads.**
+**1.71&times;&ndash;2.25&times; faster on mixed workloads.**
 
 | Scenario | PicoCfg (ns) | MsConfig (ns) | Speedup |
 |---|---|---|---|
-| Mixed n=100, p=2, l=1 | 5,920.9 | 9,273.9 | **1.57&times;** |
-| Mixed n=100, p=2, l=10 | 29,831.8 | 40,218.9 | **1.35&times;** |
-
-**AOT binary: 2,476.5 KB**
+| Mixed n=100, p=2, l=1 | 3,903.6 | 8,799.9 | **2.25&times;** |
+| Mixed n=100, p=2, l=10 | 24,761.8 | 42,288.8 | **1.71&times;** |
 
 ### PicoLog vs Microsoft.Extensions.Logging
 
@@ -75,10 +71,8 @@ PicoLog constructs richer log entries (timestamp, category, scopes, properties),
 
 | Control Benchmark | N=1 | N=10 | N=100 |
 |---|---|---|---|
-| **TimestampNowOnly** | 4.15&times; | 5.05&times; | 4.54&times; |
-| **LogEntryAllocateOnly** | 8.48&times; | 23.48&times; | 20.11&times; |
-
-**AOT binary: 3,020 KB**
+| **TimestampNowOnly** | 7.36&times; | 6.69&times; | 6.62&times; |
+| **LogEntryAllocateOnly** | 9.33&times; | 25.76&times; | 23.42&times; |
 
 ---
 

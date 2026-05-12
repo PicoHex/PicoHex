@@ -6,26 +6,15 @@ namespace PicoLog;
 public sealed class Logger<TCategory> : ILogger<TCategory>
 {
     private readonly ILoggerFactory _factory;
-    private ILogger? _innerLogger;
+    private readonly Lazy<ILogger> _innerLogger;
 
     public Logger(ILoggerFactory factory)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        _innerLogger = new Lazy<ILogger>(() => _factory.CreateLogger(typeof(TCategory).FullName!));
     }
 
-    private ILogger InnerLogger
-    {
-        get
-        {
-            var existing = Volatile.Read(ref _innerLogger);
-            if (existing is not null)
-                return existing;
-
-            var created = _factory.CreateLogger(typeof(TCategory).FullName!);
-            var winner = Interlocked.CompareExchange(ref _innerLogger, created, null);
-            return winner ?? created;
-        }
-    }
+    private ILogger InnerLogger => _innerLogger.Value;
 
     public IDisposable BeginScope<TState>(TState state)
         where TState : notnull => InnerLogger.BeginScope(state);

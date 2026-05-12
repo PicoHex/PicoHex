@@ -97,27 +97,62 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// Synchronously disposes the pipeline by blocking on <see cref="DisposeAsync"/>.
+    /// Synchronously disposes the pipeline. Uses synchronous semaphore wait
+    /// to avoid sync-over-async deadlock risks, then delegates remaining
+    /// asynchronous work to <see cref="DisposeAsyncCore"/>.
     /// Prefer calling <see cref="DisposeAsync"/> directly.
     /// </summary>
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
+            return;
+
+        _flushSemaphore.Wait();
+
+        try
+        {
+            DisposeAsyncCore().AsTask().GetAwaiter().GetResult();
+        }
+        finally
+        {
+            _flushSemaphore.Dispose();
+        }
+    }
 
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposeState, 1) != 0)
             return;
 
-        Exception? processingException = null;
-        var shutdownTimeout = _runtime.ShutdownTimeout;
-
-        using var drainCts =
-            shutdownTimeout > TimeSpan.Zero ? new CancellationTokenSource(shutdownTimeout) : null;
-
-        if (drainCts is not null)
-            _sinkDispatcher.BeginDrain(drainCts.Token);
+        // Acquire the flush semaphore BEFORE completing the queue to prevent
+        // a race with FlushAsync. Once we hold the semaphore, no concurrent
+        // FlushAsync can proceed — it either detects _disposeState != 0
+        // (line 80) or blocks on the semaphore acquisition (line 82).
+        await _flushSemaphore.WaitAsync().ConfigureAwait(false);
 
         try
         {
+            await DisposeAsyncCore().ConfigureAwait(false);
+        }
+        finally
+        {
+            _flushSemaphore.Dispose();
+        }
+    }
+
+    private async ValueTask DisposeAsyncCore()
+    {
+        Exception? processingException = null;
+        var shutdownTimeout = _runtime.ShutdownTimeout;
+
+        try
+        {
+            using var drainCts =
+                shutdownTimeout > TimeSpan.Zero ? new CancellationTokenSource(shutdownTimeout) : null;
+
+            if (drainCts is not null)
+                _sinkDispatcher.BeginDrain(drainCts.Token);
+
             _queue.Complete();
 
             if (drainCts is not null)
@@ -143,15 +178,6 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         finally
         {
             PicoLogMetrics.UnregisterQueueDepthProvider(_queueDepthProviderId);
-        }
-
-        try
-        {
-            await _flushSemaphore.WaitAsync().ConfigureAwait(false);
-        }
-        finally
-        {
-            _flushSemaphore.Dispose();
         }
 
         if (processingException is not null)

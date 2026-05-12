@@ -1,10 +1,17 @@
+using System.Runtime.CompilerServices;
+
 namespace PicoLog;
 
 internal static class ConsoleSinkWriter
 {
+    private static readonly ConditionalWeakTable<TextWriter, object> WriterLocks = new();
+
+    private static object GetLock(TextWriter writer) =>
+        WriterLocks.GetValue(writer, static _ => new object());
+
     public static Task WriteAsync(TextWriter writer, string message)
     {
-        lock (ConsoleWriteCoordinator.GetWriteLock(writer))
+        lock (GetLock(writer))
             writer.WriteLine(message);
 
         return Task.CompletedTask;
@@ -17,7 +24,7 @@ internal static class ConsoleSinkWriter
         Action<TextWriter, string, TState> consoleWrite
     )
     {
-        lock (ConsoleWriteCoordinator.GetWriteLock(writer))
+        lock (GetLock(writer))
         {
             if (!ReferenceEquals(writer, Console.Out))
             {

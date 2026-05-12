@@ -7,6 +7,9 @@ internal sealed class InternalLogSinkDispatcher
     private readonly ILogSink? _consoleFallbackSink;
     private CancellationToken _drainCancellationToken;
 
+    // Same pattern as FileWatchingCfgProvider.OnError
+    internal static Action<string, Exception>? OnFallbackError;
+
     public InternalLogSinkDispatcher(LoggerFactoryRuntime runtime)
     {
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
@@ -101,6 +104,7 @@ internal sealed class InternalLogSinkDispatcher
         }
         catch (Exception fallbackException)
         {
+            OnFallbackError?.Invoke("fallback-sink-write", fallbackException);
             WriteConsoleFallbackFailureToDebug(fallbackException);
         }
     }

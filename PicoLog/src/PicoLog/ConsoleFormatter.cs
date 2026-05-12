@@ -2,6 +2,13 @@
 
 public sealed class ConsoleFormatter : ILogFormatter
 {
+    /// <summary>
+    /// Thread-local <see cref="StringBuilder"/> cache for formatting hot paths.
+    /// <para><b>ASYNC WARNING:</b> <see cref="ThreadStaticAttribute"/> does <b>not</b> flow across <c>await</c> boundaries.
+    /// After an asynchronous continuation resumes on a different thread, <c>_cachedBuilder</c> will be <c>null</c> on the
+    /// new thread, and the old instance becomes orphaned. This is safe by design — the worst case is a missed cache hit
+    /// (allocating a fresh builder) — but callers in async paths should not rely on builder reuse.</para>
+    /// </summary>
     [ThreadStatic]
     private static StringBuilder? _cachedBuilder;
 
