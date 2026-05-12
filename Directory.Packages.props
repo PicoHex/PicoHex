@@ -16,8 +16,8 @@
     <PackageVersion Include="PicoBench" Version="2026.2.0" />
     <PackageVersion Include="PicoDI" Version="2026.6.0" />
     <PackageVersion Include="PicoDI.Gen" Version="2026.6.0" />
-    <PackageVersion Include="PicoCfg.Abs" Version="0.0.0-alpha.0.339" />
-    <PackageVersion Include="PicoLog.Abs" Version="0.0.0-alpha.0.339" />
+    <PackageVersion Include="PicoCfg.Abs" Version="2026.6.0" />
+    <PackageVersion Include="PicoLog.Abs" Version="2026.6.0" />
     <PackageVersion Include="TUnit" Version="1.44.0" />
   </ItemGroup>
 </Project>

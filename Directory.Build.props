@@ -5,7 +5,7 @@
     <!-- Default: do not produce NuGet packages from every project in the repo -->
     <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
 
-    <!-- Default version for local development; MinVer overrides via git tags -->
+    <!-- Default version for local development; CI/release pipelines override via -p:Version=<tag> -->
     <Version>0.0.0-dev</Version>
 
     <!--
