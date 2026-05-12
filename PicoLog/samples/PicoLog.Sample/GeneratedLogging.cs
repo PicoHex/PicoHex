@@ -1,9 +1,12 @@
 // Source-generated logging extension methods.
 //
-// When the PicoLog.Generators analyzer is active, these methods are emitted
-// automatically from [PicoLogMessage] partial method declarations.
-// Manual implementations are provided here as a fallback — the [PicoLogMessage]
-// attributes document the intended source-generator declarations.
+// These [PicoLogMessage] attribute declarations serve two purposes:
+// 1. Document the intended source-generator extensions with their event metadata
+// 2. Allow the PicoLog.Gen analyzer to produce AOT-compatible implementations
+//    when the methods are declared as 'partial' without a body.
+//
+// Manual implementations are provided here as a fallback when the methods are
+// not declared as 'partial', ensuring the sample builds and runs in all contexts.
 
 namespace PicoLog.Sample;
 

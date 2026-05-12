@@ -17,6 +17,7 @@
       <PackageReference Include="PicoDI" Condition="'$(UseProjectReferences)' != 'true'" />
       <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" Condition="'$(UseProjectReferences)' == 'true'" />
       <PackageReference Include="TUnit" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     </ItemGroup>
 
     <ItemGroup>
@@ -26,6 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\PicoLog.Gen\PicoLog.Gen.csproj" />
       <ProjectReference Include="..\..\src\PicoLog.Gen\PicoLog.Gen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 

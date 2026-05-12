@@ -13,12 +13,14 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
             .SyntaxProvider
             .ForAttributeWithMetadataName(
                 AttributeMetadataName,
-                predicate: static (node, _) => node is MethodDeclarationSyntax,
+                predicate: static (node, _) => node is MethodDeclarationSyntax m
+                    && m.Modifiers.Any(SyntaxKind.PartialKeyword),
                 transform: static (ctx, ct) =>
                 {
                     ct.ThrowIfCancellationRequested();
 
                     var methodDecl = (MethodDeclarationSyntax)ctx.TargetNode;
+                    var methodSymbol = (IMethodSymbol)ctx.TargetSymbol;
                     var attr = ctx.Attributes[0];
 
                     var level = (byte)attr.ConstructorArguments[0].Value!;
@@ -56,8 +58,13 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
                         paramNames.Add(p.Identifier.Text);
                     }
 
+                    var namespaceName = methodSymbol.ContainingNamespace.ToDisplayString();
+                    var className = methodSymbol.ContainingType.Name;
+
                     return new MethodInfo(
                         methodDecl.Identifier.Text,
+                        namespaceName,
+                        className,
                         paramDecls.ToImmutable(),
                         paramNames.ToImmutable(),
                         level,
@@ -97,21 +104,50 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
         sb.AppendLine("#pragma warning disable CS0618");
         sb.AppendLine();
         sb.AppendLine("using PicoLog.Abs;");
-        sb.AppendLine();
-        sb.AppendLine("namespace PicoLog.Abs");
-        sb.AppendLine("{");
-        sb.AppendLine("    public static partial class LoggerExtensions");
-        sb.AppendLine("    {");
 
-        foreach (var method in methods)
+        var groups = GroupByClass(methods);
+        foreach (var group in groups)
         {
-            AppendMethod(sb, method);
+            var first = group.Value[0];
+            var hasNamespace = !string.IsNullOrEmpty(first.NamespaceName);
             sb.AppendLine();
+            if (hasNamespace)
+            {
+                sb.AppendLine($"namespace {first.NamespaceName}");
+                sb.AppendLine("{");
+            }
+            sb.AppendLine($"    public static partial class {first.ClassName}");
+            sb.AppendLine("    {");
+
+            foreach (var method in group.Value)
+            {
+                AppendMethod(sb, method);
+                sb.AppendLine();
+            }
+
+            sb.AppendLine("    }");
+            if (hasNamespace)
+                sb.AppendLine("}");
         }
 
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
         return sb.ToString();
+    }
+
+    private static Dictionary<string, List<MethodInfo>> GroupByClass(
+        ImmutableArray<MethodInfo> methods)
+    {
+        var groups = new Dictionary<string, List<MethodInfo>>();
+        foreach (var method in methods)
+        {
+            var key = method.NamespaceName + "::" + method.ClassName;
+            if (!groups.TryGetValue(key, out var list))
+            {
+                list = new List<MethodInfo>();
+                groups[key] = list;
+            }
+            list.Add(method);
+        }
+        return groups;
     }
 
     private static void AppendMethod(StringBuilder sb, MethodInfo method)
@@ -245,6 +281,8 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
     private readonly struct MethodInfo
     {
         public readonly string MethodName;
+        public readonly string NamespaceName;
+        public readonly string ClassName;
         public readonly ImmutableArray<string> ParamDeclarations;
         public readonly ImmutableArray<string> ParamNames;
         public readonly byte Level;
@@ -254,6 +292,8 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
 
         public MethodInfo(
             string methodName,
+            string namespaceName,
+            string className,
             ImmutableArray<string> paramDeclarations,
             ImmutableArray<string> paramNames,
             byte level,
@@ -263,6 +303,8 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
         )
         {
             MethodName = methodName;
+            NamespaceName = namespaceName;
+            ClassName = className;
             ParamDeclarations = paramDeclarations;
             ParamNames = paramNames;
             Level = level;

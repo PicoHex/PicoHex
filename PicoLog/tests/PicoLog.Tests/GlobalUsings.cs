@@ -1,5 +1,9 @@
 global using System.Collections.Concurrent;
+global using System.Collections.Immutable;
 global using System.Diagnostics.Metrics;
+global using System.Reflection;
+global using Microsoft.CodeAnalysis;
+global using Microsoft.CodeAnalysis.CSharp;
 global using PicoDI;
 global using PicoDI.Abs;
 global using PicoLog.Abs;

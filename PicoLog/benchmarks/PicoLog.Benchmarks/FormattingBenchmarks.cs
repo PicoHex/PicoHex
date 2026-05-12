@@ -1,4 +1,8 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using PicoBench;
+using MelLoggerFactory = Microsoft.Extensions.Logging.LoggerFactory;
+using MelLogLevel = Microsoft.Extensions.Logging.LogLevel;
 using PicoLogLevel = PicoLog.Abs.LogLevel;
 
 namespace PicoLog.Benchmarks;
@@ -8,6 +12,7 @@ public partial class FormattingBenchmarks
 {
     private const int QueueCapacity = 262144;
     private static readonly string CachedMessage = "Hello from benchmark, cached message";
+    private static readonly Func<string, Exception?, string> MelStringFormatter = static (state, _) => state;
 
     private PicoLog.Abs.ILogger _picoNullLogger = null!;
     private PicoLog.LoggerFactory _picoNullFactory = null!;
@@ -25,6 +30,10 @@ public partial class FormattingBenchmarks
     private PicoLog.Abs.ILogger _picoDualLogger = null!;
     private PicoLog.LoggerFactory _picoDualFactory = null!;
     private string _dualFilePath = null!;
+
+    private Microsoft.Extensions.Logging.ILogger _melConsoleLogger = null!;
+    private Microsoft.Extensions.Logging.ILoggerFactory _melConsoleFactory = null!;
+    private TextWriter _originalConsoleOut = null!;
 
     [Params(100, 200)]
     public int N { get; set; }
@@ -103,6 +112,20 @@ public partial class FormattingBenchmarks
             }
         );
         _picoDualLogger = _picoDualFactory.CreateLogger("Benchmark");
+
+        _originalConsoleOut = Console.Out;
+        Console.SetOut(TextWriter.Null);
+        _melConsoleFactory = MelLoggerFactory.Create(builder =>
+        {
+            builder.SetMinimumLevel(MelLogLevel.Trace);
+            builder.AddSimpleConsole(o =>
+            {
+                o.IncludeScopes = false;
+                o.TimestampFormat = "yyyy-MM-dd HH:mm:ss.fff ";
+                o.SingleLine = true;
+            });
+        });
+        _melConsoleLogger = _melConsoleFactory.CreateLogger("Benchmark");
     }
 
     [GlobalCleanup]
@@ -113,6 +136,9 @@ public partial class FormattingBenchmarks
         _picoPooledFactory.Dispose();
         _picoFileFactory.Dispose();
         _picoDualFactory.Dispose();
+
+        Console.SetOut(_originalConsoleOut);
+        _melConsoleFactory.Dispose();
 
         TryDelete(_filePath);
         TryDelete(_dualFilePath);
@@ -151,6 +177,13 @@ public partial class FormattingBenchmarks
     {
         for (var i = 0; i < N; i++)
             _picoDualLogger.Log(PicoLogLevel.Info, CachedMessage);
+    }
+
+    [Benchmark(Description = "MSDI: SimpleConsoleFormatter → TextWriter.Null")]
+    public void MelConsoleFormatter()
+    {
+        for (var i = 0; i < N; i++)
+            _melConsoleLogger.Log(MelLogLevel.Information, default, CachedMessage, exception: null, MelStringFormatter);
     }
 
     private static void TryDelete(string? path)

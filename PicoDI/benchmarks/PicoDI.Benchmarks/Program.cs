@@ -308,9 +308,23 @@ public static class ContainerSetup
 #region Benchmark Helpers
 
 /// <summary>
+/// Extension method that mirrors MSDI's GetRequiredService&lt;T&gt;() semantics.
+/// Throws if the service is not registered, enabling fair comparison with
+/// Microsoft's GetRequiredService&lt;T&gt;() in benchmarks.
+/// </summary>
+internal static class SvcScopeBenchmarkExtensions
+{
+    public static T GetRequiredService<T>(this ISvcScope scope) =>
+        scope.GetService<T>() is T service
+            ? service
+            : throw new InvalidOperationException(
+                $"No service for type '{typeof(T)}' has been registered.");
+}
+
+/// <summary>
 /// Wraps an ISvcScope to implement IDisposable, enabling PicoBench's RunScoped&lt;TScope&gt;
-/// to work with PicoDI's IAsyncDisposable-only scopes. Calls DisposeAsync().GetAwaiter().GetResult()
-/// on dispose — acceptable in benchmark code where async is not possible.
+/// to work with PicoDI's IAsyncDisposable-only scopes. Dispose is a no-op in benchmark code
+/// to avoid async overhead — benchmark services are short-lived and resource-free.
 /// </summary>
 internal sealed class ScopeWrapper : IDisposable
 {
@@ -318,7 +332,7 @@ internal sealed class ScopeWrapper : IDisposable
 
     public ScopeWrapper(ISvcScope scope) => Scope = scope;
 
-    public void Dispose() => Scope.DisposeAsync().GetAwaiter().GetResult();
+    public void Dispose() { }
 }
 
 #endregion
@@ -519,7 +533,6 @@ public static class Program
             }
         );
 
-        picoContainer.DisposeAsync().GetAwaiter().GetResult();
         return result;
     }
 
@@ -541,7 +554,6 @@ public static class Program
                     ServiceComplexity.SingleDependency,
                     Lifetime.Scoped
                 );
-                c.DisposeAsync().GetAwaiter().GetResult();
             },
             config
         );
@@ -582,7 +594,6 @@ public static class Program
             () =>
             {
                 var scope = picoContainer.CreateScope();
-                scope.DisposeAsync().GetAwaiter().GetResult();
             },
             Config
         );
@@ -603,7 +614,6 @@ public static class Program
             category: "Infrastructure"
         );
 
-        picoContainer.DisposeAsync().GetAwaiter().GetResult();
         return result;
     }
 
@@ -647,7 +657,6 @@ public static class Program
             }
         );
 
-        picoContainer.DisposeAsync().GetAwaiter().GetResult();
         return result;
     }
 
@@ -700,7 +709,6 @@ public static class Program
             }
         );
 
-        picoContainer.DisposeAsync().GetAwaiter().GetResult();
         return result;
     }
 
@@ -712,22 +720,22 @@ public static class Program
         {
             ServiceComplexity.NoDependency
                 => (
-                    static s => s.GetService<ISimpleService>(),
+                    static s => s.GetRequiredService<ISimpleService>(),
                     static s => s.GetRequiredService<ISimpleService>()
                 ),
             ServiceComplexity.SingleDependency
                 => (
-                    static s => s.GetService<IServiceWithDep>(),
+                    static s => s.GetRequiredService<IServiceWithDep>(),
                     static s => s.GetRequiredService<IServiceWithDep>()
                 ),
             ServiceComplexity.MultipleDependencies
                 => (
-                    static s => s.GetService<IServiceWithMultipleDeps>(),
+                    static s => s.GetRequiredService<IServiceWithMultipleDeps>(),
                     static s => s.GetRequiredService<IServiceWithMultipleDeps>()
                 ),
             ServiceComplexity.DeepChain
                 => (
-                    static s => s.GetService<ILevel5>(),
+                    static s => s.GetRequiredService<ILevel5>(),
                     static s => s.GetRequiredService<ILevel5>()
                 ),
             _ => throw new ArgumentOutOfRangeException(nameof(complexity))
