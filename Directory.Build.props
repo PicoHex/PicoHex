@@ -57,8 +57,5 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
   </ItemGroup>
 
-  <!-- MinVer for package versioning -->
-  <ItemGroup Condition="'$(IsPackable)' == 'true'">
-    <PackageReference Include="MinVer" VersionOverride="6.0.0" PrivateAssets="All" />
-  </ItemGroup>
+
 </Project>

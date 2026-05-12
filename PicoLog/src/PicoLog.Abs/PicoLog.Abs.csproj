@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <IsPackable>true</IsPackable>
-        <MinVerTagPrefix>PicoLog-</MinVerTagPrefix>
+    
         <PublishAot>false</PublishAot>
     </PropertyGroup>
 

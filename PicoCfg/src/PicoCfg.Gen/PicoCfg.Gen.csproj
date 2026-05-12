@@ -16,7 +16,7 @@
         <GenerateDependencyFile>false</GenerateDependencyFile>
         <AssemblyName>PicoCfg.Gen</AssemblyName>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_IncludeAnalyzerBuildOutput</TargetsForTfmSpecificContentInPackage>
-        <MinVerTagPrefix>PicoCfg-</MinVerTagPrefix>
+    
     </PropertyGroup>
 
     <ItemGroup>

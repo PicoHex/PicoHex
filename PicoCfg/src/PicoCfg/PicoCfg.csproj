@@ -8,7 +8,7 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg</PackageId>
         <Description>Async-first configuration providers and extensions for PicoCfg.</Description>
-        <MinVerTagPrefix>PicoCfg-</MinVerTagPrefix>
+    
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">

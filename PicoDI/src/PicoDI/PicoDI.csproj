@@ -8,7 +8,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
 
         <IsPackable>true</IsPackable>
-        <MinVerTagPrefix>PicoDI-</MinVerTagPrefix>
+
     </PropertyGroup>
 
     <!-- NuGet Package Metadata -->

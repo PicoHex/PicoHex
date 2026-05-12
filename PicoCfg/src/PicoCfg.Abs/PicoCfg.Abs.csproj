@@ -8,7 +8,7 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg.Abs</PackageId>
         <Description>Abstractions for PicoCfg async-first configuration management.</Description>
-        <MinVerTagPrefix>PicoCfg-</MinVerTagPrefix>
+    
         <PublishAot>false</PublishAot>
     </PropertyGroup>
 

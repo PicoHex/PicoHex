@@ -18,7 +18,7 @@
         
         <!-- Source Generator specific packaging -->
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <MinVerTagPrefix>PicoDI-</MinVerTagPrefix>
+
     </PropertyGroup>
 
     <!-- Prevent deps file generation for source generator -->

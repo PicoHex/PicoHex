@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
-        <MinVerTagPrefix>PicoLog-</MinVerTagPrefix>
+    
     </PropertyGroup>
 
     <ItemGroup>
