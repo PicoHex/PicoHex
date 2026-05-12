@@ -1,17 +1,17 @@
 <Solution>
   <!-- PicoDI -->
   <Folder Name="/PicoDI/src/">
-    <Project Path="../PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj" />
-    <Project Path="../PicoDI/src/PicoDI/PicoDI.csproj" />
-    <Project Path="../PicoDI/src/PicoDI.Gen/PicoDI.Gen.csproj" />
+    <Project Path="PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj" />
+    <Project Path="PicoDI/src/PicoDI/PicoDI.csproj" />
+    <Project Path="PicoDI/src/PicoDI.Gen/PicoDI.Gen.csproj" />
   </Folder>
   <Folder Name="/PicoDI/tests/">
-    <Project Path="../PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj" />
+    <Project Path="PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj" />
   </Folder>
   <Folder Name="/PicoDI/samples/">
-    <Project Path="../PicoDI/samples/PicoDI.Sample.Host/PicoDI.Sample.Host.csproj" />
-    <Project Path="../PicoDI/samples/PicoDI.Sample/PicoDI.Sample.csproj" />
-    <Project Path="../PicoDI/samples/PicoDI.Sample.Services/PicoDI.Sample.Services.csproj" />
+    <Project Path="PicoDI/samples/PicoDI.Sample.Host/PicoDI.Sample.Host.csproj" />
+    <Project Path="PicoDI/samples/PicoDI.Sample/PicoDI.Sample.csproj" />
+    <Project Path="PicoDI/samples/PicoDI.Sample.Services/PicoDI.Sample.Services.csproj" />
   </Folder>
 
   <!-- PicoCfg -->
@@ -34,15 +34,15 @@
 
   <!-- PicoLog -->
   <Folder Name="/PicoLog/src/">
-    <Project Path="../PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj" />
-    <Project Path="../PicoLog/src/PicoLog/PicoLog.csproj" />
-    <Project Path="../PicoLog/src/PicoLog.DI/PicoLog.DI.csproj" />
-    <Project Path="../PicoLog/src/PicoLog.Gen/PicoLog.Gen.csproj" />
+    <Project Path="PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj" />
+    <Project Path="PicoLog/src/PicoLog/PicoLog.csproj" />
+    <Project Path="PicoLog/src/PicoLog.DI/PicoLog.DI.csproj" />
+    <Project Path="PicoLog/src/PicoLog.Gen/PicoLog.Gen.csproj" />
   </Folder>
   <Folder Name="/PicoLog/tests/">
-    <Project Path="../PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj" />
+    <Project Path="PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj" />
   </Folder>
   <Folder Name="/PicoLog/samples/">
-    <Project Path="../PicoLog/samples/PicoLog.Sample/PicoLog.Sample.csproj" />
+    <Project Path="PicoLog/samples/PicoLog.Sample/PicoLog.Sample.csproj" />
   </Folder>
 </Solution>
