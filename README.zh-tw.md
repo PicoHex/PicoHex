@@ -2,7 +2,7 @@
 
 **AOT First 的 .NET 通用最小基礎設施**
 
-The minimal universal infrastructure for production-grade .NET applications &mdash; three modules, eleven packages, zero runtime reflection.
+生產級 .NET 應用程式的最小通用基礎設施 &mdash; 三個模組、十一個套件、零執行階段反射。
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

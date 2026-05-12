@@ -2,7 +2,7 @@
 
 **Infraestructura mínima universal para .NET, priorizando Native AOT**
 
-The minimal universal infrastructure for production-grade .NET applications &mdash; three modules, eleven packages, zero runtime reflection.
+Infraestructura universal mínima para aplicaciones .NET de nivel de producción &mdash; tres módulos, once paquetes, cero reflexión en tiempo de ejecución.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

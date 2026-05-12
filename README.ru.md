@@ -2,7 +2,7 @@
 
 **Минимальная универсальная инфраструктура для .NET с приоритетом Native AOT**
 
-The minimal universal infrastructure for production-grade .NET applications — три модуля, одиннадцать пакетов, нулевое runtime-отражение.
+Минимальная универсальная инфраструктура для production-grade .NET приложений &mdash; три модуля, одиннадцать пакетов, нулевое отражение во время выполнения.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

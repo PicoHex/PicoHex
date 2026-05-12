@@ -1,6 +1,6 @@
 # PicoHex
 
-**AOT First 的 .NET 通用最小基础设施**
+**AOT-First Universal Minimal Infrastructure for .NET**
 
 The minimal universal infrastructure for production-grade .NET applications &mdash; three modules, eleven packages, zero runtime reflection.
 
