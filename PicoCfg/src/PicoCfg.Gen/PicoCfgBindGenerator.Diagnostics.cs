@@ -84,5 +84,15 @@ public sealed partial class PicoCfgBindGenerator
                 defaultSeverity: DiagnosticSeverity.Error,
                 isEnabledByDefault: true
             );
+
+        public static readonly DiagnosticDescriptor NestingTruncated =
+            new(
+                id: "PCFGGEN009",
+                title: "Nesting depth limit reached",
+                messageFormat: "Nesting depth limit of {0} reached; type '{1}' and its nested properties will not be bound",
+                category: "PicoCfg.Gen",
+                defaultSeverity: DiagnosticSeverity.Warning,
+                isEnabledByDefault: true
+            );
     }
 }

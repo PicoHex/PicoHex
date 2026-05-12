@@ -7,7 +7,6 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
     private readonly FileSinkOptions _options;
     private readonly StreamWriter _writer;
     private readonly Task _processingTask;
-    private readonly Lock _batchDelayStateLock = new();
     private readonly SemaphoreSlim _flushSemaphore = new(1, 1);
     private readonly FlushQuiesceCoordinator _flushQuiesceCoordinator = new();
     private int _disposeState;
@@ -271,17 +270,12 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
     private void RegisterBatchDelayCancellationSource(CancellationTokenSource source)
     {
-        lock (_batchDelayStateLock)
-            _batchDelayCancellationSource = source;
+        Interlocked.Exchange(ref _batchDelayCancellationSource, source);
     }
 
     private void ClearBatchDelayCancellationSource(CancellationTokenSource source)
     {
-        lock (_batchDelayStateLock)
-        {
-            if (ReferenceEquals(_batchDelayCancellationSource, source))
-                _batchDelayCancellationSource = null;
-        }
+        Interlocked.CompareExchange(ref _batchDelayCancellationSource, null, source);
     }
 
     private void CancelBatchDelayWait()

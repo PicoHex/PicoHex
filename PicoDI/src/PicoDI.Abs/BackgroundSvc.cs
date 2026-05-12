@@ -20,13 +20,25 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
     protected abstract Task ExecuteAsync(CancellationToken stoppingToken);
 
     /// <summary>
-    /// Initiates the background service by creating a linked cancellation token
-    /// and invoking <see cref="ExecuteAsync"/>.
+    /// Initiates the background service. <see cref="ExecuteAsync"/> is invoked and the returned
+    /// task indicates whether startup completed synchronously.
     /// </summary>
+    /// <remarks>
+    /// When <see cref="ExecuteAsync"/> starts asynchronously (does not complete inline), this method
+    /// returns <see cref="Task.CompletedTask"/> — the background work is fire-and-forget from the
+    /// caller's perspective and runs until <see cref="StopAsync"/> or <see cref="DisposeAsync"/> is
+    /// called. When <see cref="ExecuteAsync"/> completes synchronously (e.g., it faults or returns
+    /// immediately), that task is returned directly so the caller observes the outcome.
+    /// <para />
+    /// The returned task therefore represents only the startup phase, not the full background
+    /// lifecycle. Use <see cref="StopAsync"/> to await the graceful completion of the background
+    /// operation.
+    /// </remarks>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel startup.</param>
     /// <returns>
-    /// A task that represents the startup operation. If <see cref="ExecuteAsync"/> completes
-    /// synchronously (e.g., it throws or returns immediately), the returned task will reflect that.
+    /// <see cref="Task.CompletedTask"/> when startup completed synchronously and the background
+    /// work continues asynchronously; otherwise the faulted/cancelled/succeeded task from
+    /// <see cref="ExecuteAsync"/> if it completed inline.
     /// </returns>
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -43,11 +55,10 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
 
         Volatile.Write(ref _executingTask, ExecuteWithErrorHandlingAsync(cts.Token));
 
+        // Fire-and-forget: if the task hasn't completed inline, return Task.CompletedTask
+        // to signal that startup is done. The background work continues on _executingTask.
         return _executingTask is { IsCompleted: true }
-            ?
-            // If the task is already completed (faulted/cancelled/succeeded),
-            // return it directly so callers observe the outcome immediately.
-            _executingTask
+            ? _executingTask
             : Task.CompletedTask;
     }
 

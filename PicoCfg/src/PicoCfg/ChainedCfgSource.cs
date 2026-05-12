@@ -20,8 +20,9 @@ internal sealed class ChainedCfgProvider : ICfgProvider
     public ValueTask<bool> ReloadAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        var values = CfgEnumerationExtensions.GetAll(_chainedConfig);
-        return ValueTask.FromResult(_state.PublishIfChanged(values, null));
+        // ChainedSnapshot.TryGetValue always delegates to the live _chainedConfig,
+        // so the snapshot is inherently up-to-date. No need to enumerate all values.
+        return ValueTask.FromResult(false);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

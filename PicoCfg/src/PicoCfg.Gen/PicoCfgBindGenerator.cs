@@ -44,7 +44,7 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
         }
 
         // Phase 2: Recursively discover nested bindable targets from property types
-        DiscoverNestedTargets(targets);
+        DiscoverNestedTargets(targets, context);
 
         // Phase 3: Analyze all targets
         var validTargets = new List<TargetModel>(targets.Count);
@@ -107,11 +107,15 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
         );
     }
 
-    private static void DiscoverNestedTargets(Dictionary<ITypeSymbol, TargetRegistration> targets)
+    private static void DiscoverNestedTargets(
+        Dictionary<ITypeSymbol, TargetRegistration> targets,
+        SourceProductionContext context
+    )
     {
         const int maxDepth = 5;
         var queue = new Queue<ITypeSymbol>(targets.Keys);
         var depth = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
+        var reportedTruncated = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
 
         foreach (var key in targets.Keys)
             depth[key] = 0;
@@ -122,7 +126,20 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
             var currentDepth = depth.TryGetValue(type, out var d) ? d : 0;
 
             if (currentDepth >= maxDepth)
+            {
+                if (reportedTruncated.Add(type))
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            Diagnostics.NestingTruncated,
+                            Location.None,
+                            maxDepth,
+                            type.ToDisplayString()
+                        )
+                    );
+                }
                 continue;
+            }
 
             if (type is not INamedTypeSymbol namedType)
                 continue;

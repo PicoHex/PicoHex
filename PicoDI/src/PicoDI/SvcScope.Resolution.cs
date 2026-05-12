@@ -299,7 +299,7 @@ public sealed partial class SvcScope
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine($"Error disposing instance: {ex}");
+                    OwningContainer?.OnError?.Invoke(ex, "Error disposing instance");
                 }
 
                 break;
@@ -317,7 +317,7 @@ public sealed partial class SvcScope
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine($"Error disposing instance: {ex}");
+                    OwningContainer?.OnError?.Invoke(ex, "Error disposing instance");
                 }
 
                 break;

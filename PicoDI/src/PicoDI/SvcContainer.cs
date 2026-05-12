@@ -15,6 +15,16 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
     private readonly TrackedScopeList _rootScopes = new();
 
     /// <summary>
+    /// Callback invoked when an exception is caught during disposal or error-recovery paths.
+    /// Set this to observe errors that would otherwise be silently swallowed (default: <see langword="null"/>).
+    /// </summary>
+    /// <remarks>
+    /// The <c>string</c> parameter provides human-readable context for the failure.
+    /// The callback must not throw; exceptions from the callback itself are silently discarded.
+    /// </remarks>
+    public Action<Exception, string>? OnError { get; set; }
+
+    /// <summary>
     /// Frozen (optimized) runtime registration cache after Build() is called.
     /// </summary>
     private FrozenDictionary<Type, SvcRuntimeRegistration[]>? _frozenCache;

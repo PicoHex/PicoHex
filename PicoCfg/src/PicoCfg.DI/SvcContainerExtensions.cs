@@ -48,35 +48,7 @@ public static class SvcContainerExtensions
     private static T Bind<T>(ISvcScope scope, string? section)
         where T : class
     {
-        ArgumentNullException.ThrowIfNull(scope);
-
-        var root = TryGetServices<ICfgRoot>(scope).LastOrDefault();
-        if (root is not null)
-            return CfgBind.Bind<T>(root, section);
-
-        var cfg = TryGetServices<ICfg>(scope).LastOrDefault();
-        if (cfg is not null)
-            return CfgBind.Bind<T>(cfg, section);
-
-        throw new InvalidOperationException(
-            "No PicoCfg configuration source is registered. Call RegisterCfgRoot(...) before registering bound configuration services."
-        );
-    }
-
-    private static IEnumerable<T> TryGetServices<T>(ISvcScope scope) where T : notnull
-    {
-        ArgumentNullException.ThrowIfNull(scope);
-
-        try
-        {
-            return scope.GetServices<T>();
-        }
-        catch (PicoDiException)
-        {
-            // PicoDI.Abs does not expose an IsRegistered<T>() query API.
-            // Catching PicoDiException from GetServices<T>() is the only non-throwing
-            // path to detect unregistered service types at this layer.
-            return [];
-        }
+        var cfg = CfgServiceHelper.ResolveCfg(scope);
+        return CfgBind.Bind<T>(cfg, section);
     }
 }

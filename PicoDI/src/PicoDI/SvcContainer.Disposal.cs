@@ -27,7 +27,7 @@ public sealed partial class SvcContainer
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"Error disposing hosting scope: {ex}");
+                OnError?.Invoke(ex, "Error disposing hosting scope");
             }
         }
     }
@@ -42,7 +42,7 @@ public sealed partial class SvcContainer
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"Error disposing root scope asynchronously: {ex}");
+                OnError?.Invoke(ex, "Error disposing root scope asynchronously");
             }
         }
     }
@@ -123,7 +123,10 @@ public sealed partial class SvcContainer
             }
             catch (Exception ex)
             {
-                DisposalGuards.LogDisposeError(instance, ex);
+                OnError?.Invoke(
+                    ex,
+                    $"Error disposing service instance of type '{instance.GetType().FullName}'"
+                );
             }
         }
 
@@ -154,7 +157,10 @@ public sealed partial class SvcContainer
             }
             catch (Exception ex)
             {
-                DisposalGuards.LogDisposeError(instance, ex);
+                OnError?.Invoke(
+                    ex,
+                    $"Error disposing service instance of type '{instance.GetType().FullName}'"
+                );
             }
         }
 

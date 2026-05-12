@@ -213,7 +213,7 @@ public sealed partial class SvcContainer
         }
     }
 
-    private static async Task TryRunPhaseAsync(
+    private async Task TryRunPhaseAsync(
         string phase,
         SvcRuntimeRegistration registration,
         Func<Task> action
@@ -225,8 +225,9 @@ public sealed partial class SvcContainer
         }
         catch (Exception ex)
         {
-            Trace.WriteLine(
-                $"Error in {phase} phase of hosted service '{registration.ServiceType.FullName}': {ex}"
+            OnError?.Invoke(
+                ex,
+                $"Error in {phase} phase of hosted service '{registration.ServiceType.FullName}'"
             );
         }
     }
@@ -240,7 +241,10 @@ public sealed partial class SvcContainer
         }
         catch (Exception ex)
         {
-            Trace.WriteLine($"Error stopping hosted services during asynchronous disposal: {ex}");
+            OnError?.Invoke(
+                ex,
+                "Error stopping hosted services during asynchronous disposal"
+            );
         }
     }
 }
