@@ -122,6 +122,7 @@ jobs:
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
+            -p:PicoDiPackageVersion="$VERSION" \
             -p:UseProjectReferences=false \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
@@ -136,6 +137,7 @@ jobs:
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
+            -p:PicoDiPackageVersion="$VERSION" \
             -p:UseProjectReferences=false \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 

@@ -10,6 +10,7 @@
         <Description>Source generator package for PicoCfg generated binding.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageReleaseNotes>Initial PicoCfg.Gen release with source-generated binding for PicoCfg and bundled runtime helpers.</PackageReleaseNotes>
+        <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <NoPackageAnalysis>true</NoPackageAnalysis>
@@ -31,17 +32,24 @@
         <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
     </ItemGroup>
 
-    <Target Name="_IncludeAnalyzerBuildOutput">
+    <Target Name="_IncludeAnalyzerBuildOutput" BeforeTargets="GetPackageContents">
         <ItemGroup>
-            <TfmSpecificPackageFile Include="$(TargetPath)">
-                <PackagePath>analyzers/dotnet/cs</PackagePath>
-            </TfmSpecificPackageFile>
-            <TfmSpecificPackageFile Include="..\PicoCfg\bin\$(Configuration)\net10.0\PicoCfg.dll">
-                <PackagePath>lib/net10.0</PackagePath>
-            </TfmSpecificPackageFile>
-            <TfmSpecificPackageFile Include="..\PicoCfg.Abs\bin\$(Configuration)\netstandard2.0\PicoCfg.Abs.dll">
-                <PackagePath>lib/net10.0</PackagePath>
-            </TfmSpecificPackageFile>
+            <TfmSpecificPackageFile Include="$(TargetPath)" PackagePath="analyzers/dotnet/cs" />
+        </ItemGroup>
+        <MSBuild Projects="..\PicoCfg\PicoCfg.csproj;..\PicoCfg.Abs\PicoCfg.Abs.csproj"
+                 Targets="Build"
+                 BuildInParallel="true"
+                 Properties="Configuration=$(Configuration)">
+        </MSBuild>
+        <MSBuild Projects="..\PicoCfg\PicoCfg.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+            <Output TaskParameter="TargetOutputs" ItemName="_PicoCfgOutput" />
+        </MSBuild>
+        <MSBuild Projects="..\PicoCfg.Abs\PicoCfg.Abs.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+            <Output TaskParameter="TargetOutputs" ItemName="_PicoCfgAbsOutput" />
+        </MSBuild>
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="@(_PicoCfgOutput)" PackagePath="lib/net10.0" />
+            <TfmSpecificPackageFile Include="@(_PicoCfgAbsOutput)" PackagePath="lib/net10.0" />
         </ItemGroup>
     </Target>
 

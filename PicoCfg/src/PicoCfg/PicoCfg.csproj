@@ -8,6 +8,8 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg</PackageId>
         <Description>Async-first configuration providers and extensions for PicoCfg.</Description>
+        <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     
     </PropertyGroup>
 

@@ -32,6 +32,7 @@
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <!-- Deterministic build & SourceLink -->
@@ -55,6 +56,7 @@
   <!-- SourceLink for source-level debugging -->
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 

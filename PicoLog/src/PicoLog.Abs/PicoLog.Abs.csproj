@@ -6,6 +6,10 @@
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <IsPackable>true</IsPackable>
+        <PackageId>PicoLog.Abs</PackageId>
+        <Description>Abstractions for PicoLog structured logging (ILogger, ILogSink, LogLevel, LogEntry).</Description>
+        <PackageTags>PicoHex;Logging;AOT;SourceGenerator</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     
         <PublishAot>false</PublishAot>
     </PropertyGroup>

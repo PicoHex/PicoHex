@@ -6,6 +6,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
+        <PackageId>PicoLog</PackageId>
+        <Description>High-performance structured logging with compile-time message templates and built-in sinks.</Description>
+        <PackageTags>PicoHex;Logging;AOT;SourceGenerator</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     
     </PropertyGroup>
 

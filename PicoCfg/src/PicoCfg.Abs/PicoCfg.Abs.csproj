@@ -8,6 +8,8 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg.Abs</PackageId>
         <Description>Abstractions for PicoCfg async-first configuration management.</Description>
+        <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     
         <PublishAot>false</PublishAot>
     </PropertyGroup>
