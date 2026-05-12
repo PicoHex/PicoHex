@@ -4,9 +4,9 @@ namespace PicoLog;
 /// Writes color-coded log entries to the console.
 /// </summary>
 /// <remarks>
-    /// <see cref="Console.ForegroundColor"/> is process-global state. Writes are
-    /// synchronized within PicoLog via per-writer locks in <see cref="ConsoleSinkWriter"/>,
-    /// but concurrent console writes from external sources may still interleave colors.
+/// <see cref="Console.ForegroundColor"/> is process-global state. Writes are
+/// synchronized within PicoLog via per-writer locks in <see cref="ConsoleSinkWriter"/>,
+/// but concurrent console writes from external sources may still interleave colors.
 /// </remarks>
 public sealed class ColoredConsoleSink(ILogFormatter formatter, TextWriter? writer = null)
     : IConsoleFallbackSink
@@ -18,7 +18,7 @@ public sealed class ColoredConsoleSink(ILogFormatter formatter, TextWriter? writ
     public Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
     {
         var message = _formatter.Format(entry);
-        return ConsoleSinkWriter.WriteAsync(
+        ConsoleSinkWriter.Write(
             _writer,
             message,
             entry.Level,
@@ -50,6 +50,7 @@ public sealed class ColoredConsoleSink(ILogFormatter formatter, TextWriter? writ
                 }
             }
         );
+        return Task.CompletedTask;
     }
 
     public void Dispose() { }

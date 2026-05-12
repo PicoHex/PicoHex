@@ -1,5 +1,11 @@
 ﻿namespace PicoLog.Abs;
 
+/// <summary>
+/// Provides extension methods for <see cref="ILogger"/> to enable convenient
+/// level-specific logging (Trace, Debug, Info, etc.) with support for string messages,
+/// <see cref="FormattableString"/> templates, <see cref="EventId"/> tags,
+/// and asynchronous variants.
+/// </summary>
 public static partial class LoggerExtensions
 {
     extension(ILogger logger)

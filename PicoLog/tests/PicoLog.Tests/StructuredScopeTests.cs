@@ -190,6 +190,56 @@ public sealed class StructuredScopeTests
         await Assert.That(entry.ScopeProperties[1].Value).IsEqualTo("val1");
     }
 
+    [Test]
+    public async Task OutOfOrderDispose_DisposeInnerScopeBeforeChild_HandlesGracefully()
+    {
+        // Arrange
+        var sink = new CollectingSink();
+        await using var factory = new LoggerFactory([sink]);
+        var logger = factory.CreateLogger("Tests.OutOfOrderDispose");
+
+        // Act - create nested scopes and dispose out of order
+        var scope1 = logger.BeginScope(new Dictionary<string, object> { { "level", "outer" } });
+        var scope2 = logger.BeginScope(new Dictionary<string, object> { { "level", "middle" } });
+        var scope3 = logger.BeginScope(new Dictionary<string, object> { { "level", "inner" } });
+
+        // Dispose scope2 (middle) before scope3 (inner) — out of order
+        scope2.Dispose();
+        scope3.Dispose();
+        scope1.Dispose();
+
+        logger.Info("after-out-of-order-dispose");
+
+        await factory.DisposeAsync();
+
+        // Assert - the log entry should still have valid scope info
+        var entry = sink.Entries.Single();
+        await Assert.That(entry.ScopeProperties).IsNotNull();
+        // After all scopes are disposed, capturing should return no scopes
+        // (depends on implementation - if Capture is called after all are disposed)
+    }
+
+    [Test]
+    public async Task OutOfOrderDispose_DisposeParentBeforeChild_DoesNotThrow()
+    {
+        // Arrange
+        var sink = new CollectingSink();
+        await using var factory = new LoggerFactory([sink]);
+        var logger = factory.CreateLogger("Tests.OutOfOrderDispose");
+
+        // Act & Assert - should not throw when parent scope is disposed before child
+        var scope1 = logger.BeginScope("parent");
+        var scope2 = logger.BeginScope("child");
+
+        // Dispose parent first, then child
+        scope1.Dispose();
+        // Should not throw
+        scope2.Dispose();
+
+        logger.Info("after-parent-first-dispose");
+        await factory.DisposeAsync();
+    }
+
     private sealed class CollectingSink : ILogSink
     {
         private readonly ConcurrentQueue<LogEntry> _entries = [];

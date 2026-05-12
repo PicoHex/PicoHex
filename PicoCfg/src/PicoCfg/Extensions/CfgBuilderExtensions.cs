@@ -3,6 +3,19 @@ namespace PicoCfg.Extensions;
 /// <summary>
 /// Convenience methods for adding common configuration source types to a <see cref="CfgBuilder"/>.
 /// </summary>
+/// <remarks>
+/// The source types supported by these extensions are unified by their backing store:
+/// <list type="bullet">
+///   <item><description><b>Stream-based</b> — inline text, file stream, or any <see cref="Stream"/> factory (<see cref="CfgBuilderExtensions.Add(CfgBuilder, Func{Stream}, Encoding?, Func{object?}?)"/>).</description></item>
+///   <item><description><b>Dictionary-based</b> — in-memory <see cref="IDictionary{TKey, TValue}"/> or factory delegate (<see cref="CfgBuilderExtensions.Add(CfgBuilder, IDictionary{string, string}, Func{object?}?)"/>).</description></item>
+///   <item><description><b>Environment variables</b> — OS environment with optional prefix filtering (<see cref="CfgBuilderExtensions.AddEnvironmentVariables(CfgBuilder, string?)"/>).</description></item>
+///   <item><description><b>Command-line arguments</b> — structured CLI input (<see cref="CfgBuilderExtensions.AddCommandLine(CfgBuilder, string[], string?)"/>).</description></item>
+///   <item><description><b>Key-per-file</b> — Kubernetes ConfigMap style for container environments (<see cref="CfgBuilderExtensions.AddKeyPerFile(CfgBuilder, string, Func{string, bool}?)"/>).</description></item>
+///   <item><description><b>Chained</b> — delegate to another <see cref="ICfg"/> instance (<see cref="CfgBuilderExtensions.AddConfiguration(CfgBuilder, ICfg)"/>).</description></item>
+/// </list>
+/// All source types produce <see cref="Dictionary{TKey, TValue}"/> snapshots keyed by configuration path
+/// (<c>Section:Key</c> format). Providers are additive: later sources override earlier ones on key conflict.
+/// </remarks>
 public static class CfgBuilderExtensions
 {
     extension(CfgBuilder builder)

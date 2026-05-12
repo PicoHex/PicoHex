@@ -556,6 +556,8 @@ public class ErrorHandlingTests
             throw new NotSupportedException();
         }
 
+        public bool IsRegistered(Type serviceType) => false;
+
         public ValueTask DisposeAsync()
         {
             return ValueTask.CompletedTask;

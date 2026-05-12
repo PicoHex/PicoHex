@@ -12,6 +12,7 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
     private int _disposeState;
     private int _activeDequeuedMessages;
     private int _activeBatchOperations;
+    private long _channelClosedExceptions;
     private CancellationTokenSource? _batchDelayCancellationSource;
 
     public FileSink(ILogFormatter formatter, string filePath = FileSinkOptions.DefaultFilePath)
@@ -81,7 +82,7 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         }
         catch (ChannelClosedException)
         {
-            // Ignore writes that race with shutdown.
+            Interlocked.Increment(ref _channelClosedExceptions);
         }
     }
 

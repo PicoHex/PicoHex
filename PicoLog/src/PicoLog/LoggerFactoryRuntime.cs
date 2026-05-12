@@ -77,7 +77,14 @@ internal sealed class LoggerFactoryRuntime
 
     public ScopeSnapshot CaptureScopes() => _scopeProvider.Capture();
 
-    public void ReportDroppedMessages(string categoryName, long droppedCount)
+    /// <summary>
+    /// Records a dropped log entry metric and invokes the optional <see cref="LoggerFactoryOptions.OnMessagesDropped"/>
+    /// callback. When no callback is registered and the dropped count is a power of two (1, 2, 4, 8, …),
+    /// a debug trace is emitted to reduce noise during high-pressure scenarios.
+    /// </summary>
+    /// <param name="categoryName">The logger category that experienced the drop.</param>
+    /// <param name="droppedCount">The number of entries dropped since the last notification.</param>
+    internal void ReportDroppedMessages(string categoryName, long droppedCount)
     {
         PicoLogMetrics.RecordDroppedEntry();
         _options.OnMessagesDropped?.Invoke(categoryName, droppedCount);

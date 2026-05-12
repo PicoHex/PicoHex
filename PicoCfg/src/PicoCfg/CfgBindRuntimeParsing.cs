@@ -109,6 +109,6 @@ partial class CfgBindRuntime
     /// to all key lookups. The returned view is a live delegation to the parent
     /// <paramref name="cfg"/> and reflects any reloads the parent observes.
     /// </summary>
-    public static ICfg CreateScopedView(ICfg cfg, string section)
-        => new CfgSection(cfg, section ?? throw new ArgumentNullException(nameof(section)));
+    public static ICfg CreateScopedView(ICfg cfg, string? section)
+        => new CfgSection(cfg, section ?? string.Empty);
 }

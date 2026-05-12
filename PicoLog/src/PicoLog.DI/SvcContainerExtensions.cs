@@ -58,18 +58,15 @@ public static class SvcContainerExtensions
             sinks.AddRange(CreateOwnedSinks(options));
 
             if (sinks.Count == 0)
-            {
-                loggingScope.DisposeAsync().GetAwaiter().GetResult();
                 throw new InvalidOperationException(
                     "ReadFrom.RegisteredSinks requires at least one registered ILogSink when no explicit WriteTo sinks are configured."
                 );
-            }
 
             return new OwnedLoggerFactory(new LoggerFactory(sinks, options.Factory), loggingScope);
         }
         catch
         {
-            loggingScope.DisposeAsync().GetAwaiter().GetResult();
+            DisposeScopeSync(loggingScope);
             throw;
         }
     }
@@ -128,5 +125,12 @@ public static class SvcContainerExtensions
         }
 
         return sinks;
+    }
+
+    private static void DisposeScopeSync(ISvcScope scope)
+    {
+        Task.Run(async () => await scope.DisposeAsync().ConfigureAwait(false))
+            .GetAwaiter()
+            .GetResult();
     }
 }

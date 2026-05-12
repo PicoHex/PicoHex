@@ -13,7 +13,12 @@ internal sealed class OwnedLoggerFactory(LoggerFactory innerFactory, IAsyncDispo
     public ValueTask FlushAsync(CancellationToken cancellationToken = default) =>
         innerFactory.FlushAsync(cancellationToken);
 
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+    public void Dispose()
+    {
+        Task.Run(async () => await DisposeAsync().ConfigureAwait(false))
+            .GetAwaiter()
+            .GetResult();
+    }
 
     public async ValueTask DisposeAsync()
     {

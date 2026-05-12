@@ -58,8 +58,8 @@ public sealed partial class SvcContainer
         if (frozen is not null)
         {
             foreach (var kvp in frozen)
-            foreach (var reg in kvp.Value)
-                yield return reg;
+                foreach (var reg in kvp.Value)
+                    yield return reg;
 
             yield break;
         }
@@ -68,8 +68,8 @@ public sealed partial class SvcContainer
         if (cache is not null)
         {
             foreach (var kvp in cache)
-            foreach (var reg in kvp.Value)
-                yield return reg;
+                foreach (var reg in kvp.Value)
+                    yield return reg;
         }
     }
 
@@ -164,6 +164,12 @@ public sealed partial class SvcContainer
             }
         }
 
+        // Volatile.Write establishes a release fence: all singleton disposal writes
+        // (including TakeSingletonInstanceUnderLock and DisposeAsync calls above)
+        // are guaranteed to be visible before the null assignments below. This
+        // prevents a concurrent scope resolution from observing a non-null cache
+        // while singleton instances have already been taken for disposal, ensuring
+        // the scope either gets the pre-disposal instance or a null (which it handles).
         Volatile.Write(ref _registrationCache, null);
         Volatile.Write(ref _singletonCache, null);
         Volatile.Write(ref _frozenCache, null);

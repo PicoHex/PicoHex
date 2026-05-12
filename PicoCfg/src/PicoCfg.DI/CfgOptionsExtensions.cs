@@ -26,6 +26,4 @@ public static class CfgOptionsExtensions
             where T : class
             => container.RegisterScoped<ICfgOptions<T>>(scope => new CfgOptionsSnapshot<T>(Resolve(scope), section));
     }
-
-    private static ICfg Resolve(ISvcScope scope) => CfgServiceHelper.ResolveCfg(scope);
 }

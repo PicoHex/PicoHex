@@ -51,6 +51,7 @@
   <PropertyGroup Condition="'$(IsPackable)' == 'true'">
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReleaseNotes>https://github.com/PicoHex/PicoHex/releases</PackageReleaseNotes>
   </PropertyGroup>
 
   <!-- SourceLink for source-level debugging -->

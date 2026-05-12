@@ -6,15 +6,27 @@ namespace PicoCfg;
 /// </summary>
 public sealed class CfgBuilder
 {
+    /// <summary>
+    /// Default delegate that parses a <see cref="Stream"/> into a key-value dictionary
+    /// using PicoCfg's built-in line-based <c>key=value</c> parser.
+    /// </summary>
     private static readonly Func<
         Stream,
         CancellationToken,
         Task<Dictionary<string, string>>
     > SDefaultStreamParser = static (stream, ct) => ParseStreamAsync(stream, ct);
 
+    /// <summary>
+    /// Default delegate that creates a new <see cref="CfgChangeSignal"/> instance.
+    /// Used by the built-in provider state factory.
+    /// </summary>
     private static readonly Func<CfgChangeSignal> SDefaultChangeSignalFactory = static () =>
         new CfgChangeSignal();
 
+    /// <summary>
+    /// Default delegate that creates a <see cref="CfgSnapshot"/> from a dictionary of values
+    /// and a fingerprint. Used by the built-in snapshot composer.
+    /// </summary>
     private static readonly Func<
         IReadOnlyDictionary<string, string>,
         int,

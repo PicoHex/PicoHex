@@ -95,6 +95,7 @@ public sealed class PicoCfgBindGeneratorGoldenFileTests
     private static string NormalizeLineEndings(string text) =>
         text.Replace("\r\n", "\n").Replace("\r", "\n");
 
+    [RequiresAssemblyFiles("Calls System.Reflection.Assembly.Location")]
     private static string ResolveGoldenFilePath(string fileName)
     {
         var assemblyDir = Path.GetDirectoryName(

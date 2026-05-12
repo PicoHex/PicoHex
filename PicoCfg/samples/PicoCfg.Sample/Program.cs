@@ -1,8 +1,6 @@
 // AOT Compatibility Validation for PicoCfg
 // This program validates that all PicoCfg features work correctly in AOT-compiled mode
 
-using PicoCfg;
-using PicoCfg.Extensions;
 using System.ComponentModel.DataAnnotations;
 
 Console.WriteLine("=== PicoCfg AOT Compatibility Validation ===");
@@ -65,7 +63,7 @@ await Test(
             stream.Position = 0;
             return stream;
         });
-        
+
         await using var root = await builder.BuildAsync();
 
         var stringValue = root.GetValue("StringKey");

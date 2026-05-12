@@ -38,6 +38,19 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
 
     private int _disposed;
 
+    /// <inheritdoc />
+    public bool IsRegistered(Type serviceType)
+    {
+        ArgumentNullException.ThrowIfNull(serviceType);
+
+        var frozen = Volatile.Read(ref _frozenCache);
+        if (frozen is not null)
+            return frozen.ContainsKey(serviceType);
+
+        var cache = Volatile.Read(ref _registrationCache);
+        return cache is not null && cache.ContainsKey(serviceType);
+    }
+
     /// <summary>
     /// Creates a new instance of <see cref="SvcContainer"/>.
     /// </summary>

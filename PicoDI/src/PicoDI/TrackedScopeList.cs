@@ -40,15 +40,15 @@ internal sealed class TrackedScopeList
     /// </summary>
     public void Remove(SvcScope scope)
     {
-        // Caller guarantees that scope is parented to the expected container/scope.
-        // See DetachChildScope and DetachRootScope for the ReferenceEquals guard.
-        if (scope.ParentScope is null && scope.OwningContainer is null)
-            throw new InvalidOperationException(
-                "Remove called on scope that is not parented to any container/scope."
-            );
-
         lock (_lock)
         {
+            // Caller guarantees that scope is parented to the expected container/scope.
+            // See DetachChildScope and DetachRootScope for the ReferenceEquals guard.
+            if (scope.ParentScope is null && scope.OwningContainer is null)
+                throw new InvalidOperationException(
+                    "Remove called on scope that is not parented to any container/scope."
+                );
+
             if (!_sealed)
             {
                 var prev = scope.PreviousTrackedScope;

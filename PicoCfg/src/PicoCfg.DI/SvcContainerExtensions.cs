@@ -44,11 +44,4 @@ public static class SvcContainerExtensions
             where T : class
             => container.RegisterSingleton<T>(scope => Bind<T>(scope, section));
     }
-
-    private static T Bind<T>(ISvcScope scope, string? section)
-        where T : class
-    {
-        var cfg = CfgServiceHelper.ResolveCfg(scope);
-        return CfgBind.Bind<T>(cfg, section);
-    }
 }

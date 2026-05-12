@@ -38,8 +38,10 @@ internal sealed class StreamCfgProvider : ICfgProvider
 
     private async Task<Dictionary<string, string>> CreateSnapshotDataAsync(CancellationToken ct)
     {
-        var stream = _streamFactory()
-            ?? throw new InvalidOperationException("The stream factory returned null.");
+        var stream = _streamFactory();
+
+        if (stream is null)
+            throw new ArgumentNullException(nameof(stream), "The stream factory returned null.");
 
         await using (stream)
         {

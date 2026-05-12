@@ -112,14 +112,14 @@ internal static class RegistrationSemanticPipeline
                         );
                         break;
                     case PicoDiNames.Type when arg.Expression is TypeOfExpressionSyntax typeOfExpr:
-                    {
-                        var typeSymbol = semanticModel.GetTypeInfo(typeOfExpr.Type).Type;
-                        if (serviceType is null)
-                            serviceType = typeSymbol;
-                        else
-                            implementationType = typeSymbol;
-                        break;
-                    }
+                        {
+                            var typeSymbol = semanticModel.GetTypeInfo(typeOfExpr.Type).Type;
+                            if (serviceType is null)
+                                serviceType = typeSymbol;
+                            else
+                                implementationType = typeSymbol;
+                            break;
+                        }
                 }
         }
 

@@ -30,7 +30,7 @@ public sealed partial class SvcContainer
             }
             else
             {
-                cache[runtimeRegistration.ServiceType] =  [runtimeRegistration];
+                cache[runtimeRegistration.ServiceType] = [runtimeRegistration];
             }
         }
 

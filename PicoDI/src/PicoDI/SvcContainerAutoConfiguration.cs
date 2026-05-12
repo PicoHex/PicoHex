@@ -57,6 +57,15 @@ public static class SvcContainerAutoConfiguration
                 }
             }
         }
+
+        public void Clear()
+        {
+            lock (_configurators)
+            {
+                _configurators.Clear();
+                _sortedSnapshot = null;
+            }
+        }
     }
 
     private sealed class GeneratedConfigurationStateRegistry
@@ -172,5 +181,14 @@ public static class SvcContainerAutoConfiguration
     public static bool HasConfigurator
     {
         get => Configurators.HasAny;
+    }
+
+    /// <summary>
+    /// Clears all registered configurators to enable isolated test execution.
+    /// Only use in test scenarios — production code should never call this.
+    /// </summary>
+    internal static void ClearForTesting()
+    {
+        Configurators.Clear();
     }
 }

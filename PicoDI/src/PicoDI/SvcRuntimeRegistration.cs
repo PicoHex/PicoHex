@@ -24,6 +24,15 @@ internal sealed class SvcRuntimeRegistration
     {
         ArgumentNullException.ThrowIfNull(descriptor);
 
+        if (descriptor.Factory is not null && descriptor.SingleInstance is not null)
+        {
+            throw new ArgumentException(
+                $"Service '{descriptor.ServiceType}' has both a Factory and a SingleInstance set. "
+                + "Use Factory for deferred construction or SingleInstance for a pre-built instance, not both.",
+                nameof(descriptor)
+            );
+        }
+
         var singletonState =
             descriptor.Lifetime == SvcLifetime.Singleton
                 ? new SvcRuntimeSingletonState(

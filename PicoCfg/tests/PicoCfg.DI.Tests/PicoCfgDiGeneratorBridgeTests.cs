@@ -3,7 +3,6 @@ using PicoCfg.Gen;
 namespace PicoCfg.DI.Tests;
 
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using PicoCfg.Abs;

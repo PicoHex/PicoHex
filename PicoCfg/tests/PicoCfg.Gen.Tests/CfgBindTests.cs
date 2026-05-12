@@ -105,4 +105,27 @@ public sealed class CfgBindTests
         await Assert.That(settings.Name).IsEqualTo("app");
         await Assert.That(settings.Port).IsEqualTo(8080);
     }
+
+    [Test]
+    public async Task Bind_NestedNonCircularBindings_ResolvesChildProperties()
+    {
+        await using var root = await Cfg
+            .CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Name"] = "Root",
+                    ["Inner:Value"] = "nested-value",
+                    ["Inner:Count"] = "99",
+                }
+            )
+            .BuildAsync();
+
+        var settings = CfgBind.Bind<PicoCfgBindRuntimeTests.OuterSettings>(root);
+
+        await Assert.That(settings.Name).IsEqualTo("Root");
+        await Assert.That(settings.Inner).IsNotNull();
+        await Assert.That(settings.Inner!.Value).IsEqualTo("nested-value");
+        await Assert.That(settings.Inner.Count).IsEqualTo(99);
+    }
 }

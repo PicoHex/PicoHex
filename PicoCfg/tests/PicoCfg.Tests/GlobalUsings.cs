@@ -1,7 +1,6 @@
 ﻿// Global using directives
 
 global using System.Text;
-global using PicoCfg;
 global using PicoCfg.Abs;
 global using PicoCfg.Extensions;
 global using TUnit.Assertions;

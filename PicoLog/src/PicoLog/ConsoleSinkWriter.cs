@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace PicoLog;
 
 internal static class ConsoleSinkWriter
@@ -9,15 +7,13 @@ internal static class ConsoleSinkWriter
     private static object GetLock(TextWriter writer) =>
         WriterLocks.GetValue(writer, static _ => new object());
 
-    public static Task WriteAsync(TextWriter writer, string message)
+    public static void Write(TextWriter writer, string message)
     {
         lock (GetLock(writer))
             writer.WriteLine(message);
-
-        return Task.CompletedTask;
     }
 
-    public static Task WriteAsync<TState>(
+    public static void Write<TState>(
         TextWriter writer,
         string message,
         TState state,
@@ -29,12 +25,10 @@ internal static class ConsoleSinkWriter
             if (!ReferenceEquals(writer, Console.Out))
             {
                 writer.WriteLine(message);
-                return Task.CompletedTask;
+                return;
             }
 
             consoleWrite(writer, message, state);
         }
-
-        return Task.CompletedTask;
     }
 }

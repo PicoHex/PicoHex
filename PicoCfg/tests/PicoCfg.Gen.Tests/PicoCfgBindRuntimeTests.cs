@@ -231,6 +231,18 @@ public class PicoCfgBindRuntimeTests
         public string? Name { get; set; }
     }
 
+    public sealed class InnerSettings
+    {
+        public string? Value { get; set; }
+        public int Count { get; set; }
+    }
+
+    public sealed class OuterSettings
+    {
+        public string? Name { get; set; }
+        public InnerSettings? Inner { get; set; }
+    }
+
     public sealed class SkewedSettings
     {
         public int Value { get; set; }

@@ -99,14 +99,22 @@ internal sealed class ClosedGenericAnalyzer
         if (angleIndex < 0)
             return null;
 
-        var baseName = typeFullName.Substring(0, angleIndex);
-        if (baseName.StartsWith(PicoDiNames.GlobalSystemPrefix))
+        var baseName = typeFullName.Substring(0, angleIndex).Trim();
+        if (baseName.StartsWith(PicoDiNames.GlobalSystemPrefix, StringComparison.Ordinal))
+            return null;
+
+        var closeAngleIndex = typeFullName.LastIndexOf('>');
+        if (closeAngleIndex < 0 || closeAngleIndex <= angleIndex)
             return null;
 
         var typeArgumentsSection = typeFullName.Substring(
             angleIndex + 1,
-            typeFullName.Length - angleIndex - 2
-        );
+            closeAngleIndex - angleIndex - 1
+        ).Trim();
+
+        if (typeArgumentsSection.Length == 0)
+            return null;
+
         var typeArguments = ParseTypeArguments(typeArgumentsSection).ToImmutableArray();
         var openGenericArityPlaceholder =
             typeArguments.Length > 0 ? new string(',', typeArguments.Length - 1) : string.Empty;

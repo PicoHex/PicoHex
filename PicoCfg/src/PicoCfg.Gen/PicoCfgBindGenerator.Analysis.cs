@@ -133,7 +133,7 @@ public sealed partial class PicoCfgBindGenerator
         model = new TargetModel(
             namedType,
             registration.Operations,
-            [..properties],
+            [.. properties],
             hasPublicParameterlessCtor,
             isRecordClass,
             hasPrimaryCtor
@@ -428,14 +428,14 @@ public sealed partial class PicoCfgBindGenerator
                 case INamedTypeSymbol { IsUnboundGenericType: true }:
                     return true;
                 case INamedTypeSymbol namedType:
-                {
-                    if (Enumerable.Any(namedType.TypeArguments, ContainsTypeParameter))
                     {
-                        return true;
-                    }
+                        if (Enumerable.Any(namedType.TypeArguments, ContainsTypeParameter))
+                        {
+                            return true;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             return false;

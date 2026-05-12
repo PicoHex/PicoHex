@@ -17,4 +17,11 @@ public interface ISvcContainer : IAsyncDisposable
     /// </summary>
     /// <returns>A new service scope instance.</returns>
     public ISvcScope CreateScope();
+
+    /// <summary>
+    /// Determines whether the specified service type has been registered with the container.
+    /// </summary>
+    /// <param name="serviceType">The service type to check.</param>
+    /// <returns><see langword="true"/> if the service type is registered; otherwise, <see langword="false"/>.</returns>
+    public bool IsRegistered(Type serviceType);
 }

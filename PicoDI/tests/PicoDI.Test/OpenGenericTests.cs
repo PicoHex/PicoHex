@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace PicoDI.Test;
 
 /// <summary>
@@ -12,6 +14,7 @@ public class OpenGenericTests
         container.RegisterTransient<IAlternativeSimpleService, PreferredCtorService>();
     }
 
+    [RequiresAssemblyFiles("Calls System.Reflection.Assembly.Location")]
     private static PortableExecutableReference CreateAotSafeReference(string assemblyName)
     {
         var path = Path.Combine(AppContext.BaseDirectory, assemblyName + ".dll");

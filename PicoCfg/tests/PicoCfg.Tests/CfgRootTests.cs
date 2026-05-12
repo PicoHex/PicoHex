@@ -676,4 +676,29 @@ public class CfgRootTests
             await completedTask;
         }
     }
+
+    [Test]
+    public async Task GetValue_ConcurrentAccess_ReturnsConsistentResults()
+    {
+        var provider = new MockProvider(
+            [new Dictionary<string, string> { ["shared"] = "value42", ["other"] = "hello" }]
+        );
+        var root = TestCfgFactory.CreateRoot([provider]);
+
+        const int threadCount = 50;
+        var tasks = new Task<string?>[threadCount];
+        for (var i = 0; i < threadCount; i++)
+        {
+            var key = i % 2 == 0 ? "shared" : "other";
+            tasks[i] = Task.Run(() => root.GetValue(key));
+        }
+
+        var results = await Task.WhenAll(tasks);
+
+        for (var i = 0; i < threadCount; i++)
+        {
+            var expected = i % 2 == 0 ? "value42" : "hello";
+            await Assert.That(results[i]).IsEqualTo(expected);
+        }
+    }
 }

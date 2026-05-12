@@ -10,7 +10,8 @@ public sealed class ConsoleSink(ILogFormatter formatter, TextWriter? writer = nu
     public Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
     {
         var message = _formatter.Format(entry);
-        return ConsoleSinkWriter.WriteAsync(_writer, message);
+        ConsoleSinkWriter.Write(_writer, message);
+        return Task.CompletedTask;
     }
 
     public void Dispose() { }

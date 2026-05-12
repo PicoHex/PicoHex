@@ -32,6 +32,18 @@ public static class CfgValidator
 
 public static class CfgValidationExtensions
 {
+    /// <summary>
+    /// Binds configuration to type <typeparamref name="T"/> and validates the result.
+    /// </summary>
+    /// <typeparam name="T">The type to bind and validate.</typeparam>
+    /// <param name="cfg">The configuration root.</param>
+    /// <param name="section">Optional configuration section key prefix.</param>
+    /// <returns>The bound and validated instance of <typeparamref name="T"/>.</returns>
+    [RequiresUnreferencedCode(
+        "CfgValidator uses IValidatableObject-based validation. "
+        + "Types implementing IValidatableObject are compatible with Native AOT. "
+        + "DataAnnotations-based validation is not supported under trimming."
+    )]
     public static T BindAndValidate<T>(this ICfg cfg, string? section = null)
     {
         var instance = CfgBind.Bind<T>(cfg, section);

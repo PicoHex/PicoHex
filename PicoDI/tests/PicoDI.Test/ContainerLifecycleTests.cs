@@ -326,12 +326,10 @@ public class ContainerLifecycleTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var configurator = ResolveGeneratedConfigurator();
 
         // Act
-        var result = PicoDI
-            .Generated
-            .GeneratedServiceRegistrations_PicoDITest
-            .ConfigureGeneratedServices(container);
+        var result = configurator(container);
 
         // Assert
         await Assert.That(result).IsEqualTo(container);
@@ -351,16 +349,11 @@ public class ContainerLifecycleTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        var configurator = ResolveGeneratedConfigurator();
 
         // Act
-        PicoDI
-            .Generated
-            .GeneratedServiceRegistrations_PicoDITest
-            .ConfigureGeneratedServices(container);
-        PicoDI
-            .Generated
-            .GeneratedServiceRegistrations_PicoDITest
-            .ConfigureGeneratedServices(container);
+        configurator(container);
+        configurator(container);
 
         // Assert
         await using var scope = container.CreateScope();
@@ -595,4 +588,37 @@ public class ContainerLifecycleTests
     }
 
     #endregion
+
+    private static Func<ISvcContainer, ISvcContainer> ResolveGeneratedConfigurator()
+    {
+        // Dynamically resolve the generated configurator type using the assembly name,
+        // avoiding hardcoded coupling to a specific assembly name in the generated type identifier.
+        var assembly = typeof(ContainerLifecycleTests).Assembly;
+        var asmName = assembly.GetName().Name;
+        var safeName = asmName is not null
+            ? new string(asmName.Select(c => c == '.' ? '_' : c).Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray())
+            : "Unknown";
+        var typeName = $"PicoDI.Generated.GeneratedServiceRegistrations_{safeName}";
+
+        if (assembly.GetType(typeName) is not { } type)
+        {
+            // Fallback: scan all types in the PicoDI.Generated namespace
+            type = assembly
+                .GetTypes()
+                .FirstOrDefault(t =>
+                    t.FullName?.StartsWith("PicoDI.Generated.GeneratedServiceRegistrations_", StringComparison.Ordinal)
+                    == true
+                ) ?? throw new InvalidOperationException(
+                    $"Generated configurator type not found. Expected '{typeName}' or a type "
+                    + "matching 'PicoDI.Generated.GeneratedServiceRegistrations_*'."
+                );
+        }
+
+        var method = type.GetMethod("ConfigureGeneratedServices", [typeof(ISvcContainer)])
+            ?? throw new InvalidOperationException(
+                $"Method 'ConfigureGeneratedServices' not found on '{type.FullName}'."
+            );
+
+        return container => (ISvcContainer)method.Invoke(null, [container])!;
+    }
 }

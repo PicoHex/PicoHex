@@ -1,5 +1,16 @@
 ﻿namespace PicoLog.Abs;
 
+/// <summary>
+/// Provides logging methods with overloads for every combination of:
+/// <list type="bullet">
+///   <item><description><b>Message format</b> — plain <see cref="string"/>, <see cref="FormattableString"/>, or <see cref="EventId"/>-qualified.</description></item>
+///   <item><description><b>Sync/Async</b> — synchronous <see cref="Log"/> for fire-and-forget, <see cref="LogAsync"/> for backpressure-aware producers.</description></item>
+///   <item><description><b>Structured properties</b> — each overload pair has a variant accepting <c>IReadOnlyList&lt;KeyValuePair&lt;string, object?&gt;&gt;?</c>.</description></item>
+/// </list>
+/// This yields 24 overloads (3 message formats × 2 sync/async × 2 property presence × 2 with/without exception default = 24).
+/// The design avoids boxing and conditional branches at the call site so that source generators and AOT compilers can
+/// emit direct dispatch with minimal metadata overhead.
+/// </summary>
 public interface ILogger
 {
     IDisposable BeginScope<TState>(TState state)

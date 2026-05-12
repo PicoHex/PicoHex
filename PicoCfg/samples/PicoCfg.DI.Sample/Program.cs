@@ -4,7 +4,6 @@ using PicoCfg.DI;
 using PicoCfg.Extensions;
 using PicoDI;
 using PicoDI.Abs;
-using System.ComponentModel;
 
 Console.WriteLine("=== PicoCfg.DI Sample ===");
 
