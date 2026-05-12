@@ -72,6 +72,9 @@ coverage-report/
 # Sisyphus
 .sisyphus/
 
+# Superpowers docs (discussion artifacts, not project docs)
+docs/superpowers/
+
 # OpenCode
 .opencode/
 .continue/
