@@ -6,7 +6,6 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-
         <StripSymbols>false</StripSymbols>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
@@ -16,18 +15,18 @@
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-      <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
-      <ProjectReference Include="..\..\src\PicoLog.DI\PicoLog.DI.csproj" />
+        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
+        <ProjectReference Include="..\..\src\PicoLog.DI\PicoLog.DI.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-      <PackageReference Include="PicoDI" />
-      <PackageReference Include="PicoLog.DI" Version="$(Version)" />
+        <PackageReference Include="PicoDI" />
+        <PackageReference Include="PicoLog.DI" Version="$(Version)" />
     </ItemGroup>
 
     <ItemGroup>
-      <!-- PicoLog.Generators analyzer — source-generates [PicoLogMessage] method bodies -->
-      <ProjectReference Include="..\..\src\PicoLog.Gen\PicoLog.Gen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <!-- PicoLog.Generators analyzer — source-generates [PicoLogMessage] method bodies -->
+        <ProjectReference Include="..\..\src\PicoLog.Gen\PicoLog.Gen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>

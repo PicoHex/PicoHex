@@ -8,9 +8,8 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg.DI</PackageId>
         <Description>PicoDI registration helpers for PicoCfg roots, snapshots, and generated bound POCOs.</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
-    
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">

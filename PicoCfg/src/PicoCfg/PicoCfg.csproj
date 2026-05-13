@@ -2,22 +2,21 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg</PackageId>
         <Description>Async-first configuration providers and extensions for PicoCfg.</Description>
         <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-    
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-      <ProjectReference Include="..\PicoCfg.Abs\PicoCfg.Abs.csproj">
-          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-          <Private>false</Private>
-      </ProjectReference>
+        <ProjectReference Include="..\PicoCfg.Abs\PicoCfg.Abs.csproj">
+            <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+            <Private>false</Private>
+        </ProjectReference>
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">

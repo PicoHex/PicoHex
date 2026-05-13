@@ -3,22 +3,20 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <PublishAot>false</PublishAot>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <LangVersion>latest</LangVersion>
-        <IsPackable>true</IsPackable>
-        <DevelopmentDependency>false</DevelopmentDependency>
-        <PackageId>PicoCfg.Gen</PackageId>
-        <Description>Source generator package for PicoCfg generated binding.</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Initial PicoCfg.Gen release with source-generated binding for PicoCfg and bundled runtime helpers.</PackageReleaseNotes>
-        <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>true</IsRoslynComponent>
-        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <NoWarn>$(NoWarn);RS2008;RS1041;NU5128</NoWarn>
-        <AssemblyName>PicoCfg.Gen</AssemblyName>
-    
+        <IsPackable>true</IsPackable>
+        <DevelopmentDependency>false</DevelopmentDependency>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <PackageId>PicoCfg.Gen</PackageId>
+        <Description>Source generator package for PicoCfg generated binding.</Description>
+        <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageReleaseNotes>Initial PicoCfg.Gen release with source-generated binding for PicoCfg and bundled runtime helpers.</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -31,6 +29,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="..\..\..\README.md" Pack="true" PackagePath="" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
@@ -39,11 +45,6 @@
     <ItemGroup>
         <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
         <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
-        <None Include="..\..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
@@ -53,5 +54,9 @@
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
         <PackageReference Include="PicoCfg.Abs" />
     </ItemGroup>
+
+    <PropertyGroup>
+        <AssemblyName>PicoCfg.Gen</AssemblyName>
+    </PropertyGroup>
 
 </Project>

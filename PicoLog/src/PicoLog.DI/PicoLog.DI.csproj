@@ -10,25 +10,24 @@
         <Description>PicoDI integration for PicoLog registration (AddPicoLog, WriteTo, ReadFrom).</Description>
         <PackageTags>PicoHex;Logging;AOT;SourceGenerator</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-    
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-      <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
-      <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
+        <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
+        <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-      <PackageReference Include="PicoLog.Abs" Version="$(Version)" />
-      <PackageReference Include="PicoLog" Version="$(Version)" />
+        <PackageReference Include="PicoLog.Abs" Version="$(Version)" />
+        <PackageReference Include="PicoLog" Version="$(Version)" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-      <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
+        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-      <PackageReference Include="PicoDI" />
+        <PackageReference Include="PicoDI" />
     </ItemGroup>
 
 </Project>

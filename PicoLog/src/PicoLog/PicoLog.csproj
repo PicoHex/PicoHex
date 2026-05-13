@@ -3,28 +3,28 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
         <PackageId>PicoLog</PackageId>
         <Description>High-performance structured logging with compile-time message templates and built-in sinks.</Description>
         <PackageTags>PicoHex;Logging;AOT;SourceGenerator</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-    
     </PropertyGroup>
 
     <ItemGroup>
-      <InternalsVisibleTo Include="PicoLog.Tests" />
+        <InternalsVisibleTo Include="PicoLog.Tests" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-      <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj">
-          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-          <Private>false</Private>
-      </ProjectReference>
+        <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj">
+            <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+            <Private>false</Private>
+        </ProjectReference>
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-      <PackageReference Include="PicoLog.Abs" />
+        <PackageReference Include="PicoLog.Abs" />
     </ItemGroup>
+
 </Project>
