@@ -27,7 +27,7 @@ jobs:
       pico-cfg: ${{ steps.filter.outputs.pico-cfg }}
       pico-log: ${{ steps.filter.outputs.pico-log }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -68,7 +68,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -163,7 +163,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -273,7 +273,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-dotnet@v4
         with:
