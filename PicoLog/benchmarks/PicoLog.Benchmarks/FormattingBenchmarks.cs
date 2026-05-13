@@ -193,6 +193,6 @@ public partial class FormattingBenchmarks
             if (path is not null)
                 File.Delete(path);
         }
-        catch { }
+        catch { /* best-effort cleanup */ }
     }
 }

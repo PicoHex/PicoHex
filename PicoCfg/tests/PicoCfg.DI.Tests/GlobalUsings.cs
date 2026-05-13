@@ -1,3 +1,4 @@
+global using System.Globalization;
 global using PicoCfg.Abs;
 global using PicoCfg.Extensions;
 global using PicoDI;

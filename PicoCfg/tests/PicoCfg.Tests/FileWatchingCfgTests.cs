@@ -24,7 +24,7 @@ public class FileWatchingCfgTests
         }
         finally
         {
-            try { File.Delete(tempPath); } catch { }
+            try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
         }
     }
 
@@ -45,7 +45,7 @@ public class FileWatchingCfgTests
         }
         finally
         {
-            try { File.Delete(tempPath); } catch { }
+            try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
         }
     }
 
@@ -76,7 +76,7 @@ public class FileWatchingCfgTests
         }
         finally
         {
-            try { File.Delete(tempPath); } catch { }
+            try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
         }
     }
 }

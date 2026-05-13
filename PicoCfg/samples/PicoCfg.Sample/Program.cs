@@ -1,8 +1,6 @@
 // AOT Compatibility Validation for PicoCfg
 // This program validates that all PicoCfg features work correctly in AOT-compiled mode
 
-using System.ComponentModel.DataAnnotations;
-
 Console.WriteLine("=== PicoCfg AOT Compatibility Validation ===");
 Console.WriteLine();
 

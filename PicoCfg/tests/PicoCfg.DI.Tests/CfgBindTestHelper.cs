@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace PicoCfg.DI.Tests;
 
 internal static class CfgBindTestHelper

@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace PicoCfg.Tests;
 
 public sealed class CfgValidatorTests

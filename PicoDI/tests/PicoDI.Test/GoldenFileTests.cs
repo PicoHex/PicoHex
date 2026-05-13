@@ -1,7 +1,5 @@
 namespace PicoDI.Test;
 
-using System.Diagnostics.CodeAnalysis;
-
 public sealed class PicoDIGoldenFileTests
 {
     [Test]

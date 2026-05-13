@@ -1,5 +1,3 @@
-using System.Text;
-
 [BenchmarkClass(Description = "Reload configuration from PicoCfg in-memory sources")]
 public partial class ReloadBenchmarks
 {

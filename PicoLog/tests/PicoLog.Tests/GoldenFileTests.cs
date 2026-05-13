@@ -1,7 +1,5 @@
 namespace PicoLog.Tests;
 
-using System.Diagnostics.CodeAnalysis;
-
 public sealed class PicoLogMessageGoldenFileTests
 {
     [Test]

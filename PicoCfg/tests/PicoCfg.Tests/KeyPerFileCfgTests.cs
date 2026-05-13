@@ -29,7 +29,7 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
         }
     }
 
@@ -53,7 +53,7 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
         }
     }
 
@@ -74,7 +74,7 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
         }
     }
 
@@ -113,7 +113,7 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
         }
     }
 
@@ -135,7 +135,7 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
         }
     }
 
@@ -161,7 +161,7 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { }
+            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
         }
     }
 }

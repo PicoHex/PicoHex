@@ -1,5 +1,3 @@
-using System.Text;
-
 [BenchmarkClass(Description = "Non-equivalent product-behavior reload controls")]
 public partial class ReloadControlBenchmarks
 {

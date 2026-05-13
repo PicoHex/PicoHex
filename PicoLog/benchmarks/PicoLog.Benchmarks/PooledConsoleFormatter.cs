@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using PicoLog.Abs;
 
 namespace PicoLog.Benchmarks;
