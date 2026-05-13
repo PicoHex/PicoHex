@@ -7,9 +7,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
-        <PublishAot>true</PublishAot>
         <StripSymbols>false</StripSymbols>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' != ''">
+        <PublishAot>true</PublishAot>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">

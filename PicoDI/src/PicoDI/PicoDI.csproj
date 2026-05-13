@@ -15,7 +15,7 @@
     <PropertyGroup>
         <PackageId>PicoDI</PackageId>
         <Description>A lightweight, zero-reflection, AOT-compatible dependency injection container for .NET with compile-time source generation</Description>
-        <PackageTags>DI;IoC;AOT;Dependency Injection;Container;Source Generator</PackageTags>
+        <PackageTags>PicoHex;DI;IoC;AOT;Dependency Injection;Container;Source Generator</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 

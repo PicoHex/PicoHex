@@ -5,19 +5,16 @@
 
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <PublishAot>false</PublishAot>
         
         <IsPackable>true</IsPackable>
-        <GenerateDepsFile>false</GenerateDepsFile>
-    
-    </PropertyGroup>
-
-    <!-- NuGet Package Metadata -->
-    <PropertyGroup>
         <PackageId>PicoDI.Abs</PackageId>
         <Description>Abstractions for PicoDI - a lightweight, zero-reflection, AOT-compatible dependency injection container</Description>
-        <PackageTags>DI;IoC;AOT;Dependency Injection;Abstractions</PackageTags>
+        <PackageTags>PicoHex;DI;IoC;AOT;Dependency Injection;Abstractions</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <GenerateDepsFile>false</GenerateDepsFile>
+    
     </PropertyGroup>
 
     <ItemGroup>

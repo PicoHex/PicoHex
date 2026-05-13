@@ -6,6 +6,9 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' != ''">
         <PublishAot>true</PublishAot>
         <TrimMode>full</TrimMode>
     </PropertyGroup>

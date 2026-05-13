@@ -9,6 +9,7 @@
 
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
 
         <!-- Suppress release tracking warning -->
         <NoWarn>$(NoWarn);RS2008;RS1041;NU5128</NoWarn>
@@ -48,7 +49,7 @@
     <PropertyGroup>
         <PackageId>PicoDI.Gen</PackageId>
         <Description>Independent source generator for PicoDI - generates AOT-compatible service registrations and open generic metadata at compile time. Use this package when building DI extension libraries based on PicoDI.Abs.</Description>
-        <PackageTags>DI;IoC;AOT;Source Generator;Roslyn;Analyzer</PackageTags>
+        <PackageTags>PicoHex;DI;IoC;AOT;Source Generator;Roslyn;Analyzer</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
