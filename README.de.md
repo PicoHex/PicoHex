@@ -58,8 +58,6 @@ Benchmarks ausgeführt auf **.NET 10.0.5, Windows 10, X64, Native AOT, Release-M
 | SingleResolution &times; Transient | 55.3 | 187.8 | 3.39&times; |
 | ScopeCreation | 94.1 | 104.5 | 1.11&times; |
 
-**AOT binary: 3,087.5 KB**
-
 ### PicoCfg vs Microsoft.Extensions.Configuration
 
 **1.35&times;&ndash;1.57&times; schneller bei gemischten Workloads.**
@@ -69,8 +67,6 @@ Benchmarks ausgeführt auf **.NET 10.0.5, Windows 10, X64, Native AOT, Release-M
 | Mixed n=100, p=2, l=1 | 5,920.9 | 9,273.9 | **1.57&times;** |
 | Mixed n=100, p=2, l=10 | 29,831.8 | 40,218.9 | **1.35&times;** |
 
-**AOT binary: 2,476.5 KB**
-
 ### PicoLog vs Microsoft.Extensions.Logging
 
 PicoLog erzeugt umfangreichere Logeinträge (Zeitstempel, Kategorie, Scopes, Eigenschaften), weshalb der asynchrone Übergabepfad mit dem schlanken String-Kanal von Microsoft vergleichbar ist. Die **Kontroll-Benchmarks** messen die zugrunde liegende Effizienz ohne Queue-/Sink-Overhead:
@@ -79,8 +75,6 @@ PicoLog erzeugt umfangreichere Logeinträge (Zeitstempel, Kategorie, Scopes, Eig
 |---|---|---|---|
 | **TimestampNowOnly** | 4.15&times; | 5.05&times; | 4.54&times; |
 | **LogEntryAllocateOnly** | 8.48&times; | 23.48&times; | 20.11&times; |
-
-**AOT binary: 3,020 KB**
 
 ---
 

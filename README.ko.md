@@ -58,8 +58,6 @@ Configuration  ──→  Dependency Injection  ──→  Logging
 | SingleResolution × Transient | 55.3 | 187.8 | 3.39배 |
 | ScopeCreation | 94.1 | 104.5 | 1.11배 |
 
-**AOT 바이너리: 3,087.5 KB**
-
 ### PicoCfg vs Microsoft.Extensions.Configuration
 
 **혼합 워크로드에서 1.35배&ndash;1.57배 더 빠름.**
@@ -69,8 +67,6 @@ Configuration  ──→  Dependency Injection  ──→  Logging
 | Mixed n=100, p=2, l=1 | 5,920.9 | 9,273.9 | **1.57배** |
 | Mixed n=100, p=2, l=10 | 29,831.8 | 40,218.9 | **1.35배** |
 
-**AOT 바이너리: 2,476.5 KB**
-
 ### PicoLog vs Microsoft.Extensions.Logging
 
 PicoLog은 더 풍부한 로그 항목(타임스탬프, 카테고리, 스코프, 속성)을 구성하므로, 비동기 핸드오프 경로가 Microsoft의 경량 문자열 채널 핸드오프와 비슷한 수준입니다. **제어 벤치마크**는 큐/싱크 오버헤드 없이 기본 효율성을 측정합니다:
@@ -79,8 +75,6 @@ PicoLog은 더 풍부한 로그 항목(타임스탬프, 카테고리, 스코프,
 |---|---|---|---|
 | **TimestampNowOnly** | 4.15배 | 5.05배 | 4.54배 |
 | **LogEntryAllocateOnly** | 8.48배 | 23.48배 | 20.11배 |
-
-**AOT 바이너리: 3,020 KB**
 
 ---
 

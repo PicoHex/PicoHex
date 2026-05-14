@@ -58,8 +58,6 @@ Pruebas de rendimiento ejecutadas en **.NET 10.0.5, Windows 10, X64, Native AOT,
 | SingleResolution &times; Transient | 55,3 | 187,8 | 3,39&times; |
 | ScopeCreation | 94,1 | 104,5 | 1,11&times; |
 
-**Binario AOT: 3.087,5 KB**
-
 ### PicoCfg frente a Microsoft.Extensions.Configuration
 
 **Entre 1,35&times; y 1,57&times; más rápido en cargas de trabajo mixtas.**
@@ -69,8 +67,6 @@ Pruebas de rendimiento ejecutadas en **.NET 10.0.5, Windows 10, X64, Native AOT,
 | Mixto n=100, p=2, l=1 | 5.920,9 | 9.273,9 | **1,57&times;** |
 | Mixto n=100, p=2, l=10 | 29.831,8 | 40.218,9 | **1,35&times;** |
 
-**Binario AOT: 2.476,5 KB**
-
 ### PicoLog frente a Microsoft.Extensions.Logging
 
 PicoLog construye entradas de registro más ricas (marca de tiempo, categoría, ámbitos, propiedades), por lo que la ruta de entrega asíncrona es comparable a la transferencia ligera de cadenas de Microsoft. Los **puntos de control** miden la eficiencia subyacente sin la sobrecarga de la cola o el sumidero:
@@ -79,8 +75,6 @@ PicoLog construye entradas de registro más ricas (marca de tiempo, categoría, 
 |---|---|---|---|
 | **TimestampNowOnly** | 4,15&times; | 5,05&times; | 4,54&times; |
 | **LogEntryAllocateOnly** | 8,48&times; | 23,48&times; | 20,11&times; |
-
-**Binario AOT: 3.020 KB**
 
 ---
 

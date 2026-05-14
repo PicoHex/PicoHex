@@ -58,8 +58,6 @@ Configuration  ──→  Dependency Injection  ──→  Logging
 | SingleResolution &times; Transient | 55.3 | 187.8 | 3.39&times; |
 | ScopeCreation | 94.1 | 104.5 | 1.11&times; |
 
-**AOT 二進位大小：3,087.5 KB**
-
 ### PicoCfg vs Microsoft.Extensions.Configuration
 
 **混合工作負載下快 1.35&times;&ndash;1.57&times;。**
@@ -69,8 +67,6 @@ Configuration  ──→  Dependency Injection  ──→  Logging
 | Mixed n=100, p=2, l=1 | 5,920.9 | 9,273.9 | **1.57&times;** |
 | Mixed n=100, p=2, l=10 | 29,831.8 | 40,218.9 | **1.35&times;** |
 
-**AOT 二進位大小：2,476.5 KB**
-
 ### PicoLog vs Microsoft.Extensions.Logging
 
 PicoLog 會構造更豐富的日誌条目（包含時間戳、類別、作用域、屬性），因此非同步交接路徑與 Microsoft 輕量級字串通道交接相當。**控制基準測試**則衡量排除佇列/接收器開銷後的底層效率：
@@ -79,8 +75,6 @@ PicoLog 會構造更豐富的日誌条目（包含時間戳、類別、作用域
 |---|---|---|---|
 | **TimestampNowOnly** | 4.15&times; | 5.05&times; | 4.54&times; |
 | **LogEntryAllocateOnly** | 8.48&times; | 23.48&times; | 20.11&times; |
-
-**AOT 二進位大小：3,020 KB**
 
 ---
 

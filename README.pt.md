@@ -58,8 +58,6 @@ Benchmarks executados em **.NET 10.0.5, Windows 10, X64, Native AOT, modo Releas
 | SingleResolution &times; Transient | 55,3 | 187,8 | 3,39&times; |
 | ScopeCreation | 94,1 | 104,5 | 1,11&times; |
 
-**Binário AOT: 3.087,5 KB**
-
 ### PicoCfg vs Microsoft.Extensions.Configuration
 
 **1,35&times; a 1,57&times; mais rápido em cargas de trabalho mistas.**
@@ -69,8 +67,6 @@ Benchmarks executados em **.NET 10.0.5, Windows 10, X64, Native AOT, modo Releas
 | Misto n=100, p=2, l=1 | 5.920,9 | 9.273,9 | **1,57&times;** |
 | Misto n=100, p=2, l=10 | 29.831,8 | 40.218,9 | **1,35&times;** |
 
-**Binário AOT: 2.476,5 KB**
-
 ### PicoLog vs Microsoft.Extensions.Logging
 
 PicoLog constrói entradas de log mais ricas (timestamp, categoria, escopos, propriedades), por isso o caminho de handoff assíncrono é comparável ao handoff leve do canal de string da Microsoft. Os **benchmarks de controle** medem a eficiência subjacente sem sobrecarga de fila/sink:
@@ -79,8 +75,6 @@ PicoLog constrói entradas de log mais ricas (timestamp, categoria, escopos, pro
 |---|---|---|---|
 | **TimestampNowOnly** | 4,15&times; | 5,05&times; | 4,54&times; |
 | **LogEntryAllocateOnly** | 8,48&times; | 23,48&times; | 20,11&times; |
-
-**Binário AOT: 3.020 KB**
 
 ---
 
