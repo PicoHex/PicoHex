@@ -54,9 +54,10 @@
     <IsAotCompatible>false</IsAotCompatible>
   </PropertyGroup>
 
-  <!-- Libraries: declare AOT-compatible but do not self-publish -->
+  <!-- Libraries: declare AOT-compatible but do not self-publish.
+       Only for TFMs that support AOT (net8.0+). -->
   <PropertyGroup>
-    <IsAotCompatible Condition="'$(IsAotCompatible)' == '' and '$(OutputType)' != 'Exe'">true</IsAotCompatible>
+    <IsAotCompatible Condition="'$(IsAotCompatible)' == '' and '$(OutputType)' != 'Exe' and $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
   </PropertyGroup>
 
   <!-- PublishAotOnRun: when true, dotnet run auto-publishes as AOT before executing.

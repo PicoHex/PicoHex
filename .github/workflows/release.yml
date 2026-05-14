@@ -46,6 +46,7 @@ jobs:
       - name: Run all tests
         shell: bash
         run: |
+          mkdir -p ./artifacts/nupkg
           dotnet test PicoDI/tests/PicoDI.Test/ --configuration Release
           dotnet test PicoCfg/tests/PicoCfg.Tests/ --configuration Release
           dotnet test PicoCfg/tests/PicoCfg.Gen.Tests/ --configuration Release

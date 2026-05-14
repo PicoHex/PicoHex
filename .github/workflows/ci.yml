@@ -85,7 +85,9 @@ jobs:
           fi
 
       - name: Restore dependencies
-        run: dotnet restore PicoDI/src/PicoDI/PicoDI.csproj -p:UseProjectReferences=true
+        run: |
+          mkdir -p ./artifacts/nupkg
+          dotnet restore PicoDI/src/PicoDI/PicoDI.csproj -p:UseProjectReferences=true
 
       - name: Build
         run: dotnet build PicoDI/src/PicoDI/PicoDI.csproj --configuration Release --no-restore -p:UseProjectReferences=true
@@ -180,7 +182,9 @@ jobs:
           fi
 
       - name: Restore dependencies
-        run: dotnet restore PicoCfg/src/PicoCfg/PicoCfg.csproj -p:UseProjectReferences=true
+        run: |
+          mkdir -p ./artifacts/nupkg
+          dotnet restore PicoCfg/src/PicoCfg/PicoCfg.csproj -p:UseProjectReferences=true
 
       - name: Build
         run: dotnet build PicoCfg/src/PicoCfg/PicoCfg.csproj --configuration Release --no-restore -p:UseProjectReferences=true
@@ -290,7 +294,9 @@ jobs:
           fi
 
       - name: Restore dependencies
-        run: dotnet restore PicoLog/src/PicoLog/PicoLog.csproj -p:UseProjectReferences=true
+        run: |
+          mkdir -p ./artifacts/nupkg
+          dotnet restore PicoLog/src/PicoLog/PicoLog.csproj -p:UseProjectReferences=true
 
       - name: Build
         run: dotnet build PicoLog/src/PicoLog/PicoLog.csproj --configuration Release --no-restore -p:UseProjectReferences=true
