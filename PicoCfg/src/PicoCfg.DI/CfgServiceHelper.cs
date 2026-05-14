@@ -47,4 +47,16 @@ internal static class CfgServiceHelper
             "No PicoCfg configuration source is registered. Call RegisterCfgRoot(...) before registering configuration options."
         );
     }
+
+    /// <summary>
+    /// Resolves an <see cref="ICfg"/> from the scope (convenience shorthand for extension method bodies).
+    /// </summary>
+    internal static ICfg Resolve(ISvcScope scope) => ResolveCfg(scope);
+
+    /// <summary>
+    /// Binds a POCO of type <typeparamref name="T"/> from configuration resolved through the scope.
+    /// </summary>
+    internal static T Bind<T>(ISvcScope scope, string? section = null)
+        where T : class
+        => CfgBind.Bind<T>(ResolveCfg(scope), section);
 }

@@ -1,3 +1,5 @@
+using static PicoCfg.DI.CfgServiceHelper;
+
 namespace PicoCfg.DI;
 
 /// <summary>
