@@ -208,10 +208,10 @@ jobs:
         run: dotnet test --project PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
 
       - name: Run PicoCfg.Gen tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
 
       - name: Run PicoCfg.DI tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
+        run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
 
       - name: AOT publish validation
         run: dotnet publish PicoCfg/src/PicoCfg/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
