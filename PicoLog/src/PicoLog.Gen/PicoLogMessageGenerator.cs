@@ -58,7 +58,9 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
                         paramNames.Add(p.Identifier.Text);
                     }
 
-                    var namespaceName = methodSymbol.ContainingNamespace.ToDisplayString();
+                    var namespaceName = methodSymbol.ContainingNamespace.IsGlobalNamespace
+                        ? null
+                        : methodSymbol.ContainingNamespace.ToDisplayString();
                     var className = methodSymbol.ContainingType.Name;
 
                     return new MethodInfo(
