@@ -23,9 +23,12 @@
         <PackageReference Include="PicoCfg" />
     </ItemGroup>
 
-    <ItemGroup>
-        <!-- PicoDI is a monorepo sibling — always built from source, shares $(Version) -->
+    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
         <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+        <PackageReference Include="PicoDI" />
     </ItemGroup>
 
 </Project>
