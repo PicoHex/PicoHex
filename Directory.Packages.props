@@ -14,9 +14,9 @@
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.203" />
 
     <PackageVersion Include="PicoBench" Version="2026.2.0" />
-    <PackageVersion Include="PicoDI" Version="$(Version)" />
-    <PackageVersion Include="PicoDI.Abs" Version="$(PicoDiPackageVersion)" />
-    <PackageVersion Include="PicoDI.Gen" Version="$(Version)" />
+    <PackageVersion Include="PicoDI" Version="2026.2.0" />
+    <PackageVersion Include="PicoDI.Abs" Version="2026.2.0" />
+    <PackageVersion Include="PicoDI.Gen" Version="2026.2.0" />
     <PackageVersion Include="PicoCfg" Version="$(Version)" />
     <PackageVersion Include="PicoCfg.Abs" Version="$(Version)" />
     <PackageVersion Include="PicoLog" Version="$(Version)" />
