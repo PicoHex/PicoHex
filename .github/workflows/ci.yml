@@ -87,10 +87,10 @@ jobs:
       - name: Restore dependencies
         run: |
           mkdir -p ./artifacts/nupkg
-          dotnet restore PicoDI/src/PicoDI/PicoDI.csproj -p:UseProjectReferences=true
+          dotnet restore PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj -p:UseProjectReferences=true
 
       - name: Build
-        run: dotnet build PicoDI/src/PicoDI/PicoDI.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+        run: dotnet build PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
       - name: Run tests
         run: dotnet test --project PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
@@ -184,10 +184,10 @@ jobs:
       - name: Restore dependencies
         run: |
           mkdir -p ./artifacts/nupkg
-          dotnet restore PicoCfg/src/PicoCfg/PicoCfg.csproj -p:UseProjectReferences=true
+          dotnet restore PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj -p:UseProjectReferences=true
 
       - name: Build
-        run: dotnet build PicoCfg/src/PicoCfg/PicoCfg.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+        run: dotnet build PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
       - name: Run PicoCfg tests
         run: dotnet test --project PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
@@ -296,10 +296,10 @@ jobs:
       - name: Restore dependencies
         run: |
           mkdir -p ./artifacts/nupkg
-          dotnet restore PicoLog/src/PicoLog/PicoLog.csproj -p:UseProjectReferences=true
+          dotnet restore PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj -p:UseProjectReferences=true
 
       - name: Build
-        run: dotnet build PicoLog/src/PicoLog/PicoLog.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+        run: dotnet build PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
       - name: Run tests
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --timeout 120s --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
