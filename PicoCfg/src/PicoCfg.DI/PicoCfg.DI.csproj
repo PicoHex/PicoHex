@@ -17,10 +17,14 @@
             <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
             <Private>false</Private>
         </ProjectReference>
+        <ProjectReference Include="..\PicoCfg.Gen\PicoCfg.Gen.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
         <PackageReference Include="PicoCfg" Version="$(Version)" />
+        <PackageReference Include="PicoCfg.Gen" Version="$(Version)" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
