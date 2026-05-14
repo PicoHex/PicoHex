@@ -34,10 +34,25 @@ jobs:
           filters: |
             pico-di:
               - 'PicoDI/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - '.github/**'
+              - 'global.json'
             pico-cfg:
               - 'PicoCfg/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - '.github/**'
+              - 'global.json'
             pico-log:
               - 'PicoLog/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - '.github/**'
+              - 'global.json'
 
   # ---------------------------------------------------------------------------
   # PicoDI
