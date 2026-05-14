@@ -41,12 +41,9 @@
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" PrivateAssets="all" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+    <ItemGroup>
+        <!-- PicoDI.Abs is a monorepo sibling — always built from source -->
         <ProjectReference Include="..\PicoDI.Abs\PicoDI.Abs.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoDI.Abs" />
     </ItemGroup>
 
     <PropertyGroup>
