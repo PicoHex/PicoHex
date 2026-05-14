@@ -4,9 +4,7 @@
     "rollForward": "latestFeature",
     "allowPrerelease": false
   },
-  "msbuild-sdks": {
-    "Microsoft.Testing.Platform": {
-      "runner": "Microsoft.Testing.Platform"
-    }
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
   }
 }
