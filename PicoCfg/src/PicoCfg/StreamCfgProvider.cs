@@ -41,7 +41,7 @@ internal sealed class StreamCfgProvider : ICfgProvider
         var stream = _streamFactory();
 
         if (stream is null)
-            throw new ArgumentNullException(nameof(stream), "The stream factory returned null.");
+            throw new InvalidOperationException("The stream factory returned null.");
 
         await using (stream)
         {
