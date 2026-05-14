@@ -23,16 +23,9 @@
         <PackageReference Include="PicoCfg" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoDI" />
-    </ItemGroup>
-
     <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+        <!-- PicoDI is a monorepo sibling — always built from source, shares $(Version) -->
+        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
     </ItemGroup>
 
 </Project>
