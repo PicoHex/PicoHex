@@ -18,8 +18,8 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoLog.Abs" Version="$(Version)" />
-        <PackageReference Include="PicoLog" Version="$(Version)" />
+        <PackageReference Include="PicoLog.Abs" />
+        <PackageReference Include="PicoLog" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">

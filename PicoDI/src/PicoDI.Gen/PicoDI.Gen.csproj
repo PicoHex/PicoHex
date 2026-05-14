@@ -46,7 +46,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoDI.Abs" Version="$(PicoDiPackageVersion)" />
+        <PackageReference Include="PicoDI.Abs" />
     </ItemGroup>
 
     <PropertyGroup>
