@@ -8,10 +8,7 @@
         <Nullable>enable</Nullable>
         <StripSymbols>false</StripSymbols>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' != ''">
-        <PublishAot>true</PublishAot>
+        <AotOptimizationLevel>aggressive</AotOptimizationLevel>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">

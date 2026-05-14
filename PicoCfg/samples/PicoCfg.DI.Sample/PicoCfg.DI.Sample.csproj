@@ -6,21 +6,7 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' != ''">
-        <PublishAot>true</PublishAot>
-        <SelfContained>true</SelfContained>
-        <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
-        <IlcOptimizationPreference>Size</IlcOptimizationPreference>
-        <PublishTrimmed>true</PublishTrimmed>
-        <TrimMode>full</TrimMode>
-        <IlcTrimMetadata>true</IlcTrimMetadata>
-        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-        <IlcDisableReflection>true</IlcDisableReflection>
-        <IlcGenerateDebugInfo>false</IlcGenerateDebugInfo>
-        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
-        <IlcGenerateUnwindStackTraceData>false</IlcGenerateUnwindStackTraceData>
+        <AotOptimizationLevel>aggressive</AotOptimizationLevel>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">

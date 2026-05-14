@@ -1,0 +1,37 @@
+<Project>
+  <!--
+    PublishAotIfRequested: when PublishAotOnRun is true, intercepts dotnet run
+    to publish as AOT first, then execute the native binary.
+    Gates: only for Exe projects (libraries cannot self-publish).
+  -->
+  <Target Name="PublishAotIfRequested" BeforeTargets="Run"
+          Condition="'$(PublishAotOnRun)' == 'true' and '$(OutputType)' == 'Exe'">
+    <Message Text="Publishing AOT build to $(PublishDir)..." Importance="high" />
+    <PropertyGroup>
+      <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+      <_AotPublishDir>$(BaseIntermediateOutputPath)aot-publish\</_AotPublishDir>
+    </PropertyGroup>
+    <Exec Command="dotnet publish &quot;$(MSBuildProjectFullPath)&quot;
+        -c $(Configuration)
+        -r $(RuntimeIdentifier)
+        -p:PublishAot=true
+        -o &quot;$(_AotPublishDir)&quot;" />
+    <Exec Command="&quot;$(_AotPublishDir)$(AssemblyName)$(TargetExt)&quot;"
+          WorkingDirectory="$(_AotPublishDir)" />
+  </Target>
+
+  <!--
+    RefreshGoldenFiles: deletes stale golden files before Release/AOT builds.
+    Golden file tests auto-regenerate them from current generator output on next run.
+    Only activates for projects containing a GoldenFiles/ directory (test projects).
+  -->
+  <Target Name="RefreshGoldenFiles" BeforeTargets="Build"
+          Condition="'$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)\GoldenFiles')">
+    <Message Text="[RefreshGoldenFiles] Deleting stale golden files in $(MSBuildProjectDirectory)\GoldenFiles" Importance="high" />
+    <ItemGroup>
+      <_GoldenFiles Include="$(MSBuildProjectDirectory)\GoldenFiles\*.verified.g.cs" />
+    </ItemGroup>
+    <Delete Files="@(_GoldenFiles)" />
+    <Message Text="[RefreshGoldenFiles] Deleted @(_GoldenFiles->Count()) file(s). Tests will regenerate on next run." Importance="high" />
+  </Target>
+</Project>

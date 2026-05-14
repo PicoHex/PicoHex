@@ -8,12 +8,7 @@
         <Nullable>enable</Nullable>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-    </PropertyGroup>
-
-    <!-- AOT Publishing: conditional on Release+RID (not for inner-loop development) -->
-    <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' != ''">
-        <PublishAot>true</PublishAot>
-        <TrimMode>full</TrimMode>
+        <AotOptimizationLevel>aggressive</AotOptimizationLevel>
     </PropertyGroup>
 
     <!-- Optional publish preset defined in-project (no .pubxml required).

@@ -17,10 +17,53 @@
     <PicoDiPackageVersion Condition="'$(PicoDiPackageVersion)' == ''">$(Version)</PicoDiPackageVersion>
   </PropertyGroup>
 
-  <!-- Disable AOT for netstandard2.0 projects -->
+  <!-- ===== AOT Strategy ===== -->
+
+  <!--
+    AotOptimizationLevel:
+      minimal  — Tests and default. PublishAot + TrimMode only, fast compilation.
+      aggressive — Samples and Benchmarks. Full trimming, no reflection, no debug info.
+    Override per-project via <AotOptimizationLevel>aggressive</AotOptimizationLevel>.
+  -->
+  <PropertyGroup>
+    <AotOptimizationLevel Condition="'$(AotOptimizationLevel)' == ''">minimal</AotOptimizationLevel>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(AotOptimizationLevel)' == 'minimal'">
+    <PublishAot Condition="'$(PublishAot)' == ''">true</PublishAot>
+    <TrimMode Condition="'$(TrimMode)' == ''">full</TrimMode>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(AotOptimizationLevel)' == 'aggressive'">
+    <PublishAot Condition="'$(PublishAot)' == ''">true</PublishAot>
+    <TrimMode Condition="'$(TrimMode)' == ''">full</TrimMode>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <PublishTrimmed>true</PublishTrimmed>
+    <IlcTrimMetadata>true</IlcTrimMetadata>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <IlcDisableReflection>true</IlcDisableReflection>
+    <IlcGenerateDebugInfo>false</IlcGenerateDebugInfo>
+    <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
+    <IlcGenerateUnwindStackTraceData>false</IlcGenerateUnwindStackTraceData>
+  </PropertyGroup>
+
+  <!-- ⚠️ netstandard2.0 must NEVER AOT — this block MUST come after the AOT level blocks -->
   <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
     <PublishAot>false</PublishAot>
     <IsAotCompatible>false</IsAotCompatible>
+  </PropertyGroup>
+
+  <!-- Libraries: declare AOT-compatible but do not self-publish -->
+  <PropertyGroup>
+    <IsAotCompatible Condition="'$(IsAotCompatible)' == '' and '$(OutputType)' != 'Exe'">true</IsAotCompatible>
+  </PropertyGroup>
+
+  <!-- PublishAotOnRun: when true, dotnet run auto-publishes as AOT before executing.
+       Defaults to false locally, true in CI. -->
+  <PropertyGroup>
+    <PublishAotOnRun Condition="'$(PublishAotOnRun)' == '' and '$(CI)' == 'true'">true</PublishAotOnRun>
+    <PublishAotOnRun Condition="'$(PublishAotOnRun)' == ''">false</PublishAotOnRun>
   </PropertyGroup>
 
   <!-- Common package metadata -->

@@ -7,37 +7,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <PublishAotOnRun>false</PublishAotOnRun>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' != ''">
-        <PublishAot>true</PublishAot>
-        <SelfContained>true</SelfContained>
-        <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
-        <IlcOptimizationPreference>Size</IlcOptimizationPreference>
-        <PublishTrimmed>true</PublishTrimmed>
-        <TrimMode>full</TrimMode>
-        <IlcTrimMetadata>true</IlcTrimMetadata>
-        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-        <IlcDisableReflection>true</IlcDisableReflection>
-        <IlcGenerateDebugInfo>false</IlcGenerateDebugInfo>
-        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
-        <IlcGenerateUnwindStackTraceData>false</IlcGenerateUnwindStackTraceData>
+        <AotOptimizationLevel>aggressive</AotOptimizationLevel>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\PicoDI\PicoDI.csproj" />
         <ProjectReference Include="..\PicoDI.Sample.Services\PicoDI.Sample.Services.csproj" />
     </ItemGroup>
-
-    <Target Name="PublishAotIfRequested" BeforeTargets="Run" Condition="'$(PublishAotOnRun)'=='true'">
-        <Message Text="Publishing AOT build (PublishAot=true) to $(PublishDir)..." Importance="high" />
-        <PropertyGroup>
-            <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
-            <PublishDir>$(OutputPath)publish\</PublishDir>
-        </PropertyGroup>
-        <Exec Command="dotnet publish &quot;$(MSBuildProjectFullPath)&quot; -c $(Configuration) -r $(RuntimeIdentifier) -p:PublishAot=true -o &quot;$(PublishDir)&quot;" />
-        <Exec Command="&quot;$(PublishDir)$(AssemblyName)$(TargetExt)&quot;" WorkingDirectory="$(PublishDir)" />
-    </Target>
 
 </Project>
