@@ -7,7 +7,8 @@ internal sealed class InternalLogSinkDispatcher
     private readonly ILogSink? _consoleFallbackSink;
     private CancellationToken _drainCancellationToken;
 
-    // Same pattern as FileWatchingCfgProvider.OnError
+    // Same pattern as FileWatchingCfgProvider.OnError.
+    // Assign once at startup (single-threaded); read on rare sink-failure path.
     internal static Action<string, Exception>? OnFallbackError;
 
     public InternalLogSinkDispatcher(LoggerFactoryRuntime runtime)

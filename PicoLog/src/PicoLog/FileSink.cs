@@ -12,7 +12,6 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
     private int _disposeState;
     private int _activeDequeuedMessages;
     private int _activeBatchOperations;
-    private long _channelClosedExceptions;
     private CancellationTokenSource? _batchDelayCancellationSource;
 
     public FileSink(ILogFormatter formatter, string filePath = FileSinkOptions.DefaultFilePath)
@@ -72,7 +71,10 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
     public async Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
     {
         if (Volatile.Read(ref _disposeState) != 0)
+        {
+            PicoLogMetrics.RecordRejectedAfterShutdown();
             return;
+        }
 
         var message = _formatter.Format(entry);
 
@@ -82,7 +84,10 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         }
         catch (ChannelClosedException)
         {
-            Interlocked.Increment(ref _channelClosedExceptions);
+            // Channel closed means the sink is shutting down.
+            // Writes arriving after channel completion are expected
+            // and silently discarded — the entry was already in flight
+            // when disposal began.
         }
     }
 
