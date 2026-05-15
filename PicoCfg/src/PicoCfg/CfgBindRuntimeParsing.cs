@@ -50,7 +50,9 @@ partial class CfgBindRuntime
 
     public static bool TryParseGuid(string? raw, out Guid value) => Guid.TryParse(raw, out value);
 
-    public static bool TryParseEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(string? raw, out TEnum value)
+    public static bool TryParseEnum<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum
+    >(string? raw, out TEnum value)
         where TEnum : struct, Enum
     {
         try
@@ -58,7 +60,7 @@ partial class CfgBindRuntime
             value = (TEnum)Enum.Parse(typeof(TEnum), raw?.Trim()!, ignoreCase: true);
             return true;
         }
-        catch
+        catch (ArgumentException)
         {
             value = default;
             return false;
@@ -102,13 +104,16 @@ partial class CfgBindRuntime
         Version.TryParse(raw?.Trim(), out value);
 
     public static bool TryParseBigInteger(string? raw, out System.Numerics.BigInteger value) =>
-        System.Numerics.BigInteger.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        System
+            .Numerics
+            .BigInteger
+            .TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
 
     /// <summary>
     /// Creates a scoped configuration view that prepends <paramref name="section"/>
     /// to all key lookups. The returned view is a live delegation to the parent
     /// <paramref name="cfg"/> and reflects any reloads the parent observes.
     /// </summary>
-    public static ICfg CreateScopedView(ICfg cfg, string? section)
-        => new CfgSection(cfg, section ?? string.Empty);
+    public static ICfg CreateScopedView(ICfg cfg, string? section) =>
+        new CfgSection(cfg, section ?? string.Empty);
 }

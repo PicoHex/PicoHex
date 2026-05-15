@@ -21,7 +21,10 @@ internal sealed class ChainedCfgProvider : ICfgProvider
     {
         ct.ThrowIfCancellationRequested();
         // ChainedSnapshot.TryGetValue always delegates to the live _chainedConfig,
-        // so the snapshot is inherently up-to-date. No need to enumerate all values.
+        // so reads are inherently up-to-date without explicit reload. This provider
+        // never publishes a new snapshot, which means WaitForChangeAsync() on the
+        // root will not complete for changes within the chained config — the caller
+        // is responsible for change notification when using chained configurations.
         return ValueTask.FromResult(false);
     }
 

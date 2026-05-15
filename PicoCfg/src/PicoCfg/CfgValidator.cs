@@ -1,8 +1,17 @@
 namespace PicoCfg;
 
-[RequiresUnreferencedCode("CfgValidator uses IValidatableObject-based validation. Types implementing IValidatableObject are compatible with Native AOT. DataAnnotations-based validation is not supported under trimming.")]
+[RequiresUnreferencedCode(
+    "CfgValidator uses IValidatableObject-based validation. Types implementing IValidatableObject are compatible with Native AOT. DataAnnotations-based validation is not supported under trimming."
+)]
 public static class CfgValidator
 {
+    /// <summary>
+    /// Validates <paramref name="instance"/> using <see cref="IValidatableObject"/>.
+    /// Returns a list of <see cref="ValidationResult"/> errors, or an empty list when validation succeeds.
+    /// </summary>
+    /// <typeparam name="T">The type to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <returns>A list of validation errors, or an empty list when the instance is valid.</returns>
     public static List<ValidationResult> Validate<T>(T instance)
     {
         var results = new List<ValidationResult>();
@@ -22,6 +31,13 @@ public static class CfgValidator
         return results;
     }
 
+    /// <summary>
+    /// Validates <paramref name="instance"/> using <see cref="IValidatableObject"/>
+    /// and throws <see cref="CfgValidationException"/> when validation fails.
+    /// </summary>
+    /// <typeparam name="T">The type to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <exception cref="CfgValidationException">Thrown when validation produces one or more errors.</exception>
     public static void ValidateOrThrow<T>(T instance)
     {
         var errors = Validate(instance);
@@ -41,8 +57,8 @@ public static class CfgValidationExtensions
     /// <returns>The bound and validated instance of <typeparamref name="T"/>.</returns>
     [RequiresUnreferencedCode(
         "CfgValidator uses IValidatableObject-based validation. "
-        + "Types implementing IValidatableObject are compatible with Native AOT. "
-        + "DataAnnotations-based validation is not supported under trimming."
+            + "Types implementing IValidatableObject are compatible with Native AOT. "
+            + "DataAnnotations-based validation is not supported under trimming."
     )]
     public static T BindAndValidate<T>(this ICfg cfg, string? section = null)
     {

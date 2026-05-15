@@ -18,7 +18,11 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
     /// </summary>
     internal static Action<string, Exception>? OnError;
 
-    internal FileWatchingCfgProvider(ICfgProvider inner, string filePath, TimeSpan? debounceInterval = null)
+    internal FileWatchingCfgProvider(
+        ICfgProvider inner,
+        string filePath,
+        TimeSpan? debounceInterval = null
+    )
     {
         ArgumentNullException.ThrowIfNull(inner);
         ArgumentNullException.ThrowIfNull(filePath);
@@ -52,10 +56,7 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
     {
         var dir = Path.GetDirectoryName(_filePath) ?? ".";
         var file = Path.GetFileName(_filePath);
-        _watcher = new FileSystemWatcher(dir, file)
-        {
-            EnableRaisingEvents = true
-        };
+        _watcher = new FileSystemWatcher(dir, file) { EnableRaisingEvents = true };
         _watcher.Changed += OnFileChanged;
         _watcher.Created += OnFileChanged;
         _watcher.Error += OnWatcherError;
@@ -84,7 +85,10 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
                         }
                         catch (Exception ex)
                         {
-                            OnError?.Invoke("reload", ex);
+                            if (OnError is not null)
+                                OnError("reload", ex);
+                            else
+                                Trace.TraceError($"[PicoCfg] File watching reload error: {ex}");
                         }
                     },
                     CancellationToken.None,
@@ -105,7 +109,10 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         }
         catch (Exception ex)
         {
-            OnError?.Invoke("cleanup", ex);
+            if (OnError is not null)
+                OnError("cleanup", ex);
+            else
+                Trace.TraceError($"[PicoCfg] File watching cleanup error: {ex}");
         }
 
         if (Volatile.Read(ref _disposed) == 1)
