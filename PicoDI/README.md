@@ -1,6 +1,6 @@
 # PicoDI
 
-Zero-reflection, AOT-compatible dependency injection for .NET 10.
+Zero-reflection, AOT-compatible dependency injection for .NET.
 
 ## Quick Start
 
@@ -250,10 +250,10 @@ PicoDI is designed for concurrent use:
 
 ## Packages
 
-| Package | TFM | Description |
-|---|---|---|
-| **PicoDI** | net10.0 | DI container runtime |
-| **PicoDI.Abs** | netstandard2.0 | `ISvcContainer`, `ISvcScope`, `SvcDescriptor`, `SvcLifetime`, `IHostedSvc`, `BackgroundSvc` |
-| **PicoDI.Gen** | netstandard2.0 | Roslyn source generator + diagnostic analyzer |
+| Package | Description |
+|---|---|
+| **PicoDI** | DI container runtime |
+| **PicoDI.Abs** | Abstractions: `ISvcContainer`, `ISvcScope`, `SvcDescriptor`, `SvcLifetime`, `IHostedSvc`, `BackgroundSvc` |
+| **PicoDI.Gen** | Roslyn source generator + diagnostic analyzer |
 
 [← Back to PicoHex](../README.md)
