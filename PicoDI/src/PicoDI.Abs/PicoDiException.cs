@@ -1,7 +1,9 @@
 ﻿namespace PicoDI.Abs;
 
 /// <summary>
-/// Exception thrown by PicoDI container operations.
+/// Base exception for all PicoDI errors. Not sealed by design —
+/// serves as the base class for specialized exception types such as
+/// <see cref="HostedSvcRegistrationException"/>.
 /// </summary>
 public class PicoDiException : Exception
 {

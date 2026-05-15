@@ -51,7 +51,10 @@ public sealed partial class SvcScope
     }
 
     /// <inheritdoc />
-    public bool TryGetServices(Type serviceType, [MaybeNullWhen(false)] out IReadOnlyList<object> services)
+    public bool TryGetServices(
+        Type serviceType,
+        [MaybeNullWhen(false)] out IReadOnlyList<object> services
+    )
     {
         ArgumentNullException.ThrowIfNull(serviceType);
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
@@ -288,6 +291,16 @@ public sealed partial class SvcScope
         return instance;
     }
 
+    /// <summary>
+    /// Synchronously disposes a tracked instance that was created during a race
+    /// with scope/container disposal. This method must be synchronous because its
+    /// callers are factory delegates or non-async resolution paths that need
+    /// guaranteed disposal before returning (or throwing). The <c>Task.Run</c>
+    /// wrapper prevents deadlocks on threads with a <c>SynchronizationContext</c>
+    /// (WPF, WinForms). Types that implement both <c>IDisposable</c> and
+    /// <c>IAsyncDisposable</c> take the faster sync path (checked first); only
+    /// <c>IAsyncDisposable</c>-only types may block a ThreadPool thread here.
+    /// </summary>
     private void DisposeTrackedInstance(object instance)
     {
         switch (instance)

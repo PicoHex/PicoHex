@@ -67,6 +67,15 @@ internal static partial class ServiceRegistrationSourceEmitter
         sb.AppendLine("    }");
     }
 
+    /// <summary>
+    /// Produces a legal C# method name from a fully qualified type name by replacing
+    /// special characters with underscores. Two distinct types may produce the same
+    /// method name (e.g. <c>Dictionary&lt;A_B, C&gt;</c> and <c>Dictionary&lt;A, B_C&gt;</c>).
+    /// The caller guards against this via <c>generatedMethods</c> — the second type
+    /// silently falls back to dictionary-based resolution with no diagnostic.
+    /// In practice this requires user type names with underscores adjacent to generic
+    /// parameter boundaries and is expected to be extremely rare.
+    /// </summary>
     private static string GetResolverMethodName(string serviceTypeFullName)
     {
         var name = serviceTypeFullName.Replace("global::", "");
