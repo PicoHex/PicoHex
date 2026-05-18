@@ -49,14 +49,4 @@
         <PackageReference Include="PicoDI.Abs" />
     </ItemGroup>
 
-    <PropertyGroup>
-        <BuildInParallel>false</BuildInParallel>
-    </PropertyGroup>
-
-    <Target Name="RemoveCopyLocalReferences" AfterTargets="ResolveAssemblyReferences">
-        <ItemGroup>
-            <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
-        </ItemGroup>
-    </Target>
-
 </Project>

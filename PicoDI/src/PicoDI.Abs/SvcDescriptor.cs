@@ -55,7 +55,7 @@ public sealed class SvcDescriptor(
     /// writes happen during registration under the container's registration lock.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public object? SingleInstance { get; set; }
+    public object? SingleInstance { get; internal set; }
 
     /// <summary>
     /// Gets the factory function used to create service instances.

@@ -322,10 +322,16 @@ public sealed partial class SvcScope
                     var vt = ad.DisposeAsync();
                     if (!vt.IsCompletedSuccessfully)
                     {
-                        // Run the async disposal on the thread pool to avoid
-                        // deadlocking on threads that have a SynchronizationContext
-                        // (WPF, WinForms, legacy ASP.NET).
-                        Task.Run(vt.AsTask).GetAwaiter().GetResult();
+                        // Only block a ThreadPool thread for truly async disposal.
+                        // The Task.Run wrapper prevents deadlocks on threads with a
+                        // SynchronizationContext (WPF, WinForms, legacy ASP.NET).
+                        vt.AsTask().GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        // Synchronous completion: no async work needed, no blocking.
+                        // Completing the ValueTask observable for correctness.
+                        vt.GetAwaiter().GetResult();
                     }
                 }
                 catch (Exception ex)

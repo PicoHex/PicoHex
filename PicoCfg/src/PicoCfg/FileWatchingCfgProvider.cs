@@ -41,7 +41,17 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
 
-        _watcher?.Dispose();
+        try
+        {
+            _watcher?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            if (OnError is not null)
+                OnError("dispose", ex);
+            else
+                Trace.TraceError($"[PicoCfg] File watching dispose error: {ex}");
+        }
         lock (_debounceLock)
         {
             _debounceCts?.Cancel();

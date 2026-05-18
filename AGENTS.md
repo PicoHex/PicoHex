@@ -65,7 +65,6 @@ PicoLog/src/       .Abs           netstandard2.0   Interfaces
 - Target `netstandard2.0` with Roslyn analyzer references.
 - Must have `EnforceExtendedAnalyzerRules=true`, `IsRoslynComponent=true`, `IncludeBuildOutput=false`.
 - Generator DLL delivered via `buildTransitive/<name>/analyzers/dotnet/cs/` in the NuGet package + a companion `.props` file.
-- `BuildInParallel=false` on generator projects (Roslyn generators have known parallel-build issues).
 - Generator tests use `CSharpGeneratorDriver.RunGeneratorsAndUpdateCompilation()` to exercise generators in-process.
 
 ## Code Conventions

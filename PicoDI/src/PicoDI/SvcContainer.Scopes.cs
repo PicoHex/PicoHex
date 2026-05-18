@@ -29,16 +29,17 @@ public sealed partial class SvcContainer
         catch (ObjectDisposedException)
         {
             // The container was disposed between ThrowIfDisposed and AddToHead.
-            // Dispose the orphaned scope before rethrowing so it does not leak.
-            scope
-                .DisposeAsync()
-                .AsTask()
-                .ContinueWith(
-                    static t => Trace.WriteLine($"Error disposing orphaned scope: {t.Exception}"),
-                    CancellationToken.None,
-                    TaskContinuationOptions.OnlyOnFaulted,
-                    TaskScheduler.Default
-                );
+            // Dispose the orphaned scope synchronously before rethrowing so it
+            // does not leak. Using GetAwaiter().GetResult() (matching the
+            // DisposeTrackedInstance pattern) ensures deterministic cleanup.
+            try
+            {
+                scope.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error disposing orphaned scope: {ex}");
+            }
             throw;
         }
 
