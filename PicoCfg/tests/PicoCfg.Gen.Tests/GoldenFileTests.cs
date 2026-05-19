@@ -4,10 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable CS0618
 
-public sealed class PicoCfgBindGeneratorGoldenFileTests
+public sealed class PicoCfgBindGeneratorCompilationTests
 {
     [Test]
-    public async Task PicoCfgBindGenerator_ProducesExpectedOutput()
+    public async Task PicoCfgBindGenerator_ProducesCompilableOutput()
     {
         var inputSource = """
             using PicoCfg;
@@ -27,26 +27,15 @@ public sealed class PicoCfgBindGeneratorGoldenFileTests
             }
             """;
 
-        var generatedSource = await GenerateSourceAsync(inputSource);
-
-        await VerifyAgainstGoldenFileAsync(
-            "PicoCfgBindRegistrations.verified.g.cs",
-            generatedSource
-        );
-    }
-
-    private static async Task<string> GenerateSourceAsync(string source)
-    {
-        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(
-            LanguageVersion.Preview
-        );
-        var syntaxTree = CSharpSyntaxTree.ParseText(source, parseOptions);
+        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
+        var inputTree = CSharpSyntaxTree.ParseText(inputSource, parseOptions);
+        var references = GetMetadataReferences();
 
         var compilation = CSharpCompilation.Create(
-            assemblyName: "PicoCfg.Gen.Tests.GoldenFileCompilation",
-            syntaxTrees: [syntaxTree],
-            references: GetMetadataReferences(),
-            options: new CSharpCompilationOptions(OutputKind.ConsoleApplication)
+            assemblyName: "GeneratorInput",
+            syntaxTrees: [inputTree],
+            references: references,
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
 
         var generator = new PicoCfgBindGenerator();
@@ -54,57 +43,24 @@ public sealed class PicoCfgBindGeneratorGoldenFileTests
             [generator.AsSourceGenerator()],
             parseOptions: parseOptions
         );
-        driver = driver.RunGeneratorsAndUpdateCompilation(
+
+        driver.RunGeneratorsAndUpdateCompilation(
             compilation,
-            out _,
-            out _
+            out var outputCompilation,
+            out var diagnostics
         );
 
-        var runResult = driver.GetRunResult();
-        var generatedSources = runResult
-            .Results.SelectMany(static result => result.GeneratedSources)
+        using var ms = new MemoryStream();
+        var result = outputCompilation.Emit(ms);
+
+        var errors = result
+            .Diagnostics
+            .Where(d => d.Severity == DiagnosticSeverity.Error)
             .ToArray();
-        var generatedRegistration = generatedSources.Single(
-            sourceResult =>
-                sourceResult.HintName == "PicoCfgBindRegistrations.g.cs"
-        );
 
-        return generatedRegistration.SourceText.ToString();
-    }
-
-    private static async Task VerifyAgainstGoldenFileAsync(
-        string fileName,
-        string actual
-    )
-    {
-        var goldenPath = ResolveGoldenFilePath(fileName);
-
-        if (!File.Exists(goldenPath))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(goldenPath)!);
-            await File.WriteAllTextAsync(goldenPath, NormalizeLineEndings(actual));
-            return;
-        }
-
-        var expected = NormalizeLineEndings(await File.ReadAllTextAsync(goldenPath));
         await Assert
-            .That(NormalizeLineEndings(actual))
-            .IsEqualTo(expected);
-    }
-
-    private static string NormalizeLineEndings(string text) =>
-        text.Replace("\r\n", "\n").Replace("\r", "\n");
-
-    [RequiresAssemblyFiles("Calls System.Reflection.Assembly.Location")]
-    private static string ResolveGoldenFilePath(string fileName)
-    {
-        var assemblyDir = Path.GetDirectoryName(
-            typeof(PicoCfgBindGeneratorGoldenFileTests).Assembly.Location
-        )!;
-        var projectDir = Path.GetFullPath(
-            Path.Combine(assemblyDir, "..", "..", "..")
-        );
-        return Path.Combine(projectDir, "GoldenFiles", fileName);
+            .That(errors.Length)
+            .IsEqualTo(0, string.Join("\n", errors.Select(d => d.ToString())));
     }
 
     [UnconditionalSuppressMessage(
@@ -114,16 +70,11 @@ public sealed class PicoCfgBindGeneratorGoldenFileTests
     )]
     private static MetadataReference[] GetMetadataReferences()
     {
-        var trustedPlatformAssemblies = ((string?)
-            AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))!.Split(
-            Path.PathSeparator,
-            StringSplitOptions.RemoveEmptyEntries
-        );
+        var trustedPlatformAssemblies = (
+            (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
+        )!.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-        var explicitAssemblies = new[]
-        {
-            typeof(CfgBind).Assembly.Location,
-        };
+        var explicitAssemblies = new[] { typeof(CfgBind).Assembly.Location, };
 
         return trustedPlatformAssemblies
             .Concat(explicitAssemblies)

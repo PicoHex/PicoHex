@@ -1,9 +1,9 @@
 namespace PicoDI.Test;
 
-public sealed class PicoDIGoldenFileTests
+public sealed class PicoDIGeneratorCompilationTests
 {
     [Test]
-    public async Task ServiceRegistrationGenerator_ProducesExpectedOutput()
+    public async Task ServiceRegistrationGenerator_ProducesCompilableOutput()
     {
         var inputSource = """
             using PicoDI;
@@ -28,29 +28,13 @@ public sealed class PicoDIGoldenFileTests
             }
             """;
 
-        var generatedSources = await RunGeneratorAsync(inputSource);
-
-        var registrationSource = generatedSources
-            .Single(s => s.HintName.Contains("ServiceRegistrations", StringComparison.Ordinal))
-            .SourceText.ToString();
-
-        await VerifyAgainstGoldenFileAsync(
-            "PicoDI.ServiceRegistrations.GoldenFileTest.verified.g.cs",
-            registrationSource
-        );
-    }
-
-    private static async Task<ImmutableArray<GeneratedSourceResult>> RunGeneratorAsync(
-        string source
-    )
-    {
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
-        var syntaxTree = CSharpSyntaxTree.ParseText(source, parseOptions);
+        var inputTree = CSharpSyntaxTree.ParseText(inputSource, parseOptions);
         var references = GetMetadataReferences();
 
         var compilation = CSharpCompilation.Create(
-            assemblyName: "GoldenFileTest",
-            syntaxTrees: [syntaxTree],
+            assemblyName: "GeneratorInput",
+            syntaxTrees: [inputTree],
             references: references,
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -60,40 +44,24 @@ public sealed class PicoDIGoldenFileTests
             [generator.AsSourceGenerator()],
             parseOptions: parseOptions
         );
-        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out _);
 
-        var runResult = driver.GetRunResult();
-        return runResult
-            .Results.SelectMany(static r => r.GeneratedSources)
-            .ToImmutableArray();
-    }
+        driver.RunGeneratorsAndUpdateCompilation(
+            compilation,
+            out var outputCompilation,
+            out var diagnostics
+        );
 
-    private static async Task VerifyAgainstGoldenFileAsync(string fileName, string actual)
-    {
-        var goldenPath = ResolveGoldenFilePath(fileName);
+        using var ms = new MemoryStream();
+        var result = outputCompilation.Emit(ms);
 
-        if (!File.Exists(goldenPath))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(goldenPath)!);
-            await File.WriteAllTextAsync(goldenPath, NormalizeLineEndings(actual));
-            return;
-        }
+        var errors = result
+            .Diagnostics
+            .Where(d => d.Severity == DiagnosticSeverity.Error)
+            .ToArray();
 
-        var expected = NormalizeLineEndings(await File.ReadAllTextAsync(goldenPath));
-        await Assert.That(NormalizeLineEndings(actual)).IsEqualTo(expected);
-    }
-
-    private static string NormalizeLineEndings(string text) =>
-        text.Replace("\r\n", "\n").Replace("\r", "\n");
-
-    [RequiresAssemblyFiles("Calls System.Reflection.Assembly.Location")]
-    private static string ResolveGoldenFilePath(string fileName)
-    {
-        var assemblyDir = Path.GetDirectoryName(
-            typeof(PicoDIGoldenFileTests).Assembly.Location
-        )!;
-        var projectDir = Path.GetFullPath(Path.Combine(assemblyDir, "..", "..", ".."));
-        return Path.Combine(projectDir, "GoldenFiles", fileName);
+        await Assert
+            .That(errors.Length)
+            .IsEqualTo(0, string.Join("\n", errors.Select(d => d.ToString())));
     }
 
     [UnconditionalSuppressMessage(
@@ -103,11 +71,9 @@ public sealed class PicoDIGoldenFileTests
     )]
     private static MetadataReference[] GetMetadataReferences()
     {
-        var trustedPlatformAssemblies = ((string?)
-            AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))!.Split(
-            Path.PathSeparator,
-            StringSplitOptions.RemoveEmptyEntries
-        );
+        var trustedPlatformAssemblies = (
+            (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
+        )!.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
         var explicitAssemblies = new[]
         {

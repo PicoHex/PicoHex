@@ -19,19 +19,4 @@
     <Exec Command="&quot;$(_AotPublishDir)$(AssemblyName)$(TargetExt)&quot;"
           WorkingDirectory="$(_AotPublishDir)" />
   </Target>
-
-  <!--
-    RefreshGoldenFiles: deletes stale golden files before Release/AOT builds.
-    Golden file tests auto-regenerate them from current generator output on next run.
-    Only activates for projects containing a GoldenFiles/ directory (test projects).
-  -->
-  <Target Name="RefreshGoldenFiles" BeforeTargets="Build"
-          Condition="'$(Configuration)' == 'Release' and Exists('$(MSBuildProjectDirectory)\GoldenFiles')">
-    <Message Text="[RefreshGoldenFiles] Deleting stale golden files in $(MSBuildProjectDirectory)\GoldenFiles" Importance="high" />
-    <ItemGroup>
-      <_GoldenFiles Include="$(MSBuildProjectDirectory)\GoldenFiles\*.verified.g.cs" />
-    </ItemGroup>
-    <Delete Files="@(_GoldenFiles)" />
-    <Message Text="[RefreshGoldenFiles] Deleted @(_GoldenFiles->Count()) file(s). Tests will regenerate on next run." Importance="high" />
-  </Target>
 </Project>

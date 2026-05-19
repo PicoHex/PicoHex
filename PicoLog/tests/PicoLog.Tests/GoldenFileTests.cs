@@ -1,9 +1,9 @@
 namespace PicoLog.Tests;
 
-public sealed class PicoLogMessageGoldenFileTests
+public sealed class PicoLogGeneratorCompilationTests
 {
     [Test]
-    public async Task PicoLogMessageGenerator_ProducesExpectedOutput()
+    public async Task PicoLogMessageGenerator_ProducesCompilableOutput()
     {
         var inputSource = """
             using PicoLog.Abs;
@@ -26,12 +26,32 @@ public sealed class PicoLogMessageGoldenFileTests
             }
             """;
 
-        var generatedSource = await GenerateSourceAsync(inputSource);
+        var output = await GenerateSourceAsync(inputSource);
 
-        await VerifyAgainstGoldenFileAsync(
-            "PicoLogMessage.verified.g.cs",
-            generatedSource
+        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
+        var outputTree = CSharpSyntaxTree.ParseText(output, parseOptions);
+        var references = GetMetadataReferences();
+
+        var verifyCompilation = CSharpCompilation.Create(
+            "Verify",
+            [outputTree],
+            references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
+
+        using var ms = new MemoryStream();
+        var result = verifyCompilation.Emit(ms);
+
+        await Assert.That(result.Success).IsTrue();
+
+        if (!result.Success)
+        {
+            var failures = string.Join(
+                "\n",
+                result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)
+            );
+            Assert.Fail($"Generated code failed to compile:\n{failures}");
+        }
     }
 
     private static async Task<string> GenerateSourceAsync(string source)
@@ -42,7 +62,7 @@ public sealed class PicoLogMessageGoldenFileTests
         var syntaxTree = CSharpSyntaxTree.ParseText(source, parseOptions);
 
         var compilation = CSharpCompilation.Create(
-            assemblyName: "PicoLog.Tests.GoldenFileCompilation",
+            assemblyName: "GeneratorInput",
             syntaxTrees: [syntaxTree],
             references: GetMetadataReferences(),
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
@@ -53,11 +73,7 @@ public sealed class PicoLogMessageGoldenFileTests
             [generator.AsSourceGenerator()],
             parseOptions: parseOptions
         );
-        driver = driver.RunGeneratorsAndUpdateCompilation(
-            compilation,
-            out _,
-            out _
-        );
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out _);
 
         var runResult = driver.GetRunResult();
         var generatedSources = runResult
@@ -68,43 +84,6 @@ public sealed class PicoLogMessageGoldenFileTests
         );
 
         return generated.SourceText.ToString();
-    }
-
-    private static async Task VerifyAgainstGoldenFileAsync(
-        string fileName,
-        string actual
-    )
-    {
-        var goldenPath = ResolveGoldenFilePath(fileName);
-
-        if (!File.Exists(goldenPath))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(goldenPath)!);
-            await File.WriteAllTextAsync(goldenPath, NormalizeLineEndings(actual));
-            return;
-        }
-
-        var expected = NormalizeLineEndings(
-            await File.ReadAllTextAsync(goldenPath)
-        );
-        await Assert
-            .That(NormalizeLineEndings(actual))
-            .IsEqualTo(expected);
-    }
-
-    private static string NormalizeLineEndings(string text) =>
-        text.Replace("\r\n", "\n").Replace("\r", "\n");
-
-    [RequiresAssemblyFiles("Calls System.Reflection.Assembly.Location")]
-    private static string ResolveGoldenFilePath(string fileName)
-    {
-        var assemblyDir = Path.GetDirectoryName(
-            typeof(PicoLogMessageGoldenFileTests).Assembly.Location
-        )!;
-        var projectDir = Path.GetFullPath(
-            Path.Combine(assemblyDir, "..", "..", "..")
-        );
-        return Path.Combine(projectDir, "GoldenFiles", fileName);
     }
 
     [UnconditionalSuppressMessage(

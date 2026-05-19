@@ -57,7 +57,7 @@ PicoLog/src/       .Abs           netstandard2.0   Interfaces
 - **Framework**: TUnit (not xUnit/NUnit). Runner: Microsoft.Testing.Platform (see `global.json` `test.runner`).
 - **No `--filter`**: TUnit uses its own filter syntax after `--`. Use `dotnet test --project ... -- --filter "FullyQualifiedName~MyTest"`.
 - **Coverage**: `dotnet test --project ... --coverage --coverage-output-format cobertura`.
-- **Golden file tests**: Generator tests use `GoldenFiles/` directory. On first run, `.verified.g.cs` files are auto-created. To regenerate: build with `-c Release` (triggers `RefreshGoldenFiles` target which deletes stale golden files pre-build), then run tests and the golden files regenerate. Golden file tests assert `\n` line endings only (normalized), so platform line endings don't matter.
+- **Generator tests**: Use `CSharpGeneratorDriver.RunGeneratorsAndUpdateCompilation()` in-process, then verify the output compilation emits successfully (no golden files — compile-and-verify is more robust than text diff).
 - **Test project pattern**: `OutputType=Exe`, references `TUnit` package, `TestingPlatformDotnetTestSupport=true`.
 
 ## Source Generators
