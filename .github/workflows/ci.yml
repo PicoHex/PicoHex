@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      force-all:
+        description: 'Force run all modules (ignore path filter)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -60,7 +66,7 @@ jobs:
   validate-picodi:
     name: PicoDI (${{ matrix.logical-target }})
     needs: changes
-    if: needs.changes.outputs.pico-di == 'true'
+    if: needs.changes.outputs.pico-di == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
     strategy:
@@ -157,7 +163,7 @@ jobs:
   validate-picocfg:
     name: PicoCfg (${{ matrix.logical-target }})
     needs: changes
-    if: needs.changes.outputs.pico-cfg == 'true'
+    if: needs.changes.outputs.pico-cfg == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
     strategy:
@@ -269,7 +275,7 @@ jobs:
   validate-picolog:
     name: PicoLog (${{ matrix.logical-target }})
     needs: changes
-    if: needs.changes.outputs.pico-log == 'true'
+    if: needs.changes.outputs.pico-log == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
     strategy:
