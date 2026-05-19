@@ -25,7 +25,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoDI.Gen" PrivateAssets="all" />
+        <PackageReference Include="PicoDI.Gen" />
     </ItemGroup>
 
     <ItemGroup>
