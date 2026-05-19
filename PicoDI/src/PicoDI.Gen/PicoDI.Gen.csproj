@@ -41,12 +41,4 @@
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" PrivateAssets="all" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\PicoDI.Abs\PicoDI.Abs.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoDI.Abs" />
-    </ItemGroup>
-
 </Project>

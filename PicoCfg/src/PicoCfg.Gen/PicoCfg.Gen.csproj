@@ -47,14 +47,6 @@
         <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\PicoCfg.Abs\PicoCfg.Abs.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoCfg.Abs" />
-    </ItemGroup>
-
     <PropertyGroup>
         <AssemblyName>PicoCfg.Gen</AssemblyName>
     </PropertyGroup>

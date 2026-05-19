@@ -28,20 +28,24 @@ dotnet publish PicoDI/samples/PicoDI.Sample.Host/ -c Release -r win-x64 -p:Publi
 
 ```
 Module/            Package        TFM              Purpose
-PicoDI/src/        .Abs           netstandard2.0   Interfaces (ISvcContainer, ISvcScope, SvcDescriptor)
-                   .Gen           netstandard2.0   Roslyn source gen (analyzer + ModuleInitializer)
-                   /              net10.0          DI container (references .Abs + .Gen as analyzer)
-PicoCfg/src/       .Abs           netstandard2.0   Interfaces (ICfg, ICfgRoot)
-                   .Gen           netstandard2.0   CfgBind.Bind<T> source generator
-                   /              net10.0          Configuration runtime
-                   .DI            net10.0          DI integration (references PicoDI + PicoCfg)
-PicoLog/src/       .Abs           netstandard2.0   Interfaces
-                   .Gen           netstandard2.0   [PicoLogMessage] source generator
-                   /              net10.0          Logging runtime
+PicoDI/src/        .Abs           netstandard2.0   Interfaces + bundles .Gen as analyzer
+                   .Gen           netstandard2.0   Roslyn source gen (no PicoHex deps; pure string-based)
+                   /              net10.0          DI container (references .Abs)
+PicoCfg/src/       .Abs           netstandard2.0   Interfaces + bundles .Gen as analyzer
+                   .Gen           netstandard2.0   CfgBind gen (no PicoHex deps; pure string-based)
+                   /              net10.0          Configuration runtime (references .Abs)
+                   .DI            net10.0          DI integration
+PicoLog/src/       .Abs           netstandard2.0   Interfaces + bundles .Gen as analyzer
+                   .Gen           netstandard2.0   [PicoLogMessage] gen (no PicoHex deps; pure string-based)
+                   /              net10.0          Logging runtime (references .Abs)
                    .DI            net10.0          DI integration
 ```
 
-**Pack layer order**: Abstractions first → Generators second → Core/DI third. Never break this.
+**Gen-Abs architecture**: .Gen projects have zero PicoHex dependencies — they resolve Abs types via Roslyn's semantic model using string-based type names (e.g. `"PicoDI.Abs.ISvcContainer"`). This allows .Abs to ProjectReference .Gen as Analyzer (`ReferenceOutputAssembly=false`) without creating a circular project graph.
+
+**Pack layer order**: Gen first (no PicoHex deps) → Abs second (depends on Gen via PackageRef PrivateAssets=all) → Core/DI last.
+
+**Pack layer order**: Gen first → Abs second → Core/DI last. Gen has zero PicoHex deps so packs without waiting for anything. Abs depends on Gen via PackageRef PrivateAssets=all. Consumers reference Abs to get full functionality.
 
 ## Critical Build Config
 
@@ -84,7 +88,7 @@ PicoLog/src/       .Abs           netstandard2.0   Interfaces
 - **Path-filtered**: Each module's CI job only runs when its files or root build files change.
 - **Linux AOT needs**: `clang`, `zlib1g-dev` (and `gcc-aarch64-linux-gnu` for arm64).
 - **CI package validation**: Packs with `UseProjectReferences=false` to validate consumer experience.
-- **Release**: Tag `v*` triggers pack→publish. Phase 1: Abs → Phase 2: Gen → Phase 3: Core + .DI packages (inter-package dependencies via `RestoreAdditionalProjectSources` pointing to just-built nupkgs).
+- **Release**: Tag `v*` triggers pack→publish. Phase 1: Gen → Phase 2: Abs → Phase 3: Core + .DI packages (inter-package dependencies via `RestoreAdditionalProjectSources` pointing to just-built nupkgs).
 
 ## Local NuGet
 
