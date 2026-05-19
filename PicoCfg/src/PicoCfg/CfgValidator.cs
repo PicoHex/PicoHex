@@ -1,10 +1,12 @@
 namespace PicoCfg;
 
-[RequiresUnreferencedCode(
-    "CfgValidator uses IValidatableObject-based validation. Types implementing IValidatableObject are compatible with Native AOT. DataAnnotations-based validation is not supported under trimming."
-)]
+/// <summary>
+/// Provides validation extensions for configuration-bound types.
+/// </summary>
 public static class CfgValidator
 {
+#pragma warning disable PCFGGEN001 // BindAndValidate forwards to generic Bind<T>
+
     /// <summary>
     /// Validates <paramref name="instance"/> using <see cref="IValidatableObject"/>.
     /// Returns a list of <see cref="ValidationResult"/> errors, or an empty list when validation succeeds.

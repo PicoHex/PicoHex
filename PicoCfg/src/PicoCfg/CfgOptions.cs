@@ -1,5 +1,7 @@
 namespace PicoCfg;
 
+#pragma warning disable PCFGGEN001 // internal binding uses open generic T
+
 /// <summary>
 /// Binds and caches a configuration value at construction time.
 /// Each <see cref="Value"/> access returns the same cached instance.
