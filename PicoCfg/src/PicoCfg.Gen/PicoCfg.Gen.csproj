@@ -40,19 +40,12 @@
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+        <PackageReference Include="PicoCfg.Abs" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
         <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
         <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\PicoCfg.Abs\PicoCfg.Abs.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoCfg.Abs" />
     </ItemGroup>
 
     <PropertyGroup>
