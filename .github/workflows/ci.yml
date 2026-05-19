@@ -228,22 +228,22 @@ jobs:
           NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/ci-nupkg"
           NUGET_SOURCE="https://api.nuget.org/v3/index.json"
 
-          dotnet pack PicoCfg/src/PicoCfg.Abs/PicoCfg.Abs.csproj \
-            --configuration Release \
-            --output ./artifacts/ci-nupkg \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreSources="$NUGET_SOURCE" \
-            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
-
           dotnet pack PicoCfg/src/PicoCfg.Gen/PicoCfg.Gen.csproj \
             --configuration Release \
             --output ./artifacts/ci-nupkg \
             -p:Version="$VERSION" \
             -p:UseProjectReferences=false \
             -p:RestoreSources="$NUGET_SOURCE" \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
             -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/gen"
+
+          dotnet pack PicoCfg/src/PicoCfg.Abs/PicoCfg.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
 
           dotnet pack PicoCfg/src/PicoCfg/PicoCfg.csproj \
             --configuration Release \
@@ -334,22 +334,22 @@ jobs:
           NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/ci-nupkg"
           NUGET_SOURCE="https://api.nuget.org/v3/index.json"
 
-          dotnet pack PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj \
-            --configuration Release \
-            --output ./artifacts/ci-nupkg \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreSources="$NUGET_SOURCE" \
-            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
-
           dotnet pack PicoLog/src/PicoLog.Gen/PicoLog.Gen.csproj \
             --configuration Release \
             --output ./artifacts/ci-nupkg \
             -p:Version="$VERSION" \
             -p:UseProjectReferences=false \
             -p:RestoreSources="$NUGET_SOURCE" \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
             -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/gen"
+
+          dotnet pack PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
 
           dotnet pack PicoLog/src/PicoLog/PicoLog.csproj \
             --configuration Release \
