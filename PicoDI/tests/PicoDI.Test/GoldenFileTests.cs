@@ -61,7 +61,7 @@ public sealed class PicoDIGeneratorCompilationTests
 
         await Assert
             .That(errors.Length)
-            .IsEqualTo(0, string.Join("\n", errors.Select(d => d.ToString())));
+            .IsEqualTo(0);
     }
 
     [UnconditionalSuppressMessage(
