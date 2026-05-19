@@ -18,6 +18,13 @@
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
         <ProjectReference Include="..\PicoDI.Abs\PicoDI.Abs.csproj" />
+        <ProjectReference Include="..\PicoDI.Gen\PicoDI.Gen.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+        <PackageReference Include="PicoDI.Gen" />
     </ItemGroup>
 
     <ItemGroup>
