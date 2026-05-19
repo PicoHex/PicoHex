@@ -5,8 +5,6 @@ namespace PicoCfg;
 /// </summary>
 public static class CfgValidator
 {
-#pragma warning disable PCFGGEN001 // BindAndValidate forwards to generic Bind<T>
-
     /// <summary>
     /// Validates <paramref name="instance"/> using <see cref="IValidatableObject"/>.
     /// Returns a list of <see cref="ValidationResult"/> errors, or an empty list when validation succeeds.

@@ -25,6 +25,9 @@ public sealed partial class PicoCfgBindGenerator
         if (context.SemanticModel.Compilation.AssemblyName == "PicoCfg.Gen")
             return null;
 
+        if (context.SemanticModel.Compilation.AssemblyName == "PicoCfg")
+            return null;
+
         if (context.SemanticModel.GetSymbolInfo(invocation).Symbol is IMethodSymbol method
             && TryGetOperation(method, out var operation)
             && TryGetTargetType(context.SemanticModel, invocation, method, out var targetType))

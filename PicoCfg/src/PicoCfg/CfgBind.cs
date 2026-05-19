@@ -1,7 +1,5 @@
 namespace PicoCfg;
 
-#pragma warning disable PCFGGEN001 // self-calls within CfgBind use open generic T
-
 /// <summary>
 /// Source-generated configuration binding API.
 /// The static methods on this type are recognized by the PicoCfg.Gen source generator,
