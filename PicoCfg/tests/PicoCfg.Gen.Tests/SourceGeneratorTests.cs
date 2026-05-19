@@ -1,30 +1,29 @@
-namespace PicoDI.Test;
+namespace PicoCfg.Gen.Tests;
 
-public sealed class PicoDIGeneratorCompilationTests
+using System.Diagnostics.CodeAnalysis;
+
+#pragma warning disable CS0618
+
+public sealed class PicoCfgSourceGeneratorTests
 {
     [Test]
-    public async Task ServiceRegistrationGenerator_ProducesCompilableOutput()
+    public async Task PicoCfgBindGenerator_ProducesCompilableOutput()
     {
         var inputSource = """
-            using PicoDI;
-            using PicoDI.Abs;
+            using PicoCfg;
+            using PicoCfg.Abs;
 
-            public interface IGoldenService
+            public sealed class GoldenSettings
             {
-                string Name { get; }
+                public string? Name { get; set; }
+                public int MaxRetries { get; set; } = 3;
+                public bool EnableFeature { get; set; }
             }
 
-            public class GoldenService : IGoldenService
+            public static class GoldenEntry
             {
-                public string Name => "Golden";
-            }
-
-            public static class GoldenSetup
-            {
-                public static void Configure(SvcContainer container)
-                {
-                    container.RegisterSingleton<IGoldenService, GoldenService>();
-                }
+                public static GoldenSettings Bind(ICfg cfg) =>
+                    CfgBind.Bind<GoldenSettings>(cfg, "App");
             }
             """;
 
@@ -39,7 +38,7 @@ public sealed class PicoDIGeneratorCompilationTests
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
 
-        var generator = new ServiceRegistrationGenerator();
+        var generator = new PicoCfgBindGenerator();
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [generator.AsSourceGenerator()],
             parseOptions: parseOptions
@@ -59,9 +58,7 @@ public sealed class PicoDIGeneratorCompilationTests
             .Where(d => d.Severity == DiagnosticSeverity.Error)
             .ToArray();
 
-        await Assert
-            .That(errors.Length)
-            .IsEqualTo(0);
+        await Assert.That(errors.Length).IsEqualTo(0);
     }
 
     [UnconditionalSuppressMessage(
@@ -75,11 +72,7 @@ public sealed class PicoDIGeneratorCompilationTests
             (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
         )!.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-        var explicitAssemblies = new[]
-        {
-            typeof(SvcContainer).Assembly.Location,
-            typeof(ISvcContainer).Assembly.Location,
-        };
+        var explicitAssemblies = new[] { typeof(CfgBind).Assembly.Location, };
 
         return trustedPlatformAssemblies
             .Concat(explicitAssemblies)
@@ -88,3 +81,5 @@ public sealed class PicoDIGeneratorCompilationTests
             .ToArray();
     }
 }
+
+#pragma warning restore CS0618

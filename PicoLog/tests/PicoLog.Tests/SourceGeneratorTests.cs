@@ -1,6 +1,6 @@
 namespace PicoLog.Tests;
 
-public sealed class PicoLogGeneratorCompilationTests
+public sealed class PicoLogSourceGeneratorTests
 {
     [Test]
     public async Task PicoLogMessageGenerator_ProducesCompilableOutput()
@@ -56,9 +56,7 @@ public sealed class PicoLogGeneratorCompilationTests
 
     private static async Task<string> GenerateSourceAsync(string source)
     {
-        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(
-            LanguageVersion.Preview
-        );
+        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
         var syntaxTree = CSharpSyntaxTree.ParseText(source, parseOptions);
 
         var compilation = CSharpCompilation.Create(
@@ -77,7 +75,8 @@ public sealed class PicoLogGeneratorCompilationTests
 
         var runResult = driver.GetRunResult();
         var generatedSources = runResult
-            .Results.SelectMany(static result => result.GeneratedSources)
+            .Results
+            .SelectMany(static result => result.GeneratedSources)
             .ToArray();
         var generated = generatedSources.Single(
             sourceResult => sourceResult.HintName == "PicoLogMessage.g.cs"
@@ -93,16 +92,11 @@ public sealed class PicoLogGeneratorCompilationTests
     )]
     private static MetadataReference[] GetMetadataReferences()
     {
-        var trustedPlatformAssemblies = ((string?)
-            AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))!.Split(
-            Path.PathSeparator,
-            StringSplitOptions.RemoveEmptyEntries
-        );
+        var trustedPlatformAssemblies = (
+            (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
+        )!.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-        var explicitAssemblies = new[]
-        {
-            typeof(PicoLog.Abs.ILogger).Assembly.Location,
-        };
+        var explicitAssemblies = new[] { typeof(PicoLog.Abs.ILogger).Assembly.Location, };
 
         return trustedPlatformAssemblies
             .Concat(explicitAssemblies)
