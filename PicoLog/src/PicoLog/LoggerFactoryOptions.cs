@@ -27,7 +27,7 @@ public sealed class LoggerFactoryOptions
     /// Maximum time to wait for sink writes to complete during shutdown drain.
     /// <see cref="TimeSpan.Zero"/> (default) means wait indefinitely.
     /// </summary>
-    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.Zero;
+    public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
     public LoggerFactoryOptions CreateValidatedCopy()
     {
