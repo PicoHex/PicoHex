@@ -46,14 +46,12 @@ internal sealed class InternalLoggerQueue
                 // continuations starve, causing dispatcher threads to never
                 // run and BlockingSink-based tests to hang indefinitely.
                 //
-                // The earlier concern that inline continuations re-enter
-                // probe code under linux-x64 coverage instrumentation
-                // turned out to be a misdiagnosis — the real linux-x64
-                // hang was caused by sync writers burning the full
-                // SyncWriteTimeout in the backoff loop after Complete(),
-                // which is now fixed in TryEnqueueSyncWithWait and locked
-                // in by Wait_Mode_SyncWrite_ReturnsPromptlyWhen-
-                // ShutdownStartsDuringBackoff.
+                // DO NOT FLIP THIS BACK TO false. The contract is implicitly
+                // exercised by every test that uses BlockingSink or
+                // CoordinatedDisposalSink and awaits its WriteStarted latch
+                // (Wait_Mode_*, DropWrite_*, DropOldest_*, DisposeAsync_*,
+                // FactoryDisposeAsync_*, Metrics_*). Flipping it to false
+                // makes those tests hang on any parallel CI runner.
                 AllowSynchronousContinuations = true
             }
         );
