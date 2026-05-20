@@ -6,7 +6,7 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
     private readonly LoggerFactoryRuntime _runtime;
     private readonly InternalLogSinkDispatcher _sinkDispatcher;
     private readonly InternalLoggerQueue _queue;
-    private readonly Task _processingTask;
+    private readonly Thread _processingThread;
     private readonly int _queueDepthProviderId;
     private readonly SemaphoreSlim _flushSemaphore = new(1, 1);
     private readonly FlushQuiesceCoordinator _flushQuiesceCoordinator = new();
@@ -14,6 +14,7 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
     private int _activeDequeuedEntries;
     private int _activeDispatchOperations;
     private long _droppedEntries;
+    private Exception? _processingException;
 
     public CategoryPipeline(string categoryName, LoggerFactoryRuntime runtime)
     {
@@ -23,10 +24,20 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
         _sinkDispatcher = new InternalLogSinkDispatcher(_runtime);
         _queue = new InternalLoggerQueue(_runtime);
-        _processingTask = ProcessEntriesAsync();
+        // Dedicated background thread instead of a ThreadPool task. The processing
+        // loop performs sync-over-async on this thread to bridge async sink APIs;
+        // because the thread is not a pool worker, blocking it here cannot starve
+        // the ThreadPool and therefore cannot deadlock with sync Dispose paths
+        // (this matters most on resource-constrained linux-arm64 CI VMs).
+        _processingThread = new Thread(ProcessEntries)
+        {
+            IsBackground = true,
+            Name = $"PicoLog.Pipeline[{categoryName}]"
+        };
         _queueDepthProviderId = PicoLogMetrics.RegisterQueueDepthProvider(
             _queue.GetQueuedEntryCount
         );
+        _processingThread.Start();
     }
 
     public void Write(LogEntry entry)
@@ -97,10 +108,12 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// Synchronously disposes the pipeline. Uses synchronous semaphore wait
-    /// to avoid sync-over-async deadlock risks, then delegates remaining
-    /// asynchronous work to <see cref="DisposeAsyncCore"/>.
-    /// Prefer calling <see cref="DisposeAsync"/> directly.
+    /// Synchronously disposes the pipeline. Fully synchronous — no sync-over-async
+    /// bridging — so callers can safely invoke this from any thread, including
+    /// ThreadPool workers, without risking ThreadPool starvation deadlocks.
+    /// Shutdown blocks on <see cref="Thread.Join()"/> of the dedicated processing
+    /// thread; because that thread is not a pool worker, the pool remains free
+    /// to service async continuations the dispatcher relies on.
     /// </summary>
     public void Dispose()
     {
@@ -111,7 +124,7 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
 
         try
         {
-            DisposeAsyncCore().AsTask().GetAwaiter().GetResult();
+            ShutdownCore();
         }
         finally
         {
@@ -127,12 +140,16 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         // Acquire the flush semaphore BEFORE completing the queue to prevent
         // a race with FlushAsync. Once we hold the semaphore, no concurrent
         // FlushAsync can proceed — it either detects _disposeState != 0
-        // (line 80) or blocks on the semaphore acquisition (line 82).
+        // or blocks on the semaphore acquisition.
         await _flushSemaphore.WaitAsync().ConfigureAwait(false);
 
         try
         {
-            await DisposeAsyncCore().ConfigureAwait(false);
+            // Run the synchronous shutdown (which Joins the dedicated processing
+            // thread) on a pool thread so we don't block the awaiter's thread.
+            // This is safe — the dedicated thread doesn't depend on the pool,
+            // so even if the pool is highly loaded the Join completes.
+            await Task.Run(ShutdownCore).ConfigureAwait(false);
         }
         finally
         {
@@ -140,38 +157,27 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         }
     }
 
-    private async ValueTask DisposeAsyncCore()
+    private void ShutdownCore()
     {
         Exception? processingException = null;
         var shutdownTimeout = _runtime.ShutdownTimeout;
+        CancellationTokenSource? drainCts = null;
 
         try
         {
-            using var drainCts =
-                shutdownTimeout > TimeSpan.Zero
-                    ? new CancellationTokenSource(shutdownTimeout)
-                    : null;
-
-            if (drainCts is not null)
+            if (shutdownTimeout > TimeSpan.Zero)
+            {
+                drainCts = new CancellationTokenSource(shutdownTimeout);
                 _sinkDispatcher.BeginDrain(drainCts.Token);
+            }
 
             _queue.Complete();
 
-            if (drainCts is not null)
-            {
-                try
-                {
-                    await _processingTask.WaitAsync(drainCts.Token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    // Drain timeout: sinks have been notified via the drain token.
-                    // Fall through to await the processing task without a timeout
-                    // so it finishes draining before we dispose resources.
-                }
-            }
-
-            await _processingTask.ConfigureAwait(false);
+            // Wait for processing thread to finish draining. If the drain CTS
+            // fires, sinks observe cancellation via the drain token and abort,
+            // which causes the loop to exit promptly; Join then returns.
+            _processingThread.Join();
+            processingException = _processingException;
         }
         catch (Exception ex)
         {
@@ -179,6 +185,7 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         }
         finally
         {
+            drainCts?.Dispose();
             PicoLogMetrics.UnregisterQueueDepthProvider(_queueDepthProviderId);
         }
 
@@ -206,39 +213,57 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         _runtime.ReportDroppedMessages(_categoryName, dropped);
     }
 
-    private async Task ProcessEntriesAsync()
+    private void ProcessEntries()
     {
-        while (await _queue.WaitToReadAsync().ConfigureAwait(false))
+        try
         {
-            while (true)
+            while (WaitForRead())
             {
-                BeginDequeuedEntry();
-
-                if (!_queue.TryRead(out var entry))
+                while (true)
                 {
-                    EndDequeuedEntry();
-                    break;
-                }
+                    BeginDequeuedEntry();
 
-                try
-                {
-                    BeginDispatch();
+                    if (!_queue.TryRead(out var entry))
+                    {
+                        EndDequeuedEntry();
+                        break;
+                    }
 
                     try
                     {
-                        await _sinkDispatcher.DispatchEntryAsync(entry).ConfigureAwait(false);
+                        BeginDispatch();
+
+                        try
+                        {
+                            // Sync-over-async on this dedicated thread is intentional and safe:
+                            // continuations of DispatchEntryAsync run on the ThreadPool, which
+                            // is never blocked by this thread (it is not a pool worker).
+                            _sinkDispatcher.DispatchEntryAsync(entry).GetAwaiter().GetResult();
+                        }
+                        finally
+                        {
+                            EndDispatch();
+                        }
                     }
                     finally
                     {
-                        EndDispatch();
+                        EndDequeuedEntry();
                     }
-                }
-                finally
-                {
-                    EndDequeuedEntry();
                 }
             }
         }
+        catch (Exception ex)
+        {
+            _processingException = ex;
+        }
+    }
+
+    private bool WaitForRead()
+    {
+        var waitTask = _queue.WaitToReadAsync();
+        return waitTask.IsCompletedSuccessfully
+            ? waitTask.Result
+            : waitTask.AsTask().GetAwaiter().GetResult();
     }
 
     private void EnterWriteOperationSync() =>

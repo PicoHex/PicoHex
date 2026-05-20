@@ -42,12 +42,77 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
     }
 
     /// <summary>
-    /// Synchronously disposes the factory by blocking on <see cref="DisposeAsync"/>.
-    /// All internal awaits use <see cref="System.Threading.Tasks.Task.ConfigureAwait(bool)"/>
-    /// with <c>false</c>, preventing <see cref="System.Threading.SynchronizationContext"/>-based
-    /// deadlocks. Prefer calling <see cref="DisposeAsync"/> directly.
+    /// Synchronously disposes the factory. Fully synchronous — no sync-over-async
+    /// bridging — so callers can safely invoke this from any thread, including
+    /// ThreadPool workers, without risking ThreadPool starvation deadlocks.
+    /// Pipelines and sinks are disposed via their synchronous <see cref="IDisposable.Dispose"/>
+    /// methods, which Join dedicated background threads rather than awaiting Tasks
+    /// that could be starved when the ThreadPool is saturated.
     /// </summary>
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
+            return;
+
+        List<Exception>? exceptions = null;
+        var drainStopwatch = Stopwatch.StartNew();
+
+        _flushDisposeLock.Wait();
+
+        try
+        {
+            LoggerRegistration[] registrations;
+
+            lock (_registrationsLock)
+            {
+                if (!_runtime.TryBeginShutdown())
+                    return;
+
+                registrations =  [.. _registrations.Values];
+                _registrations.Clear();
+            }
+
+            foreach (var registration in registrations)
+            {
+                try
+                {
+                    registration.Pipeline.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    (exceptions ??=  []).Add(ex);
+                }
+            }
+
+            PicoLogMetrics.RecordShutdownDrainDuration(drainStopwatch.Elapsed);
+
+            foreach (ILogSink sink in _runtime.Sinks)
+            {
+                try
+                {
+                    sink.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    (exceptions ??=  []).Add(ex);
+                }
+            }
+        }
+        finally
+        {
+            try
+            {
+                _flushDisposeLock.Release();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Semaphore was already disposed by another path.
+            }
+        }
+
+        if (exceptions is { Count: > 0 })
+            throw new AggregateException(exceptions);
+    }
 
     public async ValueTask FlushAsync(CancellationToken cancellationToken = default)
     {
