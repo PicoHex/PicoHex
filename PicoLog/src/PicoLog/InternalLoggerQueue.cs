@@ -120,15 +120,29 @@ internal sealed class InternalLoggerQueue
             return LogWriteResult.Accepted;
         }
 
+        // Fast-exit if shutdown already started: a completed channel will
+        // never accept TryWrite again, and ChannelWriter.TryWrite does not
+        // throw on completion (it just returns false), so without this
+        // check we would burn the full SyncWriteTimeout sleeping in the
+        // backoff loop. Under TUnit parallel + coverage instrumentation
+        // (linux-x64) that turns shutdown into a serialized stall that
+        // pins ThreadPool workers and trips the test-runner's hang
+        // detection.
+        if (Volatile.Read(ref _shutdownStarted) != 0)
+            return LogWriteResult.RejectedAfterShutdown;
+
         var startTimestamp = Stopwatch.GetTimestamp();
         var backoffMs = 1;
-        const int maxBackoffMs = 100;
+        const int maxBackoffMs = 25;
         const int backoffFactor = 2;
 
         try
         {
             while (true)
             {
+                if (Volatile.Read(ref _shutdownStarted) != 0)
+                    return LogWriteResult.RejectedAfterShutdown;
+
                 var remaining = _syncWriteTimeout - Stopwatch.GetElapsedTime(startTimestamp);
                 if (remaining <= TimeSpan.Zero)
                     return LogWriteResult.DroppedNewWrite;
