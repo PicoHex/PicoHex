@@ -45,15 +45,15 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
             {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,
-                // Asynchronous continuations: channel completion continuations
-                // run on the ThreadPool rather than inline on the completer's
-                // thread. This is the safe default. See InternalLoggerQueue for
-                // the rationale — inline continuations can re-enter probe code
-                // under static native coverage instrumentation, producing
-                // apparent hangs on linux-x64 coverage runs, and DisposeAsync
-                // no longer pins pool workers so a worker is always available
-                // to resolve the WaitToReadAsync wakeup on TryComplete().
-                AllowSynchronousContinuations = false
+                // Synchronous continuations are REQUIRED here. See
+                // InternalLoggerQueue for the full rationale: the dedicated
+                // ProcessWrites thread blocks on _channel.Reader.WaitToReadAsync
+                // via sync-over-async; without inline continuations, every
+                // write requires a ThreadPool worker to wake the reader,
+                // which on low-core ARM64 CI runners (win-arm64,
+                // osx-arm64) with 166 parallel TUnit tests starves and
+                // hangs file-sink tests indefinitely.
+                AllowSynchronousContinuations = true
             }
         );
 

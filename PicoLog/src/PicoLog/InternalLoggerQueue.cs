@@ -35,18 +35,26 @@ internal sealed class InternalLoggerQueue
                     _ => BoundedChannelFullMode.DropOldest
                 },
                 SingleReader = true,
-                // Asynchronous continuations: channel completion continuations
-                // run on the ThreadPool rather than inline on the completer's
-                // thread. This is the safe default. We deliberately do NOT
-                // enable AllowSynchronousContinuations because:
-                //   1. DisposeAsync no longer pins pool workers (it awaits a
-                //      TaskCompletionSource signaled by the dedicated thread),
-                //      so a worker is always available to resolve the
-                //      WaitToReadAsync wakeup on Complete().
-                //   2. Inline continuations can re-enter probe code under
-                //      static native coverage instrumentation, producing
-                //      apparent hangs on linux-x64 coverage runs.
-                AllowSynchronousContinuations = false
+                // Synchronous continuations are REQUIRED here. The dedicated
+                // processing thread (CategoryPipeline) blocks on
+                // _queue.WaitToReadAsync().AsTask().GetAwaiter().GetResult().
+                // With AllowSynchronousContinuations = false, every write
+                // would need a ThreadPool worker to run the wakeup
+                // continuation that completes the reader's Task. On low-core
+                // ARM64 CI runners (win-arm64, osx-arm64) running 166 TUnit
+                // tests in parallel, the pool gets saturated and the wakeup
+                // continuations starve, causing dispatcher threads to never
+                // run and BlockingSink-based tests to hang indefinitely.
+                //
+                // The earlier concern that inline continuations re-enter
+                // probe code under linux-x64 coverage instrumentation
+                // turned out to be a misdiagnosis — the real linux-x64
+                // hang was caused by sync writers burning the full
+                // SyncWriteTimeout in the backoff loop after Complete(),
+                // which is now fixed in TryEnqueueSyncWithWait and locked
+                // in by Wait_Mode_SyncWrite_ReturnsPromptlyWhen-
+                // ShutdownStartsDuringBackoff.
+                AllowSynchronousContinuations = true
             }
         );
         _writer = channel.Writer;
