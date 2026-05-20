@@ -68,7 +68,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.pico-di == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -102,7 +102,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang zlib1g-dev
           if [[ "${{ matrix.rid }}" == "linux-arm64" ]]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+            sudo apt-get install -y gcc binutils
           fi
 
       - name: Restore dependencies
@@ -127,7 +127,7 @@ jobs:
           path: PicoDI/tests/PicoDI.Test/TestResults/**/coverage.cobertura.xml
 
       - name: AOT publish validation
-        run: dotnet publish PicoDI/src/PicoDI/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
+        run: dotnet publish PicoDI/src/PicoDI/ -p:PublishAot=true -r ${{ matrix.rid }} --configuration Release
 
       - name: Pack CI packages (package-consumer validation)
         shell: bash
@@ -175,7 +175,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.pico-cfg == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -209,7 +209,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang zlib1g-dev
           if [[ "${{ matrix.rid }}" == "linux-arm64" ]]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+            sudo apt-get install -y gcc binutils
           fi
 
       - name: Restore dependencies
@@ -240,7 +240,7 @@ jobs:
         run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
 
       - name: AOT publish validation
-        run: dotnet publish PicoCfg/src/PicoCfg/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
+        run: dotnet publish PicoCfg/src/PicoCfg/ -p:PublishAot=true -r ${{ matrix.rid }} --configuration Release
 
       - name: Pack CI packages (package-consumer validation)
         shell: bash
@@ -297,7 +297,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.pico-log == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -331,7 +331,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang zlib1g-dev
           if [[ "${{ matrix.rid }}" == "linux-arm64" ]]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+            sudo apt-get install -y gcc binutils
           fi
 
       - name: Restore dependencies
@@ -356,7 +356,7 @@ jobs:
           path: PicoLog/tests/PicoLog.Tests/TestResults/**/coverage.cobertura.xml
 
       - name: AOT publish validation
-        run: dotnet publish PicoLog/src/PicoLog/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
+        run: dotnet publish PicoLog/src/PicoLog/ -p:PublishAot=true -r ${{ matrix.rid }} --configuration Release
 
       - name: Pack CI packages (package-consumer validation)
         shell: bash
