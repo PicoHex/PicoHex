@@ -102,7 +102,6 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
             ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposeState) != 0, this);
 
             await BlockWritesAsync(cancellationToken).ConfigureAwait(false);
-            CancelBatchDelayWait();
             await WaitForIdleAsync(cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
             await _writer.FlushAsync().ConfigureAwait(false);
@@ -162,60 +161,15 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
                 if (IsFlushPending())
                     break;
 
-                // Try a synchronous read first to avoid timer allocation for the common
-                // case where another entry is already available.
-                if (_channel.Reader.TryRead(out var message))
-                {
-                    batch.Add(message);
-                    continue;
-                }
-
-                // Wait with a bounded timeout for the next entry. On ARM64 runners,
-                // CancellationTokenSource(TimeSpan) timers may not fire reliably,
-                // so WaitToReadAsync with a CTS token is paired with a defensive
-                // Task.WhenAny fallback that enforces the FlushInterval regardless.
-                using var cts = new CancellationTokenSource(_options.FlushInterval);
-                RegisterBatchDelayCancellationSource(cts);
-
-                try
-                {
-                    var waitTask = _channel.Reader.WaitToReadAsync(cts.Token).AsTask();
-                    var delayTask = Task.Delay(_options.FlushInterval, CancellationToken.None);
-                    var completed = await Task.WhenAny(waitTask, delayTask).ConfigureAwait(false);
-
-                    if (completed == waitTask)
-                    {
-                        try
-                        {
-                            if (await waitTask.ConfigureAwait(false))
-                            {
-                                if (_channel.Reader.TryRead(out message))
-                                    batch.Add(message);
-                            }
-                            else
-                            {
-                                break; // Channel completed
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            break;
-                        }
-                    }
-                    // delayTask won → FlushInterval elapsed, flush the batch
-                }
-                catch (ChannelClosedException)
-                {
+                // Synchronous read — no timer, no CancellationTokenSource, no Task.WhenAny.
+                // If a message is already available, add it and keep filling the batch.
+                // If not, flush immediately. This avoids the ARM64 timer reliability issue
+                // entirely while preserving batching under load (messages arrive faster than
+                // the processing loop can drain).
+                if (!_channel.Reader.TryRead(out var message))
                     break;
-                }
-                finally
-                {
-                    ClearBatchDelayCancellationSource(cts);
-                }
 
-                // After the FlushInterval wait (whether cancelled or elapsed),
-                // always flush the current batch so we don't wait indefinitely.
-                break;
+                batch.Add(message);
             }
         }
         else
@@ -247,7 +201,6 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         if (Interlocked.Exchange(ref _disposeState, 1) != 0)
             return;
 
-        CancelBatchDelayWait();
         _channel.Writer.TryComplete();
 
         Exception? processingException = null;
@@ -318,31 +271,4 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
     private bool IsOwnerIdleUnderLock() =>
         _activeDequeuedMessages == 0 && _activeBatchOperations == 0 && _channel.Reader.Count == 0;
-
-    private void RegisterBatchDelayCancellationSource(CancellationTokenSource source)
-    {
-        Interlocked.Exchange(ref _batchDelayCancellationSource, source);
-    }
-
-    private void ClearBatchDelayCancellationSource(CancellationTokenSource source)
-    {
-        Interlocked.CompareExchange(ref _batchDelayCancellationSource, null, source);
-    }
-
-    private void CancelBatchDelayWait()
-    {
-        var cts = Interlocked.Exchange(ref _batchDelayCancellationSource, null);
-
-        if (cts is null)
-            return;
-
-        try
-        {
-            cts.Cancel();
-        }
-        catch (ObjectDisposedException)
-        {
-            // Ignore cancellation races with completed batch-delay waits.
-        }
-    }
 }
