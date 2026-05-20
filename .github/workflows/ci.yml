@@ -113,8 +113,18 @@ jobs:
       - name: Build
         run: dotnet build PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
-      - name: Run tests
+      - name: Run tests (coverage)
+        if: matrix.rid == 'linux-x64'
         run: dotnet test --project PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
+      - name: Run tests
+        if: matrix.rid != 'linux-x64'
+        run: dotnet test --project PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Upload coverage
+        if: matrix.rid == 'linux-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-picodi
+          path: PicoDI/tests/PicoDI.Test/TestResults/**/coverage.cobertura.xml
 
       - name: AOT publish validation
         run: dotnet publish PicoDI/src/PicoDI/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
@@ -210,14 +220,24 @@ jobs:
       - name: Build
         run: dotnet build PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
-      - name: Run PicoCfg tests
+      - name: Run PicoCfg tests (coverage)
+        if: matrix.rid == 'linux-x64'
         run: dotnet test --project PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
-
+      - name: Run PicoCfg tests
+        if: matrix.rid != 'linux-x64'
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Upload PicoCfg coverage
+        if: matrix.rid == 'linux-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-picocfg
+          path: PicoCfg/tests/PicoCfg.Tests/TestResults/**/coverage.cobertura.xml
       - name: Run PicoCfg.Gen tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
-
+        if: matrix.rid != 'linux-x64'
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
       - name: Run PicoCfg.DI tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
+        if: matrix.rid != 'linux-x64'
+        run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
 
       - name: AOT publish validation
         run: dotnet publish PicoCfg/src/PicoCfg/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
@@ -322,12 +342,18 @@ jobs:
       - name: Build
         run: dotnet build PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
-      - name: Run tests
-        if: "!startsWith(matrix.rid, 'linux-arm')"
+      - name: Run tests (coverage)
+        if: matrix.rid == 'linux-x64'
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
-      - name: Run tests (ARM, no coverage)
-        if: startsWith(matrix.rid, 'linux-arm')
+      - name: Run tests
+        if: matrix.rid != 'linux-x64'
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Upload coverage
+        if: matrix.rid == 'linux-x64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-picolog
+          path: PicoLog/tests/PicoLog.Tests/TestResults/**/coverage.cobertura.xml
 
       - name: AOT publish validation
         run: dotnet publish PicoLog/src/PicoLog/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
