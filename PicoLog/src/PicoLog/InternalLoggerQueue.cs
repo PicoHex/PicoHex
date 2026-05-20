@@ -35,15 +35,18 @@ internal sealed class InternalLoggerQueue
                     _ => BoundedChannelFullMode.DropOldest
                 },
                 SingleReader = true,
-                // Synchronous continuations are REQUIRED here. The dedicated
-                // processing thread waits on WaitToReadAsync via
-                // AsTask().GetAwaiter().GetResult(); when Complete() fires, the
-                // completion continuation must run inline on the completer's
-                // thread so the processing thread is signaled without needing
-                // a ThreadPool worker. Otherwise concurrent Dispose paths that
-                // already occupy pool workers (via Task.Run(ShutdownCore) +
-                // Thread.Join) would self-starve and deadlock the wakeup.
-                AllowSynchronousContinuations = true
+                // Asynchronous continuations: channel completion continuations
+                // run on the ThreadPool rather than inline on the completer's
+                // thread. This is the safe default. We deliberately do NOT
+                // enable AllowSynchronousContinuations because:
+                //   1. DisposeAsync no longer pins pool workers (it awaits a
+                //      TaskCompletionSource signaled by the dedicated thread),
+                //      so a worker is always available to resolve the
+                //      WaitToReadAsync wakeup on Complete().
+                //   2. Inline continuations can re-enter probe code under
+                //      static native coverage instrumentation, producing
+                //      apparent hangs on linux-x64 coverage runs.
+                AllowSynchronousContinuations = false
             }
         );
         _writer = channel.Writer;
