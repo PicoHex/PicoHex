@@ -123,6 +123,14 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
         catch (OperationCanceledException)
         {
             // Cancellation was requested — stop waiting for the background task.
+            // If the task itself faulted (not cancelled), log it so callers don't
+            // silently lose the failure.
+            if (task.IsFaulted)
+            {
+                Trace.WriteLine(
+                    $"Background service faulted while waiting for stop: {task.Exception?.InnerException}"
+                );
+            }
         }
     }
 

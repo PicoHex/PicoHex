@@ -248,7 +248,22 @@ public sealed partial class SvcScope
         // the field stays clean after dispose.
         if (Volatile.Read(ref _disposed) != 0)
         {
-            _ = Interlocked.Exchange(ref _scopedInstances, null);
+            // Atomically swap out the scoped-instances dictionary so the field
+            // stays clean after dispose. Best-effort drain: dispose any already-
+            // materialized values (Lazy.Value succeeded before the disposed check).
+            var abandoned = Interlocked.Exchange(ref _scopedInstances, null);
+            if (abandoned is not null)
+            {
+                foreach (var abandonedLazy in abandoned.Values)
+                {
+                    if (abandonedLazy.IsValueCreated)
+                    {
+                        try { DisposeTrackedInstance(abandonedLazy.Value); }
+                        catch { /* best-effort */ }
+                    }
+                }
+            }
+
             throw new ObjectDisposedException(nameof(SvcScope));
         }
 
@@ -325,7 +340,7 @@ public sealed partial class SvcScope
                         // Only block a ThreadPool thread for truly async disposal.
                         // The Task.Run wrapper prevents deadlocks on threads with a
                         // SynchronizationContext (WPF, WinForms, legacy ASP.NET).
-                        vt.AsTask().GetAwaiter().GetResult();
+                        Task.Run(() => vt.AsTask().GetAwaiter().GetResult()).GetAwaiter().GetResult();
                     }
                     else
                     {

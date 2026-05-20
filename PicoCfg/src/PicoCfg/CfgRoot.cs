@@ -203,7 +203,20 @@ internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
         }
         catch when (creationFailure is not null)
         {
-            // Preserve the original synchronous creation failure after already-started reloads settle.
+            // Preserve the original synchronous creation failure after already-started
+            // reloads settle. Task exceptions from already-launched providers are
+            // logged via Trace so no failure information is silently lost.
+            foreach (var task in reloadTasks)
+            {
+                if (task.IsFaulted && task.Exception is { } aggregateException)
+                {
+                    foreach (var inner in aggregateException.InnerExceptions)
+                        Trace.TraceError(
+                            $"[PicoCfg] Provider reload faulted while handling a "
+                                + $"synchronous startup failure: {inner}"
+                        );
+                }
+            }
         }
         catch
         {

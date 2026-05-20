@@ -166,7 +166,18 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
         }
         finally
         {
-            _flushDisposeLock.Dispose();
+            // Release instead of dispose: concurrent FlushAsync calls may still
+            // be waiting on this semaphore after the TOCTOU dispose-state check.
+            // The semaphore holds no unmanaged resources (only WaitAsync is used,
+            // so no WaitHandle is created) and will be reclaimed by the GC.
+            try
+            {
+                _flushDisposeLock.Release();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Semaphore was already disposed by another path.
+            }
         }
 
         if (exceptions is { Count: > 0 })

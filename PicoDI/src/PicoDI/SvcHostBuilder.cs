@@ -7,8 +7,22 @@ namespace PicoDI;
 public sealed class SvcHostBuilder : IAsyncDisposable
 {
     private readonly List<Action<ISvcContainer>> _configureActions = [];
+    private readonly bool _autoConfigureFromGenerator;
     private IHost? _host;
     private bool _built;
+
+    /// <summary>
+    /// Creates a new host builder.
+    /// </summary>
+    /// <param name="autoConfigureFromGenerator">
+    /// When <see langword="true"/> (default), the container automatically applies
+    /// source-generated registrations from PicoDI.Gen. Set to <see langword="false"/>
+    /// when all registrations are supplied manually via <see cref="ConfigureServices"/>.
+    /// </param>
+    public SvcHostBuilder(bool autoConfigureFromGenerator = true)
+    {
+        _autoConfigureFromGenerator = autoConfigureFromGenerator;
+    }
 
     /// <summary>
     /// Adds a configuration delegate to customize the container's service registrations.
@@ -34,7 +48,7 @@ public sealed class SvcHostBuilder : IAsyncDisposable
             throw new InvalidOperationException("Build has already been called.");
         _built = true;
 
-        var container = new SvcContainer();
+        var container = new SvcContainer(_autoConfigureFromGenerator);
 
         try
         {

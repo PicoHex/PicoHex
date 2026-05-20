@@ -237,7 +237,18 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         }
 
         await _flushSemaphore.WaitAsync().ConfigureAwait(false);
-        _flushSemaphore.Dispose();
+        // Release instead of dispose: concurrent FlushAsync calls may still
+        // be waiting on this semaphore after the TOCTOU dispose-state check.
+        // The semaphore holds no unmanaged resources (only WaitAsync is used)
+        // and will be reclaimed by the GC.
+        try
+        {
+            _flushSemaphore.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Semaphore was already disposed by another path.
+        }
 
         if (processingException is not null)
             ExceptionDispatchInfo.Throw(processingException);

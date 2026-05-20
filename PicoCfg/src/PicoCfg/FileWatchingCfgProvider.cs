@@ -83,6 +83,7 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
                 return;
 
             _debounceCts?.Cancel();
+            _debounceCts?.Dispose();
             _debounceCts = new CancellationTokenSource();
             var capturedCts = _debounceCts;
             Task.Delay(_debounceInterval, capturedCts.Token)
