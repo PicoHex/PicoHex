@@ -730,6 +730,67 @@ public sealed class LoggerFactoryTests
     }
 
     [Test]
+    public async Task Wait_Mode_SyncWrite_ReturnsPromptlyWhenShutdownStartsDuringBackoff()
+    {
+        // Regression test: TryEnqueueSyncWithWait used to ignore the channel's
+        // completed state and keep sleeping in its backoff loop until the full
+        // SyncWriteTimeout elapsed, because ChannelWriter.TryWrite returns
+        // false (rather than throwing ChannelClosedException) on a completed
+        // channel. Under concurrent shutdown this pinned ThreadPool workers
+        // for the full timeout each, intermittently tripping CI hang detection
+        // under coverage instrumentation on linux-x64.
+        //
+        // Contract: once factory shutdown has been signaled, any sync writer
+        // currently waiting in the backoff loop must observe the shutdown and
+        // return promptly (well under SyncWriteTimeout).
+        var sink = new BlockingSink();
+        // SyncWriteTimeout is deliberately large so that the pre-fix code
+        // would block for many seconds and obviously fail the budget below.
+        var options = new LoggerFactoryOptions
+        {
+            QueueCapacity = 1,
+            QueueFullMode = LogQueueFullMode.Wait,
+            SyncWriteTimeout = TimeSpan.FromSeconds(30)
+        };
+        var factory = new LoggerFactory([sink], options);
+        var logger = factory.CreateLogger("Tests.Category");
+
+        // Drive the queue to the state where a third write must block:
+        //   - "first" is dispatched and the sink blocks on it.
+        //   - "second" fills the bounded queue (capacity 1).
+        logger.Info("first");
+        await sink.WriteStarted;
+        logger.Info("second");
+
+        // Kick off the third sync write on a worker thread; it will enter
+        // TryEnqueueSyncWithWait's backoff loop because the queue is full.
+        var stopwatch = Stopwatch.StartNew();
+        var thirdWrite = Task.Run(() => logger.Info("third"));
+
+        // Give the third writer time to enter the backoff loop.
+        await Task.Delay(100);
+        await Assert.That(thirdWrite.IsCompleted).IsFalse();
+
+        // Start shutdown concurrently. This signals Complete() on the queue,
+        // which the third writer must observe and exit on the next backoff
+        // iteration. DisposeAsync itself will block on the still-busy sink,
+        // so we don't await it until after releasing the sink below.
+        var disposeTask = Task.Run(async () => await factory.DisposeAsync());
+
+        // The third write must return promptly — well under SyncWriteTimeout.
+        // Pre-fix this would not complete until ~30s (timeout) and the await
+        // below would fail.
+        await thirdWrite.WaitAsync(TimeSpan.FromSeconds(5));
+        stopwatch.Stop();
+
+        await Assert.That(stopwatch.Elapsed).IsLessThan(TimeSpan.FromSeconds(2));
+
+        // Let the blocked sink finish so DisposeAsync can complete cleanly.
+        sink.Release();
+        await disposeTask.WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [Test]
     public async Task Wait_Mode_BlocksAsyncWrites_UntilQueueSpaceIsAvailable()
     {
         var sink = new BlockingSink();
