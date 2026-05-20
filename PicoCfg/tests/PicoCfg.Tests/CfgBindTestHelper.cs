@@ -22,13 +22,18 @@ internal static class CfgBindTestHelper
         );
     }
 
-    private static CfgOptionsTests.TestClass BindTestClass(ICfg cfg, string? section) => new()
-    {
-        Name = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Name")),
-        Count = ParseInt(cfg, CfgBindRuntime.CombinePath(section, "Count")),
-    };
+    private static CfgOptionsTests.TestClass BindTestClass(ICfg cfg, string? section) =>
+        new()
+        {
+            Name = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Name")),
+            Count = ParseInt(cfg, CfgBindRuntime.CombinePath(section, "Count")),
+        };
 
-    private static bool TryBindTestClass(ICfg cfg, string? section, out CfgOptionsTests.TestClass value)
+    private static bool TryBindTestClass(
+        ICfg cfg,
+        string? section,
+        out CfgOptionsTests.TestClass value
+    )
     {
         value = new CfgOptionsTests.TestClass
         {
@@ -38,19 +43,30 @@ internal static class CfgBindTestHelper
         return true;
     }
 
-    private static void BindIntoTestClass(ICfg cfg, string? section, CfgOptionsTests.TestClass instance)
+    private static void BindIntoTestClass(
+        ICfg cfg,
+        string? section,
+        CfgOptionsTests.TestClass instance
+    )
     {
         instance.Name = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Name"));
         var raw = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Count"));
-        if (raw is not null && int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c))
+        if (
+            raw is not null
+            && int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c)
+        )
             instance.Count = c;
     }
 
-    private static CfgValidatorTests.ValidatableTarget BindValidatableTarget(ICfg cfg, string? section) => new()
-    {
-        Name = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Name")),
-        Count = ParseInt(cfg, CfgBindRuntime.CombinePath(section, "Count")),
-    };
+    private static CfgValidatorTests.ValidatableTarget BindValidatableTarget(
+        ICfg cfg,
+        string? section
+    ) =>
+        new()
+        {
+            Name = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Name")),
+            Count = ParseInt(cfg, CfgBindRuntime.CombinePath(section, "Count")),
+        };
 
     private static bool TryBindValidatableTarget(
         ICfg cfg,
@@ -74,14 +90,19 @@ internal static class CfgBindTestHelper
     {
         instance.Name = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Name"));
         var raw = cfg.GetValue(CfgBindRuntime.CombinePath(section, "Count"));
-        if (raw is not null && int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c))
+        if (
+            raw is not null
+            && int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var c)
+        )
             instance.Count = c;
     }
 
     private static int ParseInt(ICfg cfg, string path)
     {
         var raw = cfg.GetValue(path);
-        return raw is not null && int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+        return
+            raw is not null
+            && int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
             ? value
             : 0;
     }

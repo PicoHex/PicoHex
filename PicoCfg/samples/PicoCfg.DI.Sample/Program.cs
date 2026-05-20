@@ -7,15 +7,16 @@ using PicoDI.Abs;
 
 Console.WriteLine("=== PicoCfg.DI Sample ===");
 
-await using var root = await Cfg
-    .CreateBuilder()
-    .Add(new Dictionary<string, string>
-    {
-        ["App:Name"] = "PicoCfg.DI",
-        ["App:Count"] = "42",
-        ["Request:Name"] = "Scoped Request",
-        ["Request:Count"] = "7",
-    })
+await using var root = await Cfg.CreateBuilder()
+    .Add(
+        new Dictionary<string, string>
+        {
+            ["App:Name"] = "PicoCfg.DI",
+            ["App:Count"] = "42",
+            ["Request:Name"] = "Scoped Request",
+            ["Request:Count"] = "7",
+        }
+    )
     .BuildAsync();
 
 await using var container = new SvcContainer(autoConfigureFromGenerator: false);
@@ -48,6 +49,7 @@ AssertEqual("Scoped Count", request1.Count, 7);
 AssertTrue("Scoped Same Instance", ReferenceEquals(request1, request2));
 
 Console.WriteLine("=== Options Pattern via DI ===");
+
 // Register and resolve ICfgOptions<AppSettings>
 var options = scope.GetService<ICfgOptions<AppSettings>>();
 Console.WriteLine($"  Options Name = {options!.Value.Name}");
@@ -57,7 +59,9 @@ static void AssertEqual<T>(string name, T actual, T expected)
 {
     if (!EqualityComparer<T>.Default.Equals(actual, expected))
     {
-        throw new InvalidOperationException($"{name} mismatch. Expected '{expected}' but got '{actual}'.");
+        throw new InvalidOperationException(
+            $"{name} mismatch. Expected '{expected}' but got '{actual}'."
+        );
     }
 }
 

@@ -12,7 +12,10 @@ public partial class FormattingBenchmarks
 {
     private const int QueueCapacity = 262144;
     private static readonly string CachedMessage = "Hello from benchmark, cached message";
-    private static readonly Func<string, Exception?, string> MelStringFormatter = static (state, _) => state;
+    private static readonly Func<string, Exception?, string> MelStringFormatter = static (
+        state,
+        _
+    ) => state;
 
     private PicoLog.Abs.ILogger _picoNullLogger = null!;
     private PicoLog.LoggerFactory _picoNullFactory = null!;
@@ -183,7 +186,13 @@ public partial class FormattingBenchmarks
     public void MelConsoleFormatter()
     {
         for (var i = 0; i < N; i++)
-            _melConsoleLogger.Log(MelLogLevel.Information, default, CachedMessage, exception: null, MelStringFormatter);
+            _melConsoleLogger.Log(
+                MelLogLevel.Information,
+                default,
+                CachedMessage,
+                exception: null,
+                MelStringFormatter
+            );
     }
 
     private static void TryDelete(string? path)
@@ -193,6 +202,8 @@ public partial class FormattingBenchmarks
             if (path is not null)
                 File.Delete(path);
         }
-        catch { /* best-effort cleanup */ }
+        catch
+        { /* best-effort cleanup */
+        }
     }
 }

@@ -39,15 +39,16 @@ public class CfgBuilderExtensionsTests
     public async Task Add_WithStringContentAndExplicitEncoding_ForwardsEncodedBytesToTheParser()
     {
         byte[]? observedBytes = null;
-        var builder = Cfg
-            .CreateBuilder()
-            .WithStreamParser(async (stream, ct) =>
-            {
-                using var memory = new MemoryStream();
-                await stream.CopyToAsync(memory, ct);
-                observedBytes = memory.ToArray();
-                return [];
-            });
+        var builder = Cfg.CreateBuilder()
+            .WithStreamParser(
+                async (stream, ct) =>
+                {
+                    using var memory = new MemoryStream();
+                    await stream.CopyToAsync(memory, ct);
+                    observedBytes = memory.ToArray();
+                    return [];
+                }
+            );
 
         builder.Add("key=value", Encoding.Unicode);
 
@@ -64,13 +65,14 @@ public class CfgBuilderExtensionsTests
     public async Task Add_WithStringContentAndUnchangedVersionStamp_ReloadSkipsReparseAndRetainsPublishedValue()
     {
         var parserCalls = 0;
-        var builder = Cfg
-            .CreateBuilder()
-            .WithStreamParser(async (stream, ct) =>
-            {
-                parserCalls++;
-                return await CfgBuilder.CreateDefaultStreamParser()(stream, ct);
-            });
+        var builder = Cfg.CreateBuilder()
+            .WithStreamParser(
+                async (stream, ct) =>
+                {
+                    parserCalls++;
+                    return await CfgBuilder.CreateDefaultStreamParser()(stream, ct);
+                }
+            );
 
         builder.Add("key=value1", versionStampFactory: () => 1);
 
@@ -103,10 +105,7 @@ public class CfgBuilderExtensionsTests
     [Test]
     public async Task Add_WithDictionaryDataWithoutVersionStamp_ReloadPublishesMutatedDictionaryValues()
     {
-        var data = new Dictionary<string, string>
-        {
-            ["key"] = "before",
-        };
+        var data = new Dictionary<string, string> { ["key"] = "before", };
         var builder = Cfg.CreateBuilder();
         builder.Add(data);
 
@@ -122,10 +121,7 @@ public class CfgBuilderExtensionsTests
     [Test]
     public async Task Add_WithDictionaryDataAndUnchangedVersionStamp_ReloadSkipsMutatedDictionaryValues()
     {
-        var data = new Dictionary<string, string>
-        {
-            ["key"] = "before",
-        };
+        var data = new Dictionary<string, string> { ["key"] = "before", };
         var builder = Cfg.CreateBuilder();
         builder.Add(data, () => 1);
 
@@ -143,7 +139,8 @@ public class CfgBuilderExtensionsTests
     {
         var builder = Cfg.CreateBuilder();
 
-        await Assert.That(() => builder.Add((IDictionary<string, string>)null!))
+        await Assert
+            .That(() => builder.Add((IDictionary<string, string>)null!))
             .Throws<ArgumentNullException>();
     }
 
@@ -168,7 +165,8 @@ public class CfgBuilderExtensionsTests
     {
         var builder = Cfg.CreateBuilder();
 
-        await Assert.That(() => builder.Add((Func<IEnumerable<KeyValuePair<string, string>>>)null!))
+        await Assert
+            .That(() => builder.Add((Func<IEnumerable<KeyValuePair<string, string>>>)null!))
             .Throws<ArgumentNullException>();
     }
 }

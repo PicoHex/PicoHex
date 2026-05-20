@@ -16,8 +16,7 @@ public sealed class CfgRootConsumerContractTests
         var data = new Dictionary<string, string> { ["App:Name"] = "Before" };
         var version = 0;
 
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(() => data, () => version)
             .BuildAsync();
 

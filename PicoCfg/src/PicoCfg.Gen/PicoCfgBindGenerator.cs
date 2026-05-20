@@ -276,9 +276,7 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
             inPath.Add(current);
             path.Add(current);
 
-            var next = dependsOn[current].Find(
-                n => cycleSet.Contains(n) && !inPath.Contains(n)
-            );
+            var next = dependsOn[current].Find(n => cycleSet.Contains(n) && !inPath.Contains(n));
 
             if (next < 0)
             {

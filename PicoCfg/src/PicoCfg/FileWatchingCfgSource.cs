@@ -6,7 +6,11 @@ internal sealed class FileWatchingCfgSource : ICfgSource
     private readonly string _filePath;
     private readonly TimeSpan? _debounceInterval;
 
-    internal FileWatchingCfgSource(ICfgSource innerSource, string filePath, TimeSpan? debounceInterval)
+    internal FileWatchingCfgSource(
+        ICfgSource innerSource,
+        string filePath,
+        TimeSpan? debounceInterval
+    )
     {
         ArgumentNullException.ThrowIfNull(innerSource);
         ArgumentNullException.ThrowIfNull(filePath);

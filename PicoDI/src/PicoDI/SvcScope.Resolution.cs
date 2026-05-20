@@ -258,8 +258,13 @@ public sealed partial class SvcScope
                 {
                     if (abandonedLazy.IsValueCreated)
                     {
-                        try { DisposeTrackedInstance(abandonedLazy.Value); }
-                        catch { /* best-effort */ }
+                        try
+                        {
+                            DisposeTrackedInstance(abandonedLazy.Value);
+                        }
+                        catch
+                        { /* best-effort */
+                        }
                     }
                 }
             }
@@ -340,7 +345,9 @@ public sealed partial class SvcScope
                         // Only block a ThreadPool thread for truly async disposal.
                         // The Task.Run wrapper prevents deadlocks on threads with a
                         // SynchronizationContext (WPF, WinForms, legacy ASP.NET).
-                        Task.Run(() => vt.AsTask().GetAwaiter().GetResult()).GetAwaiter().GetResult();
+                        Task.Run(() => vt.AsTask().GetAwaiter().GetResult())
+                            .GetAwaiter()
+                            .GetResult();
                     }
                     else
                     {

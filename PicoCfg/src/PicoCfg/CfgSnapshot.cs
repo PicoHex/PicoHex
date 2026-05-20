@@ -5,9 +5,7 @@ internal sealed class CfgSnapshot : ICfgSnapshot
     public static CfgSnapshot Empty { get; } = new(new Dictionary<string, string>(), 0);
 
     internal CfgSnapshot(IReadOnlyDictionary<string, string> values)
-        : this(values, ConfigDataComparer.ComputeFingerprint(values))
-    {
-    }
+        : this(values, ConfigDataComparer.ComputeFingerprint(values)) { }
 
     internal CfgSnapshot(IReadOnlyDictionary<string, string> values, int fingerprint)
     {

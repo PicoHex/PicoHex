@@ -5,13 +5,8 @@ public class CfgEnumerationExtensionsTests
     [Test]
     public async Task GetAll_WithSingleSource_ReturnsAllValues()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
-            .Add(new Dictionary<string, string>
-            {
-                ["key1"] = "value1",
-                ["key2"] = "value2",
-            })
+        await using var root = await Cfg.CreateBuilder()
+            .Add(new Dictionary<string, string> { ["key1"] = "value1", ["key2"] = "value2", })
             .BuildAsync();
 
         var all = root.GetAll();
@@ -24,18 +19,9 @@ public class CfgEnumerationExtensionsTests
     [Test]
     public async Task GetAll_WithMultipleSources_LaterOverridesEarlier()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
-            .Add(new Dictionary<string, string>
-            {
-                ["shared"] = "first",
-                ["unique1"] = "val1",
-            })
-            .Add(new Dictionary<string, string>
-            {
-                ["shared"] = "second",
-                ["unique2"] = "val2",
-            })
+        await using var root = await Cfg.CreateBuilder()
+            .Add(new Dictionary<string, string> { ["shared"] = "first", ["unique1"] = "val1", })
+            .Add(new Dictionary<string, string> { ["shared"] = "second", ["unique2"] = "val2", })
             .BuildAsync();
 
         var all = root.GetAll();

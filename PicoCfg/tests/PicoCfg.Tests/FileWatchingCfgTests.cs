@@ -24,7 +24,13 @@ public class FileWatchingCfgTests
         }
         finally
         {
-            try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 
@@ -45,7 +51,13 @@ public class FileWatchingCfgTests
         }
         finally
         {
-            try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 
@@ -76,7 +88,13 @@ public class FileWatchingCfgTests
         }
         finally
         {
-            try { File.Delete(tempPath); } catch { /* best-effort cleanup */ }
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 }

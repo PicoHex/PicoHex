@@ -2,7 +2,8 @@ namespace PicoCfg.Tests;
 
 public class CfgBuilderTests
 {
-    private static ICfgSnapshot SnapshotOf(ICfgRoot root) => ((IInternalCfgRootSnapshotAccessor)root).CurrentSnapshot;
+    private static ICfgSnapshot SnapshotOf(ICfgRoot root) =>
+        ((IInternalCfgRootSnapshotAccessor)root).CurrentSnapshot;
 
     [Test]
     public async Task AddSource_AddsSourceToBuilder()
@@ -71,7 +72,9 @@ public class CfgBuilderTests
         builder.AddSource(new TrackingSource(secondProvider));
         builder.AddSource(new FailingSource());
 
-        await Assert.That(async () => await builder.BuildAsync()).Throws<InvalidOperationException>();
+        await Assert
+            .That(async () => await builder.BuildAsync())
+            .Throws<InvalidOperationException>();
         await Assert.That(firstProvider.DisposeCalled).IsTrue();
         await Assert.That(secondProvider.DisposeCalled).IsTrue();
     }
@@ -88,7 +91,9 @@ public class CfgBuilderTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        await Assert.That(async () => await builder.BuildAsync(cts.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await builder.BuildAsync(cts.Token))
+            .Throws<OperationCanceledException>();
         await Assert.That(firstProvider.DisposeCalled).IsTrue();
     }
 
@@ -110,10 +115,7 @@ public class CfgBuilderTests
         var value = "before";
         var stamp = 1;
 
-        builder.Add(
-            () => new Dictionary<string, string> { ["key"] = value },
-            () => stamp
-        );
+        builder.Add(() => new Dictionary<string, string> { ["key"] = value }, () => stamp);
 
         await using var firstRoot = await builder.BuildAsync();
         await using var secondRoot = await builder.BuildAsync();
@@ -140,15 +142,16 @@ public class CfgBuilderTests
     public async Task BuildAsync_WithPublicStreamParser_UsesInjectedStreamParserForBuiltInSourcePath()
     {
         var parserCalls = 0;
-        var builder = Cfg
-            .CreateBuilder()
-            .WithStreamParser(async (stream, ct) =>
-            {
-                parserCalls++;
-                using var reader = new StreamReader(stream);
-                var content = await reader.ReadToEndAsync(ct);
-                return new Dictionary<string, string> { ["parsed"] = $"custom:{content}" };
-            });
+        var builder = Cfg.CreateBuilder()
+            .WithStreamParser(
+                async (stream, ct) =>
+                {
+                    parserCalls++;
+                    using var reader = new StreamReader(stream);
+                    var content = await reader.ReadToEndAsync(ct);
+                    return new Dictionary<string, string> { ["parsed"] = $"custom:{content}" };
+                }
+            );
 
         builder.Add(() => new MemoryStream(Encoding.UTF8.GetBytes("not-valid-default-format")));
 
@@ -163,15 +166,19 @@ public class CfgBuilderTests
     {
         var parserCalls = 0;
         var defaultParser = CfgBuilder.CreateDefaultStreamParser();
-        var builder = Cfg
-            .CreateBuilder()
-            .WithStreamParser(async (stream, ct) =>
-            {
-                parserCalls++;
-                return await defaultParser(stream, ct);
-            });
+        var builder = Cfg.CreateBuilder()
+            .WithStreamParser(
+                async (stream, ct) =>
+                {
+                    parserCalls++;
+                    return await defaultParser(stream, ct);
+                }
+            );
 
-        builder.Add(() => new MemoryStream(Encoding.UTF8.GetBytes(" key = a=b=c \ninvalid\n\nother = value ")));
+        builder.Add(
+            () =>
+                new MemoryStream(Encoding.UTF8.GetBytes(" key = a=b=c \ninvalid\n\nother = value "))
+        );
 
         await using var root = await builder.BuildAsync();
 
@@ -191,8 +198,7 @@ public class CfgBuilderTests
             new MockSnapshot("provider", "before"),
             new MockSnapshot("provider", "after")
         );
-        var builder = Cfg
-            .CreateBuilder()
+        var builder = Cfg.CreateBuilder()
             .WithSnapshotComposer(_ => ++composeCalls == 1 ? initialSnapshot : reloadedSnapshot)
             .AddSource(new StaticSource(provider));
 
@@ -212,8 +218,7 @@ public class CfgBuilderTests
     {
         var composeCalls = 0;
         var defaultComposer = CfgBuilder.CreateDefaultSnapshotComposer();
-        var builder = Cfg
-            .CreateBuilder()
+        var builder = Cfg.CreateBuilder()
             .WithSnapshotComposer(providerSnapshots =>
             {
                 composeCalls++;

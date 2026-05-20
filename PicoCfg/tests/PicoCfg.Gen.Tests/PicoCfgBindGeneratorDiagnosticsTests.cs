@@ -29,7 +29,12 @@ public class PicoCfgBindGeneratorDiagnosticsTests
             """
         );
 
-        await AssertDiagnosticAsync(diagnostics, "PCFGGEN003", "ComplexSettings.Child", expectedCount: 2);
+        await AssertDiagnosticAsync(
+            diagnostics,
+            "PCFGGEN003",
+            "ComplexSettings.Child",
+            expectedCount: 2
+        );
     }
 
     [Test]
@@ -53,7 +58,12 @@ public class PicoCfgBindGeneratorDiagnosticsTests
             """
         );
 
-        await AssertDiagnosticAsync(diagnostics, "PCFGGEN004", "CollectionSettings.Values", expectedCount: 2);
+        await AssertDiagnosticAsync(
+            diagnostics,
+            "PCFGGEN004",
+            "CollectionSettings.Values",
+            expectedCount: 2
+        );
     }
 
     [Test]

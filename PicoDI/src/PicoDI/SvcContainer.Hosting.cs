@@ -241,10 +241,7 @@ public sealed partial class SvcContainer
         }
         catch (Exception ex)
         {
-            OnError?.Invoke(
-                ex,
-                "Error stopping hosted services during asynchronous disposal"
-            );
+            OnError?.Invoke(ex, "Error stopping hosted services during asynchronous disposal");
         }
     }
 }

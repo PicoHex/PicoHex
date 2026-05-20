@@ -11,12 +11,14 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_WithNullFactory_ThrowsArgumentNullException()
     {
-        await Assert.That(() =>
-                TestCfgFactory.CreateStreamProvider(
-                    null!,
-                    streamParser: CfgBuilder.CreateDefaultStreamParser(),
-                    state: TestCfgFactory.CreateProviderState()
-                )
+        await Assert
+            .That(
+                () =>
+                    TestCfgFactory.CreateStreamProvider(
+                        null!,
+                        streamParser: CfgBuilder.CreateDefaultStreamParser(),
+                        state: TestCfgFactory.CreateProviderState()
+                    )
             )
             .Throws<ArgumentNullException>();
     }
@@ -199,7 +201,9 @@ public class StreamCfgTests
     {
         var provider = TestCfgFactory.CreateStreamProvider(() => null!);
 
-        await Assert.That(async () => await provider.ReloadAsync()).Throws<InvalidOperationException>();
+        await Assert
+            .That(async () => await provider.ReloadAsync())
+            .Throws<InvalidOperationException>();
     }
 
     [Test]
@@ -346,9 +350,15 @@ public class StreamCfgTests
     public async Task StreamCfgProvider_ReloadAsync_CallsVersionStampFactoryOutsideLock()
     {
         StreamCfgProvider? provider = null;
-        var versionStampEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var allowVersionStampToExit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var snapshotReadCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var versionStampEntered = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        var allowVersionStampToExit = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        var snapshotReadCompleted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         provider = TestCfgFactory.CreateStreamProvider(
             () => new MemoryStream(Encoding.UTF8.GetBytes("key=value")),
             () =>
@@ -396,7 +406,9 @@ public class StreamCfgTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        await Assert.That(async () => await provider.ReloadAsync(cts.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await provider.ReloadAsync(cts.Token))
+            .Throws<OperationCanceledException>();
         await Assert.That(streamFactoryCalls).IsEqualTo(0);
         await Assert.That(versionStampCalls).IsEqualTo(0);
     }
@@ -422,7 +434,9 @@ public class StreamCfgTests
         using var cts = new CancellationTokenSource();
         cancellationSource = cts;
 
-        await Assert.That(async () => await provider.ReloadAsync(cts.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await provider.ReloadAsync(cts.Token))
+            .Throws<OperationCanceledException>();
         await Assert.That(streamFactoryCalls).IsEqualTo(0);
     }
 

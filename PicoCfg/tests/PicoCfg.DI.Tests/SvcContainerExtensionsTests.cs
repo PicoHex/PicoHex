@@ -39,9 +39,7 @@ public sealed class SvcContainerExtensionsTests
         await using var root = await CreateRootAsync(() => state, () => version);
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        container
-            .RegisterCfgRoot(root)
-            .RegisterCfgTransient<AppSettings>("App");
+        container.RegisterCfgRoot(root).RegisterCfgTransient<AppSettings>("App");
 
         await using var scope = container.CreateScope();
         var before = scope.GetService<AppSettings>();
@@ -67,9 +65,7 @@ public sealed class SvcContainerExtensionsTests
         await using var root = await CreateRootAsync(() => state, () => version);
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        container
-            .RegisterCfgRoot(root)
-            .RegisterCfgScoped<AppSettings>("App");
+        container.RegisterCfgRoot(root).RegisterCfgScoped<AppSettings>("App");
 
         await using var firstScope = container.CreateScope();
         var first = firstScope.GetService<AppSettings>();
@@ -100,9 +96,7 @@ public sealed class SvcContainerExtensionsTests
         await using var root = await CreateRootAsync(() => state, () => version);
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        container
-            .RegisterCfgRoot(root)
-            .RegisterCfgSingleton<AppSettings>("App");
+        container.RegisterCfgRoot(root).RegisterCfgSingleton<AppSettings>("App");
 
         await using var firstScope = container.CreateScope();
         var first = firstScope.GetService<AppSettings>();
@@ -127,7 +121,9 @@ public sealed class SvcContainerExtensionsTests
         container.RegisterCfgTransient<AppSettings>("App");
 
         await using var scope = container.CreateScope();
-        var thrown = await Assert.That(() => scope.GetService<AppSettings>()).Throws<InvalidOperationException>();
+        var thrown = await Assert
+            .That(() => scope.GetService<AppSettings>())
+            .Throws<InvalidOperationException>();
 
         await Assert.That(thrown).IsNotNull();
         await Assert.That(thrown.Message).Contains("RegisterCfgRoot(...)");
@@ -138,17 +134,12 @@ public sealed class SvcContainerExtensionsTests
         Func<int> versionFactory
     ) => await Cfg.CreateBuilder().Add(() => dataFactory(), () => versionFactory()).BuildAsync();
 
-    private static Dictionary<string, string> CreateSettingsData(string name, int count)
-        => new()
-        {
-            ["App:Name"] = name,
-            ["App:Count"] = count.ToString(),
-        };
+    private static Dictionary<string, string> CreateSettingsData(string name, int count) =>
+        new() { ["App:Name"] = name, ["App:Count"] = count.ToString(), };
 
     public sealed class AppSettings
     {
         public string? Name { get; set; }
         public int Count { get; set; }
     }
-
 }

@@ -11,8 +11,7 @@ public sealed class CfgBindTests
     [Test]
     public async Task Bind_BindsFromRootAsCfg()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(new Dictionary<string, string> { ["Name"] = "PicoCfg", ["Count"] = "42" })
             .BuildAsync();
 
@@ -25,8 +24,7 @@ public sealed class CfgBindTests
     [Test]
     public async Task Bind_BindsFromRootSnapshot()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(new Dictionary<string, string> { ["Name"] = "Runtime", ["Count"] = "7" })
             .BuildAsync();
 
@@ -39,8 +37,7 @@ public sealed class CfgBindTests
     [Test]
     public async Task Bind_BindsFromCfgWhenCfgIsRoot()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(new Dictionary<string, string> { ["Name"] = "Cfg", ["Count"] = "3" })
             .BuildAsync();
 
@@ -55,7 +52,9 @@ public sealed class CfgBindTests
     [Test]
     public async Task Bind_FromNonSnapshotCfg_SucceedsWhenKeysExist()
     {
-        ICfg cfg = new InlineCfg(new Dictionary<string, string> { ["Name"] = "Loose", ["Count"] = "5" });
+        ICfg cfg = new InlineCfg(
+            new Dictionary<string, string> { ["Name"] = "Loose", ["Count"] = "5" }
+        );
 
         var settings = CfgBind.Bind<PicoCfgBindRuntimeTests.FlatSettings>(cfg);
 
@@ -95,8 +94,7 @@ public sealed class CfgBindTests
     [Test]
     public async Task PartialBinding_StructPropertyDoesNotBlockScalars()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(new Dictionary<string, string> { ["Name"] = "app", ["Port"] = "8080" })
             .BuildAsync();
 
@@ -109,8 +107,7 @@ public sealed class CfgBindTests
     [Test]
     public async Task Bind_NestedNonCircularBindings_ResolvesChildProperties()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(
                 new Dictionary<string, string>
                 {

@@ -318,7 +318,8 @@ internal static class SvcScopeBenchmarkExtensions
         scope.GetService<T>() is T service
             ? service
             : throw new InvalidOperationException(
-                $"No service for type '{typeof(T)}' has been registered.");
+                $"No service for type '{typeof(T)}' has been registered."
+            );
 }
 
 /// <summary>

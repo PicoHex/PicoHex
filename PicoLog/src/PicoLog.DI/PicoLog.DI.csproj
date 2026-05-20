@@ -2,9 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
         <PackageId>PicoLog.DI</PackageId>
         <Description>PicoDI integration for PicoLog registration (AddPicoLog, WriteTo, ReadFrom).</Description>

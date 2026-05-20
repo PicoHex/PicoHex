@@ -15,18 +15,18 @@ public sealed class CfgOptionsExtensionsTests
     public async Task RegisterCfgOptionsSingleton_ResolvesSameInstance()
     {
         var builder = Cfg.CreateBuilder();
-        builder.Add(new Dictionary<string, string>
-        {
-            ["DIOptions:Name"] = "SingletonDI",
-            ["DIOptions:Count"] = "99",
-        });
+        builder.Add(
+            new Dictionary<string, string>
+            {
+                ["DIOptions:Name"] = "SingletonDI",
+                ["DIOptions:Count"] = "99",
+            }
+        );
 
         await using var root = await builder.BuildAsync();
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        container
-            .RegisterCfgRoot(root)
-            .RegisterCfgOptionsSingleton<OptionsTarget>("DIOptions");
+        container.RegisterCfgRoot(root).RegisterCfgOptionsSingleton<OptionsTarget>("DIOptions");
 
         await using var scope = container.CreateScope();
 
@@ -43,18 +43,18 @@ public sealed class CfgOptionsExtensionsTests
     public async Task RegisterCfgOptionsScoped_ResolvesPerScope()
     {
         var builder = Cfg.CreateBuilder();
-        builder.Add(new Dictionary<string, string>
-        {
-            ["ScopedOpts:Name"] = "ScopedDI",
-            ["ScopedOpts:Count"] = "50",
-        });
+        builder.Add(
+            new Dictionary<string, string>
+            {
+                ["ScopedOpts:Name"] = "ScopedDI",
+                ["ScopedOpts:Count"] = "50",
+            }
+        );
 
         await using var root = await builder.BuildAsync();
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        container
-            .RegisterCfgRoot(root)
-            .RegisterCfgOptionsScoped<OptionsTarget>("ScopedOpts");
+        container.RegisterCfgRoot(root).RegisterCfgOptionsScoped<OptionsTarget>("ScopedOpts");
 
         await using var firstScope = container.CreateScope();
         await using var secondScope = container.CreateScope();

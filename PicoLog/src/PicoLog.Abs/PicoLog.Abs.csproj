@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
@@ -9,7 +9,7 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoLog.Abs</PackageId>
         <Description>Abstractions for PicoLog structured logging (ILogger, ILogSink, LogLevel, LogEntry).</Description>
-        <PackageTags>PicoHex;Logging;AOT;SourceGenerator</PackageTags>
+        <PackageTags>PicoHex;Logging;AOT;Logging Injection;Abstractions</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 

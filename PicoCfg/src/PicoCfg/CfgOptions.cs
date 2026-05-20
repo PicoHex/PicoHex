@@ -5,7 +5,13 @@ namespace PicoCfg;
 /// Each <see cref="Value"/> access returns the same cached instance.
 /// </summary>
 /// <typeparam name="T">The bound configuration type.</typeparam>
-internal sealed class CfgOptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T> : ICfgOptions<T>
+internal sealed class CfgOptions<
+    [DynamicallyAccessedMembers(
+        DynamicallyAccessedMemberTypes.PublicConstructors
+            | DynamicallyAccessedMemberTypes.PublicProperties
+    )]
+        T
+> : ICfgOptions<T>
 {
     private readonly T _value;
 

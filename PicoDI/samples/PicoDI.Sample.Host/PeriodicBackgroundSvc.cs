@@ -8,9 +8,7 @@ public sealed class PeriodicBackgroundSvc(IGreeter greeter) : BackgroundSvc
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            Console.WriteLine(
-                $"[{DateTime.Now:HH:mm:ss}] {greeter.Greet("Background")}"
-            );
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {greeter.Greet("Background")}");
             await Task.Delay(2000, stoppingToken);
         }
     }

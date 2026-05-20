@@ -98,11 +98,8 @@ internal sealed class TypeParameterSubstitutor
             var resolvedArgs = namedType
                 .TypeArguments
                 .Select(
-                    ta => ResolveTypeParametersRecursive(
-                        ta,
-                        typeArgumentSymbols,
-                        typeParameterNames
-                    )
+                    ta =>
+                        ResolveTypeParametersRecursive(ta, typeArgumentSymbols, typeParameterNames)
                 )
                 .ToArray();
 

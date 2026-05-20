@@ -40,7 +40,10 @@ internal sealed class EnvCfgProvider : ICfgProvider
             var keyStr = (string)enumerator.Key;
             var valueStr = (string?)enumerator.Value;
 
-            if (_prefix is not null && !keyStr.StartsWith(_prefix, StringComparison.OrdinalIgnoreCase))
+            if (
+                _prefix is not null
+                && !keyStr.StartsWith(_prefix, StringComparison.OrdinalIgnoreCase)
+            )
                 continue;
 
             var configKey = _prefix is not null

@@ -3,15 +3,16 @@ using PicoCfg.Extensions;
 
 Console.WriteLine("=== PicoCfg.Gen AOT Binding Sample ===");
 
-await using var root = await Cfg
-    .CreateBuilder()
-    .Add(new Dictionary<string, string>
-    {
-        ["App:Name"] = "PicoCfg.Gen",
-        ["App:Enabled"] = "true",
-        ["App:Count"] = "42",
-        ["App:Mode"] = "Advanced",
-    })
+await using var root = await Cfg.CreateBuilder()
+    .Add(
+        new Dictionary<string, string>
+        {
+            ["App:Name"] = "PicoCfg.Gen",
+            ["App:Enabled"] = "true",
+            ["App:Count"] = "42",
+            ["App:Mode"] = "Advanced",
+        }
+    )
     .BuildAsync();
 
 var settings = CfgBind.Bind<AppSettings>(root, "App");
@@ -54,7 +55,9 @@ static void AssertEqual<T>(string name, T actual, T expected)
 {
     if (!EqualityComparer<T>.Default.Equals(actual, expected))
     {
-        throw new InvalidOperationException($"{name} mismatch. Expected '{expected}' but got '{actual}'.");
+        throw new InvalidOperationException(
+            $"{name} mismatch. Expected '{expected}' but got '{actual}'."
+        );
     }
 }
 

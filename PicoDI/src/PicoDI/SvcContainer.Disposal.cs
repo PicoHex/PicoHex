@@ -58,8 +58,8 @@ public sealed partial class SvcContainer
         if (frozen is not null)
         {
             foreach (var kvp in frozen)
-                foreach (var reg in kvp.Value)
-                    yield return reg;
+            foreach (var reg in kvp.Value)
+                yield return reg;
 
             yield break;
         }
@@ -68,8 +68,8 @@ public sealed partial class SvcContainer
         if (cache is not null)
         {
             foreach (var kvp in cache)
-                foreach (var reg in kvp.Value)
-                    yield return reg;
+            foreach (var reg in kvp.Value)
+                yield return reg;
         }
     }
 

@@ -14,9 +14,8 @@
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <PackageId>PicoCfg.Gen</PackageId>
         <Description>Source generator package for PicoCfg generated binding.</Description>
-        <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
+        <PackageTags>PicoHex;Configuration;AOT;Source Generator;Roslyn;Analyzer</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Initial PicoCfg.Gen release with source-generated binding for PicoCfg and bundled runtime helpers.</PackageReleaseNotes>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -46,9 +45,5 @@
         <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
         <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     </ItemGroup>
-
-    <PropertyGroup>
-        <AssemblyName>PicoCfg.Gen</AssemblyName>
-    </PropertyGroup>
 
 </Project>

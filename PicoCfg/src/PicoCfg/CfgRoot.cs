@@ -26,8 +26,8 @@ internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
         ArgumentNullException.ThrowIfNull(changeSignalFactory);
         _snapshotComposer = snapshotComposer;
         _changeSignalFactory = changeSignalFactory;
-        _providers = [.. providers];
-        _providerSnapshots = [.. _providers.Select(static provider => provider.Snapshot)];
+        _providers =  [.. providers];
+        _providerSnapshots =  [.. _providers.Select(static provider => provider.Snapshot)];
         _snapshot = _snapshotComposer(_providerSnapshots);
         _changeSignal = _changeSignalFactory();
     }
@@ -108,7 +108,7 @@ internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
                 }
                 catch (Exception ex)
                 {
-                    exceptions ??= [];
+                    exceptions ??=  [];
                     exceptions.Add(ex);
                 }
             }

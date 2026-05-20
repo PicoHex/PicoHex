@@ -47,23 +47,20 @@ public sealed class ILoggerStructuredCallSiteTests
             string Message,
             Exception? Exception,
             CancellationToken CancellationToken
-        )> AsyncEntries
-        { get; } = [];
+        )> AsyncEntries { get; } = [];
         public List<(
             LogLevel Level,
             string Message,
             IReadOnlyList<KeyValuePair<string, object?>>? Properties,
             Exception? Exception
-        )> SyncStructuredEntries
-        { get; } = [];
+        )> SyncStructuredEntries { get; } = [];
         public List<(
             LogLevel Level,
             string Message,
             IReadOnlyList<KeyValuePair<string, object?>>? Properties,
             Exception? Exception,
             CancellationToken CancellationToken
-        )> AsyncStructuredEntries
-        { get; } = [];
+        )> AsyncStructuredEntries { get; } = [];
 
         public IDisposable BeginScope<TState>(TState state)
             where TState : notnull => NoopDisposable.Instance;
@@ -107,16 +104,14 @@ public sealed class ILoggerStructuredCallSiteTests
             LogLevel logLevel,
             FormattableString message,
             Exception? exception = null
-        )
-        { }
+        ) { }
 
         public void Log(
             LogLevel logLevel,
             FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
             Exception? exception
-        )
-        { }
+        ) { }
 
         public Task LogAsync(
             LogLevel logLevel,
@@ -138,8 +133,7 @@ public sealed class ILoggerStructuredCallSiteTests
             EventId eventId,
             string message,
             Exception? exception = null
-        )
-        { }
+        ) { }
 
         public void Log(
             LogLevel logLevel,
@@ -147,8 +141,7 @@ public sealed class ILoggerStructuredCallSiteTests
             string message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
             Exception? exception
-        )
-        { }
+        ) { }
 
         public Task LogAsync(
             LogLevel logLevel,
@@ -172,8 +165,7 @@ public sealed class ILoggerStructuredCallSiteTests
             EventId eventId,
             FormattableString message,
             Exception? exception = null
-        )
-        { }
+        ) { }
 
         public void Log(
             LogLevel logLevel,
@@ -181,8 +173,7 @@ public sealed class ILoggerStructuredCallSiteTests
             FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
             Exception? exception
-        )
-        { }
+        ) { }
 
         public Task LogAsync(
             LogLevel logLevel,

@@ -12,10 +12,7 @@ public class EnvCfgTests
         {
             Environment.SetEnvironmentVariable(key, "expected_value");
 
-            await using var root = await Cfg
-                .CreateBuilder()
-                .AddEnvironmentVariables()
-                .BuildAsync();
+            await using var root = await Cfg.CreateBuilder().AddEnvironmentVariables().BuildAsync();
 
             await Assert.That(root.GetValue(key)).IsEqualTo("expected_value");
         }
@@ -34,8 +31,7 @@ public class EnvCfgTests
             Environment.SetEnvironmentVariable("MYTEST_Baz", "qux");
             Environment.SetEnvironmentVariable("OTHER_X", "y");
 
-            await using var root = await Cfg
-                .CreateBuilder()
+            await using var root = await Cfg.CreateBuilder()
                 .AddEnvironmentVariables("MYTEST_")
                 .BuildAsync();
 
@@ -58,8 +54,7 @@ public class EnvCfgTests
         {
             Environment.SetEnvironmentVariable("MYTEST_DB__HOST", "localhost");
 
-            await using var root = await Cfg
-                .CreateBuilder()
+            await using var root = await Cfg.CreateBuilder()
                 .AddEnvironmentVariables("MYTEST_")
                 .BuildAsync();
 
@@ -76,8 +71,7 @@ public class EnvCfgTests
     {
         var uniquePrefix = $"NONEXISTENT_{Guid.NewGuid():N}_";
 
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .AddEnvironmentVariables(uniquePrefix)
             .BuildAsync();
 

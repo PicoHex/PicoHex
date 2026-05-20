@@ -13,5 +13,4 @@ public static class CfgSnapshotExtensions
             throw new ArgumentNullException(nameof(cfg));
         return cfg.TryGetValue(path, out var value) ? value : null;
     }
-
 }

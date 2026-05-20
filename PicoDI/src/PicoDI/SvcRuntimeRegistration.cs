@@ -28,7 +28,7 @@ internal sealed class SvcRuntimeRegistration
         {
             throw new ArgumentException(
                 $"Service '{descriptor.ServiceType}' has both a Factory and a SingleInstance set. "
-                + "Use Factory for deferred construction or SingleInstance for a pre-built instance, not both.",
+                    + "Use Factory for deferred construction or SingleInstance for a pre-built instance, not both.",
                 nameof(descriptor)
             );
         }

@@ -15,9 +15,7 @@ internal sealed class OwnedLoggerFactory(LoggerFactory innerFactory, IAsyncDispo
 
     public void Dispose()
     {
-        Task.Run(async () => await DisposeAsync().ConfigureAwait(false))
-            .GetAwaiter()
-            .GetResult();
+        Task.Run(async () => await DisposeAsync().ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     public async ValueTask DisposeAsync()

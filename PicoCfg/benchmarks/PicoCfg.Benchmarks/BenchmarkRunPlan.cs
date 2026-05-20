@@ -4,7 +4,11 @@ internal sealed record BenchmarkRunPlan(
     MixedWorkloadScenario? MixedScenario
 )
 {
-    public static bool TryParse(IReadOnlyList<string> args, out BenchmarkRunPlan plan, out string? error)
+    public static bool TryParse(
+        IReadOnlyList<string> args,
+        out BenchmarkRunPlan plan,
+        out string? error
+    )
     {
         var includeBaselines = false;
         var includeReload = false;
@@ -45,7 +49,9 @@ internal sealed record BenchmarkRunPlan(
                     break;
 
                 case "--mixed-lookup-pass-count":
-                    if (!TryReadNonNegativeInt(args, ref i, out var lookupPassCountValue, out error))
+                    if (
+                        !TryReadNonNegativeInt(args, ref i, out var lookupPassCountValue, out error)
+                    )
                     {
                         plan = Invalid();
                         return false;
@@ -61,7 +67,8 @@ internal sealed record BenchmarkRunPlan(
             }
         }
 
-        var hasAnyMixedArgument = mixedN.HasValue || mixedProviderCount.HasValue || mixedLookupPassCount.HasValue;
+        var hasAnyMixedArgument =
+            mixedN.HasValue || mixedProviderCount.HasValue || mixedLookupPassCount.HasValue;
         if (!hasAnyMixedArgument)
         {
             plan = new BenchmarkRunPlan(includeBaselines, includeReload, null);
@@ -71,7 +78,8 @@ internal sealed record BenchmarkRunPlan(
 
         if (!mixedN.HasValue || !mixedProviderCount.HasValue || !mixedLookupPassCount.HasValue)
         {
-            error = "Single mixed scenario mode requires --mixed-n, --mixed-provider-count, and --mixed-lookup-pass-count together.";
+            error =
+                "Single mixed scenario mode requires --mixed-n, --mixed-provider-count, and --mixed-lookup-pass-count together.";
             plan = Invalid();
             return false;
         }
@@ -79,7 +87,11 @@ internal sealed record BenchmarkRunPlan(
         plan = new BenchmarkRunPlan(
             includeBaselines,
             includeReload,
-            new MixedWorkloadScenario(mixedN.Value, mixedProviderCount.Value, mixedLookupPassCount.Value)
+            new MixedWorkloadScenario(
+                mixedN.Value,
+                mixedProviderCount.Value,
+                mixedLookupPassCount.Value
+            )
         );
         error = null;
         return true;

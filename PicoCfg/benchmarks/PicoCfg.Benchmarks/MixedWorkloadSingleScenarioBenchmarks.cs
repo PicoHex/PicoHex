@@ -1,4 +1,6 @@
-[BenchmarkClass(Description = "Steady-state lookup: build once (GlobalSetup), measure lookup throughput (single scenario)")]
+[BenchmarkClass(
+    Description = "Steady-state lookup: build once (GlobalSetup), measure lookup throughput (single scenario)"
+)]
 public sealed partial class MixedWorkloadSingleScenarioBenchmarks
 {
     private readonly int _n;
@@ -36,7 +38,10 @@ public sealed partial class MixedWorkloadSingleScenarioBenchmarks
         for (var i = 0; i < _dataSets.Count; i++)
         {
             msBuilder.AddInMemoryCollection(
-                _dataSets[i].ToDictionary(static pair => pair.Key, static pair => (string?)pair.Value)
+                _dataSets[i].ToDictionary(
+                    static pair => pair.Key,
+                    static pair => (string?)pair.Value
+                )
             );
         }
 

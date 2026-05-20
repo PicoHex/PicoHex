@@ -76,7 +76,12 @@ internal static partial class ServiceRegistrationSourceEmitter
 
     private static string SanitizeIdentifier(string value)
     {
-        return new string(value.Select(c => c == '.' ? '_' : c).Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+        return new string(
+            value
+                .Select(c => c == '.' ? '_' : c)
+                .Where(c => char.IsLetterOrDigit(c) || c == '_')
+                .ToArray()
+        );
     }
 
     private static void AppendModuleInitializer(StringBuilder sb, string configuratorId)

@@ -21,7 +21,10 @@ public partial class ReloadBenchmarks
         for (var i = 0; i < N; i++)
             _dictionaryData[$"Section:Key{i}"] = $"Value{i}";
 
-        _streamContent = string.Join(Environment.NewLine, _dictionaryData.Select(pair => $"{pair.Key}={pair.Value}"));
+        _streamContent = string.Join(
+            Environment.NewLine,
+            _dictionaryData.Select(pair => $"{pair.Key}={pair.Value}")
+        );
 
         var builder = Cfg.CreateBuilder();
         builder.Add(_dictionaryData);
@@ -95,7 +98,12 @@ public partial class ReloadBenchmarks
     {
         _streamContent = string.Join(
             Environment.NewLine,
-            Enumerable.Range(0, N).Select(i => $"Section:Key{i}={(i == 0 ? $"Changed-{Environment.TickCount64}" : $"Value{i}")}")
+            Enumerable
+                .Range(0, N)
+                .Select(
+                    i =>
+                        $"Section:Key{i}={(i == 0 ? $"Changed-{Environment.TickCount64}" : $"Value{i}")}"
+                )
         );
         _streamVersionStamp++;
         _ = _streamStampedRoot.ReloadAsync().AsTask().GetAwaiter().GetResult();

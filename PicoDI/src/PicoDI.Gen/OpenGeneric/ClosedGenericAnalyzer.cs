@@ -107,10 +107,9 @@ internal sealed class ClosedGenericAnalyzer
         if (closeAngleIndex < 0 || closeAngleIndex <= angleIndex)
             return null;
 
-        var typeArgumentsSection = typeFullName.Substring(
-            angleIndex + 1,
-            closeAngleIndex - angleIndex - 1
-        ).Trim();
+        var typeArgumentsSection = typeFullName
+            .Substring(angleIndex + 1, closeAngleIndex - angleIndex - 1)
+            .Trim();
 
         if (typeArgumentsSection.Length == 0)
             return null;

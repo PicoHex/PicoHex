@@ -79,6 +79,7 @@ public sealed class CategoryFilterTests
         await Assert
             .That(entries.Select(e => (e.Level, e.Message)).ToArray())
             .IsEquivalentTo(
+
                 [
                     (LogLevel.Debug, (string?)"user-debug-passes"),
                     (LogLevel.Warning, (string?)"generic-warning-passes")

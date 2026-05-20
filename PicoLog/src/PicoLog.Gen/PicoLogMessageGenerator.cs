@@ -13,8 +13,8 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
             .SyntaxProvider
             .ForAttributeWithMetadataName(
                 AttributeMetadataName,
-                predicate: static (node, _) => node is MethodDeclarationSyntax m
-                    && m.Modifiers.Any(SyntaxKind.PartialKeyword),
+                predicate: static (node, _) =>
+                    node is MethodDeclarationSyntax m && m.Modifiers.Any(SyntaxKind.PartialKeyword),
                 transform: static (ctx, ct) =>
                 {
                     ct.ThrowIfCancellationRequested();
@@ -136,7 +136,8 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
     }
 
     private static Dictionary<string, List<MethodInfo>> GroupByClass(
-        ImmutableArray<MethodInfo> methods)
+        ImmutableArray<MethodInfo> methods
+    )
     {
         var groups = new Dictionary<string, List<MethodInfo>>();
         foreach (var method in methods)
@@ -247,7 +248,8 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
                     break;
                 case ')':
                 case ']':
-                    if (parenDepth > 0) parenDepth--;
+                    if (parenDepth > 0)
+                        parenDepth--;
                     break;
                 case '?':
                     // Second '?' of '??' is not a ternary start

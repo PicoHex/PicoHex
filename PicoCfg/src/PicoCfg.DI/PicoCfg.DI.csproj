@@ -2,9 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg.DI</PackageId>
         <Description>PicoDI registration helpers for PicoCfg roots, snapshots, and generated bound POCOs.</Description>
@@ -32,7 +32,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
     </ItemGroup>
 
 </Project>

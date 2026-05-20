@@ -17,7 +17,10 @@ public partial class ReloadControlBenchmarks
 
         _msConfig = new ConfigurationBuilder()
             .AddInMemoryCollection(
-                _dictionaryData.ToDictionary(static pair => pair.Key, static pair => (string?)pair.Value)
+                _dictionaryData.ToDictionary(
+                    static pair => pair.Key,
+                    static pair => (string?)pair.Value
+                )
             )
             .Build();
 

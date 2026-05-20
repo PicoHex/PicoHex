@@ -5,8 +5,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_EqualsFormat_ParsesCorrectly()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .AddCommandLine(["--Name=PicoCfg", "--Count=42"])
             .BuildAsync();
 
@@ -17,8 +16,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_SpaceFormat_ParsesCorrectly()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .AddCommandLine(["--Name", "PicoCfg", "--Count", "42"])
             .BuildAsync();
 
@@ -29,10 +27,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_Switch_BecomesTrue()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
-            .AddCommandLine(["--Verbose"])
-            .BuildAsync();
+        await using var root = await Cfg.CreateBuilder().AddCommandLine(["--Verbose"]).BuildAsync();
 
         await Assert.That(root.GetValue("Verbose")).IsEqualTo("true");
     }
@@ -40,8 +35,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_ShortForm_ParsesCorrectly()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .AddCommandLine(["-n", "PicoCfg"])
             .BuildAsync();
 
@@ -51,8 +45,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_WindowsForm_ParsesCorrectly()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .AddCommandLine(["/Port", "8080"])
             .BuildAsync();
 
@@ -62,8 +55,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_EqualsInValue_Preserved()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .AddCommandLine(["--Conn=Host=localhost;Port=5432"])
             .BuildAsync();
 
@@ -73,8 +65,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_Prefix_FiltersCorrectly()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .AddCommandLine(["--App:Name=Pico", "--Db:Host=localhost"], "App:")
             .BuildAsync();
 
@@ -85,10 +76,7 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_EmptyArgs_ReturnsEmptyConfig()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
-            .AddCommandLine([])
-            .BuildAsync();
+        await using var root = await Cfg.CreateBuilder().AddCommandLine([]).BuildAsync();
 
         await Assert.That(root.GetValue("anything")).IsNull();
     }
@@ -96,17 +84,10 @@ public class CmdLineCfgTests
     [Test]
     public async Task AddCommandLine_MixedFormats_AllParsedCorrectly()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
-            .AddCommandLine([
-                "--Mode=full",
-                "--Name",
-                "PicoCfg",
-                "-v",
-                "/Port",
-                "8080",
-                "--Verbose",
-            ])
+        await using var root = await Cfg.CreateBuilder()
+            .AddCommandLine(
+                ["--Mode=full", "--Name", "PicoCfg", "-v", "/Port", "8080", "--Verbose",]
+            )
             .BuildAsync();
 
         await Assert.That(root.GetValue("Mode")).IsEqualTo("full");

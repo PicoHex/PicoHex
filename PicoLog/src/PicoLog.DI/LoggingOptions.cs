@@ -36,7 +36,7 @@ public sealed class LoggingOptions
         copy.Factory.OnMessagesDropped = factory.OnMessagesDropped;
         copy.Factory.TimestampProvider = factory.TimestampProvider;
         copy.Factory.ShutdownTimeout = factory.ShutdownTimeout;
-        copy.Factory.FilterRules = [.. factory.FilterRules];
+        copy.Factory.FilterRules =  [.. factory.FilterRules];
 
         foreach (var registration in WriteTo.Registrations)
         {

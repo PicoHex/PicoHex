@@ -29,7 +29,10 @@ internal sealed class CmdLineCfgProvider : ICfgProvider
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     private static Dictionary<string, string> ParseArgs(
-        string[] args, string? prefix, CancellationToken ct)
+        string[] args,
+        string? prefix,
+        CancellationToken ct
+    )
     {
         var result = new Dictionary<string, string>(args.Length);
 
@@ -75,10 +78,12 @@ internal sealed class CmdLineCfgProvider : ICfgProvider
             else
             {
                 key = rawKey;
-                if (i + 1 < args.Length
+                if (
+                    i + 1 < args.Length
                     && args[i + 1].Length > 0
                     && args[i + 1][0] != '-'
-                    && args[i + 1][0] != '/')
+                    && args[i + 1][0] != '/'
+                )
                 {
                     value = args[i + 1];
                     i++;

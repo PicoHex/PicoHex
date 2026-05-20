@@ -32,7 +32,10 @@ public partial class BuildBenchmarks
         for (var i = 0; i < _dataSets.Count; i++)
         {
             builder.AddInMemoryCollection(
-                _dataSets[i].ToDictionary(static pair => pair.Key, static pair => (string?)pair.Value)
+                _dataSets[i].ToDictionary(
+                    static pair => pair.Key,
+                    static pair => (string?)pair.Value
+                )
             );
         }
 

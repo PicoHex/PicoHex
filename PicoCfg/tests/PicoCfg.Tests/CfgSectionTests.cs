@@ -5,13 +5,14 @@ public class CfgSectionTests
     [Test]
     public async Task GetSection_ReturnsScopedView()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
-            .Add(new Dictionary<string, string>
-            {
-                ["Logging:Level"] = "Debug",
-                ["App:Name"] = "Pico",
-            })
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Logging:Level"] = "Debug",
+                    ["App:Name"] = "Pico",
+                }
+            )
             .BuildAsync();
 
         var loggingSection = root.GetSection("Logging");
@@ -23,8 +24,7 @@ public class CfgSectionTests
     [Test]
     public async Task GetSection_Nested_ComposesCorrectly()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(new Dictionary<string, string> { ["A:B:C"] = "deep" })
             .BuildAsync();
 
@@ -39,7 +39,10 @@ public class CfgSectionTests
         var stamp = 1;
         var value = "before";
         var builder = Cfg.CreateBuilder();
-        builder.Add(() => new Dictionary<string, string> { ["Logging:Level"] = value }, () => stamp);
+        builder.Add(
+            () => new Dictionary<string, string> { ["Logging:Level"] = value },
+            () => stamp
+        );
         await using var root = await builder.BuildAsync();
         var section = root.GetSection("Logging");
 
@@ -56,8 +59,7 @@ public class CfgSectionTests
     [Test]
     public async Task GetSection_EmptyPath_IsIdentity()
     {
-        await using var root = await Cfg
-            .CreateBuilder()
+        await using var root = await Cfg.CreateBuilder()
             .Add(new Dictionary<string, string> { ["Key"] = "value" })
             .BuildAsync();
 

@@ -571,9 +571,7 @@ public class SingletonLifetimeTests
         }
 
         // Diagnostics only — documented race window makes this non-deterministic.
-        TestContext.Current?.OutputWriter?.WriteLine(
-            $"Bug 11 race window hits: {failures} / 500"
-        );
+        TestContext.Current?.OutputWriter?.WriteLine($"Bug 11 race window hits: {failures} / 500");
     }
 
     #endregion

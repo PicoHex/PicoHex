@@ -35,13 +35,14 @@ internal static class TestCfgFactory
         Func<CfgProviderState>? providerStateFactory = null
     )
     {
-        return new StreamCfgSource(() =>
-            CreateStreamProvider(
-                streamFactory,
-                versionStampFactory,
-                streamParser,
-                providerStateFactory?.Invoke() ?? CreateProviderState()
-            )
+        return new StreamCfgSource(
+            () =>
+                CreateStreamProvider(
+                    streamFactory,
+                    versionStampFactory,
+                    streamParser,
+                    providerStateFactory?.Invoke() ?? CreateProviderState()
+                )
         );
     }
 
@@ -51,7 +52,11 @@ internal static class TestCfgFactory
         CfgProviderState? state = null
     )
     {
-        return new DictionaryCfgProvider(dataFactory, versionStampFactory, state ?? CreateProviderState());
+        return new DictionaryCfgProvider(
+            dataFactory,
+            versionStampFactory,
+            state ?? CreateProviderState()
+        );
     }
 
     public static DictionaryCfgSource CreateDictionarySource(
@@ -69,12 +74,13 @@ internal static class TestCfgFactory
         Func<CfgProviderState>? providerStateFactory = null
     )
     {
-        return new DictionaryCfgSource(() =>
-            CreateDictionaryProvider(
-                dataFactory,
-                versionStampFactory,
-                providerStateFactory?.Invoke() ?? CreateProviderState()
-            )
+        return new DictionaryCfgSource(
+            () =>
+                CreateDictionaryProvider(
+                    dataFactory,
+                    versionStampFactory,
+                    providerStateFactory?.Invoke() ?? CreateProviderState()
+                )
         );
     }
 
@@ -87,7 +93,9 @@ internal static class TestCfgFactory
         return new CfgRoot(
             providers,
             snapshotComposer
-                ?? CfgBuilder.CreateDefaultSnapshotComposer(CfgBuilder.CreateDefaultSnapshotFactory()),
+                ?? CfgBuilder.CreateDefaultSnapshotComposer(
+                    CfgBuilder.CreateDefaultSnapshotFactory()
+                ),
             changeSignalFactory ?? CfgBuilder.CreateDefaultChangeSignalFactory()
         );
     }

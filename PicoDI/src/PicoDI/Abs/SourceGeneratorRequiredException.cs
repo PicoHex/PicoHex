@@ -9,8 +9,7 @@ public sealed class SourceGeneratorRequiredException : InvalidOperationException
     public SourceGeneratorRequiredException()
         : base(
             "Compile-time generated registrations are required. Ensure PicoDI.Gen runs and call ConfigureGeneratedServices()."
-        )
-    { }
+        ) { }
 
     public SourceGeneratorRequiredException(string? message)
         : base(message) { }

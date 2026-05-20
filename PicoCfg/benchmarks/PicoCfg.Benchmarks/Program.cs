@@ -88,6 +88,9 @@ var outputFileName = runPlan.MixedScenario is { } scenario
     ? $"results-mixed-n{scenario.N}-p{scenario.ProviderCount}-l{scenario.LookupPassCount}.md"
     : "results.md";
 
-File.WriteAllText(Path.Combine(outputDir, outputFileName), string.Join(Environment.NewLine, sections));
+File.WriteAllText(
+    Path.Combine(outputDir, outputFileName),
+    string.Join(Environment.NewLine, sections)
+);
 
 Console.WriteLine($"\nResults saved to: {outputDir}");

@@ -163,8 +163,7 @@ await Test(
 
         await using var root = await builder.BuildAsync();
 
-        return root.GetValue("Key1") == "Value1"
-            && root.GetValue("Key2") == "Value2";
+        return root.GetValue("Key1") == "Value1" && root.GetValue("Key2") == "Value2";
     }
 );
 
@@ -193,14 +192,16 @@ await Test(
 );
 
 Console.WriteLine("=== Environment Variables ===");
+
 // Demo: Read all env vars with a prefix
 // Note: Set some env vars before running, e.g., set MYAPP_NAME=PicoCfg
-await using var envRoot = await Cfg.CreateBuilder()
-    .AddEnvironmentVariables()
-    .BuildAsync();
-Console.WriteLine($"  PATH = {envRoot.GetValue("PATH")?.Substring(0, Math.Min(50, envRoot.GetValue("PATH")?.Length ?? 0))}...");
+await using var envRoot = await Cfg.CreateBuilder().AddEnvironmentVariables().BuildAsync();
+Console.WriteLine(
+    $"  PATH = {envRoot.GetValue("PATH")?.Substring(0, Math.Min(50, envRoot.GetValue("PATH")?.Length ?? 0))}..."
+);
 
 Console.WriteLine("=== Command-Line ===");
+
 // Demo: Parse command-line args
 await using var cmdRoot = await Cfg.CreateBuilder()
     .AddCommandLine(["--Name=PicoCfg", "--Count", "42", "--Verbose"])
@@ -210,6 +211,7 @@ Console.WriteLine($"  Count = {cmdRoot.GetValue("Count")}");
 Console.WriteLine($"  Verbose = {cmdRoot.GetValue("Verbose")}");
 
 Console.WriteLine("=== GetSection ===");
+
 // Demo: Hierarchical sections
 await using var sectionRoot = await Cfg.CreateBuilder()
     .Add("Logging:Level=Debug\nLogging:Console=true\nApp:Name=PicoCfg")
@@ -217,10 +219,12 @@ await using var sectionRoot = await Cfg.CreateBuilder()
 var logSection = sectionRoot.GetSection("Logging");
 Console.WriteLine($"  Logging:Level = {logSection.GetValue("Level")}");
 Console.WriteLine($"  Logging:Console = {logSection.GetValue("Console")}");
+
 // Out-of-section lookup returns null
 Console.WriteLine($"  Logging.App:Name = {logSection.GetValue("App:Name")} (should be null)");
 
 Console.WriteLine("=== GetAll ===");
+
 // Demo: Enumerate all configuration
 await using var enumRoot = await Cfg.CreateBuilder()
     .Add("Key1=Value1\nKey2=Value2\nKey3=Value3")
@@ -231,6 +235,7 @@ foreach (var (key, value) in all)
     Console.WriteLine($"  {key} = {value}");
 
 Console.WriteLine("=== Key-Per-File ===");
+
 // Demo: Key-per-file source (if temp directory available)
 try
 {
@@ -238,16 +243,18 @@ try
     Directory.CreateDirectory(kpfDir);
     File.WriteAllText(Path.Combine(kpfDir, "name"), "PicoCfg");
     File.WriteAllText(Path.Combine(kpfDir, "port"), "8080");
-    await using var kpfRoot = await Cfg.CreateBuilder()
-        .AddKeyPerFile(kpfDir)
-        .BuildAsync();
+    await using var kpfRoot = await Cfg.CreateBuilder().AddKeyPerFile(kpfDir).BuildAsync();
     Console.WriteLine($"  name = {kpfRoot.GetValue("name")}");
     Console.WriteLine($"  port = {kpfRoot.GetValue("port")}");
     Directory.Delete(kpfDir, true);
 }
-catch { Console.WriteLine("  (Key-per-file demo skipped)"); }
+catch
+{
+    Console.WriteLine("  (Key-per-file demo skipped)");
+}
 
 Console.WriteLine("=== Validation ===");
+
 // Demo: Bind and validate
 try
 {
@@ -256,7 +263,9 @@ try
         .BuildAsync();
     var settings = CfgBind.Bind<AppSettings>(validRoot, "App");
     CfgValidator.ValidateOrThrow(settings);
-    Console.WriteLine($"  Name = {settings.Name}, Enabled = {settings.Enabled}, Count = {settings.Count}");
+    Console.WriteLine(
+        $"  Name = {settings.Name}, Enabled = {settings.Enabled}, Count = {settings.Count}"
+    );
 
     // Demo: Invalid config
     await using var invalidRoot = await Cfg.CreateBuilder()
@@ -273,6 +282,7 @@ catch (CfgValidationException ex)
 }
 
 Console.WriteLine("=== Chained Configuration ===");
+
 // Demo: Chain one config into another
 await using var baseRoot = await Cfg.CreateBuilder()
     .Add("Shared:Key=baseValue\nOverride:Old=shouldBeOverridden")

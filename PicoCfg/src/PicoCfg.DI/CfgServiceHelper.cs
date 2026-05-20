@@ -57,6 +57,5 @@ internal static class CfgServiceHelper
     /// Binds a POCO of type <typeparamref name="T"/> from configuration resolved through the scope.
     /// </summary>
     internal static T Bind<T>(ISvcScope scope, string? section = null)
-        where T : class
-        => CfgBind.Bind<T>(ResolveCfg(scope), section);
+        where T : class => CfgBind.Bind<T>(ResolveCfg(scope), section);
 }

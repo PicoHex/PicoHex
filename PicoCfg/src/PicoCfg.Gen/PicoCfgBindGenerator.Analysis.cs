@@ -428,14 +428,14 @@ public sealed partial class PicoCfgBindGenerator
                 case INamedTypeSymbol { IsUnboundGenericType: true }:
                     return true;
                 case INamedTypeSymbol namedType:
+                {
+                    if (Enumerable.Any(namedType.TypeArguments, ContainsTypeParameter))
                     {
-                        if (Enumerable.Any(namedType.TypeArguments, ContainsTypeParameter))
-                        {
-                            return true;
-                        }
-
-                        break;
+                        return true;
                     }
+
+                    break;
+                }
             }
 
             return false;

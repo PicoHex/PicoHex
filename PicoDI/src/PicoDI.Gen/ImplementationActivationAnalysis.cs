@@ -124,14 +124,13 @@ internal static class ImplementationActivationAnalyzer
             ];
     }
 
-    private static ImmutableArray<ITypeSymbol> GetConstructorParameterTypeSymbols(IMethodSymbol? constructor)
+    private static ImmutableArray<ITypeSymbol> GetConstructorParameterTypeSymbols(
+        IMethodSymbol? constructor
+    )
     {
         return constructor is null
             ? ImmutableArray<ITypeSymbol>.Empty
-            :
-            [
-                .. constructor.Parameters.Select(p => p.Type)
-            ];
+            : [.. constructor.Parameters.Select(p => p.Type)];
     }
 
     private static bool HasSvcConstructorAttribute(IMethodSymbol constructor)

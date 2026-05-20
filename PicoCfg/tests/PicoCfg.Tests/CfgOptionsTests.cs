@@ -15,11 +15,13 @@ public sealed class CfgOptionsTests
     public async Task CfgOptions_Singleton_CachesValue()
     {
         var builder = Cfg.CreateBuilder();
-        builder.Add(new Dictionary<string, string>
-        {
-            ["Options:Name"] = "Singleton",
-            ["Options:Count"] = "42",
-        });
+        builder.Add(
+            new Dictionary<string, string>
+            {
+                ["Options:Name"] = "Singleton",
+                ["Options:Count"] = "42",
+            }
+        );
 
         await using var root = await builder.BuildAsync();
 

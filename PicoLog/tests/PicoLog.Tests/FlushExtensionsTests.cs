@@ -116,8 +116,7 @@ public sealed class FlushExtensionsTests
             string message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
             Exception? exception
-        )
-        { }
+        ) { }
 
         public Task LogAsync(
             LogLevel logLevel,
@@ -138,16 +137,14 @@ public sealed class FlushExtensionsTests
             LogLevel logLevel,
             FormattableString message,
             Exception? exception = null
-        )
-        { }
+        ) { }
 
         public void Log(
             LogLevel logLevel,
             FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
             Exception? exception
-        )
-        { }
+        ) { }
 
         public Task LogAsync(
             LogLevel logLevel,
@@ -169,8 +166,7 @@ public sealed class FlushExtensionsTests
             EventId eventId,
             string message,
             Exception? exception = null
-        )
-        { }
+        ) { }
 
         public void Log(
             LogLevel logLevel,
@@ -178,8 +174,7 @@ public sealed class FlushExtensionsTests
             string message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
             Exception? exception
-        )
-        { }
+        ) { }
 
         public Task LogAsync(
             LogLevel logLevel,
@@ -203,8 +198,7 @@ public sealed class FlushExtensionsTests
             EventId eventId,
             FormattableString message,
             Exception? exception = null
-        )
-        { }
+        ) { }
 
         public void Log(
             LogLevel logLevel,
@@ -212,8 +206,7 @@ public sealed class FlushExtensionsTests
             FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
             Exception? exception
-        )
-        { }
+        ) { }
 
         public Task LogAsync(
             LogLevel logLevel,

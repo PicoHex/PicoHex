@@ -148,7 +148,9 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         try
         {
             using var drainCts =
-                shutdownTimeout > TimeSpan.Zero ? new CancellationTokenSource(shutdownTimeout) : null;
+                shutdownTimeout > TimeSpan.Zero
+                    ? new CancellationTokenSource(shutdownTimeout)
+                    : null;
 
             if (drainCts is not null)
                 _sinkDispatcher.BeginDrain(drainCts.Token);

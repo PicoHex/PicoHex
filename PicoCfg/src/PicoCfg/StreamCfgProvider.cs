@@ -4,7 +4,11 @@ internal sealed class StreamCfgProvider : ICfgProvider
 {
     private readonly Func<Stream> _streamFactory;
     private readonly Func<object?>? _versionStampFactory;
-    private readonly Func<Stream, CancellationToken, Task<Dictionary<string, string>>> _streamParser;
+    private readonly Func<
+        Stream,
+        CancellationToken,
+        Task<Dictionary<string, string>>
+    > _streamParser;
     private readonly CfgProviderState _state;
 
     internal StreamCfgProvider(

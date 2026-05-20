@@ -5,7 +5,13 @@ namespace PicoCfg;
 /// Each <see cref="Value"/> call creates a new instance from the underlying configuration.
 /// </summary>
 /// <typeparam name="T">The bound configuration type.</typeparam>
-internal sealed class CfgOptionsSnapshot<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T> : ICfgOptions<T>
+internal sealed class CfgOptionsSnapshot<
+    [DynamicallyAccessedMembers(
+        DynamicallyAccessedMemberTypes.PublicConstructors
+            | DynamicallyAccessedMemberTypes.PublicProperties
+    )]
+        T
+> : ICfgOptions<T>
 {
     private readonly ICfg _cfg;
     private readonly string? _section;

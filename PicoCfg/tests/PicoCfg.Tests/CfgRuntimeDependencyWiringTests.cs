@@ -12,8 +12,7 @@ public class CfgRuntimeDependencyWiringTests
             new CfgSnapshot(new Dictionary<string, string> { ["key"] = "before" }),
             new CfgSnapshot(new Dictionary<string, string> { ["key"] = "after" })
         );
-        var builder = Cfg
-            .CreateBuilder()
+        var builder = Cfg.CreateBuilder()
             .WithChangeSignalFactory(() => signals.Dequeue())
             .AddSource(new StaticSource(provider));
 
@@ -33,10 +32,10 @@ public class CfgRuntimeDependencyWiringTests
     [Test]
     public async Task BuildAsync_DefaultComposer_UsesInjectedSnapshotFactoryForFlattenedNativeSnapshots()
     {
-        var composedSnapshot = new CfgSnapshot(new Dictionary<string, string> { ["composed"] = "from-factory" });
-        var builder = Cfg
-            .CreateBuilder()
-            .WithSnapshotFactory((_, _) => composedSnapshot);
+        var composedSnapshot = new CfgSnapshot(
+            new Dictionary<string, string> { ["composed"] = "from-factory" }
+        );
+        var builder = Cfg.CreateBuilder().WithSnapshotFactory((_, _) => composedSnapshot);
 
         builder.Add(new Dictionary<string, string> { ["first"] = "one" });
         builder.Add(new Dictionary<string, string> { ["second"] = "two" });
@@ -49,11 +48,13 @@ public class CfgRuntimeDependencyWiringTests
     [Test]
     public async Task BuildAsync_WithInjectedProviderStateFactory_UsesCustomProviderStateForBuiltInDictionarySource()
     {
-        var publishedSnapshot = new CfgSnapshot(new Dictionary<string, string> { ["key"] = "from-factory" });
-        var builder = Cfg
-            .CreateBuilder()
-            .WithProviderStateFactory(() =>
-                TestCfgFactory.CreateProviderState(snapshotFactory: (_, _) => publishedSnapshot)
+        var publishedSnapshot = new CfgSnapshot(
+            new Dictionary<string, string> { ["key"] = "from-factory" }
+        );
+        var builder = Cfg.CreateBuilder()
+            .WithProviderStateFactory(
+                () =>
+                    TestCfgFactory.CreateProviderState(snapshotFactory: (_, _) => publishedSnapshot)
             );
 
         builder.Add(new Dictionary<string, string> { ["key"] = "from-source" });
@@ -66,7 +67,9 @@ public class CfgRuntimeDependencyWiringTests
     [Test]
     public async Task DictionaryCfgProvider_WithInjectedProviderStateFactory_UsesExplicitStateDependencies()
     {
-        var publishedSnapshot = new CfgSnapshot(new Dictionary<string, string> { ["key"] = "from-factory" });
+        var publishedSnapshot = new CfgSnapshot(
+            new Dictionary<string, string> { ["key"] = "from-factory" }
+        );
         var initialSignal = new CfgChangeSignal();
         var nextSignal = new CfgChangeSignal();
         var signals = new Queue<CfgChangeSignal>([initialSignal, nextSignal]);

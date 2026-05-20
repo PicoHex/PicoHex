@@ -221,9 +221,15 @@ public class DictionaryCfgTests
     public async Task DictionaryCfgProvider_ReloadAsync_CallsVersionStampFactoryOutsideLock()
     {
         DictionaryCfgProvider? provider = null;
-        var versionStampEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var allowVersionStampToExit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var snapshotReadCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var versionStampEntered = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        var allowVersionStampToExit = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        var snapshotReadCompleted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         provider = TestCfgFactory.CreateDictionaryProvider(
             () => new Dictionary<string, string> { ["key"] = "value" },
             () =>
@@ -271,7 +277,9 @@ public class DictionaryCfgTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        await Assert.That(async () => await provider.ReloadAsync(cts.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await provider.ReloadAsync(cts.Token))
+            .Throws<OperationCanceledException>();
         await Assert.That(dataFactoryCalls).IsEqualTo(0);
         await Assert.That(versionStampCalls).IsEqualTo(0);
     }
@@ -297,7 +305,9 @@ public class DictionaryCfgTests
         using var cts = new CancellationTokenSource();
         cancellationSource = cts;
 
-        await Assert.That(async () => await provider.ReloadAsync(cts.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await provider.ReloadAsync(cts.Token))
+            .Throws<OperationCanceledException>();
         await Assert.That(dataFactoryCalls).IsEqualTo(0);
         await Assert.That(provider.Snapshot).IsSameReferenceAs(CfgSnapshot.Empty);
     }
@@ -313,7 +323,9 @@ public class DictionaryCfgTests
         );
         var provider = TestCfgFactory.CreateDictionaryProvider(() => sequence);
 
-        await Assert.That(async () => await provider.ReloadAsync(cts.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await provider.ReloadAsync(cts.Token))
+            .Throws<OperationCanceledException>();
         await Assert.That(provider.Snapshot).IsSameReferenceAs(CfgSnapshot.Empty);
         await Assert.That(provider.Snapshot.GetValue("key")).IsNull();
     }
@@ -331,6 +343,7 @@ public class DictionaryCfgTests
             yield return second;
         }
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() =>
+            GetEnumerator();
     }
 }

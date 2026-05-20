@@ -18,9 +18,7 @@ public class KeyPerFileCfgTests
             File.WriteAllText(Path.Combine(dir, "name"), "PicoCfg", Encoding.UTF8);
             File.WriteAllText(Path.Combine(dir, "port"), "8080", Encoding.UTF8);
 
-            await using var root = await Cfg.CreateBuilder()
-                .AddKeyPerFile(dir)
-                .BuildAsync();
+            await using var root = await Cfg.CreateBuilder().AddKeyPerFile(dir).BuildAsync();
 
             await root.ReloadAsync();
 
@@ -29,7 +27,13 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 
@@ -42,9 +46,7 @@ public class KeyPerFileCfgTests
             File.WriteAllText(Path.Combine(dir, "visible"), "yes", Encoding.UTF8);
             File.WriteAllText(Path.Combine(dir, ".hidden"), "no", Encoding.UTF8);
 
-            await using var root = await Cfg.CreateBuilder()
-                .AddKeyPerFile(dir)
-                .BuildAsync();
+            await using var root = await Cfg.CreateBuilder().AddKeyPerFile(dir).BuildAsync();
 
             await root.ReloadAsync();
 
@@ -53,7 +55,13 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 
@@ -63,9 +71,7 @@ public class KeyPerFileCfgTests
         var dir = CreateTempDir();
         try
         {
-            await using var root = await Cfg.CreateBuilder()
-                .AddKeyPerFile(dir)
-                .BuildAsync();
+            await using var root = await Cfg.CreateBuilder().AddKeyPerFile(dir).BuildAsync();
 
             await root.ReloadAsync();
 
@@ -74,14 +80,23 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 
     [Test]
     public async Task AddKeyPerFile_NonExistentDirectory_ReturnsEmptyConfig()
     {
-        var nonExistentPath = Path.Combine(Path.GetTempPath(), $"PicoCfg_NonExist_{Guid.NewGuid():N}");
+        var nonExistentPath = Path.Combine(
+            Path.GetTempPath(),
+            $"PicoCfg_NonExist_{Guid.NewGuid():N}"
+        );
 
         await using var root = await Cfg.CreateBuilder()
             .AddKeyPerFile(nonExistentPath)
@@ -113,7 +128,13 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 
@@ -125,9 +146,7 @@ public class KeyPerFileCfgTests
         {
             File.WriteAllText(Path.Combine(dir, "key"), "value\n", Encoding.UTF8);
 
-            await using var root = await Cfg.CreateBuilder()
-                .AddKeyPerFile(dir)
-                .BuildAsync();
+            await using var root = await Cfg.CreateBuilder().AddKeyPerFile(dir).BuildAsync();
 
             await root.ReloadAsync();
 
@@ -135,7 +154,13 @@ public class KeyPerFileCfgTests
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 
@@ -149,19 +174,24 @@ public class KeyPerFileCfgTests
             for (var i = 0; i < 100; i++)
                 File.WriteAllText(Path.Combine(dir, $"file_{i:D4}"), $"value_{i}", Encoding.UTF8);
 
-            await using var root = await Cfg.CreateBuilder()
-                .AddKeyPerFile(dir)
-                .BuildAsync();
+            await using var root = await Cfg.CreateBuilder().AddKeyPerFile(dir).BuildAsync();
 
             using var cts = new CancellationTokenSource();
             await cts.CancelAsync();
 
-            await Assert.That(async () => await root.ReloadAsync(cts.Token))
+            await Assert
+                .That(async () => await root.ReloadAsync(cts.Token))
                 .Throws<OperationCanceledException>();
         }
         finally
         {
-            try { Directory.Delete(dir, true); } catch { /* best-effort cleanup */ }
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
         }
     }
 }

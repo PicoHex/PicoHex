@@ -18,7 +18,9 @@ public sealed class CfgValidatorTests
                 results.Add(new ValidationResult("Name is required.", [nameof(Name)]));
 
             if (Count < 1 || Count > 100)
-                results.Add(new ValidationResult("Count must be between 1 and 100.", [nameof(Count)]));
+                results.Add(
+                    new ValidationResult("Count must be between 1 and 100.", [nameof(Count)])
+                );
 
             return results;
         }
@@ -37,7 +39,8 @@ public sealed class CfgValidatorTests
     {
         var invalid = new ValidatableTarget { Name = null!, Count = 0 };
 
-        var ex = await Assert.That(() => CfgValidator.ValidateOrThrow(invalid))
+        var ex = await Assert
+            .That(() => CfgValidator.ValidateOrThrow(invalid))
             .Throws<CfgValidationException>();
 
         await Assert.That(ex!.TargetType).IsEqualTo(typeof(ValidatableTarget));
@@ -48,7 +51,8 @@ public sealed class CfgValidatorTests
     {
         var invalid = new ValidatableTarget { Name = null!, Count = 0 };
 
-        var ex = await Assert.That(() => CfgValidator.ValidateOrThrow(invalid))
+        var ex = await Assert
+            .That(() => CfgValidator.ValidateOrThrow(invalid))
             .Throws<CfgValidationException>();
 
         await Assert.That(ex!.Errors.Count).IsEqualTo(2);
@@ -74,19 +78,25 @@ public sealed class CfgValidatorTests
 
         await Assert.That(errors).IsNotNull();
         await Assert.That(errors).IsNotEmpty();
-        await Assert.That(errors.Any(e => e.MemberNames.Contains(nameof(ValidatableTarget.Name)))).IsTrue();
-        await Assert.That(errors.Any(e => e.MemberNames.Contains(nameof(ValidatableTarget.Count)))).IsTrue();
+        await Assert
+            .That(errors.Any(e => e.MemberNames.Contains(nameof(ValidatableTarget.Name))))
+            .IsTrue();
+        await Assert
+            .That(errors.Any(e => e.MemberNames.Contains(nameof(ValidatableTarget.Count))))
+            .IsTrue();
     }
 
     [Test]
     public async Task BindAndValidate_BindsAndValidates()
     {
         var builder = Cfg.CreateBuilder();
-        builder.Add(new Dictionary<string, string>
-        {
-            ["Validation:Name"] = "Bound",
-            ["Validation:Count"] = "50",
-        });
+        builder.Add(
+            new Dictionary<string, string>
+            {
+                ["Validation:Name"] = "Bound",
+                ["Validation:Count"] = "50",
+            }
+        );
 
         await using var root = await builder.BuildAsync();
 
@@ -101,14 +111,12 @@ public sealed class CfgValidatorTests
     {
         var builder = Cfg.CreateBuilder();
         // Missing the Count key so it stays at 0 (invalid range)
-        builder.Add(new Dictionary<string, string>
-        {
-            ["Validation:Name"] = "Bound",
-        });
+        builder.Add(new Dictionary<string, string> { ["Validation:Name"] = "Bound", });
 
         await using var root = await builder.BuildAsync();
 
-        await Assert.That(() => root.BindAndValidate<ValidatableTarget>("Validation"))
+        await Assert
+            .That(() => root.BindAndValidate<ValidatableTarget>("Validation"))
             .Throws<CfgValidationException>();
     }
 }

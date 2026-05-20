@@ -57,9 +57,7 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
 
         // Fire-and-forget: if the task hasn't completed inline, return Task.CompletedTask
         // to signal that startup is done. The background work continues on _executingTask.
-        return _executingTask is { IsCompleted: true }
-            ? _executingTask
-            : Task.CompletedTask;
+        return _executingTask is { IsCompleted: true } ? _executingTask : Task.CompletedTask;
     }
 
     /// <summary>

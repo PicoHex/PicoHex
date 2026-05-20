@@ -2,7 +2,8 @@ namespace PicoCfg.Tests;
 
 public class CfgRootTests
 {
-    private static ICfgSnapshot SnapshotOf(CfgRoot root) => ((IInternalCfgRootSnapshotAccessor)root).CurrentSnapshot;
+    private static ICfgSnapshot SnapshotOf(CfgRoot root) =>
+        ((IInternalCfgRootSnapshotAccessor)root).CurrentSnapshot;
 
     [Test]
     public async Task Snapshot_WithNoProviders_ReturnsMissingValues()
@@ -35,6 +36,7 @@ public class CfgRootTests
     public async Task ReloadAsync_RefreshesSnapshotFromProviders()
     {
         var provider = new MockProvider(
+
             [
                 new Dictionary<string, string> { ["key"] = "before" },
                 new Dictionary<string, string> { ["key"] = "after" },
@@ -56,6 +58,7 @@ public class CfgRootTests
     public async Task ReloadAsync_WithoutDataChange_KeepsCurrentSnapshot()
     {
         var provider = new MockProvider(
+
             [
                 new Dictionary<string, string> { ["key"] = "same" },
                 new Dictionary<string, string> { ["key"] = "same" },
@@ -74,6 +77,7 @@ public class CfgRootTests
     public async Task ReloadAsync_WhenProviderReloadFails_PublishesObservedProviderStateBeforeRethrowing()
     {
         var provider1 = new MockProvider(
+
             [
                 new Dictionary<string, string> { ["key"] = "before" },
                 new Dictionary<string, string> { ["key"] = "after" },
@@ -103,7 +107,9 @@ public class CfgRootTests
 
         await Assert.That(async () => await root.ReloadAsync()).Throws<InvalidOperationException>();
         await Assert.That(SnapshotOf(root)).IsSameReferenceAs(originalSnapshot);
-        await Assert.That(async () => await root.WaitForChangeAsync(cts.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await root.WaitForChangeAsync(cts.Token))
+            .Throws<OperationCanceledException>();
         await Assert.That(root.GetValue("key")).IsEqualTo("same");
     }
 
@@ -146,6 +152,7 @@ public class CfgRootTests
     public async Task WaitForChangeAsync_CompletesWhenRootReloadUpdatesSnapshot()
     {
         var provider = new MockProvider(
+
             [
                 new Dictionary<string, string> { ["key"] = "before" },
                 new Dictionary<string, string> { ["key"] = "after" },
@@ -179,6 +186,7 @@ public class CfgRootTests
     public async Task WaitForChangeAsync_NewWaitTracksNextReload()
     {
         var provider = new MockProvider(
+
             [
                 new Dictionary<string, string> { ["key"] = "before" },
                 new Dictionary<string, string> { ["key"] = "after" },
@@ -239,7 +247,9 @@ public class CfgRootTests
         );
         var root = TestCfgFactory.CreateRoot([provider]);
 
-        await Assert.That(async () => await root.DisposeAsync()).Throws<InvalidOperationException>();
+        await Assert
+            .That(async () => await root.DisposeAsync())
+            .Throws<InvalidOperationException>();
         await Assert.That(provider.DisposeCalled).IsTrue();
     }
 
@@ -248,6 +258,7 @@ public class CfgRootTests
     {
         using var cancelSource = new CancellationTokenSource();
         var provider1 = new MockProvider(
+
             [
                 new Dictionary<string, string> { ["key"] = "before" },
                 new Dictionary<string, string> { ["key"] = "after" },
@@ -259,7 +270,9 @@ public class CfgRootTests
         using var waitCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var waitTask = root.WaitForChangeAsync(waitCts.Token).AsTask();
 
-        await Assert.That(async () => await root.ReloadAsync(cancelSource.Token)).Throws<OperationCanceledException>();
+        await Assert
+            .That(async () => await root.ReloadAsync(cancelSource.Token))
+            .Throws<OperationCanceledException>();
         await waitTask;
         await Assert.That(SnapshotOf(root)).IsNotSameReferenceAs(originalSnapshot);
         await Assert.That(root.GetValue("key")).IsEqualTo("after");
@@ -290,7 +303,9 @@ public class CfgRootTests
     public async Task ReloadAsync_WhenLaterProviderThrowsSynchronously_RethrowsCapturedFailureAfterStartedFaultsSettle()
     {
         var expected = new InvalidOperationException("Synchronous start failure.");
-        var provider1 = new DeferredFailingProvider(new ApplicationException("Deferred reload failure."));
+        var provider1 = new DeferredFailingProvider(
+            new ApplicationException("Deferred reload failure.")
+        );
         var provider2 = new ThrowingReloadProvider(expected);
         var root = TestCfgFactory.CreateRoot([provider1, provider2]);
 
@@ -298,7 +313,9 @@ public class CfgRootTests
         await provider1.WaitForReloadStartedAsync();
         provider1.FailReload();
 
-        var thrown = await Assert.That(async () => await reloadTask).Throws<InvalidOperationException>();
+        var thrown = await Assert
+            .That(async () => await reloadTask)
+            .Throws<InvalidOperationException>();
         await Assert.That(thrown).IsSameReferenceAs(expected);
     }
 
@@ -308,7 +325,11 @@ public class CfgRootTests
         var provider = new CountingDisposeProvider();
         var root = TestCfgFactory.CreateRoot([provider]);
 
-        await Task.WhenAll(root.DisposeAsync().AsTask(), root.DisposeAsync().AsTask(), root.DisposeAsync().AsTask());
+        await Task.WhenAll(
+            root.DisposeAsync().AsTask(),
+            root.DisposeAsync().AsTask(),
+            root.DisposeAsync().AsTask()
+        );
 
         await Assert.That(provider.DisposeCount).IsEqualTo(1);
     }
@@ -317,12 +338,15 @@ public class CfgRootTests
     public async Task ReloadAsync_WhenProviderSequenceChangesButVisibleValueStaysOverridden_PublishesNewSnapshot()
     {
         var provider1 = new MockProvider(
+
             [
                 new Dictionary<string, string> { ["shared"] = "first-before" },
                 new Dictionary<string, string> { ["shared"] = "first-after" },
             ]
         );
-        var provider2 = new MockProvider([new Dictionary<string, string> { ["shared"] = "second" }]);
+        var provider2 = new MockProvider(
+            [new Dictionary<string, string> { ["shared"] = "second" }]
+        );
         var root = TestCfgFactory.CreateRoot([provider1, provider2]);
         var originalSnapshot = SnapshotOf(root);
 
@@ -336,8 +360,12 @@ public class CfgRootTests
     [Test]
     public async Task Snapshot_WithCustomSnapshots_UsesCompositeLookupSemantics()
     {
-        var provider1 = new StaticProvider(new DelegatingSnapshot(path => path == "shared" ? "first" : null));
-        var provider2 = new StaticProvider(new DelegatingSnapshot(path => path == "shared" ? "second" : null));
+        var provider1 = new StaticProvider(
+            new DelegatingSnapshot(path => path == "shared" ? "first" : null)
+        );
+        var provider2 = new StaticProvider(
+            new DelegatingSnapshot(path => path == "shared" ? "second" : null)
+        );
         var root = TestCfgFactory.CreateRoot([provider1, provider2]);
 
         await Assert.That(root.GetValue("shared")).IsEqualTo("second");
@@ -415,12 +443,17 @@ public class CfgRootTests
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
-    private sealed class ConcurrentReloadProvider(string key, string value, ParallelReloadCoordination coordination) : ICfgProvider
+    private sealed class ConcurrentReloadProvider(
+        string key,
+        string value,
+        ParallelReloadCoordination coordination
+    ) : ICfgProvider
     {
         private int _activeReloads;
 
         public int MaxConcurrentReloads { get; private set; }
-        public ICfgSnapshot Snapshot { get; private set; } = new MockSnapshot(new Dictionary<string, string>());
+        public ICfgSnapshot Snapshot { get; private set; } =
+            new MockSnapshot(new Dictionary<string, string>());
 
         public async ValueTask<bool> ReloadAsync(CancellationToken ct = default)
         {
@@ -453,7 +486,8 @@ public class CfgRootTests
 
     private sealed class ParallelReloadCoordination(int expectedConcurrentReloads)
     {
-        private readonly TaskCompletionSource _allEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _allEntered =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
         private int _activeReloads;
         private int _enteredReloads;
 
@@ -480,7 +514,8 @@ public class CfgRootTests
         }
     }
 
-    private sealed class CancelingReloadProvider(CancellationTokenSource cancellationSource) : ICfgProvider
+    private sealed class CancelingReloadProvider(CancellationTokenSource cancellationSource)
+        : ICfgProvider
     {
         public ICfgSnapshot Snapshot { get; } = new MockSnapshot(new Dictionary<string, string>());
 
@@ -499,7 +534,8 @@ public class CfgRootTests
         public int DisposeCount { get; private set; }
         public ICfgSnapshot Snapshot { get; } = new MockSnapshot(new Dictionary<string, string>());
 
-        public ValueTask<bool> ReloadAsync(CancellationToken ct = default) => ValueTask.FromResult(false);
+        public ValueTask<bool> ReloadAsync(CancellationToken ct = default) =>
+            ValueTask.FromResult(false);
 
         public ValueTask DisposeAsync()
         {
@@ -508,15 +544,17 @@ public class CfgRootTests
         }
     }
 
-    private sealed class DeferredPublishingProvider(string key, string before, string after) : ICfgProvider
+    private sealed class DeferredPublishingProvider(string key, string before, string after)
+        : ICfgProvider
     {
-        private readonly TaskCompletionSource _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _entered =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _release =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
         private bool _reloaded;
 
-        public ICfgSnapshot Snapshot { get; private set; } = new MockSnapshot(
-            new Dictionary<string, string> { [key] = before }
-        );
+        public ICfgSnapshot Snapshot { get; private set; } =
+            new MockSnapshot(new Dictionary<string, string> { [key] = before });
 
         public async ValueTask<bool> ReloadAsync(CancellationToken ct = default)
         {
@@ -540,8 +578,10 @@ public class CfgRootTests
 
     private sealed class DeferredFailingProvider(Exception failure) : ICfgProvider
     {
-        private readonly TaskCompletionSource _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _entered =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _release =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public ICfgSnapshot Snapshot { get; } = new MockSnapshot(new Dictionary<string, string>());
 
@@ -572,7 +612,8 @@ public class CfgRootTests
     {
         public ICfgSnapshot Snapshot { get; } = snapshot;
 
-        public ValueTask<bool> ReloadAsync(CancellationToken ct = default) => ValueTask.FromResult(false);
+        public ValueTask<bool> ReloadAsync(CancellationToken ct = default) =>
+            ValueTask.FromResult(false);
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
@@ -589,8 +630,10 @@ public class CfgRootTests
     private sealed class GatedReloadProvider : ICfgProvider
     {
         private int _activeReloads;
-        private readonly TaskCompletionSource _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _entered =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _release =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public int MaxConcurrentReloads { get; private set; }
         public ICfgSnapshot Snapshot { get; } = new MockSnapshot(new Dictionary<string, string>());

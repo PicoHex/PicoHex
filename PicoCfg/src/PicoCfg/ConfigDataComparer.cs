@@ -14,7 +14,11 @@ internal static class ConfigDataComparer
         return fingerprint;
     }
 
-    public static bool Equals(CfgSnapshot left, IReadOnlyDictionary<string, string> right, int rightFingerprint)
+    public static bool Equals(
+        CfgSnapshot left,
+        IReadOnlyDictionary<string, string> right,
+        int rightFingerprint
+    )
     {
         if (left.Values.Count != right.Count)
             return false;

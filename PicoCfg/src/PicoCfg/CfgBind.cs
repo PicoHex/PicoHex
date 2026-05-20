@@ -11,7 +11,13 @@ public static class CfgBind
     /// Binds a new instance of <typeparamref name="T"/> from the configuration root,
     /// optionally scoped to a configuration <paramref name="section"/> prefix.
     /// </summary>
-    public static T Bind<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(ICfgRoot root, string? section = null)
+    public static T Bind<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicConstructors
+                | DynamicallyAccessedMemberTypes.PublicProperties
+        )]
+            T
+    >(ICfgRoot root, string? section = null)
     {
         ArgumentNullException.ThrowIfNull(root);
         return Bind<T>((ICfg)root, section);
@@ -22,11 +28,13 @@ public static class CfgBind
     /// optionally scoped to a configuration <paramref name="section"/> prefix.
     /// Returns <see langword="false"/> when binding fails without throwing.
     /// </summary>
-    public static bool TryBind<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(
-        ICfgRoot root,
-        [MaybeNullWhen(false)] out T value,
-        string? section = null
-    )
+    public static bool TryBind<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicConstructors
+                | DynamicallyAccessedMemberTypes.PublicProperties
+        )]
+            T
+    >(ICfgRoot root, [MaybeNullWhen(false)] out T value, string? section = null)
     {
         ArgumentNullException.ThrowIfNull(root);
         return TryBind((ICfg)root, out value, section);
@@ -36,7 +44,9 @@ public static class CfgBind
     /// Binds configuration values into an existing <paramref name="instance"/> of <typeparamref name="T"/>
     /// from the configuration root, optionally scoped to a configuration <paramref name="section"/> prefix.
     /// </summary>
-    public static void BindInto<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(ICfgRoot root, T instance, string? section = null)
+    public static void BindInto<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T
+    >(ICfgRoot root, T instance, string? section = null)
     {
         ArgumentNullException.ThrowIfNull(root);
         BindInto((ICfg)root, instance, section);
@@ -46,7 +56,13 @@ public static class CfgBind
     /// Binds a new instance of <typeparamref name="T"/> from a configuration view,
     /// optionally scoped to a configuration <paramref name="section"/> prefix.
     /// </summary>
-    public static T Bind<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(ICfg cfg, string? section = null)
+    public static T Bind<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicConstructors
+                | DynamicallyAccessedMemberTypes.PublicProperties
+        )]
+            T
+    >(ICfg cfg, string? section = null)
     {
         ArgumentNullException.ThrowIfNull(cfg);
 
@@ -62,11 +78,13 @@ public static class CfgBind
     /// optionally scoped to a configuration <paramref name="section"/> prefix.
     /// Returns <see langword="false"/> when binding fails without throwing.
     /// </summary>
-    public static bool TryBind<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(
-        ICfg cfg,
-        [MaybeNullWhen(false)] out T value,
-        string? section = null
-    )
+    public static bool TryBind<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicConstructors
+                | DynamicallyAccessedMemberTypes.PublicProperties
+        )]
+            T
+    >(ICfg cfg, [MaybeNullWhen(false)] out T value, string? section = null)
     {
         ArgumentNullException.ThrowIfNull(cfg);
 
@@ -81,7 +99,9 @@ public static class CfgBind
     /// Binds configuration values into an existing <paramref name="instance"/> of <typeparamref name="T"/>
     /// from a configuration view, optionally scoped to a configuration <paramref name="section"/> prefix.
     /// </summary>
-    public static void BindInto<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(ICfg cfg, T instance, string? section = null)
+    public static void BindInto<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T
+    >(ICfg cfg, T instance, string? section = null)
     {
         ArgumentNullException.ThrowIfNull(cfg);
         ArgumentNullException.ThrowIfNull(instance);

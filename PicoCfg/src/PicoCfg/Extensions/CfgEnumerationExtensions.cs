@@ -24,7 +24,10 @@ public static class CfgEnumerationExtensions
             if (rootAccessor.CurrentSnapshot is CfgSnapshot rootSnapshot)
                 return rootSnapshot.GetAllValues();
 
-            if (rootAccessor.CurrentSnapshot is CfgSnapshotComposer.CompositeCfgSnapshot rootComposite)
+            if (
+                rootAccessor.CurrentSnapshot
+                is CfgSnapshotComposer.CompositeCfgSnapshot rootComposite
+            )
                 return rootComposite.GetAllValues();
         }
 

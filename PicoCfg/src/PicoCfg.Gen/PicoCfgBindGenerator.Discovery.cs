@@ -28,14 +28,23 @@ public sealed partial class PicoCfgBindGenerator
         if (context.SemanticModel.Compilation.AssemblyName == "PicoCfg")
             return null;
 
-        if (context.SemanticModel.GetSymbolInfo(invocation).Symbol is IMethodSymbol method
+        if (
+            context.SemanticModel.GetSymbolInfo(invocation).Symbol is IMethodSymbol method
             && TryGetOperation(method, out var operation)
-            && TryGetTargetType(context.SemanticModel, invocation, method, out var targetType))
+            && TryGetTargetType(context.SemanticModel, invocation, method, out var targetType)
+        )
         {
             return new BindCall(targetType, operation, invocation.GetLocation());
         }
 
-        if (TryGetDiOperationFromSyntax(context.SemanticModel, invocation, out var syntaxOperation, out var syntaxTargetType))
+        if (
+            TryGetDiOperationFromSyntax(
+                context.SemanticModel,
+                invocation,
+                out var syntaxOperation,
+                out var syntaxTargetType
+            )
+        )
             return new BindCall(syntaxTargetType, syntaxOperation, invocation.GetLocation());
 
         return null;
@@ -51,17 +60,32 @@ public sealed partial class PicoCfgBindGenerator
         operation = default;
         targetType = null!;
 
-        if (invocation.Expression is not MemberAccessExpressionSyntax { Expression: var receiver, Name: GenericNameSyntax genericName })
+        if (
+            invocation.Expression
+            is not MemberAccessExpressionSyntax
+            {
+                Expression: var receiver,
+                Name: GenericNameSyntax genericName
+            }
+        )
             return false;
 
         if (!IsDiRegistrationMethodName(genericName.Identifier.ValueText))
             return false;
 
-        var receiverType = semanticModel.GetTypeInfo(receiver).Type ?? semanticModel.GetTypeInfo(receiver).ConvertedType;
+        var receiverType =
+            semanticModel.GetTypeInfo(receiver).Type
+            ?? semanticModel.GetTypeInfo(receiver).ConvertedType;
         if (!IsSupportedDiReceiverType(receiverType))
             return false;
 
-        if (!TryGetTypeSymbol(semanticModel, genericName.TypeArgumentList.Arguments[0], out targetType))
+        if (
+            !TryGetTypeSymbol(
+                semanticModel,
+                genericName.TypeArgumentList.Arguments[0],
+                out targetType
+            )
+        )
             return false;
 
         operation = BindOperation.Bind;
@@ -83,18 +107,37 @@ public sealed partial class PicoCfgBindGenerator
             return true;
         }
 
-        if (invocation.Expression is MemberAccessExpressionSyntax { Name: GenericNameSyntax genericName })
-            return TryGetTypeSymbol(semanticModel, genericName.TypeArgumentList.Arguments[0], out targetType);
+        if (
+            invocation.Expression is MemberAccessExpressionSyntax
+            {
+                Name: GenericNameSyntax genericName
+            }
+        )
+            return TryGetTypeSymbol(
+                semanticModel,
+                genericName.TypeArgumentList.Arguments[0],
+                out targetType
+            );
 
         if (invocation.Expression is GenericNameSyntax directGenericName)
-            return TryGetTypeSymbol(semanticModel, directGenericName.TypeArgumentList.Arguments[0], out targetType);
+            return TryGetTypeSymbol(
+                semanticModel,
+                directGenericName.TypeArgumentList.Arguments[0],
+                out targetType
+            );
 
         return false;
     }
 
-    private static bool TryGetTypeSymbol(SemanticModel semanticModel, TypeSyntax syntax, out ITypeSymbol typeSymbol)
+    private static bool TryGetTypeSymbol(
+        SemanticModel semanticModel,
+        TypeSyntax syntax,
+        out ITypeSymbol typeSymbol
+    )
     {
-        typeSymbol = semanticModel.GetTypeInfo(syntax).Type ?? semanticModel.GetTypeInfo(syntax).ConvertedType!;
+        typeSymbol =
+            semanticModel.GetTypeInfo(syntax).Type
+            ?? semanticModel.GetTypeInfo(syntax).ConvertedType!;
         return typeSymbol is not null;
     }
 
@@ -115,11 +158,16 @@ public sealed partial class PicoCfgBindGenerator
             return false;
 
         return TryGetOperationCore(method, out operation)
-            || (method.ReducedFrom is { } reducedMethod
-                && TryGetOperationCore(reducedMethod, out operation));
+            || (
+                method.ReducedFrom is { } reducedMethod
+                && TryGetOperationCore(reducedMethod, out operation)
+            );
     }
 
-    private static bool TryGetOperationCore(IMethodSymbol operationMethod, out BindOperation operation)
+    private static bool TryGetOperationCore(
+        IMethodSymbol operationMethod,
+        out BindOperation operation
+    )
     {
         operation = default;
 
@@ -144,19 +192,27 @@ public sealed partial class PicoCfgBindGenerator
             }
         }
 
-        var isDiRegistrationName = operationMethod.Name
-            is "RegisterCfgTransient"
-                or "RegisterCfgScoped"
-                or "RegisterCfgSingleton";
+        var isDiRegistrationName =
+            operationMethod.Name
+                is "RegisterCfgTransient"
+                    or "RegisterCfgScoped"
+                    or "RegisterCfgSingleton";
         if (!isDiRegistrationName)
             return false;
 
-        var containingNamespace = operationMethod.ContainingType.ContainingNamespace.ToDisplayString();
+        var containingNamespace = operationMethod
+            .ContainingType
+            .ContainingNamespace
+            .ToDisplayString();
         var isSupportedDiContainerSurface =
-            (operationMethod.ContainingType.Name == "SvcContainerExtensions"
-                && containingNamespace == "PicoCfg.DI")
-            || (operationMethod.ContainingType.Name is "ISvcContainer" or "SvcContainer"
-                && containingNamespace is "PicoDI.Abs" or "PicoDI");
+            (
+                operationMethod.ContainingType.Name == "SvcContainerExtensions"
+                && containingNamespace == "PicoCfg.DI"
+            )
+            || (
+                operationMethod.ContainingType.Name is "ISvcContainer" or "SvcContainer"
+                && containingNamespace is "PicoDI.Abs" or "PicoDI"
+            );
         if (!isSupportedDiContainerSurface)
             return false;
 
@@ -182,8 +238,5 @@ public sealed partial class PicoCfgBindGenerator
                 or "RegisterCfgSingleton";
 
     private static bool IsDiRegistrationMethodName(string methodName) =>
-        methodName
-            is "RegisterCfgTransient"
-                or "RegisterCfgScoped"
-                or "RegisterCfgSingleton";
+        methodName is "RegisterCfgTransient" or "RegisterCfgScoped" or "RegisterCfgSingleton";
 }

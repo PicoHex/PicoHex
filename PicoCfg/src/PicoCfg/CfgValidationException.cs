@@ -22,7 +22,7 @@ public sealed class CfgValidationException : InvalidOperationException
         Errors = errors;
     }
 
-    private static string BuildMessage(Type type, List<ValidationResult> errors)
-        => $"Configuration validation failed for '{type.FullName}':\n"
-           + string.Join("\n", errors.Select(e => $"  - {e.ErrorMessage}"));
+    private static string BuildMessage(Type type, List<ValidationResult> errors) =>
+        $"Configuration validation failed for '{type.FullName}':\n"
+        + string.Join("\n", errors.Select(e => $"  - {e.ErrorMessage}"));
 }

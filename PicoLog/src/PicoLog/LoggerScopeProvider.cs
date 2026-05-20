@@ -28,7 +28,7 @@ internal sealed class LoggerScopeProvider
 
             if (current.State is IEnumerable<KeyValuePair<string, object?>> kvPairs)
             {
-                properties ??= [];
+                properties ??=  [];
                 properties.AddRange(kvPairs);
             }
 

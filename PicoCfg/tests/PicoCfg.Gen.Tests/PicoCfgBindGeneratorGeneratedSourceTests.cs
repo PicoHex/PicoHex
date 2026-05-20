@@ -168,7 +168,10 @@ public class PicoCfgBindGeneratorGeneratedSourceTests
         );
 
         var runResult = driver.GetRunResult();
-        var generatedSources = runResult.Results.SelectMany(static result => result.GeneratedSources).ToArray();
+        var generatedSources = runResult
+            .Results
+            .SelectMany(static result => result.GeneratedSources)
+            .ToArray();
         var generatedRegistration = generatedSources.SingleOrDefault(
             sourceResult => sourceResult.HintName == "PicoCfgBindRegistrations.g.cs"
         );

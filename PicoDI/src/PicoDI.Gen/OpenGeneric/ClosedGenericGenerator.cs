@@ -88,12 +88,14 @@ internal sealed class ClosedGenericGenerator
             index++
         )
         {
-            typeParameterMap[openGeneric.TypeParameterNames[index]] =
-                usage.TypeArgumentsFullNames[index];
+            typeParameterMap[openGeneric.TypeParameterNames[index]] = usage.TypeArgumentsFullNames[
+                index
+            ];
         }
 
         return openGeneric
-            .ConstructorParameters.Select(
+            .ConstructorParameters
+            .Select(
                 typeFullName =>
                     _substitutor.SubstituteTypeParameters(typeFullName, typeParameterMap)
             )

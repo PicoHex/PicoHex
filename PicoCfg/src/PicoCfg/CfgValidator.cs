@@ -60,7 +60,13 @@ public static class CfgValidationExtensions
             + "Types implementing IValidatableObject are compatible with Native AOT. "
             + "DataAnnotations-based validation is not supported under trimming."
     )]
-    public static T BindAndValidate<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)] T>(this ICfg cfg, string? section = null)
+    public static T BindAndValidate<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicConstructors
+                | DynamicallyAccessedMemberTypes.PublicProperties
+        )]
+            T
+    >(this ICfg cfg, string? section = null)
     {
         var instance = CfgBind.Bind<T>(cfg, section);
         CfgValidator.ValidateOrThrow(instance);
