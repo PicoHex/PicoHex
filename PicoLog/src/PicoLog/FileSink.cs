@@ -162,17 +162,47 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
                 if (IsFlushPending())
                     break;
 
+                // Try a synchronous read first to avoid timer allocation for the common
+                // case where another entry is already available.
+                if (_channel.Reader.TryRead(out var message))
+                {
+                    batch.Add(message);
+                    continue;
+                }
+
+                // Wait with a bounded timeout for the next entry. On ARM64 runners,
+                // CancellationTokenSource(TimeSpan) timers may not fire reliably,
+                // so WaitToReadAsync with a CTS token is paired with a defensive
+                // Task.WhenAny fallback that enforces the FlushInterval regardless.
                 using var cts = new CancellationTokenSource(_options.FlushInterval);
                 RegisterBatchDelayCancellationSource(cts);
 
                 try
                 {
-                    var message = await _channel.Reader.ReadAsync(cts.Token).ConfigureAwait(false);
-                    batch.Add(message);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
+                    var waitTask = _channel.Reader.WaitToReadAsync(cts.Token).AsTask();
+                    var delayTask = Task.Delay(_options.FlushInterval, CancellationToken.None);
+                    var completed = await Task.WhenAny(waitTask, delayTask).ConfigureAwait(false);
+
+                    if (completed == waitTask)
+                    {
+                        try
+                        {
+                            if (await waitTask.ConfigureAwait(false))
+                            {
+                                if (_channel.Reader.TryRead(out message))
+                                    batch.Add(message);
+                            }
+                            else
+                            {
+                                break; // Channel completed
+                            }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
+                    }
+                    // delayTask won → FlushInterval elapsed, flush the batch
                 }
                 catch (ChannelClosedException)
                 {
@@ -182,6 +212,10 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
                 {
                     ClearBatchDelayCancellationSource(cts);
                 }
+
+                // After the FlushInterval wait (whether cancelled or elapsed),
+                // always flush the current batch so we don't wait indefinitely.
+                break;
             }
         }
         else
