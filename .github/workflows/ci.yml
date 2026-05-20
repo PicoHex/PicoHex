@@ -346,8 +346,11 @@ jobs:
         if: matrix.rid == 'linux-x64'
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
       - name: Run PicoLog tests
-        if: matrix.rid != 'linux-x64'
+        if: matrix.rid != 'linux-x64' && matrix.rid != 'linux-arm64'
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Run PicoLog tests (linux-arm64 — increased parallelism, I/O-bound on slow VM)
+        if: matrix.rid == 'linux-arm64'
+        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true -- --maximum-parallel-tests 4
       - name: Upload coverage
         if: matrix.rid == 'linux-x64'
         uses: actions/upload-artifact@v4
