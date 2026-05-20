@@ -35,7 +35,15 @@ internal sealed class InternalLoggerQueue
                     _ => BoundedChannelFullMode.DropOldest
                 },
                 SingleReader = true,
-                AllowSynchronousContinuations = false
+                // Synchronous continuations are REQUIRED here. The dedicated
+                // processing thread waits on WaitToReadAsync via
+                // AsTask().GetAwaiter().GetResult(); when Complete() fires, the
+                // completion continuation must run inline on the completer's
+                // thread so the processing thread is signaled without needing
+                // a ThreadPool worker. Otherwise concurrent Dispose paths that
+                // already occupy pool workers (via Task.Run(ShutdownCore) +
+                // Thread.Join) would self-starve and deadlock the wakeup.
+                AllowSynchronousContinuations = true
             }
         );
         _writer = channel.Writer;

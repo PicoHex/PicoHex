@@ -7,6 +7,8 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
     private readonly FileSinkOptions _options;
     private readonly StreamWriter _writer;
     private readonly Thread _processingThread;
+    private readonly TaskCompletionSource _processingExited =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly SemaphoreSlim _flushSemaphore = new(1, 1);
     private readonly FlushQuiesceCoordinator _flushQuiesceCoordinator = new();
     private int _disposeState;
@@ -43,7 +45,16 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
             {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,
-                AllowSynchronousContinuations = false
+                // Synchronous continuations are REQUIRED here. The dedicated
+                // processing thread waits on WaitToReadAsync via
+                // AsTask().GetAwaiter().GetResult(); when TryComplete() fires,
+                // the completion continuation must run inline on the
+                // completer's thread so the processing thread is signaled
+                // without needing a ThreadPool worker. Otherwise concurrent
+                // Dispose paths that already occupy pool workers (via
+                // Task.Run(ShutdownCore) + Thread.Join) would self-starve and
+                // deadlock the wakeup.
+                AllowSynchronousContinuations = true
             }
         );
 
@@ -167,6 +178,13 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         {
             _processingException = ex;
         }
+        finally
+        {
+            // Signal completion to async waiters (DisposeAsync) without pinning
+            // a pool worker. RunContinuationsAsynchronously prevents reentrant
+            // execution of the awaiter on this dedicated thread.
+            _processingExited.TrySetResult();
+        }
     }
 
     private bool WaitForRead()
@@ -230,9 +248,56 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         if (Interlocked.Exchange(ref _disposeState, 1) != 0)
             return ValueTask.CompletedTask;
 
-        // Run the synchronous shutdown (which Joins the dedicated processing
-        // thread) on a pool thread so we don't block the awaiter's thread.
-        return new ValueTask(Task.Run(ShutdownCore));
+        // Complete the channel inline (no pool worker pinned). The dedicated
+        // processing thread observes completion (channel uses
+        // AllowSynchronousContinuations = true so the wakeup is inline),
+        // drains, and signals _processingExited from its own thread.
+        _channel.Writer.TryComplete();
+        return new ValueTask(ShutdownAsync());
+    }
+
+    private async Task ShutdownAsync()
+    {
+        Exception? processingException = null;
+
+        try
+        {
+            // Await the TCS — zero pool workers are pinned during this wait.
+            await _processingExited.Task.ConfigureAwait(false);
+            processingException = _processingException;
+        }
+        catch (Exception ex)
+        {
+            processingException = ex;
+        }
+
+        try
+        {
+            _writer.Flush();
+        }
+        catch (Exception ex) when (processingException is null)
+        {
+            processingException = ex;
+        }
+        finally
+        {
+            _writer.Dispose();
+        }
+
+        // Drain any concurrent FlushAsync waiters by acquiring then releasing
+        // the semaphore (async — no pool worker pinned on the wait).
+        await _flushSemaphore.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            _flushSemaphore.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Semaphore was already disposed by another path.
+        }
+
+        if (processingException is not null)
+            ExceptionDispatchInfo.Throw(processingException);
     }
 
     private void ShutdownCore()

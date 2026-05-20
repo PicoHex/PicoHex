@@ -7,6 +7,8 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
     private readonly InternalLogSinkDispatcher _sinkDispatcher;
     private readonly InternalLoggerQueue _queue;
     private readonly Thread _processingThread;
+    private readonly TaskCompletionSource _processingExited =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly int _queueDepthProviderId;
     private readonly SemaphoreSlim _flushSemaphore = new(1, 1);
     private readonly FlushQuiesceCoordinator _flushQuiesceCoordinator = new();
@@ -145,11 +147,29 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
 
         try
         {
-            // Run the synchronous shutdown (which Joins the dedicated processing
-            // thread) on a pool thread so we don't block the awaiter's thread.
-            // This is safe — the dedicated thread doesn't depend on the pool,
-            // so even if the pool is highly loaded the Join completes.
-            await Task.Run(ShutdownCore).ConfigureAwait(false);
+            // Begin drain and complete the queue inline (no pool worker
+            // pinned). The dedicated processing thread observes completion
+            // (channel completion uses AllowSynchronousContinuations = true
+            // so the wakeup is inline), drains, and signals _processingExited
+            // from its own thread.
+            var shutdownTimeout = _runtime.ShutdownTimeout;
+            using var drainCts =
+                shutdownTimeout > TimeSpan.Zero
+                    ? new CancellationTokenSource(shutdownTimeout)
+                    : null;
+
+            if (drainCts is not null)
+                _sinkDispatcher.BeginDrain(drainCts.Token);
+
+            _queue.Complete();
+
+            // Await the TCS — zero pool workers are pinned during this wait.
+            await _processingExited.Task.ConfigureAwait(false);
+
+            PicoLogMetrics.UnregisterQueueDepthProvider(_queueDepthProviderId);
+
+            if (_processingException is { } ex)
+                ExceptionDispatchInfo.Throw(ex);
         }
         finally
         {
@@ -255,6 +275,13 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         catch (Exception ex)
         {
             _processingException = ex;
+        }
+        finally
+        {
+            // Signal completion to async waiters (DisposeAsync) without pinning
+            // a pool worker. RunContinuationsAsynchronously prevents reentrant
+            // execution of the awaiter on this dedicated thread.
+            _processingExited.TrySetResult();
         }
     }
 
