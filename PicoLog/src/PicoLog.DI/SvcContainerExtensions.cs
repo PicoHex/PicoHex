@@ -129,6 +129,10 @@ public static class SvcContainerExtensions
 
     private static void DisposeScopeSync(ISvcScope scope)
     {
+        // ISvcScope is IAsyncDisposable only — no sync Dispose().
+        // This path runs exclusively during error cleanup (factory creation
+        // failure), when no processing threads exist yet, so pool starvation
+        // cannot occur.
         Task.Run(async () => await scope.DisposeAsync().ConfigureAwait(false))
             .GetAwaiter()
             .GetResult();
