@@ -323,7 +323,11 @@ jobs:
         run: dotnet build PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
       - name: Run tests
+        if: "!startsWith(matrix.rid, 'linux-arm')"
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
+      - name: Run tests (ARM, no coverage)
+        if: startsWith(matrix.rid, 'linux-arm')
+        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
 
       - name: AOT publish validation
         run: dotnet publish PicoLog/src/PicoLog/ -p:PublishAot=true -r ${{ matrix.rid }} --sc --configuration Release
