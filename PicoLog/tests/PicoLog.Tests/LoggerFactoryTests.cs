@@ -743,9 +743,16 @@ public sealed class LoggerFactoryTests
         // Contract: once factory shutdown has been signaled, any sync writer
         // currently waiting in the backoff loop must observe the shutdown and
         // return promptly (well under SyncWriteTimeout).
+        //
+        // This test deliberately uses dedicated Thread instances (not Task.Run
+        // on the ThreadPool) for the third writer and the disposer, so the
+        // timing is not affected by ThreadPool saturation when many TUnit
+        // tests run in parallel on CI. It also guarantees cleanup in a
+        // finally block so that an assertion failure cannot leak the held
+        // BlockingSink + un-disposed factory and deadlock the test host.
         var sink = new BlockingSink();
-        // SyncWriteTimeout is deliberately large so that the pre-fix code
-        // would block for many seconds and obviously fail the budget below.
+        // SyncWriteTimeout is deliberately large so the pre-fix code would
+        // block for many seconds (>> the assertion budget below).
         var options = new LoggerFactoryOptions
         {
             QueueCapacity = 1,
@@ -753,41 +760,116 @@ public sealed class LoggerFactoryTests
             SyncWriteTimeout = TimeSpan.FromSeconds(30)
         };
         var factory = new LoggerFactory([sink], options);
-        var logger = factory.CreateLogger("Tests.Category");
 
-        // Drive the queue to the state where a third write must block:
-        //   - "first" is dispatched and the sink blocks on it.
-        //   - "second" fills the bounded queue (capacity 1).
-        logger.Info("first");
-        await sink.WriteStarted;
-        logger.Info("second");
+        Thread? thirdWriteThread = null;
+        Thread? disposeThread = null;
+        var thirdWriteSignal = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        var disposeSignal = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
 
-        // Kick off the third sync write on a worker thread; it will enter
-        // TryEnqueueSyncWithWait's backoff loop because the queue is full.
-        var stopwatch = Stopwatch.StartNew();
-        var thirdWrite = Task.Run(() => logger.Info("third"));
+        try
+        {
+            var logger = factory.CreateLogger("Tests.Category");
 
-        // Give the third writer time to enter the backoff loop.
-        await Task.Delay(100);
-        await Assert.That(thirdWrite.IsCompleted).IsFalse();
+            // Drive the queue to the state where a third write must block:
+            //   - "first" is dispatched and the sink blocks on it.
+            //   - "second" fills the bounded queue (capacity 1).
+            logger.Info("first");
+            await sink.WriteStarted;
+            logger.Info("second");
 
-        // Start shutdown concurrently. This signals Complete() on the queue,
-        // which the third writer must observe and exit on the next backoff
-        // iteration. DisposeAsync itself will block on the still-busy sink,
-        // so we don't await it until after releasing the sink below.
-        var disposeTask = Task.Run(async () => await factory.DisposeAsync());
+            // Run the third sync write on a dedicated thread so it is
+            // guaranteed to enter the backoff loop regardless of ThreadPool
+            // saturation on the CI runner.
+            thirdWriteThread = new Thread(() =>
+            {
+                try
+                {
+                    logger.Info("third");
+                }
+                finally
+                {
+                    thirdWriteSignal.TrySetResult();
+                }
+            })
+            {
+                IsBackground = true,
+                Name = "PicoLog.Test.ThirdWriter"
+            };
+            thirdWriteThread.Start();
 
-        // The third write must return promptly — well under SyncWriteTimeout.
-        // Pre-fix this would not complete until ~30s (timeout) and the await
-        // below would fail.
-        await thirdWrite.WaitAsync(TimeSpan.FromSeconds(5));
-        stopwatch.Stop();
+            // Give the third writer time to enter the backoff loop.
+            await Task.Delay(200);
+            await Assert.That(thirdWriteSignal.Task.IsCompleted).IsFalse();
 
-        await Assert.That(stopwatch.Elapsed).IsLessThan(TimeSpan.FromSeconds(2));
+            // Trigger shutdown concurrently on its own dedicated thread.
+            // DisposeAsync will block on the still-busy sink until we release
+            // it in the finally block, but Complete() fires synchronously
+            // before that, which is what the third writer must observe.
+            disposeThread = new Thread(() =>
+            {
+                try
+                {
+                    factory.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                }
+                finally
+                {
+                    disposeSignal.TrySetResult();
+                }
+            })
+            {
+                IsBackground = true,
+                Name = "PicoLog.Test.Disposer"
+            };
+            disposeThread.Start();
 
-        // Let the blocked sink finish so DisposeAsync can complete cleanly.
-        sink.Release();
-        await disposeTask.WaitAsync(TimeSpan.FromSeconds(10));
+            // Contract: with the fix the third write returns within one
+            // maxBackoffMs (~25 ms) of Complete(). Without the fix it would
+            // block until SyncWriteTimeout (30 s) and the WaitAsync below
+            // would throw TimeoutException after 3 s.
+            await thirdWriteSignal.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        finally
+        {
+            // Always unblock the sink so the dispatcher thread can drain
+            // and DisposeAsync can return, even if an assertion threw above.
+            sink.Release();
+
+            // Let the disposer thread complete, then make absolutely sure
+            // the factory is disposed (idempotent on the already-disposed
+            // path). Bound the wait so a real bug can't hang the test host.
+            if (disposeThread is not null)
+            {
+                await disposeSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            }
+            else
+            {
+                try
+                {
+                    await factory.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+                }
+                catch
+                {
+                    // Best-effort cleanup; the primary assertion failure
+                    // (if any) is what we want surfaced to the test runner.
+                }
+            }
+
+            if (thirdWriteThread is not null)
+            {
+                try
+                {
+                    await thirdWriteSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                }
+                catch
+                {
+                    // Same rationale as above.
+                }
+            }
+        }
     }
 
     [Test]
