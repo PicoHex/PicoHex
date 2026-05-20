@@ -344,10 +344,10 @@ jobs:
 
       - name: Run PicoLog tests (coverage)
         if: matrix.rid == 'linux-x64'
-        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura -- --timeout 120000
+        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura -- --timeout 2m
       - name: Run PicoLog tests
         if: matrix.rid != 'linux-x64'
-        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true -- --timeout 120000
+        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true -- --timeout 2m
       - name: Upload coverage
         if: matrix.rid == 'linux-x64'
         uses: actions/upload-artifact@v4
