@@ -8,7 +8,7 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoCfg.DI</PackageId>
         <Description>PicoDI registration helpers for PicoCfg roots, snapshots, and generated bound POCOs.</Description>
-        <PackageTags>PicoHex;Configuration;AOT;SourceGenerator</PackageTags>
+        <PackageTags>PicoHex;Configuration;AOT</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 

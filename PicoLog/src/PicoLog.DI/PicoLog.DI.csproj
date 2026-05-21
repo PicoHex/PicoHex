@@ -8,7 +8,7 @@
         <IsPackable>true</IsPackable>
         <PackageId>PicoLog.DI</PackageId>
         <Description>PicoDI integration for PicoLog registration (AddPicoLog, WriteTo, ReadFrom).</Description>
-        <PackageTags>PicoHex;Logging;AOT;SourceGenerator</PackageTags>
+        <PackageTags>PicoHex;Logging;AOT</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
