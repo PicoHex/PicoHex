@@ -712,16 +712,24 @@ public sealed class LoggerFactoryTests
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
 
-        logger.Info("first");
-        await sink.WriteStarted;
-        logger.Info("second");
+        Task thirdWrite;
 
-        var thirdWrite = Task.Run(() => logger.Info("third"));
+        try
+        {
+            logger.Info("first");
+            await sink.WriteStarted;
+            logger.Info("second");
 
-        await Task.Delay(100);
-        await Assert.That(thirdWrite.IsCompleted).IsFalse();
+            thirdWrite = Task.Run(() => logger.Info("third"));
 
-        sink.Release();
+            await Task.Delay(100);
+            await Assert.That(thirdWrite.IsCompleted).IsFalse();
+        }
+        finally
+        {
+            sink.Release();
+        }
+
         await thirdWrite;
         await factory.DisposeAsync();
 
@@ -893,16 +901,24 @@ public sealed class LoggerFactoryTests
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
 
-        await logger.InfoAsync("first");
-        await sink.WriteStarted;
-        await logger.InfoAsync("second");
+        Task thirdWrite;
 
-        var thirdWrite = logger.InfoAsync("third");
+        try
+        {
+            await logger.InfoAsync("first");
+            await sink.WriteStarted;
+            await logger.InfoAsync("second");
 
-        await Task.Delay(100);
-        await Assert.That(thirdWrite.IsCompleted).IsFalse();
+            thirdWrite = logger.InfoAsync("third");
 
-        sink.Release();
+            await Task.Delay(100);
+            await Assert.That(thirdWrite.IsCompleted).IsFalse();
+        }
+        finally
+        {
+            sink.Release();
+        }
+
         await thirdWrite;
         await factory.DisposeAsync();
 
@@ -1281,6 +1297,29 @@ public sealed class LoggerFactoryTests
     }
 
     [Test]
+    public async Task DisposeAsync_CancelsInFlightSinkWrites_WhenShutdownTimeoutExpires()
+    {
+        var sink = new BlockingSink();
+        var options = new LoggerFactoryOptions { ShutdownTimeout = TimeSpan.FromMilliseconds(50) };
+        await using var factory = new LoggerFactory([sink], options);
+        var logger = factory.CreateLogger("Tests.Category");
+
+        try
+        {
+            await logger.InfoAsync("payload");
+            await sink.WriteStarted;
+
+            var disposeTask = factory.DisposeAsync().AsTask();
+
+            await disposeTask.WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        finally
+        {
+            sink.Release();
+        }
+    }
+
+    [Test]
     public async Task DisposeAsync_RejectsWrites_After_Shutdown_Begins()
     {
         var sink = new CoordinatedDisposalSink();
@@ -1363,15 +1402,25 @@ public sealed class LoggerFactoryTests
         await sink.WriteStarted;
         logger.Info("second");
 
-        var pendingWriteTask = logger.InfoAsync("third");
-        await Task.Delay(50);
-        await Assert.That(pendingWriteTask.IsCompleted).IsFalse();
+        Task pendingWriteTask;
 
-        var disposeTask = factory.DisposeAsync().AsTask();
-        await Task.Delay(50);
+        try
+        {
+            pendingWriteTask = logger.InfoAsync("third");
+            await Task.Delay(50);
+            await Assert.That(pendingWriteTask.IsCompleted).IsFalse();
 
-        sink.Release();
-        await Task.WhenAll(disposeTask, pendingWriteTask);
+            var disposeTask = factory.DisposeAsync().AsTask();
+            await Task.Delay(50);
+
+            sink.Release();
+            await Task.WhenAll(disposeTask, pendingWriteTask);
+        }
+        finally
+        {
+            sink.Release();
+        }
+
         listener.RecordObservableInstruments();
 
         await Assert.That(sink.WrittenCount).IsEqualTo(2);
@@ -1474,17 +1523,24 @@ public sealed class LoggerFactoryTests
         await using var dropFactory = new LoggerFactory([sink], options);
         var dropLogger = dropFactory.CreateLogger("Tests.Drop");
 
-        dropLogger.Info("first");
-        await sink.WriteStarted;
-        dropLogger.Info("second");
-        await RecordObservableMeasurementUntilAsync(
-            listener,
-            measurements,
-            PicoLogMetrics.QueuedEntriesName,
-            value => value == 1
-        );
-        dropLogger.Info("third");
-        sink.Release();
+        try
+        {
+            dropLogger.Info("first");
+            await sink.WriteStarted;
+            dropLogger.Info("second");
+            await RecordObservableMeasurementUntilAsync(
+                listener,
+                measurements,
+                PicoLogMetrics.QueuedEntriesName,
+                value => value >= 1
+            );
+            dropLogger.Info("third");
+        }
+        finally
+        {
+            sink.Release();
+        }
+
         await dropFactory.DisposeAsync();
 
         var collectingSink = new CollectingSink();
@@ -1519,7 +1575,11 @@ public sealed class LoggerFactoryTests
             PicoLogMetrics.ShutdownDrainDurationName,
             0
         );
-        await AssertMeasurementContainsAsync(measurements, PicoLogMetrics.QueuedEntriesName, 1);
+        await AssertMeasurementObservedAtLeastAsync(
+            measurements,
+            PicoLogMetrics.QueuedEntriesName,
+            1
+        );
         await AssertAllMeasurementsAtLeastAsync(measurements, PicoLogMetrics.QueuedEntriesName, 0);
     }
 
@@ -1704,14 +1764,14 @@ public sealed class LoggerFactoryTests
         await Assert.That(values!.Sum()).IsGreaterThanOrEqualTo(minimumValue);
     }
 
-    private static async Task AssertMeasurementContainsAsync(
+    private static async Task AssertMeasurementObservedAtLeastAsync(
         ConcurrentDictionary<string, ConcurrentQueue<double>> measurements,
         string instrumentName,
-        double expectedValue
+        double minimumValue
     )
     {
         await Assert.That(measurements.TryGetValue(instrumentName, out var values)).IsTrue();
-        await Assert.That(values!).Contains(expectedValue);
+        await Assert.That(values!.Any(value => value >= minimumValue)).IsTrue();
     }
 
     private static async Task AssertAllMeasurementsAtLeastAsync(

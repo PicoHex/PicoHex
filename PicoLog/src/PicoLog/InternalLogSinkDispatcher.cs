@@ -1,11 +1,13 @@
 namespace PicoLog;
 
-internal sealed class InternalLogSinkDispatcher
+internal sealed class InternalLogSinkDispatcher : IDisposable
 {
     private readonly ILogSink[] _sinks;
     private readonly LoggerFactoryRuntime _runtime;
     private readonly ILogSink? _consoleFallbackSink;
-    private CancellationToken _drainCancellationToken;
+    private readonly CancellationTokenSource _drainCancellationSource = new();
+    private CancellationTokenRegistration _drainCancellationRegistration;
+    private int _disposeState;
 
     // Same pattern as FileWatchingCfgProvider.OnError.
     // Assign once at startup (single-threaded); read on rare sink-failure path.
@@ -20,7 +22,22 @@ internal sealed class InternalLogSinkDispatcher
 
     public void BeginDrain(CancellationToken cancellationToken)
     {
-        _drainCancellationToken = cancellationToken;
+        if (!cancellationToken.CanBeCanceled || Volatile.Read(ref _disposeState) != 0)
+            return;
+
+        _drainCancellationRegistration = cancellationToken.UnsafeRegister(
+            static state => ((InternalLogSinkDispatcher)state!).CancelDrain(),
+            this
+        );
+    }
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
+            return;
+
+        _drainCancellationRegistration.Dispose();
+        _drainCancellationSource.Dispose();
     }
 
     /// <summary>
@@ -31,10 +48,19 @@ internal sealed class InternalLogSinkDispatcher
     /// </summary>
     internal async Task DispatchEntryAsync(LogEntry entry)
     {
-        var token = _drainCancellationToken;
+        var token = _drainCancellationSource.Token;
 
         foreach (ILogSink sink in _sinks)
             await WriteToSinkAsync(sink, entry, token).ConfigureAwait(false);
+    }
+
+    private void CancelDrain()
+    {
+        try
+        {
+            _drainCancellationSource.Cancel();
+        }
+        catch (ObjectDisposedException) { }
     }
 
     private async Task WriteToSinkAsync(

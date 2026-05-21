@@ -145,6 +145,8 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         // or blocks on the semaphore acquisition.
         await _flushSemaphore.WaitAsync().ConfigureAwait(false);
 
+        CancellationTokenSource? drainCts = null;
+
         try
         {
             // Begin drain and complete the queue inline (no pool worker
@@ -153,7 +155,7 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
             // so the wakeup is inline), drains, and signals _processingExited
             // from its own thread.
             var shutdownTimeout = _runtime.ShutdownTimeout;
-            using var drainCts =
+            drainCts =
                 shutdownTimeout > TimeSpan.Zero
                     ? new CancellationTokenSource(shutdownTimeout)
                     : null;
@@ -173,6 +175,8 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         }
         finally
         {
+            _sinkDispatcher.Dispose();
+            drainCts?.Dispose();
             _flushSemaphore.Dispose();
         }
     }
@@ -205,6 +209,7 @@ internal sealed class CategoryPipeline : IDisposable, IAsyncDisposable
         }
         finally
         {
+            _sinkDispatcher.Dispose();
             drainCts?.Dispose();
             PicoLogMetrics.UnregisterQueueDepthProvider(_queueDepthProviderId);
         }
