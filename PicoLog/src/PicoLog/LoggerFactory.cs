@@ -1,6 +1,6 @@
 ﻿namespace PicoLog;
 
-public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
+public sealed class LoggerFactory : IFlushableLoggerFactory
 {
     private readonly Lock _registrationsLock = new();
     private readonly SemaphoreSlim _flushDisposeLock = new(1, 1);
@@ -41,79 +41,6 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
         }
     }
 
-    /// <summary>
-    /// Synchronously disposes the factory. Fully synchronous — no sync-over-async
-    /// bridging — so callers can safely invoke this from any thread, including
-    /// ThreadPool workers, without risking ThreadPool starvation deadlocks.
-    /// Pipelines and sinks are disposed via their synchronous <see cref="IDisposable.Dispose"/>
-    /// methods, which Join dedicated background threads rather than awaiting Tasks
-    /// that could be starved when the ThreadPool is saturated.
-    /// </summary>
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
-            return;
-
-        List<Exception>? exceptions = null;
-        var drainStopwatch = Stopwatch.StartNew();
-
-        _flushDisposeLock.Wait();
-
-        try
-        {
-            LoggerRegistration[] registrations;
-
-            lock (_registrationsLock)
-            {
-                if (!_runtime.TryBeginShutdown())
-                    return;
-
-                registrations =  [.. _registrations.Values];
-                _registrations.Clear();
-            }
-
-            foreach (var registration in registrations)
-            {
-                try
-                {
-                    registration.Pipeline.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    (exceptions ??=  []).Add(ex);
-                }
-            }
-
-            PicoLogMetrics.RecordShutdownDrainDuration(drainStopwatch.Elapsed);
-
-            foreach (ILogSink sink in _runtime.Sinks)
-            {
-                try
-                {
-                    sink.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    (exceptions ??=  []).Add(ex);
-                }
-            }
-        }
-        finally
-        {
-            try
-            {
-                _flushDisposeLock.Release();
-            }
-            catch (ObjectDisposedException)
-            {
-                // Semaphore was already disposed by another path.
-            }
-        }
-
-        if (exceptions is { Count: > 0 })
-            throw new AggregateException(exceptions);
-    }
-
     public async ValueTask FlushAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposeState != 0, this);
@@ -128,7 +55,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
 
             lock (_registrationsLock)
             {
-                registrations =  [.. _registrations.Values];
+                registrations = [.. _registrations.Values];
             }
 
             Task[] pipelineFlushTasks = registrations
@@ -152,7 +79,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
                 }
                 catch when (whenAll.Exception is not null)
                 {
-                    (exceptions ??=  []).AddRange(whenAll.Exception.Flatten().InnerExceptions);
+                    (exceptions ??= []).AddRange(whenAll.Exception.Flatten().InnerExceptions);
                 }
             }
 
@@ -167,7 +94,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??=  []).Add(ex);
+                    (exceptions ??= []).Add(ex);
                 }
             }
 
@@ -199,7 +126,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
                 if (!_runtime.TryBeginShutdown())
                     return;
 
-                registrations =  [.. _registrations.Values];
+                registrations = [.. _registrations.Values];
                 _registrations.Clear();
             }
 
@@ -211,7 +138,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??=  []).Add(ex);
+                    (exceptions ??= []).Add(ex);
                 }
             }
 
@@ -221,11 +148,11 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
             {
                 try
                 {
-                    await DisposeSinkAsync(sink).ConfigureAwait(false);
+                    await sink.DisposeAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??=  []).Add(ex);
+                    (exceptions ??= []).Add(ex);
                 }
             }
         }
@@ -249,17 +176,6 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
             throw new AggregateException(exceptions);
     }
 
-    private static async ValueTask DisposeSinkAsync(ILogSink sink)
-    {
-        if (sink is IAsyncDisposable asyncDisposable)
-        {
-            await asyncDisposable.DisposeAsync().ConfigureAwait(false);
-            return;
-        }
-
-        sink.Dispose();
-    }
-
     private static void CollectCompletedTaskExceptions(
         Task[] tasks,
         ref List<Exception>? exceptions
@@ -268,7 +184,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory, IDisposable
         foreach (var task in tasks)
         {
             if (task is { IsCompletedSuccessfully: false, IsFaulted: true })
-                (exceptions ??=  []).AddRange(task.Exception!.Flatten().InnerExceptions);
+                (exceptions ??= []).AddRange(task.Exception!.Flatten().InnerExceptions);
         }
     }
 

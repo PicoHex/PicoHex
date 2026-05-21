@@ -1,6 +1,6 @@
 namespace PicoLog;
 
-internal sealed class SinkFlushWrapper : IFlushableLogSink, IDisposable, IAsyncDisposable
+internal sealed class SinkFlushWrapper : IFlushableLogSink
 {
     private readonly ILogSink _inner;
     private readonly FlushQuiesceCoordinator _coordinator = new();
@@ -43,8 +43,6 @@ internal sealed class SinkFlushWrapper : IFlushableLogSink, IDisposable, IAsyncD
             _coordinator.ResumeWrites();
         }
     }
-
-    public void Dispose() => _inner.Dispose();
 
     public ValueTask DisposeAsync() => _inner.DisposeAsync();
 

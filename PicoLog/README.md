@@ -181,7 +181,6 @@ public sealed class CustomSink : ILogSink
         // Write to your backend
         return Task.CompletedTask;
     }
-    public void Dispose() { }
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 ```
@@ -193,7 +192,6 @@ public sealed class BufferedSink : IFlushableLogSink
 {
     public Task WriteAsync(LogEntry entry, CancellationToken ct = default) { /* buffer */ }
     public ValueTask FlushAsync(CancellationToken ct = default) { /* flush buffer */ }
-    public void Dispose() { }
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 ```

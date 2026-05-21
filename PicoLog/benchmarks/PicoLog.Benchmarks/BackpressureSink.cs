@@ -10,7 +10,5 @@ internal sealed class BackpressureSink(int spinIterations) : ILogSink
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
-
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

@@ -40,7 +40,7 @@ public sealed class LoggerFactoryTests
     }
 
     [Test]
-    public async Task FileSink_Dispose_FlushesExistingContent_And_IgnoresLaterWrites()
+    public async Task FileSink_DisposeAsync_FlushesExistingContent_And_IgnoresLaterWrites()
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"pico-logger-sync-{Guid.NewGuid():N}.log");
 
@@ -58,7 +58,7 @@ public sealed class LoggerFactoryTests
                 }
             );
 
-            sink.Dispose();
+            await sink.DisposeAsync();
 
             await sink.WriteAsync(
                 new LogEntry
@@ -135,7 +135,7 @@ public sealed class LoggerFactoryTests
     public async Task CreateLogger_CachesLoggerPerCategory()
     {
         var sink = new CollectingSink();
-        using var factory = new LoggerFactory([sink]);
+        await using var factory = new LoggerFactory([sink]);
 
         var first = factory.CreateLogger("Tests.Category");
         var second = factory.CreateLogger("Tests.Category");
@@ -147,7 +147,7 @@ public sealed class LoggerFactoryTests
     public async Task CreateLogger_ReturnsLogger_ThatIsNotDisposable()
     {
         var sink = new CollectingSink();
-        using var factory = new LoggerFactory([sink]);
+        await using var factory = new LoggerFactory([sink]);
 
         var logger = factory.CreateLogger("Tests.Category");
 
@@ -159,7 +159,7 @@ public sealed class LoggerFactoryTests
     public async Task CreateLogger_PreservesStructuredProperties_ThroughNativeILoggerOverload()
     {
         var sink = new CollectingSink();
-        using var factory = new LoggerFactory([sink]);
+        await using var factory = new LoggerFactory([sink]);
 
         var logger = factory.CreateLogger("Tests.Category");
         IReadOnlyList<KeyValuePair<string, object?>> properties =
@@ -349,7 +349,7 @@ public sealed class LoggerFactoryTests
                 new("number", 3),
                 new("nullable", null)
             ],
-            Scopes =  ["outer", "inner"]
+            Scopes = ["outer", "inner"]
         };
 
         var rendered = formatter.Format(entry);

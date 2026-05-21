@@ -66,7 +66,7 @@ public static class SvcContainerExtensions
         }
         catch
         {
-            DisposeScopeSync(loggingScope);
+            _ = DisposeScopeOnFailureAsync(loggingScope);
             throw;
         }
     }
@@ -127,14 +127,16 @@ public static class SvcContainerExtensions
         return sinks;
     }
 
-    private static void DisposeScopeSync(ISvcScope scope)
+    private static async Task DisposeScopeOnFailureAsync(ISvcScope scope)
     {
-        // ISvcScope is IAsyncDisposable only — no sync Dispose().
-        // This path runs exclusively during error cleanup (factory creation
-        // failure), when no processing threads exist yet, so pool starvation
-        // cannot occur.
-        Task.Run(async () => await scope.DisposeAsync().ConfigureAwait(false))
-            .GetAwaiter()
-            .GetResult();
+        try
+        {
+            await scope.DisposeAsync().ConfigureAwait(false);
+        }
+        catch
+        {
+            // Preserve the original factory creation failure; cleanup exceptions
+            // cannot be awaited by the synchronous DI activation path.
+        }
     }
 }

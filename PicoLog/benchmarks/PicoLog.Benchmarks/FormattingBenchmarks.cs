@@ -76,14 +76,16 @@ public partial class FormattingBenchmarks
 
         _filePath = Path.Combine(Path.GetTempPath(), $"picolog-bench-{Guid.NewGuid():N}.log");
         _picoFileFactory = new LoggerFactory(
-
             [
-                new FileSink(new ConsoleFormatter(), new FileSinkOptions
-            {
-                FilePath = _filePath,
-                BatchSize = 32,
-                FlushInterval = TimeSpan.Zero
-            })
+                new FileSink(
+                    new ConsoleFormatter(),
+                    new FileSinkOptions
+                    {
+                        FilePath = _filePath,
+                        BatchSize = 32,
+                        FlushInterval = TimeSpan.Zero
+                    }
+                )
             ],
             new LoggerFactoryOptions
             {
@@ -98,15 +100,17 @@ public partial class FormattingBenchmarks
             $"picolog-bench-dual-{Guid.NewGuid():N}.log"
         );
         _picoDualFactory = new LoggerFactory(
-
             [
                 new ConsoleSink(new ConsoleFormatter(), TextWriter.Null),
-                new FileSink(new ConsoleFormatter(), new FileSinkOptions
-                {
-                    FilePath = _dualFilePath,
-                    BatchSize = 32,
-                    FlushInterval = TimeSpan.Zero
-                })
+                new FileSink(
+                    new ConsoleFormatter(),
+                    new FileSinkOptions
+                    {
+                        FilePath = _dualFilePath,
+                        BatchSize = 32,
+                        FlushInterval = TimeSpan.Zero
+                    }
+                )
             ],
             new LoggerFactoryOptions
             {
@@ -134,11 +138,11 @@ public partial class FormattingBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        _picoNullFactory.Dispose();
-        _picoConsoleFactory.Dispose();
-        _picoPooledFactory.Dispose();
-        _picoFileFactory.Dispose();
-        _picoDualFactory.Dispose();
+        _picoNullFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _picoConsoleFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _picoPooledFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _picoFileFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _picoDualFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
         Console.SetOut(_originalConsoleOut);
         _melConsoleFactory.Dispose();

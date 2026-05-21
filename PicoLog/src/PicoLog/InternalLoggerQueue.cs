@@ -34,25 +34,7 @@ internal sealed class InternalLoggerQueue
                     LogQueueFullMode.Wait => BoundedChannelFullMode.Wait,
                     _ => BoundedChannelFullMode.DropOldest
                 },
-                SingleReader = true,
-                // Synchronous continuations are REQUIRED here. The dedicated
-                // processing thread (CategoryPipeline) blocks on
-                // _queue.WaitToReadAsync().AsTask().GetAwaiter().GetResult().
-                // With AllowSynchronousContinuations = false, every write
-                // would need a ThreadPool worker to run the wakeup
-                // continuation that completes the reader's Task. On low-core
-                // ARM64 CI runners (win-arm64, osx-arm64) running 166 TUnit
-                // tests in parallel, the pool gets saturated and the wakeup
-                // continuations starve, causing dispatcher threads to never
-                // run and BlockingSink-based tests to hang indefinitely.
-                //
-                // DO NOT FLIP THIS BACK TO false. The contract is implicitly
-                // exercised by every test that uses BlockingSink or
-                // CoordinatedDisposalSink and awaits its WriteStarted latch
-                // (Wait_Mode_*, DropWrite_*, DropOldest_*, DisposeAsync_*,
-                // FactoryDisposeAsync_*, Metrics_*). Flipping it to false
-                // makes those tests hang on any parallel CI runner.
-                AllowSynchronousContinuations = true
+                SingleReader = true
             }
         );
         _writer = channel.Writer;

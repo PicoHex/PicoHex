@@ -49,8 +49,8 @@ public sealed partial class WaitLoggingBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        _picoWaitControlFactory.Dispose();
-        _picoWaitFactory.Dispose();
+        _picoWaitControlFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _picoWaitFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     [Benchmark(Baseline = true)]

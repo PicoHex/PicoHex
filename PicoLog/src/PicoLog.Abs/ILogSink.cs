@@ -1,6 +1,6 @@
 namespace PicoLog.Abs;
 
-public interface ILogSink : IDisposable, IAsyncDisposable
+public interface ILogSink : IAsyncDisposable
 {
     /// <summary>
     /// Writes a log entry to the sink.

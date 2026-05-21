@@ -65,7 +65,7 @@ public partial class LoggingBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        _picoFactory.Dispose();
+        _picoFactory.DisposeAsync().AsTask().GetAwaiter().GetResult();
         _melSyncFactory.Dispose();
         _melAsyncFactory.Dispose();
         _melAsyncEntryFactory.Dispose();

@@ -14,6 +14,7 @@ public sealed class AssemblySurfaceTests
             .GetMethods()
             .Where(method => method.Name == nameof(ILogger.LogAsync))
             .ToArray();
+        var pipelineType = typeof(LoggerFactory).Assembly.GetType("PicoLog.CategoryPipeline");
 
         await Assert.That(absAssembly.GetType("PicoLog.Abs.ILogSink")).IsNotNull();
         await Assert.That(absAssembly.GetType("PicoLog.Abs.IFlushableLogSink")).IsNotNull();
@@ -23,6 +24,18 @@ public sealed class AssemblySurfaceTests
         await Assert.That(absAssembly.GetType("PicoLog.Abs.FlushExtensions")).IsNotNull();
         await Assert.That(absAssembly.GetType("PicoLog.Abs.IPicoLogControl")).IsNull();
         await Assert.That(absAssembly.GetType("PicoLog.Abs.IStructuredLogger")).IsNull();
+        await Assert.That(typeof(IDisposable).IsAssignableFrom(typeof(ILogSink))).IsFalse();
+        await Assert.That(typeof(IAsyncDisposable).IsAssignableFrom(typeof(ILogSink))).IsTrue();
+        await Assert.That(typeof(IDisposable).IsAssignableFrom(typeof(LoggerFactory))).IsFalse();
+        await Assert
+            .That(typeof(IAsyncDisposable).IsAssignableFrom(typeof(LoggerFactory)))
+            .IsTrue();
+        await Assert.That(HasPublicParameterlessDispose(typeof(FileSink))).IsFalse();
+        await Assert.That(HasThreadField(typeof(FileSink))).IsFalse();
+        await Assert.That(pipelineType).IsNotNull();
+        await Assert.That(typeof(IDisposable).IsAssignableFrom(pipelineType!)).IsFalse();
+        await Assert.That(typeof(IAsyncDisposable).IsAssignableFrom(pipelineType!)).IsTrue();
+        await Assert.That(HasThreadField(pipelineType!)).IsFalse();
         await Assert.That(loggerMethods.Any(method => method.GetParameters().Length == 4)).IsTrue();
         await Assert
             .That(logAsyncMethods.Any(method => method.GetParameters().Length == 5))
@@ -47,4 +60,21 @@ public sealed class AssemblySurfaceTests
         await Assert.That(picoLogAssembly.GetType("PicoLog.Abs.IFlushableLoggerFactory")).IsNull();
         await Assert.That(picoLogAssembly.GetType("PicoLog.Abs.FlushExtensions")).IsNull();
     }
+
+    private static bool HasPublicParameterlessDispose(Type type) =>
+        type.GetMethods(
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public
+            )
+            .Any(
+                method =>
+                    method.Name == nameof(IDisposable.Dispose) && method.GetParameters().Length == 0
+            );
+
+    private static bool HasThreadField(Type type) =>
+        type.GetFields(
+                System.Reflection.BindingFlags.Instance
+                    | System.Reflection.BindingFlags.Public
+                    | System.Reflection.BindingFlags.NonPublic
+            )
+            .Any(field => field.FieldType == typeof(Thread));
 }

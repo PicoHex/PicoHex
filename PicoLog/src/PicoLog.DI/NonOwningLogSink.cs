@@ -12,8 +12,6 @@ internal static class NonOwningLogSink
         public Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default) =>
             innerSink.WriteAsync(entry, cancellationToken);
 
-        public void Dispose() { }
-
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
@@ -24,8 +22,6 @@ internal static class NonOwningLogSink
 
         public ValueTask FlushAsync(CancellationToken cancellationToken = default) =>
             innerSink.FlushAsync(cancellationToken);
-
-        public void Dispose() { }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }

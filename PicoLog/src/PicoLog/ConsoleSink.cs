@@ -14,7 +14,5 @@ public sealed class ConsoleSink(ILogFormatter formatter, TextWriter? writer = nu
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
-
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

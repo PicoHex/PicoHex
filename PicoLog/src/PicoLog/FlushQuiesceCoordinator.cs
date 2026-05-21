@@ -5,9 +5,7 @@ internal sealed class FlushQuiesceCoordinator
     private readonly Lock _stateLock = new();
     private int _flushPending;
     private int _activeWriteOperations;
-    private TaskCompletionSource? _writesResumedTcs;
-    private TaskCompletionSource? _writesQuiescedTcs;
-    private TaskCompletionSource? _idleTcs;
+    private TaskCompletionSource _stateChanged = CreateSignal();
 
     public void EnterWriteOperationSync(TimeSpan timeout)
     {
@@ -26,7 +24,7 @@ internal sealed class FlushQuiesceCoordinator
                     return;
                 }
 
-                waitTask = (_writesResumedTcs ??= CreateSignal()).Task;
+                waitTask = _stateChanged.Task;
             }
 
             var remaining = timeout - Stopwatch.GetElapsedTime(startTimestamp);
@@ -59,7 +57,7 @@ internal sealed class FlushQuiesceCoordinator
                     return;
                 }
 
-                waitTask = (_writesResumedTcs ??= CreateSignal()).Task;
+                waitTask = _stateChanged.Task;
             }
 
             await waitTask.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -68,33 +66,31 @@ internal sealed class FlushQuiesceCoordinator
 
     public void ExitWriteOperation()
     {
-        TaskCompletionSource? writesQuiesced = null;
-
         lock (_stateLock)
         {
             _activeWriteOperations--;
-
-            if (_activeWriteOperations == 0 && _flushPending != 0)
-                writesQuiesced = _writesQuiescedTcs;
+            SignalStateChangedUnderLock();
         }
-
-        writesQuiesced?.TrySetResult();
     }
 
     public async ValueTask BlockWritesAsync(CancellationToken cancellationToken)
     {
-        Task? waitTask = null;
+        Task waitTask;
 
-        lock (_stateLock)
+        while (true)
         {
-            _flushPending = 1;
+            lock (_stateLock)
+            {
+                _flushPending = 1;
 
-            if (_activeWriteOperations != 0)
-                waitTask = (_writesQuiescedTcs ??= CreateSignal()).Task;
-        }
+                if (_activeWriteOperations == 0)
+                    return;
 
-        if (waitTask is not null)
+                waitTask = _stateChanged.Task;
+            }
+
             await waitTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public async ValueTask WaitForIdleAsync(
@@ -104,32 +100,29 @@ internal sealed class FlushQuiesceCoordinator
     {
         ArgumentNullException.ThrowIfNull(isOwnerIdleUnderLock);
 
-        Task? waitTask = null;
+        Task waitTask;
 
-        lock (_stateLock)
+        while (true)
         {
-            if (!IsIdleUnderLock(isOwnerIdleUnderLock))
-                waitTask = (_idleTcs ??= CreateSignal()).Task;
-        }
+            lock (_stateLock)
+            {
+                if (CanStopWaitingForIdleUnderLock(isOwnerIdleUnderLock))
+                    return;
 
-        if (waitTask is not null)
+                waitTask = _stateChanged.Task;
+            }
+
             await waitTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public void ResumeWrites()
     {
-        TaskCompletionSource? writesResumed;
-
         lock (_stateLock)
         {
             _flushPending = 0;
-            _writesQuiescedTcs = null;
-            _idleTcs = null;
-            writesResumed = _writesResumedTcs;
-            _writesResumedTcs = null;
+            SignalStateChangedUnderLock();
         }
-
-        writesResumed?.TrySetResult();
     }
 
     public bool IsFlushPending()
@@ -157,21 +150,22 @@ internal sealed class FlushQuiesceCoordinator
         ArgumentNullException.ThrowIfNull(endOwnerActivityUnderLock);
         ArgumentNullException.ThrowIfNull(isOwnerIdleUnderLock);
 
-        TaskCompletionSource? idleSignal = null;
-
         lock (_stateLock)
         {
             endOwnerActivityUnderLock();
-
-            if (IsIdleUnderLock(isOwnerIdleUnderLock))
-                idleSignal = _idleTcs;
+            SignalStateChangedUnderLock();
         }
-
-        idleSignal?.TrySetResult();
     }
 
-    private bool IsIdleUnderLock(Func<bool> isOwnerIdleUnderLock) =>
-        _flushPending != 0 && _activeWriteOperations == 0 && isOwnerIdleUnderLock();
+    private bool CanStopWaitingForIdleUnderLock(Func<bool> isOwnerIdleUnderLock) =>
+        _flushPending == 0 || (_activeWriteOperations == 0 && isOwnerIdleUnderLock());
+
+    private void SignalStateChangedUnderLock()
+    {
+        var signal = _stateChanged;
+        _stateChanged = CreateSignal();
+        signal.TrySetResult();
+    }
 
     private static TaskCompletionSource CreateSignal() =>
         new(TaskCreationOptions.RunContinuationsAsynchronously);

@@ -226,6 +226,24 @@ public sealed class FlushQuiesceCoordinatorTests
         c.ResumeWrites();
     }
 
+    [Test]
+    public async Task ResumeWrites_UnblocksPendingIdleWaiters()
+    {
+        var c = new FlushQuiesceCoordinator();
+        var activities = new ActivityCounter();
+
+        await c.BlockWritesAsync(CancellationToken.None);
+        c.BeginOwnerActivity(() => activities.Active++);
+
+        var waitTask = c.WaitForIdleAsync(activities.IsIdle, CancellationToken.None).AsTask();
+        await Assert.That(waitTask.IsCompleted).IsFalse();
+
+        c.ResumeWrites();
+        await waitTask.WaitAsync(TimeSpan.FromSeconds(1));
+
+        c.EndOwnerActivity(() => activities.Active--, activities.IsIdle);
+    }
+
     private sealed class ActivityCounter
     {
         public int Active;

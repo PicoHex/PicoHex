@@ -53,7 +53,5 @@ public sealed class ColoredConsoleSink(ILogFormatter formatter, TextWriter? writ
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
-
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
