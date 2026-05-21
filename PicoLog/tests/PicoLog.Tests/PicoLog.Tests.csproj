@@ -16,6 +16,8 @@
         <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" Condition="'$(UseProjectReferences)' == 'true'" />
         <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj" OutputItemType="Analyzer" />
         <PackageReference Include="TUnit" />
+        <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
+        <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     </ItemGroup>
 

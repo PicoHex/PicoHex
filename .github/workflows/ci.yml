@@ -344,13 +344,22 @@ jobs:
 
       - name: Run PicoLog tests (coverage)
         if: matrix.rid == 'linux-x64'
-        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true --coverage --coverage-output-format cobertura
+        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal -p:UseProjectReferences=true --coverage --coverage-output-format cobertura -- --hangdump --hangdump-timeout 10m --hangdump-type Full --crashdump --crashdump-type Full --results-directory ${{ github.workspace }}/artifacts/test-results
       - name: Run PicoLog tests
         if: matrix.rid != 'linux-x64' && matrix.rid != 'linux-arm64'
-        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
+        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal -p:UseProjectReferences=true -- --hangdump --hangdump-timeout 10m --hangdump-type Full --crashdump --crashdump-type Full --results-directory ${{ github.workspace }}/artifacts/test-results
       - name: Run PicoLog tests (linux-arm64 — increased parallelism, I/O-bound on slow VM)
         if: matrix.rid == 'linux-arm64'
-        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true -- --maximum-parallel-tests 4
+        run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal -p:UseProjectReferences=true -- --maximum-parallel-tests 4 --hangdump --hangdump-timeout 10m --hangdump-type Full --crashdump --crashdump-type Full --results-directory ${{ github.workspace }}/artifacts/test-results
+      - name: Upload hang/crash dumps
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: picolog-dumps-${{ matrix.logical-target }}
+          path: |
+            ${{ github.workspace }}/artifacts/test-results/**
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload coverage
         if: matrix.rid == 'linux-x64'
         uses: actions/upload-artifact@v4
