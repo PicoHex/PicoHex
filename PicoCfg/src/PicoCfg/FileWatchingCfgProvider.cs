@@ -7,11 +7,12 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
     private readonly TimeSpan _debounceInterval;
     private FileSystemWatcher? _watcher;
     private CancellationTokenSource? _debounceCts;
+    private Task? _pendingReload;
     private readonly Lock _debounceLock = new();
     private int _disposed;
 
     /// <summary>
-    /// Optional callback for observing errors during fire-and-forget reload/cleanup.
+    /// Optional callback for observing errors during reload/cleanup.
     /// Receives context string ("reload" or "cleanup") and the caught exception.
     /// Expected exceptions include <see cref="IOException"/> (file locked/deleted),
     /// <see cref="ObjectDisposedException"/> (provider already disposed), etc.
@@ -52,11 +53,30 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
             else
                 Trace.TraceError($"[PicoCfg] File watching dispose error: {ex}");
         }
+
+        Task? pendingReload;
         lock (_debounceLock)
         {
             _debounceCts?.Cancel();
             _debounceCts?.Dispose();
             _debounceCts = null;
+            pendingReload = _pendingReload;
+        }
+
+        if (pendingReload is not null)
+        {
+            try
+            {
+                await pendingReload.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                if (OnError is not null)
+                    OnError("reload", ex);
+                else
+                    Trace.TraceError($"[PicoCfg] File watching reload error during dispose: {ex}");
+            }
         }
 
         await _inner.DisposeAsync();
@@ -85,27 +105,26 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
             _debounceCts?.Cancel();
             _debounceCts?.Dispose();
             _debounceCts = new CancellationTokenSource();
-            var capturedCts = _debounceCts;
-            Task.Delay(_debounceInterval, capturedCts.Token)
-                .ContinueWith(
-                    async _ =>
-                    {
-                        try
-                        {
-                            await _inner.ReloadAsync(CancellationToken.None);
-                        }
-                        catch (Exception ex)
-                        {
-                            if (OnError is not null)
-                                OnError("reload", ex);
-                            else
-                                Trace.TraceError($"[PicoCfg] File watching reload error: {ex}");
-                        }
-                    },
-                    CancellationToken.None,
-                    TaskContinuationOptions.NotOnCanceled,
-                    TaskScheduler.Default
-                );
+            var capturedCt = _debounceCts.Token;
+
+            _pendingReload = DebounceAndReloadAsync(capturedCt);
+        }
+    }
+
+    private async Task DebounceAndReloadAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(_debounceInterval, ct).ConfigureAwait(false);
+            await _inner.ReloadAsync(ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        catch (Exception ex)
+        {
+            if (OnError is not null)
+                OnError("reload", ex);
+            else
+                Trace.TraceError($"[PicoCfg] File watching reload error: {ex}");
         }
     }
 

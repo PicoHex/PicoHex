@@ -35,12 +35,20 @@ public partial class ReloadBenchmarks
         _dictionaryStampedRoot = stampedBuilder.BuildAsync().AsTask().GetAwaiter().GetResult();
 
         var streamBuilder = Cfg.CreateBuilder();
-        streamBuilder.Add(() => new MemoryStream(Encoding.UTF8.GetBytes(_streamContent)));
+        streamBuilder.Add(
+            ct =>
+                ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(_streamContent))
+                )
+        );
         _streamRoot = streamBuilder.BuildAsync().AsTask().GetAwaiter().GetResult();
 
         var stampedStreamBuilder = Cfg.CreateBuilder();
         stampedStreamBuilder.Add(
-            streamFactory: () => new MemoryStream(Encoding.UTF8.GetBytes(_streamContent)),
+            streamFactory: ct =>
+                ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(_streamContent))
+                ),
             versionStampFactory: () => _streamVersionStamp
         );
         _streamStampedRoot = stampedStreamBuilder.BuildAsync().AsTask().GetAwaiter().GetResult();

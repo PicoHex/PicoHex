@@ -375,16 +375,19 @@ public class CfgRootTests
     {
         private readonly IReadOnlyList<IReadOnlyDictionary<string, string>> _snapshots;
         private readonly Exception? _disposeException;
+        private readonly bool _shouldFailOnReload;
         private int _index;
         private ControllableMockChangeSignal _changeSignal = new();
 
         public MockProvider(
             IReadOnlyList<IReadOnlyDictionary<string, string>> snapshots,
-            Exception? disposeException = null
+            Exception? disposeException = null,
+            bool shouldFailOnReload = false
         )
         {
             _snapshots = snapshots;
             _disposeException = disposeException;
+            _shouldFailOnReload = shouldFailOnReload;
             Snapshot = new MockSnapshot(_snapshots[0]);
         }
 
@@ -394,6 +397,11 @@ public class CfgRootTests
 
         public ValueTask<bool> ReloadAsync(CancellationToken ct = default)
         {
+            if (_shouldFailOnReload)
+                return ValueTask.FromException<bool>(
+                    new InvalidOperationException("Simulated reload failure")
+                );
+
             ReloadCount++;
             if (_index < _snapshots.Count - 1)
             {
@@ -743,5 +751,45 @@ public class CfgRootTests
             var expected = i % 2 == 0 ? "value42" : "hello";
             await Assert.That(results[i]).IsEqualTo(expected);
         }
+    }
+
+    [Test]
+    public async Task ReloadAsync_TwoProvidersThirdFails_PublishesPartialThenRethrows()
+    {
+        var provider1 = new MockProvider(
+
+            [
+                new Dictionary<string, string> { ["p1"] = "v1" },
+                new Dictionary<string, string> { ["p1"] = "v1b" }
+            ],
+            shouldFailOnReload: false
+        );
+        var provider2 = new MockProvider(
+
+            [
+                new Dictionary<string, string> { ["p2"] = "v2" },
+                new Dictionary<string, string> { ["p2"] = "v2b" }
+            ],
+            shouldFailOnReload: false
+        );
+        var failingProvider = new MockProvider(
+            [new Dictionary<string, string> { ["p3"] = "v3" }],
+            shouldFailOnReload: true
+        );
+        var root = TestCfgFactory.CreateRoot([provider1, provider2, failingProvider]);
+
+        await Assert.That(root.GetValue("p1")).IsEqualTo("v1");
+        var originalSnapshot = SnapshotOf(root);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await root.ReloadAsync()
+        );
+
+        await Assert.That(ex.Message).Contains("Simulated reload failure");
+        await Assert.That(root.GetValue("p1")).IsEqualTo("v1b");
+        await Assert.That(root.GetValue("p2")).IsEqualTo("v2b");
+
+        var afterFailureSnapshot = SnapshotOf(root);
+        await Assert.That(afterFailureSnapshot).IsNotSameReferenceAs(originalSnapshot);
     }
 }

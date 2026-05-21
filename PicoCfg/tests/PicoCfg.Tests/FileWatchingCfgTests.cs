@@ -11,7 +11,10 @@ public class FileWatchingCfgTests
             await File.WriteAllTextAsync(tempPath, "key=value1", Encoding.UTF8);
 
             await using var root = await Cfg.CreateBuilder()
-                .Add(() => File.OpenRead(tempPath), watchPath: tempPath)
+                .Add(
+                    ct => ValueTask.FromResult<Stream>(File.OpenRead(tempPath)),
+                    watchPath: tempPath
+                )
                 .BuildAsync();
 
             // Data is already loaded during BuildAsync (OpenAsync calls ReloadAsync internally).
@@ -43,7 +46,10 @@ public class FileWatchingCfgTests
             await File.WriteAllTextAsync(tempPath, "key=value", Encoding.UTF8);
 
             await using var root = await Cfg.CreateBuilder()
-                .Add(() => File.OpenRead(tempPath), watchPath: tempPath)
+                .Add(
+                    ct => ValueTask.FromResult<Stream>(File.OpenRead(tempPath)),
+                    watchPath: tempPath
+                )
                 .BuildAsync();
 
             // Dispose via await using — inner provider and watcher disposed cleanly.
@@ -70,7 +76,10 @@ public class FileWatchingCfgTests
             await File.WriteAllTextAsync(tempPath, "key=value1", Encoding.UTF8);
 
             await using var root = await Cfg.CreateBuilder()
-                .Add(() => File.OpenRead(tempPath), watchPath: tempPath)
+                .Add(
+                    ct => ValueTask.FromResult<Stream>(File.OpenRead(tempPath)),
+                    watchPath: tempPath
+                )
                 .BuildAsync();
 
             // Data loaded during BuildAsync via OpenAsync → ReloadAsync.
@@ -85,6 +94,42 @@ public class FileWatchingCfgTests
             var changed = await root.ReloadAsync();
             await Assert.That(changed).IsTrue();
             await Assert.That(root.GetValue("key")).IsEqualTo("value2");
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
+        }
+    }
+
+    [Test]
+    public async Task DisposeAsync_DuringPendingReload_CancelsCleanly()
+    {
+        var tempPath = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(tempPath, "key=value1", Encoding.UTF8);
+
+            var root = await Cfg.CreateBuilder()
+                .Add(
+                    ct => ValueTask.FromResult<Stream>(File.OpenRead(tempPath)),
+                    watchPath: tempPath
+                )
+                .BuildAsync();
+
+            await Assert.That(root.GetValue("key")).IsEqualTo("value1");
+
+            // Trigger a file change.
+            await File.WriteAllTextAsync(tempPath, "key=value2", Encoding.UTF8);
+
+            await Task.Delay(50);
+
+            await root.DisposeAsync();
         }
         finally
         {

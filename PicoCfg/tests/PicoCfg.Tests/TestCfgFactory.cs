@@ -14,7 +14,7 @@ internal static class TestCfgFactory
     }
 
     public static StreamCfgProvider CreateStreamProvider(
-        Func<Stream> streamFactory,
+        Func<CancellationToken, ValueTask<Stream>> streamFactory,
         Func<object?>? versionStampFactory = null,
         Func<Stream, CancellationToken, Task<Dictionary<string, string>>>? streamParser = null,
         CfgProviderState? state = null
@@ -29,7 +29,7 @@ internal static class TestCfgFactory
     }
 
     public static StreamCfgSource CreateStreamSource(
-        Func<Stream> streamFactory,
+        Func<CancellationToken, ValueTask<Stream>> streamFactory,
         Func<object?>? versionStampFactory = null,
         Func<Stream, CancellationToken, Task<Dictionary<string, string>>>? streamParser = null,
         Func<CfgProviderState>? providerStateFactory = null

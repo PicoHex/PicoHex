@@ -26,8 +26,10 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgSource_OpenAsync_ReturnsProvider()
     {
-        var streamFactory = () =>
-            new MemoryStream(Encoding.UTF8.GetBytes("key1=value1\nkey2=value2"));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(
+                new MemoryStream(Encoding.UTF8.GetBytes("key1=value1\nkey2=value2"))
+            );
         var source = TestCfgFactory.CreateStreamSource(streamFactory);
 
         var provider = await source.OpenAsync();
@@ -39,8 +41,10 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_ReloadAsync_ParsesKeyValuePairs()
     {
-        var streamFactory = () =>
-            new MemoryStream(Encoding.UTF8.GetBytes("key1=value1\nkey2=value2\nkey3=value3"));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(
+                new MemoryStream(Encoding.UTF8.GetBytes("key1=value1\nkey2=value2\nkey3=value3"))
+            );
         var provider = TestCfgFactory.CreateStreamProvider(streamFactory);
 
         var changed = await provider.ReloadAsync();
@@ -58,8 +62,10 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_ReloadAsync_IgnoresEmptyLines()
     {
-        var streamFactory = () =>
-            new MemoryStream(Encoding.UTF8.GetBytes("\nkey1=value1\n\nkey2=value2\n"));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(
+                new MemoryStream(Encoding.UTF8.GetBytes("\nkey1=value1\n\nkey2=value2\n"))
+            );
         var provider = TestCfgFactory.CreateStreamProvider(streamFactory);
 
         _ = await provider.ReloadAsync();
@@ -74,8 +80,12 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_ReloadAsync_IgnoresMalformedLines()
     {
-        var streamFactory = () =>
-            new MemoryStream(Encoding.UTF8.GetBytes("key1=value1\nmalformed\nkey2=value2\nkey3"));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(
+                new MemoryStream(
+                    Encoding.UTF8.GetBytes("key1=value1\nmalformed\nkey2=value2\nkey3")
+                )
+            );
         var provider = TestCfgFactory.CreateStreamProvider(streamFactory);
 
         _ = await provider.ReloadAsync();
@@ -94,8 +104,10 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_ReloadAsync_TrimsKeyAndValue()
     {
-        var streamFactory = () =>
-            new MemoryStream(Encoding.UTF8.GetBytes("  key1  =  value1  \n  key2=value2  "));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(
+                new MemoryStream(Encoding.UTF8.GetBytes("  key1  =  value1  \n  key2=value2  "))
+            );
         var provider = TestCfgFactory.CreateStreamProvider(streamFactory);
 
         _ = await provider.ReloadAsync();
@@ -110,7 +122,8 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_GetValue_ReturnsNullForMissingKey()
     {
-        var streamFactory = () => new MemoryStream(Encoding.UTF8.GetBytes("key1=value1"));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("key1=value1")));
         var provider = TestCfgFactory.CreateStreamProvider(streamFactory);
 
         _ = await provider.ReloadAsync();
@@ -125,7 +138,10 @@ public class StreamCfgTests
     {
         var currentContent = "key1=oldvalue\nkey2=value2";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () => new MemoryStream(Encoding.UTF8.GetBytes(currentContent))
+            ct =>
+                ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(currentContent))
+                )
         );
 
         var initialChanged = await provider.ReloadAsync();
@@ -151,7 +167,8 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_Snapshot_IsUpdatedAfterReload()
     {
-        var streamFactory = () => new MemoryStream(Encoding.UTF8.GetBytes("key1=value1"));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("key1=value1")));
         var provider = TestCfgFactory.CreateStreamProvider(streamFactory);
 
         _ = await provider.ReloadAsync();
@@ -162,7 +179,8 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_ReloadAsync_PublishesSnapshotAndRetainsStableRead()
     {
-        var streamFactory = () => new MemoryStream(Encoding.UTF8.GetBytes("key1=value1"));
+        Func<CancellationToken, ValueTask<Stream>> streamFactory = ct =>
+            ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("key1=value1")));
         var provider = TestCfgFactory.CreateStreamProvider(streamFactory);
 
         var changed = await provider.ReloadAsync();
@@ -176,7 +194,10 @@ public class StreamCfgTests
     {
         var currentContent = "key1=value1";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () => new MemoryStream(Encoding.UTF8.GetBytes(currentContent))
+            ct =>
+                ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(currentContent))
+                )
         );
 
         var initialChanged = await provider.ReloadAsync();
@@ -199,7 +220,9 @@ public class StreamCfgTests
     [Test]
     public async Task StreamCfgProvider_ReloadAsync_WhenFactoryReturnsNull_ThrowsInvalidOperationException()
     {
-        var provider = TestCfgFactory.CreateStreamProvider(() => null!);
+        var provider = TestCfgFactory.CreateStreamProvider(
+            ct => ValueTask.FromResult<Stream>(null!)
+        );
 
         await Assert
             .That(async () => await provider.ReloadAsync())
@@ -212,10 +235,12 @@ public class StreamCfgTests
         var calls = 0;
         var content = "key1=value1";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () =>
+            ct =>
             {
                 calls++;
-                return new MemoryStream(Encoding.UTF8.GetBytes(content));
+                return ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(content))
+                );
             },
             () => 1
         );
@@ -236,7 +261,7 @@ public class StreamCfgTests
         var stamp = 1;
         const string content = "key1=value1";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () => new MemoryStream(Encoding.UTF8.GetBytes(content)),
+            ct => ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(content))),
             () => stamp
         );
 
@@ -256,10 +281,12 @@ public class StreamCfgTests
         var calls = 0;
         var content = "key1=value1";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () =>
+            ct =>
             {
                 calls++;
-                return new MemoryStream(Encoding.UTF8.GetBytes(content));
+                return ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(content))
+                );
             },
             () => null
         );
@@ -281,10 +308,12 @@ public class StreamCfgTests
         var stamp = 1;
         var content = "key1=value1";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () =>
+            ct =>
             {
                 calls++;
-                return new MemoryStream(Encoding.UTF8.GetBytes(content));
+                return ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(content))
+                );
             },
             () => stamp
         );
@@ -310,7 +339,7 @@ public class StreamCfgTests
         var stamp = 1;
         var content = "key1=value1";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () => new MemoryStream(Encoding.UTF8.GetBytes(content)),
+            ct => ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(content))),
             () => stamp
         );
 
@@ -331,7 +360,7 @@ public class StreamCfgTests
     {
         var content = "key=first\nkey=value";
         var provider = TestCfgFactory.CreateStreamProvider(
-            () => new MemoryStream(Encoding.UTF8.GetBytes(content))
+            ct => ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(content)))
         );
 
         var initialChanged = await provider.ReloadAsync();
@@ -360,7 +389,8 @@ public class StreamCfgTests
             TaskCreationOptions.RunContinuationsAsynchronously
         );
         provider = TestCfgFactory.CreateStreamProvider(
-            () => new MemoryStream(Encoding.UTF8.GetBytes("key=value")),
+            ct =>
+                ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("key=value"))),
             () =>
             {
                 versionStampEntered.TrySetResult();
@@ -391,10 +421,12 @@ public class StreamCfgTests
         var streamFactoryCalls = 0;
         var versionStampCalls = 0;
         var provider = TestCfgFactory.CreateStreamProvider(
-            () =>
+            ct =>
             {
                 streamFactoryCalls++;
-                return new MemoryStream(Encoding.UTF8.GetBytes("key=value"));
+                return ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes("key=value"))
+                );
             },
             () =>
             {
@@ -419,10 +451,12 @@ public class StreamCfgTests
         var streamFactoryCalls = 0;
         CancellationTokenSource? cancellationSource = null;
         var provider = TestCfgFactory.CreateStreamProvider(
-            () =>
+            ct =>
             {
                 streamFactoryCalls++;
-                return new MemoryStream(Encoding.UTF8.GetBytes("key=value"));
+                return ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes("key=value"))
+                );
             },
             () =>
             {
@@ -444,7 +478,8 @@ public class StreamCfgTests
     public async Task StreamCfgProvider_ReloadAsync_PreservesTextAfterFirstSeparator()
     {
         var provider = TestCfgFactory.CreateStreamProvider(
-            () => new MemoryStream(Encoding.UTF8.GetBytes("key=a=b=c"))
+            ct =>
+                ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("key=a=b=c")))
         );
 
         var changed = await provider.ReloadAsync();
@@ -480,10 +515,12 @@ public class StreamCfgTests
         var calls = 0;
 
         builder.Add(
-            streamFactory: () =>
+            streamFactory: ct =>
             {
                 calls++;
-                return new MemoryStream(Encoding.UTF8.GetBytes(content));
+                return ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes(content))
+                );
             },
             versionStampFactory: () => stamp
         );

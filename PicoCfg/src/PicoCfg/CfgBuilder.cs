@@ -131,7 +131,7 @@ public sealed class CfgBuilder
     }
 
     internal ICfgSource CreateStreamSource(
-        Func<Stream> streamFactory,
+        Func<CancellationToken, ValueTask<Stream>> streamFactory,
         Func<object?>? versionStampFactory = null,
         Encoding? encoding = null
     )
@@ -154,7 +154,7 @@ public sealed class CfgBuilder
     }
 
     internal ICfgSource CreateStreamSource(
-        Func<Stream> streamFactory,
+        Func<CancellationToken, ValueTask<Stream>> streamFactory,
         string filePath,
         Func<object?>? versionStampFactory = null,
         Encoding? encoding = null,

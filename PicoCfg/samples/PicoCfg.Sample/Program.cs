@@ -52,14 +52,14 @@ await Test(
         builder.Add(new Dictionary<string, string> { ["DictKey"] = "DictValue" });
 
         // Stream source
-        builder.Add(() =>
+        builder.Add(ct =>
         {
             var stream = new MemoryStream();
             using var writer = new StreamWriter(stream, leaveOpen: true);
             writer.WriteLine("StreamKey=StreamValue");
             writer.Flush();
             stream.Position = 0;
-            return stream;
+            return ValueTask.FromResult<Stream>(stream);
         });
 
         await using var root = await builder.BuildAsync();

@@ -29,7 +29,7 @@ public static class CfgBuilderExtensions
         /// reopening the stream. A changed stamp triggers a reread, but the current snapshot may still be
         /// retained when the reparsed content is unchanged.
         /// </summary>
-        public CfgBuilder Add(Func<Stream> streamFactory,
+        public CfgBuilder Add(Func<CancellationToken, ValueTask<Stream>> streamFactory,
             Encoding? encoding = null,
             Func<object?>? versionStampFactory = null
         ) =>
@@ -40,7 +40,7 @@ public static class CfgBuilderExtensions
         /// The stream provider is decorated with a <see cref="FileWatchingCfgProvider"/> that monitors
         /// <paramref name="watchPath"/> and triggers reloads on change events with a debounce interval.
         /// </summary>
-        public CfgBuilder Add(Func<Stream> streamFactory,
+        public CfgBuilder Add(Func<CancellationToken, ValueTask<Stream>> streamFactory,
             string watchPath,
             Encoding? encoding = null,
             Func<object?>? versionStampFactory = null
@@ -70,7 +70,7 @@ public static class CfgBuilderExtensions
         ) =>
             builder.AddSource(
                 builder.CreateStreamSource(
-                    () =>
+                    ct =>
                     {
                         var stream = new MemoryStream();
                         using var writer = new StreamWriter(
@@ -81,7 +81,7 @@ public static class CfgBuilderExtensions
                         writer.Write(configContent);
                         writer.Flush();
                         stream.Position = 0;
-                        return stream;
+                        return ValueTask.FromResult<Stream>(stream);
                     },
                     versionStampFactory
                 )

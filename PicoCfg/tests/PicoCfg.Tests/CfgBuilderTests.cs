@@ -153,7 +153,12 @@ public class CfgBuilderTests
                 }
             );
 
-        builder.Add(() => new MemoryStream(Encoding.UTF8.GetBytes("not-valid-default-format")));
+        builder.Add(
+            ct =>
+                ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes("not-valid-default-format"))
+                )
+        );
 
         await using var root = await builder.BuildAsync();
 
@@ -176,8 +181,12 @@ public class CfgBuilderTests
             );
 
         builder.Add(
-            () =>
-                new MemoryStream(Encoding.UTF8.GetBytes(" key = a=b=c \ninvalid\n\nother = value "))
+            ct =>
+                ValueTask.FromResult<Stream>(
+                    new MemoryStream(
+                        Encoding.UTF8.GetBytes(" key = a=b=c \ninvalid\n\nother = value ")
+                    )
+                )
         );
 
         await using var root = await builder.BuildAsync();

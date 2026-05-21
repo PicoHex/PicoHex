@@ -21,13 +21,13 @@ internal sealed class KeyPerFileCfgProvider : ICfgProvider
 
     public ICfgSnapshot Snapshot => _state.Snapshot;
 
-    public ValueTask<bool> ReloadAsync(CancellationToken ct = default)
+    public async ValueTask<bool> ReloadAsync(CancellationToken ct = default)
     {
         if (!_state.TryBeginReload(CreateVersionStamp, ct, out var candidateVersionStamp))
-            return ValueTask.FromResult(false);
+            return false;
 
-        var newData = CreateSnapshotData(ct);
-        return ValueTask.FromResult(_state.PublishIfChanged(newData, candidateVersionStamp));
+        var newData = await CreateSnapshotDataAsync(ct).ConfigureAwait(false);
+        return _state.PublishIfChanged(newData, candidateVersionStamp);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -41,7 +41,7 @@ internal sealed class KeyPerFileCfgProvider : ICfgProvider
         return Directory.GetLastWriteTimeUtc(_directoryPath).Ticks ^ fileCount;
     }
 
-    private Dictionary<string, string> CreateSnapshotData(CancellationToken ct)
+    private async Task<Dictionary<string, string>> CreateSnapshotDataAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -59,7 +59,9 @@ internal sealed class KeyPerFileCfgProvider : ICfgProvider
                 continue;
 
             var key = Path.GetFileName(file);
-            var value = File.ReadAllText(file, Encoding.UTF8).TrimEnd('\r', '\n');
+            var value = (
+                await File.ReadAllTextAsync(file, Encoding.UTF8, ct).ConfigureAwait(false)
+            ).TrimEnd('\r', '\n');
             newData[key] = value;
         }
 

@@ -2,7 +2,7 @@ namespace PicoCfg;
 
 internal sealed class StreamCfgProvider : ICfgProvider
 {
-    private readonly Func<Stream> _streamFactory;
+    private readonly Func<CancellationToken, ValueTask<Stream>> _streamFactory;
     private readonly Func<object?>? _versionStampFactory;
     private readonly Func<
         Stream,
@@ -12,7 +12,7 @@ internal sealed class StreamCfgProvider : ICfgProvider
     private readonly CfgProviderState _state;
 
     internal StreamCfgProvider(
-        Func<Stream> streamFactory,
+        Func<CancellationToken, ValueTask<Stream>> streamFactory,
         Func<object?>? versionStampFactory,
         Func<Stream, CancellationToken, Task<Dictionary<string, string>>> streamParser,
         CfgProviderState state
@@ -42,7 +42,7 @@ internal sealed class StreamCfgProvider : ICfgProvider
 
     private async Task<Dictionary<string, string>> CreateSnapshotDataAsync(CancellationToken ct)
     {
-        var stream = _streamFactory();
+        var stream = await _streamFactory(ct).ConfigureAwait(false);
 
         if (stream is null)
             throw new InvalidOperationException("The stream factory returned null.");

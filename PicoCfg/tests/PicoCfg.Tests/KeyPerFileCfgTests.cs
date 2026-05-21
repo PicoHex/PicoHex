@@ -194,4 +194,41 @@ public class KeyPerFileCfgTests
             }
         }
     }
+
+    [Test]
+    public async Task ReloadAsync_CancelDuringFileRead_ThrowsOperationCanceledException()
+    {
+        var dir = CreateTempDir();
+        try
+        {
+            for (var i = 0; i < 20; i++)
+                File.WriteAllText(Path.Combine(dir, $"f_{i:D4}"), "small", Encoding.UTF8);
+
+            var largePath = Path.Combine(dir, "zzz_large");
+            using (var fs = new FileStream(largePath, FileMode.Create, FileAccess.Write))
+            {
+                fs.SetLength(5 * 1024 * 1024);
+            }
+
+            await using var root = await Cfg.CreateBuilder().AddKeyPerFile(dir).BuildAsync();
+
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(TimeSpan.FromMilliseconds(10));
+            await Task.Delay(20);
+
+            await Assert
+                .That(async () => await root.ReloadAsync(cts.Token))
+                .Throws<OperationCanceledException>();
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(dir, true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
+        }
+    }
 }

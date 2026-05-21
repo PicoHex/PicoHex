@@ -7,14 +7,21 @@ public class CfgBuilderExtensionsTests
     {
         var builder = Cfg.CreateBuilder();
 
-        await Assert.That(() => builder.Add((Func<Stream>)null!)).Throws<ArgumentNullException>();
+        await Assert
+            .That(() => builder.Add((Func<CancellationToken, ValueTask<Stream>>)null!))
+            .Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task Add_WithStreamFactory_BuildAsyncPublishesParsedValues()
     {
         var builder = Cfg.CreateBuilder();
-        builder.Add(() => new MemoryStream(Encoding.UTF8.GetBytes("alpha=1\nbeta=2")));
+        builder.Add(
+            ct =>
+                ValueTask.FromResult<Stream>(
+                    new MemoryStream(Encoding.UTF8.GetBytes("alpha=1\nbeta=2"))
+                )
+        );
 
         await using var root = await builder.BuildAsync();
 

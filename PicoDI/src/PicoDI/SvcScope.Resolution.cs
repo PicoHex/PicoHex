@@ -315,8 +315,11 @@ public sealed partial class SvcScope
     /// Synchronously disposes a tracked instance that was created during a race
     /// with scope/container disposal. This method must be synchronous because its
     /// callers are factory delegates or non-async resolution paths that need
-    /// guaranteed disposal before returning (or throwing). The <c>Task.Run</c>
-    /// wrapper prevents deadlocks on threads with a <c>SynchronizationContext</c>
+    /// guaranteed disposal before returning (or throwing).
+    ///
+    /// INTENTIONAL sync-over-async bridge: race-path orphan cleanup requires deterministic
+    /// disposal for file handles, sockets, and transactions. Fire-and-forget is unsafe here.
+    /// The <c>Task.Run</c> wrapper prevents deadlocks on threads with a <c>SynchronizationContext</c>
     /// (WPF, WinForms). Types that implement both <c>IDisposable</c> and
     /// <c>IAsyncDisposable</c> take the faster sync path (checked first); only
     /// <c>IAsyncDisposable</c>-only types may block a ThreadPool thread here.
