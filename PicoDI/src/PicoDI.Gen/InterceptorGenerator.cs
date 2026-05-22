@@ -490,18 +490,23 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         ITypeSymbol? implType, INamedTypeSymbol interceptorType,
         bool isLast)
     {
+        if (implType is null
+            || SymbolEqualityComparer.Default.Equals(serviceType, implType))
+            return;
+
         var safeSvc = Sanitize(serviceType.ToDisplayString());
         var safeInt = Sanitize(interceptorType.Name);
         var decoratorClass = $"{safeSvc}_{safeInt}Decorator";
         var svcName = serviceType.ToDisplayString();
         var intName = interceptorType.ToDisplayString();
-
-        if (implType is null
-            || SymbolEqualityComparer.Default.Equals(serviceType, implType))
-            return;
-
         var implName = implType.ToDisplayString();
         var resolveType = isLast ? implName : svcName;
+
+        sb.AppendLine(
+            $"        container.Register<{svcName}>(scope =>");
+        sb.AppendLine("        {");
+        sb.AppendLine(
+            $"            var inner = scope.GetService<{resolveType}>();");
         sb.AppendLine(
             $"            var i0 = scope.GetService<{intName}>();");
         sb.AppendLine(
