@@ -7,32 +7,25 @@ public static class SvcContainerInterceptorExtensions
         public ISvcContainer InterceptBy<TInterceptor>()
             where TInterceptor : class, IInterceptor
         {
-            throw new SourceGeneratorRequiredException(
-                "PicoDI.Aop source generator must be applied. "
-                + "Add PicoDI.Gen as an analyzer."
-            );
+            // Runtime no-op: the PicoDI.Gen source generator detects this call
+            // at compile time and generates decorator types + DI registrations.
+            return container;
         }
 
         public ISvcContainer InterceptBy(Type interceptorType)
         {
-            throw new SourceGeneratorRequiredException(
-                "PicoDI.Aop source generator must be applied."
-            );
+            return container;
         }
 
         public ISvcContainer WithoutInterceptors()
         {
-            throw new SourceGeneratorRequiredException(
-                "PicoDI.Aop source generator must be applied."
-            );
+            return container;
         }
 
         public ISvcContainer WithoutInterceptor<TInterceptor>()
             where TInterceptor : class, IInterceptor
         {
-            throw new SourceGeneratorRequiredException(
-                "PicoDI.Aop source generator must be applied."
-            );
+            return container;
         }
     }
 }
