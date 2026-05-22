@@ -5,6 +5,8 @@ namespace PicoDI.Gen.OpenGeneric;
 /// </summary>
 internal sealed class OpenGenericScanner
 {
+    public static readonly OpenGenericScanner Default = new();
+
     /// <summary>
     /// Scans an invocation expression to determine if it's an open generic registration.
     /// </summary>

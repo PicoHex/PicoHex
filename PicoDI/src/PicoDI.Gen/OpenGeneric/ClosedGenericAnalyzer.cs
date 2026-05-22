@@ -5,6 +5,7 @@ namespace PicoDI.Gen.OpenGeneric;
 /// </summary>
 internal sealed class ClosedGenericAnalyzer
 {
+    public static readonly ClosedGenericAnalyzer Default = new();
     /// <summary>
     /// Analyzes a closed generic type symbol and converts it to a <see cref="ClosedGenericUsage"/> model.
     /// </summary>

@@ -25,7 +25,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsOpenGenericRegisterInvocation(node),
                 transform: static (ctx, _) =>
-                    OpenGenericClosurePipeline.GetOpenGenericInvocationInfo(ctx)
+                    OpenGenericScanner.Default.ScanOpenGenericInvocation(ctx)
             )
             .Where(static x => x is not null);
 
@@ -35,7 +35,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsGetServiceInvocation(node),
                 transform: static (ctx, _) =>
-                    OpenGenericClosurePipeline.GetClosedGenericUsageInfo(ctx)
+                    ClosedGenericCollector.Default.GetClosedGenericUsageInfo(ctx)
             )
             .Where(static x => x is not null);
 
@@ -45,7 +45,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsClosedGenericTypeDeclaration(node),
                 transform: static (ctx, _) =>
-                    OpenGenericClosurePipeline.GetClosedGenericFromDeclaration(ctx)
+                    ClosedGenericCollector.Default.GetClosedGenericFromDeclaration(ctx)
             )
             .Where(static x => x is not null);
 
@@ -55,7 +55,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsConstructorWithGenericParameter(node),
                 transform: static (ctx, _) =>
-                    OpenGenericClosurePipeline.GetClosedGenericsFromConstructor(ctx)
+                    ClosedGenericCollector.Default.GetClosedGenericsFromConstructor(ctx)
             )
             .Where(static x => x is not null)
             .SelectMany(static (x, _) => x);
