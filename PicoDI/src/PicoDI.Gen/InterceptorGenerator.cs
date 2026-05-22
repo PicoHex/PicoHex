@@ -458,12 +458,14 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
 
             var paramDecl = string.Join(", ", method.Parameters.Select(
                 p => $"{p.Type.ToDisplayString()} {p.Name}"));
-            var paramArgs = string.Join(", ", method.Parameters.Select(p => p.Name));
+            var paramArgs = method.Parameters.Any()
+                ? ", " + string.Join(", ", method.Parameters.Select(p => p.Name))
+                : "";
             var structRef = $"{safeSvc}_{safeInt}_{method.Name}_Invocation";
 
             sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
             sb.AppendLine("    {");
-            sb.AppendLine($"        var inv = new {structRef}(_inner, {paramArgs}, scope: null);");
+            sb.AppendLine($"        var inv = new {structRef}(_inner{paramArgs}, scope: null);");
             if (isVoidTask) sb.AppendLine("        _i0.InvokeVoid(inv, _ => inv.InvokeTarget()); return global::System.Threading.Tasks.Task.CompletedTask;");
             else if (isTaskOf) sb.AppendLine("        var r = _i0.Invoke(inv, _ => inv.InvokeTarget()); return global::System.Threading.Tasks.Task.FromResult(r);");
             else if (isVoid) sb.AppendLine("        _i0.InvokeVoid(inv, _ => inv.InvokeTarget());");
