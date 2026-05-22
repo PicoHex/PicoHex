@@ -66,7 +66,7 @@ public sealed partial class SvcScope
         }
 
         services = registrations
-            .Select(registration => ResolveDescriptor(serviceType, registration))
+            .Select(registration => ResolveByLifetime(serviceType, registration))
             .ToArray();
         return true;
     }
@@ -80,13 +80,9 @@ public sealed partial class SvcScope
             throw new PicoDiException($"Service type '{serviceType.FullName}' is not registered.");
 
         return registrations
-            .Select(registration => ResolveDescriptor(serviceType, registration))
+            .Select(registration => ResolveByLifetime(serviceType, registration))
             .ToArray();
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private object ResolveDescriptor(Type serviceType, SvcRuntimeRegistration registration) =>
-        ResolveByLifetime(serviceType, registration);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private object ResolveByLifetime(Type serviceType, SvcRuntimeRegistration registration) =>
