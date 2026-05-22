@@ -12,6 +12,7 @@
     <Project Path="PicoDI/samples/PicoDI.Sample.Host/PicoDI.Sample.Host.csproj" />
     <Project Path="PicoDI/samples/PicoDI.Sample/PicoDI.Sample.csproj" />
     <Project Path="PicoDI/samples/PicoDI.Sample.Services/PicoDI.Sample.Services.csproj" />
+    <Project Path="PicoDI/samples/PicoDI.Sample.Aop/PicoDI.Sample.Aop.csproj" />
   </Folder>
 
   <!-- PicoCfg -->

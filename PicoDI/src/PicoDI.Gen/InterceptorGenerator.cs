@@ -492,17 +492,19 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         ITypeSymbol? implType, INamedTypeSymbol interceptorType,
         bool isLast)
     {
-        if (implType is null
-            || SymbolEqualityComparer.Default.Equals(serviceType, implType))
-            return;
-
         var safeSvc = Sanitize(serviceType.ToDisplayString());
         var safeInt = Sanitize(interceptorType.Name);
         var decoratorClass = $"{safeSvc}_{safeInt}Decorator";
         var svcName = serviceType.ToDisplayString();
         var intName = interceptorType.ToDisplayString();
-        var implName = implType.ToDisplayString();
-        var resolveType = isLast ? implName : svcName;
+
+        // When implType is null (factory-based registration) or serviceType == implType
+        // (self-registration), resolve the service type itself as the inner implementation.
+        // This works because the generated DI registration is appended AFTER the original
+        // registration — the last registration wins, and this decorator wraps the original.
+        var hasImplType = implType is not null
+            && !SymbolEqualityComparer.Default.Equals(serviceType, implType);
+        var resolveType = hasImplType && isLast ? implType.ToDisplayString() : svcName;
 
         sb.AppendLine(
             $"        container.Register<{svcName}>(scope =>");
