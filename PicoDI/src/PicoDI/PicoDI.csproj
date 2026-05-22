@@ -26,7 +26,6 @@
 
     <ItemGroup>
         <InternalsVisibleTo Include="PicoDI.Test" />
-        <InternalsVisibleTo Include="PicoDI.Aop" />
         <InternalsVisibleTo Include="PicoDI.Aop.Tests" />
     </ItemGroup>
 
