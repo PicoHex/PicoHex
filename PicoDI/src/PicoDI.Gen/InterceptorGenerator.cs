@@ -202,6 +202,17 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                 if (interceptorType is not INamedTypeSymbol interceptorNamed)
                     continue;
 
+                // PICO010: InterceptBy<T> type must implement IInterceptor
+                if (!ImplementsIInterceptor(interceptorNamed))
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        InterceptorDiagnostics.InterceptorTypeMismatch,
+                        Location.None,
+                        interceptorNamed.Name,
+                        "IInterceptor"));
+                    continue;
+                }
+
                 EmitInvocationStruct(sb, serviceType, interceptorNamed);
                 EmitDecoratorClass(sb, serviceType, info.ImplType, interceptorNamed);
             }
@@ -337,6 +348,17 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             .Replace(",", "_")
             .Replace(".", "_")
             .Replace(" ", "");
+    }
+
+    private static bool ImplementsIInterceptor(INamedTypeSymbol type)
+    {
+        foreach (var iface in type.AllInterfaces)
+        {
+            if (iface.ToDisplayString() == "PicoDI.Abs.IInterceptor")
+                return true;
+        }
+        return type.ToDisplayString() == "PicoDI.Abs.IInterceptor"
+            || type.BaseType?.ToDisplayString() == "PicoDI.Abs.InterceptorBase";
     }
 
     private sealed record InterceptionInfo(
