@@ -180,31 +180,30 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         ImmutableArray<GlobalInterceptorInfo?> globals
     )
     {
-        var valid = perService.OfType<InterceptionInfo>().ToList();
-        if (valid.Count == 0)
-            return;
-
-        // Deduplicate: group by service type display string, merge interceptor lists
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        var deduped = new List<InterceptionInfo>();
-        foreach (var info in valid)
+        // Collect all interceptor types per service, ordered by declaration
+        var perServiceMap = new Dictionary<string, InterceptionInfo>(StringComparer.Ordinal);
+        foreach (var info in perService.OfType<InterceptionInfo>())
         {
             var key = info.ServiceType.ToDisplayString();
-            if (seen.Add(key))
-                deduped.Add(info);
-            else
+            if (perServiceMap.TryGetValue(key, out var existing))
             {
-                // Merge interceptor types into existing entry
-                var existing = deduped.First(d => d.ServiceType.ToDisplayString() == key);
-                deduped.Remove(existing);
-                deduped.Add(new InterceptionInfo(
+                // Merge: append interceptors, combine exclusions
+                perServiceMap[key] = new InterceptionInfo(
                     existing.ServiceType,
                     existing.ImplType ?? info.ImplType,
-                    existing.InterceptorTypes.Concat(info.InterceptorTypes).ToList(),
-                    existing.WithoutInterceptorTypes.Concat(info.WithoutInterceptorTypes).ToList(),
-                    existing.WithoutInterceptors || info.WithoutInterceptors));
+                    existing.InterceptorTypes.Concat(info.InterceptorTypes)
+                        .Distinct(SymbolEqualityComparer.Default).OfType<ITypeSymbol>().ToList(),
+                    existing.WithoutInterceptorTypes.Concat(info.WithoutInterceptorTypes)
+                        .Distinct(SymbolEqualityComparer.Default).OfType<ITypeSymbol>().ToList(),
+                    existing.WithoutInterceptors || info.WithoutInterceptors);
+            }
+            else
+            {
+                perServiceMap[key] = info;
             }
         }
+        var deduped = perServiceMap.Values.ToList();
+        if (deduped.Count == 0) return;
 
         var sb = new StringBuilder();
         var regSb = new StringBuilder();
@@ -221,7 +220,29 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             if (info.ServiceType is not INamedTypeSymbol serviceType)
                 continue;
 
-            var interceptorList = info.InterceptorTypes;
+            // Merge global interceptors (matching) with per-service interceptors
+            var interceptorList = new List<ITypeSymbol>(info.InterceptorTypes);
+
+            // Add matching global interceptors (outermost first)
+            var globalMatches = new List<ITypeSymbol>();
+            foreach (var g in globals.OfType<GlobalInterceptorInfo>())
+            {
+                if (MatchesGlobalFilter(serviceType, g)
+                    && !info.WithoutInterceptorTypes.Contains(g.InterceptorType, SymbolEqualityComparer.Default))
+                {
+                    globalMatches.Add(g.InterceptorType);
+                }
+            }
+
+            if (info.WithoutInterceptors)
+                globalMatches.Clear();
+
+            // Globals first (outer), per-service second (inner)
+            interceptorList.InsertRange(0, globalMatches);
+
+            if (interceptorList.Count == 0)
+                continue;
+
             for (var i = 0; i < interceptorList.Count; i++)
             {
                 if (interceptorList[i] is not INamedTypeSymbol interceptorNamed)
@@ -231,9 +252,7 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                 {
                     spc.ReportDiagnostic(Diagnostic.Create(
                         InterceptorDiagnostics.InterceptorTypeMismatch,
-                        Location.None,
-                        interceptorNamed.Name,
-                        "IInterceptor"));
+                        Location.None, interceptorNamed.Name, "IInterceptor"));
                     continue;
                 }
 
@@ -434,6 +453,33 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine();
     }
 
+    private static bool MatchesGlobalFilter(
+        INamedTypeSymbol serviceType, GlobalInterceptorInfo filter)
+    {
+        // Excluded?
+        if (filter.ExcludedTypes?.Any(
+                e => SymbolEqualityComparer.Default.Equals(e, serviceType)) == true)
+            return false;
+
+        // Namespace filter
+        if (filter.NamespaceFilter is not null)
+        {
+            var ns = serviceType.ContainingNamespace?.ToDisplayString() ?? "";
+            if (ns != filter.NamespaceFilter)
+                return false;
+        }
+
+        // Interface filter
+        if (filter.InterfaceFilter is not null)
+        {
+            if (!serviceType.AllInterfaces.Any(
+                    i => SymbolEqualityComparer.Default.Equals(i, filter.InterfaceFilter)))
+                return false;
+        }
+
+        return true;
+    }
+
     private static bool ImplementsIInterceptor(INamedTypeSymbol type)
     {
         foreach (var iface in type.AllInterfaces)
@@ -453,5 +499,9 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         bool WithoutInterceptors
     );
 
-    private sealed record GlobalInterceptorInfo(ITypeSymbol InterceptorType);
+    private sealed record GlobalInterceptorInfo(
+        ITypeSymbol InterceptorType,
+        string? NamespaceFilter = null,
+        ITypeSymbol? InterfaceFilter = null,
+        List<ITypeSymbol>? ExcludedTypes = null);
 }
