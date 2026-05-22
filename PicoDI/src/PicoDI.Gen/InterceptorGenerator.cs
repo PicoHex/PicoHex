@@ -151,40 +151,64 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
     }
 
     private static GlobalInterceptorInfo? ExtractGlobalInterceptorInfo(
-        GeneratorSyntaxContext ctx,
-        CancellationToken ct
-    )
+        GeneratorSyntaxContext ctx, CancellationToken ct)
     {
-        // Stub: detect AddInterceptor<T>().Where*() patterns
-        // For v1, just detect the AddInterceptor call
         if (ctx.Node is not InvocationExpressionSyntax invocation)
             return null;
 
-        while (
-            invocation.Expression
-                is MemberAccessExpressionSyntax
-                {
-                    Expression: InvocationExpressionSyntax next
-                } memberAccess
-        )
+        var current = invocation;
+        ITypeSymbol? interceptorType = null;
+        string? namespaceFilter = null;
+        ITypeSymbol? interfaceFilter = null;
+        var excludedTypes = new List<ITypeSymbol>();
+
+        while (current.Expression is MemberAccessExpressionSyntax
+               {
+                   Expression: InvocationExpressionSyntax next
+               } memberAccess)
         {
-            if (
-                memberAccess.Name is GenericNameSyntax { Identifier.ValueText: "AddInterceptor" }
+            var methodName = memberAccess.Name.Identifier.ValueText;
+
+            if (methodName == "AddInterceptor"
                 && memberAccess.Name is GenericNameSyntax genName
-                && genName.TypeArgumentList.Arguments.Count > 0
-            )
+                && genName.TypeArgumentList.Arguments.Count > 0)
             {
-                var typeArg = ctx.SemanticModel
-                    .GetTypeInfo(genName.TypeArgumentList.Arguments[0])
-                    .Type;
-                if (typeArg is not null)
-                    return new GlobalInterceptorInfo(typeArg);
+                interceptorType = ctx.SemanticModel
+                    .GetTypeInfo(genName.TypeArgumentList.Arguments[0]).Type;
+                break;
             }
 
-            invocation = next;
+            if (methodName == "WhereNamespace"
+                && current.ArgumentList.Arguments.Count > 0)
+            {
+                var arg = current.ArgumentList.Arguments[0].Expression;
+                if (arg is LiteralExpressionSyntax { Token.ValueText: var ns })
+                    namespaceFilter = ns;
+            }
+            else if (methodName == "WhereImplements"
+                && memberAccess.Name is GenericNameSyntax whereGen
+                && whereGen.TypeArgumentList.Arguments.Count > 0)
+            {
+                interfaceFilter = ctx.SemanticModel
+                    .GetTypeInfo(whereGen.TypeArgumentList.Arguments[0]).Type;
+            }
+            else if (methodName == "Except"
+                && memberAccess.Name is GenericNameSyntax exceptGen
+                && exceptGen.TypeArgumentList.Arguments.Count > 0)
+            {
+                var excluded = ctx.SemanticModel
+                    .GetTypeInfo(exceptGen.TypeArgumentList.Arguments[0]).Type;
+                if (excluded is not null) excludedTypes.Add(excluded);
+            }
+
+            current = next;
         }
 
-        return null;
+        if (interceptorType is null) return null;
+
+        return new GlobalInterceptorInfo(
+            interceptorType, namespaceFilter, interfaceFilter,
+            excludedTypes.Count > 0 ? excludedTypes : null);
     }
 
     private static void GenerateInterceptorRegistrations(

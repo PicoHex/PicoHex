@@ -2,30 +2,31 @@ namespace PicoDI.Aop.Tests;
 
 public class FilterEvaluationTests
 {
-    public interface IGreeter { string Greet(string name); }
-    public sealed class Greeter : IGreeter { public string Greet(string name) => $"Hi {name}"; }
+    public sealed class LogInterceptor : InterceptorBase { }
 
-    // These are in namespace PicoDI.Aop.Tests (not matching "MyApp" filter)
-    // Trigger for generator — should NOT produce decorator since namespace doesn't match
-    public static void RegisterNoMatch(SvcContainer c)
+    [Test]
+    public async Task WhereNamespace_Filter_StoredInContainerState()
     {
-        c.AddInterceptor<CallCounter>().WhereNamespace("MyApp.Services");
-        c.Register<IGreeter, Greeter>(SvcLifetime.Scoped)
-            .InterceptBy<CallCounter>();
-    }
+        var container = new SvcContainer(autoConfigureFromGenerator: false);
+        container.AddInterceptor<LogInterceptor>().WhereNamespace("MyApp");
 
-    public sealed class CallCounter : InterceptorBase
-    {
-        public int Count { get; private set; }
-        public override TResult Invoke<TResult>(IInvocation<TResult> inv,
-            Func<IInvocation<TResult>, TResult> next) { Count++; return next(inv); }
+        await Assert.That(container.InterceptorFilters.Count).IsEqualTo(1);
+        var filter = container.InterceptorFilters[0] as NamespaceFilter;
+        await Assert.That(filter).IsNotNull();
+        await Assert.That(filter!.InterceptorType).IsEqualTo(typeof(LogInterceptor));
     }
 
     [Test]
-    public async Task WhereNamespace_Match_NotYetImplemented()
+    public async Task NamespaceFilter_Matches_CorrectNamespace()
     {
-        // WhereNamespace filter evaluation requires walking the AddInterceptor
-        // chain in ExtractGlobalInterceptorInfo. Deferred.
-        await Assert.That(true).IsTrue();
+        var filter = new NamespaceFilter(typeof(LogInterceptor), "PicoDI.Aop.Tests");
+        await Assert.That(filter.Matches(typeof(FilterEvaluationTests))).IsTrue();
+    }
+
+    [Test]
+    public async Task NamespaceFilter_Rejects_DifferentNamespace()
+    {
+        var filter = new NamespaceFilter(typeof(LogInterceptor), "MyApp");
+        await Assert.That(filter.Matches(typeof(FilterEvaluationTests))).IsFalse();
     }
 }
