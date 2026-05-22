@@ -228,6 +228,23 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         sb.Append(regSb);
         sb.AppendLine("    }");
         sb.AppendLine("}");
+        sb.AppendLine();
+        sb.AppendLine(
+            "internal static class AutoRegisterInterceptorConfigurator");
+        sb.AppendLine("{");
+        sb.AppendLine(
+            "    [global::System.Runtime.CompilerServices.ModuleInitializer]");
+        sb.AppendLine(
+            "    internal static void Init()");
+        sb.AppendLine("    {");
+        sb.AppendLine(
+            "        SvcContainerAutoConfiguration.RegisterConfigurator(");
+        sb.AppendLine(
+            "            \"intercepted::PicoDI.Aop\",");
+        sb.AppendLine(
+            "            static container => GeneratedInterceptorRegistrations.Configure((SvcContainer)container));");
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
 
         spc.AddSource("InterceptorRegistrations.g.cs", sb.ToString());
     }
@@ -359,12 +376,18 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         StringBuilder sb, INamedTypeSymbol serviceType,
         ITypeSymbol? implType, INamedTypeSymbol interceptorType)
     {
+        // Only emit when implementation type is known and differs from service type.
+        // Otherwise the decorator wraps the interface which causes circular resolution.
+        if (implType is null
+            || SymbolEqualityComparer.Default.Equals(serviceType, implType))
+            return;
+
         var safeSvc = Sanitize(serviceType.ToDisplayString());
         var safeInt = Sanitize(interceptorType.Name);
         var decoratorClass = $"{safeSvc}_{safeInt}Decorator";
         var svcName = serviceType.ToDisplayString();
         var intName = interceptorType.ToDisplayString();
-        var implName = implType?.ToDisplayString() ?? svcName;
+        var implName = implType.ToDisplayString();
 
         sb.AppendLine(
             $"        container.Register<{svcName}>(scope =>");
