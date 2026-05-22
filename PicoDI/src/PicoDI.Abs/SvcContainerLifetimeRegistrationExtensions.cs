@@ -61,6 +61,7 @@ public static class SvcContainerLifetimeRegistrationExtensions
         public ISvcContainer RegisterTransient(Type serviceType) =>
             container.RegisterSelfType(serviceType, SvcLifetime.Transient);
 
+        [Obsolete("Use RegisterTransient<TService>(Func<ISvcScope, TService>) instead.")]
         public ISvcContainer RegisterTransient(Type serviceType, Func<ISvcScope, object> factory) =>
             container.RegisterFactory(serviceType, factory, SvcLifetime.Transient);
 
@@ -82,6 +83,7 @@ public static class SvcContainerLifetimeRegistrationExtensions
         public ISvcContainer RegisterScoped(Type serviceType) =>
             container.RegisterSelfType(serviceType, SvcLifetime.Scoped);
 
+        [Obsolete("Use RegisterScoped<TService>(Func<ISvcScope, TService>) instead.")]
         public ISvcContainer RegisterScoped(Type serviceType, Func<ISvcScope, object> factory) =>
             container.RegisterFactory(serviceType, factory, SvcLifetime.Scoped);
 
@@ -103,6 +105,7 @@ public static class SvcContainerLifetimeRegistrationExtensions
         public ISvcContainer RegisterSingleton(Type serviceType) =>
             container.RegisterSelfType(serviceType, SvcLifetime.Singleton);
 
+        [Obsolete("Use RegisterSingleton<TService>(Func<ISvcScope, TService>) instead.")]
         public ISvcContainer RegisterSingleton(Type serviceType, Func<ISvcScope, object> factory) =>
             container.RegisterFactory(serviceType, factory, SvcLifetime.Singleton);
 

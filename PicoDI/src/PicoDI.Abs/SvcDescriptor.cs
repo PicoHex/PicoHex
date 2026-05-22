@@ -106,6 +106,7 @@ public sealed class SvcDescriptor(
     /// <param name="serviceType">The service type being registered.</param>
     /// <param name="factory">The factory function to create instances.</param>
     /// <param name="lifetime">The service lifetime.</param>
+    [Obsolete("Use SvcDescriptor.Create() or SvcDescriptor.Create<T>() factory methods instead.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public SvcDescriptor(
         Type serviceType,
