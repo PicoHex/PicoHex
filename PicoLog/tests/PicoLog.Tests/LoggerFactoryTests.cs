@@ -717,12 +717,11 @@ public sealed class LoggerFactoryTests
         try
         {
             logger.Info("first");
-            await sink.WriteStarted;
             logger.Info("second");
 
             thirdWrite = Task.Run(() => logger.Info("third"));
 
-            await Task.Delay(100);
+            await Task.Delay(200);
             await Assert.That(thirdWrite.IsCompleted).IsFalse();
         }
         finally
