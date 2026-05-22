@@ -401,28 +401,22 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             .Where(m => m.MethodKind == MethodKind.Ordinary))
         {
             var retType = method.ReturnType.ToDisplayString();
-            var isVoid = method.ReturnType is INamedTypeSymbol
-            {
-                MetadataName: "ValueTask" or "Task"
-            } || method.ReturnType.SpecialType == SpecialType.System_Void;
+            var isVoidTask = method.ReturnType is INamedTypeSymbol { MetadataName: "ValueTask" or "Task" };
+            var isTaskOf = method.ReturnType is INamedTypeSymbol { MetadataName: "ValueTask`1" or "Task`1" };
+            var isVoid = isVoidTask || method.ReturnType.SpecialType == SpecialType.System_Void;
 
             var paramDecl = string.Join(", ", method.Parameters.Select(
                 p => $"{p.Type.ToDisplayString()} {p.Name}"));
             var paramArgs = string.Join(", ", method.Parameters.Select(p => p.Name));
-            var structRef =
-                $"{safeSvc}_{safeInt}_{method.Name}_Invocation";
+            var structRef = $"{safeSvc}_{safeInt}_{method.Name}_Invocation";
 
-            sb.AppendLine(
-                $"    public {retType} {method.Name}({paramDecl})");
+            sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
             sb.AppendLine("    {");
-            sb.AppendLine(
-                $"        var inv = new {structRef}(_inner, {paramArgs}, scope: null);");
-            if (isVoid)
-                sb.AppendLine(
-                    "        _i0.InvokeVoid(inv, _ => inv.InvokeTarget());");
-            else
-                sb.AppendLine(
-                    "        return _i0.Invoke(inv, _ => inv.InvokeTarget());");
+            sb.AppendLine($"        var inv = new {structRef}(_inner, {paramArgs}, scope: null);");
+            if (isVoidTask) sb.AppendLine("        _i0.InvokeVoid(inv, _ => inv.InvokeTarget()); return Task.CompletedTask;");
+            else if (isTaskOf) sb.AppendLine("        var r = _i0.Invoke(inv, _ => inv.InvokeTarget()); return Task.FromResult(r);");
+            else if (isVoid) sb.AppendLine("        _i0.InvokeVoid(inv, _ => inv.InvokeTarget());");
+            else sb.AppendLine("        return _i0.Invoke(inv, _ => inv.InvokeTarget());");
             sb.AppendLine("    }");
             sb.AppendLine();
         }
