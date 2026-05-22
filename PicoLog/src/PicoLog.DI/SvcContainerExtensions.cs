@@ -31,7 +31,7 @@ public static class SvcContainerExtensions
         }
 
         var registrations = container
-            .Register(new SvcDescriptor(typeof(ILoggerFactory), _ => ResolveFactory()))
+            .Register(SvcDescriptor.Create(typeof(ILoggerFactory), _ => ResolveFactory()))
             .RegisterSingleton(typeof(ILogger<>), typeof(Logger<>));
 
         return registrations;

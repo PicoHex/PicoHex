@@ -61,9 +61,6 @@ public static class SvcContainerLifetimeRegistrationExtensions
         public ISvcContainer RegisterTransient(Type serviceType) =>
             container.RegisterSelfType(serviceType, SvcLifetime.Transient);
 
-        public ISvcContainer RegisterTransient(Type serviceType, Func<ISvcScope, object> factory) =>
-            container.RegisterFactory(serviceType, factory, SvcLifetime.Transient);
-
         public ISvcContainer RegisterTransient<TService>(Func<ISvcScope, TService> factory)
             where TService : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Transient);
@@ -82,9 +79,6 @@ public static class SvcContainerLifetimeRegistrationExtensions
         public ISvcContainer RegisterScoped(Type serviceType) =>
             container.RegisterSelfType(serviceType, SvcLifetime.Scoped);
 
-        public ISvcContainer RegisterScoped(Type serviceType, Func<ISvcScope, object> factory) =>
-            container.RegisterFactory(serviceType, factory, SvcLifetime.Scoped);
-
         public ISvcContainer RegisterScoped<TService>(Func<ISvcScope, TService> factory)
             where TService : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Scoped);
@@ -102,9 +96,6 @@ public static class SvcContainerLifetimeRegistrationExtensions
 
         public ISvcContainer RegisterSingleton(Type serviceType) =>
             container.RegisterSelfType(serviceType, SvcLifetime.Singleton);
-
-        public ISvcContainer RegisterSingleton(Type serviceType, Func<ISvcScope, object> factory) =>
-            container.RegisterFactory(serviceType, factory, SvcLifetime.Singleton);
 
         public ISvcContainer RegisterSingleton<TService>(Func<ISvcScope, TService> factory)
             where TService : class =>

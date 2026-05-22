@@ -64,7 +64,7 @@ public class TransientLifetimeTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterTransient(typeof(ISimpleService), static _ => new SimpleService());
+        container.RegisterTransient<ISimpleService>(static _=> new SimpleService());
         await using var scope = container.CreateScope();
 
         // Act

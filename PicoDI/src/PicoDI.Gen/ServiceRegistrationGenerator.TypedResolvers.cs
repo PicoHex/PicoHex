@@ -52,8 +52,7 @@ internal static partial class ServiceRegistrationSourceEmitter
                     );
                     sb.AppendLine($"            return {transientFactory};");
                     break;
-                case PicoDiNames.Singleton:
-                case PicoDiNames.Scoped:
+                default:
                     sb.AppendLine(
                         $"            return ({serviceType})scope.GetService(typeof({serviceType}));"
                     );

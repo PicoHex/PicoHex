@@ -14,8 +14,7 @@ internal static class RegistrationPlanBuilder
         var registrations = normalizedRegistrations.Registrations.ToList();
         var openGenericBatch = CollectOpenGenericRegistrations(openGenericInvocations);
         var openGenerics = openGenericBatch.OpenGenerics.ToList();
-        var orchestrator = OpenGenericClosureFactory.DefaultOrchestrator;
-        var closedUsages = orchestrator.CollectClosedGenericUsages(
+        var closedUsages = ClosedGenericAnalyzer.Default.CollectClosedGenericUsages(
             closedGenericUsages,
             closedGenericDeclarations,
             ctorClosedGenerics,
@@ -29,10 +28,10 @@ internal static class RegistrationPlanBuilder
             );
         MergeDistinct(openGenerics, discoveredOpenGenerics);
 
-        var generatedClosedGenerics = orchestrator.GenerateClosedGenericRegistrations(
-            openGenerics,
-            closedUsages
-        );
+        var generatedClosedGenerics = new ClosedGenericGenerator(
+                new TypeParameterSubstitutor()
+            )
+            .GenerateClosedGenericRegistrations(openGenerics, closedUsages);
         var allRegistrations = registrations
             .Concat(generatedClosedGenerics)
             .Distinct()
@@ -55,14 +54,13 @@ internal static class RegistrationPlanBuilder
         var seenDiagnostics = new HashSet<Diagnostic>(
             OpenGenericDiagnosticIdentityComparer.Instance
         );
-        var orchestrator = OpenGenericClosureFactory.DefaultOrchestrator;
 
         foreach (var openGenericInvocation in openGenericInvocations)
         {
             if (openGenericInvocation is not { } candidate)
                 continue;
 
-            var outcome = orchestrator.AnalyzeOpenGenericInvocation(
+            var outcome = OpenGenericScanner.Default.AnalyzeOpenGenericInvocation(
                 candidate.Invocation,
                 candidate.SemanticModel
             );

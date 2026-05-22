@@ -64,7 +64,7 @@ public class ScopedLifetimeTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterScoped(typeof(ISimpleService), static _ => new SimpleService());
+        container.RegisterScoped<ISimpleService>(static _=> new SimpleService());
         await using var scope = container.CreateScope();
 
         // Act

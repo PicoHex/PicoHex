@@ -89,7 +89,12 @@ public sealed class SvcDescriptor(
         Type serviceType,
         Func<ISvcScope, object> factory,
         SvcLifetime lifetime = SvcLifetime.Singleton
-    ) => new(serviceType, factory, lifetime);
+    )
+    {
+        if (factory is null)
+            throw new ArgumentNullException(nameof(factory));
+        return new SvcDescriptor(serviceType, factory, lifetime);
+    }
 
     /// <summary>
     /// Creates a typed service descriptor with a strongly-typed factory delegate.
@@ -98,19 +103,17 @@ public sealed class SvcDescriptor(
         Func<ISvcScope, T> factory,
         SvcLifetime lifetime = SvcLifetime.Singleton
     )
-        where T : class => new(typeof(T), factory, lifetime);
+        where T : class
+    {
+        if (factory is null)
+            throw new ArgumentNullException(nameof(factory));
+        return new SvcDescriptor(typeof(T), s => factory(s)!, lifetime);
+    }
 
-    /// <summary>
-    /// Creates a service descriptor with a factory function.
-    /// </summary>
-    /// <param name="serviceType">The service type being registered.</param>
-    /// <param name="factory">The factory function to create instances.</param>
-    /// <param name="lifetime">The service lifetime.</param>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public SvcDescriptor(
+    internal SvcDescriptor(
         Type serviceType,
         Func<ISvcScope, object> factory,
-        SvcLifetime lifetime = SvcLifetime.Singleton
+        SvcLifetime lifetime
     )
         : this(serviceType, serviceType, lifetime) =>
         Factory = factory ?? throw new ArgumentNullException(nameof(factory));

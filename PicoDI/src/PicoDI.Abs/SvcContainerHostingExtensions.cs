@@ -24,7 +24,7 @@ public static class SvcContainerHostingExtensions
         /// <returns>The <see cref="ISvcContainer"/> instance for chaining.</returns>
         public ISvcContainer RegisterHostedSvc<THostedSvc>(Func<ISvcScope, THostedSvc> factory)
             where THostedSvc : class, IHostedSvc =>
-            container.Register(new SvcDescriptor(typeof(THostedSvc), (Func<ISvcScope, object>)(scope => factory(scope)), SvcLifetime.Singleton));
+            container.Register(SvcDescriptor.Create(typeof(THostedSvc), scope => factory(scope)!, SvcLifetime.Singleton));
 
         /// <summary>
         /// Registers a hosted service type as a singleton.

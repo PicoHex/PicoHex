@@ -116,7 +116,7 @@ public class ErrorHandlingTests
     {
         // Act & Assert
         await Assert
-            .That(() => new SvcDescriptor(typeof(ISimpleService), (Func<ISvcScope, object>)null!))
+            .That(() => SvcDescriptor.Create(typeof(ISimpleService), null!, SvcLifetime.Singleton))
             .Throws<ArgumentNullException>();
     }
 

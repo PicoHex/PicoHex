@@ -46,43 +46,9 @@ public class ServiceRegistrationAnalyzer : DiagnosticAnalyzer
         if (!PicoDiNames.IsPicoDiMethod(methodSymbol))
             return;
 
-        // Check if it's a factory-based registration - multiple detection methods
-        // 1. Check if any argument is a lambda expression or anonymous method
-        var hasLambda = invocation
-            .ArgumentList
-            .Arguments
-            .Any(
-                arg =>
-                    arg.Expression is LambdaExpressionSyntax
-                    || arg.Expression is AnonymousMethodExpressionSyntax
-                    || arg.Expression is AnonymousFunctionExpressionSyntax
-            );
-
-        if (hasLambda)
+        // Delegate to shared factory detection logic (also used by the generator pipeline)
+        if (RegistrationSemanticPipeline.IsFactoryRegistration(invocation, methodSymbol, context.SemanticModel))
             return;
-
-        // 2. Check if the method has a Func parameter (covers delegate and method group cases)
-        var hasFactoryParameter = methodSymbol
-            .Parameters
-            .Any(p => p.Type is INamedTypeSymbol { Name: PicoDiNames.Func });
-
-        if (hasFactoryParameter && invocation.ArgumentList.Arguments.Count > 0)
-            return;
-
-        // 3. Check if any argument's converted type is Func (covers method groups and delegate variables)
-        if (
-            invocation
-                .ArgumentList
-                .Arguments
-                .Any(
-                    arg =>
-                        context.SemanticModel.GetTypeInfo(arg.Expression).ConvertedType
-                            is INamedTypeSymbol { Name: PicoDiNames.Func }
-                )
-        )
-        {
-            return;
-        }
 
         // Extract type arguments
         var genericNameSyntax = invocation.Expression switch
