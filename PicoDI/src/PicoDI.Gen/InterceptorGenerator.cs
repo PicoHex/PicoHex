@@ -409,9 +409,7 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             sb.AppendLine("    }");
             sb.AppendLine();
 
-            var paramArgs = paramList.Count > 0
-                ? ", " + string.Join(", ", paramList.Select(p => $"_{p.Name}"))
-                : "";
+            var paramArgs = string.Join(", ", paramList.Select(p => $"_{p.Name}"));
             sb.AppendLine(
                 $"    public {resultName} InvokeTarget() => _target.{method.Name}({paramArgs});");
             sb.AppendLine("}");
