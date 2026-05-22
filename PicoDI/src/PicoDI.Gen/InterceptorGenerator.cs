@@ -184,6 +184,28 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         if (valid.Count == 0)
             return;
 
+        // Deduplicate: group by service type display string, merge interceptor lists
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var deduped = new List<InterceptionInfo>();
+        foreach (var info in valid)
+        {
+            var key = info.ServiceType.ToDisplayString();
+            if (seen.Add(key))
+                deduped.Add(info);
+            else
+            {
+                // Merge interceptor types into existing entry
+                var existing = deduped.First(d => d.ServiceType.ToDisplayString() == key);
+                deduped.Remove(existing);
+                deduped.Add(new InterceptionInfo(
+                    existing.ServiceType,
+                    existing.ImplType ?? info.ImplType,
+                    existing.InterceptorTypes.Concat(info.InterceptorTypes).ToList(),
+                    existing.WithoutInterceptorTypes.Concat(info.WithoutInterceptorTypes).ToList(),
+                    existing.WithoutInterceptors || info.WithoutInterceptors));
+            }
+        }
+
         var sb = new StringBuilder();
         var regSb = new StringBuilder();
 
@@ -194,14 +216,15 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("using PicoDI.Abs;");
         sb.AppendLine();
 
-        foreach (var info in valid)
+        foreach (var info in deduped)
         {
             if (info.ServiceType is not INamedTypeSymbol serviceType)
                 continue;
 
-            foreach (var interceptorType in info.InterceptorTypes)
+            var interceptorList = info.InterceptorTypes;
+            for (var i = 0; i < interceptorList.Count; i++)
             {
-                if (interceptorType is not INamedTypeSymbol interceptorNamed)
+                if (interceptorList[i] is not INamedTypeSymbol interceptorNamed)
                     continue;
 
                 if (!ImplementsIInterceptor(interceptorNamed))
@@ -214,9 +237,12 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                     continue;
                 }
 
+                var isLast = i == interceptorList.Count - 1;
                 EmitInvocationStruct(sb, serviceType, interceptorNamed);
-                EmitDecoratorClass(sb, serviceType, info.ImplType, interceptorNamed);
-                EmitDiRegistration(regSb, serviceType, info.ImplType, interceptorNamed);
+                EmitDecoratorClass(sb, serviceType, info.ImplType,
+                    interceptorNamed, interceptorList, i, isLast);
+                EmitDiRegistration(regSb, serviceType, info.ImplType,
+                    interceptorNamed, isLast);
             }
         }
 
@@ -308,13 +334,19 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
 
     private static void EmitDecoratorClass(
         StringBuilder sb, INamedTypeSymbol serviceType,
-        ITypeSymbol? implType, INamedTypeSymbol interceptorType)
+        ITypeSymbol? implType, INamedTypeSymbol interceptorType,
+        IReadOnlyList<ITypeSymbol> allInterceptors, int index, bool isLast)
     {
         var safeSvc = Sanitize(serviceType.ToDisplayString());
         var safeInt = Sanitize(interceptorType.Name);
         var className = $"{safeSvc}_{safeInt}Decorator";
         var svcName = serviceType.ToDisplayString();
         var intName = interceptorType.ToDisplayString();
+        var innerTypeName = isLast
+            ? (implType?.ToDisplayString() ?? svcName)
+            : Sanitize(serviceType.ToDisplayString()) + "_"
+                + Sanitize(((INamedTypeSymbol)allInterceptors[index + 1]).Name)
+                + "Decorator";
 
         sb.AppendLine($"sealed class {className} : {svcName}");
         sb.AppendLine("{");
@@ -374,10 +406,9 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
 
     private static void EmitDiRegistration(
         StringBuilder sb, INamedTypeSymbol serviceType,
-        ITypeSymbol? implType, INamedTypeSymbol interceptorType)
+        ITypeSymbol? implType, INamedTypeSymbol interceptorType,
+        bool isLast)
     {
-        // Only emit when implementation type is known and differs from service type.
-        // Otherwise the decorator wraps the interface which causes circular resolution.
         if (implType is null
             || SymbolEqualityComparer.Default.Equals(serviceType, implType))
             return;
@@ -388,12 +419,13 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         var svcName = serviceType.ToDisplayString();
         var intName = interceptorType.ToDisplayString();
         var implName = implType.ToDisplayString();
+        var resolveType = isLast ? implName : svcName;
 
         sb.AppendLine(
             $"        container.Register<{svcName}>(scope =>");
         sb.AppendLine("        {");
         sb.AppendLine(
-            $"            var inner = scope.GetService<{implName}>();");
+            $"            var inner = scope.GetService<{resolveType}>();");
         sb.AppendLine(
             $"            var i0 = scope.GetService<{intName}>();");
         sb.AppendLine(
