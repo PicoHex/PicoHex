@@ -25,13 +25,13 @@ container.RegisterSingleton<RetryInterceptor>(_ => new RetryInterceptor(3));
 
 // Register services with InterceptBy markers — these are compile-time markers
 // that trigger the source generator to emit decorator class definitions
-container.Register<ICalculator, Calculator>(SvcLifetime.Scoped)
+container.Register<ICalculator>(_ => new Calculator(), SvcLifetime.Scoped)
     .InterceptBy<LoggingInterceptor>();
-container.Register<ICalculator, Calculator>(SvcLifetime.Scoped)
+container.Register<ICalculator>(_ => new Calculator(), SvcLifetime.Scoped)
     .InterceptBy<TimingInterceptor>();
-container.Register<ICalculator, Calculator>(SvcLifetime.Scoped)
+container.Register<ICalculator>(_ => new Calculator(), SvcLifetime.Scoped)
     .InterceptBy<ValidationInterceptor>();
-container.Register<IFlakyService, FlakyService>(SvcLifetime.Scoped)
+container.Register<IFlakyService>(_ => new FlakyService(), SvcLifetime.Scoped)
     .InterceptBy<RetryInterceptor>();
 
 container.Build();
