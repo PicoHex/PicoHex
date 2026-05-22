@@ -20,7 +20,6 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\PicoDI.Abs\PicoDI.Abs.csproj" />
         <ProjectReference Include="..\..\src\PicoDI\PicoDI.csproj" />
-        <ProjectReference Include="..\..\src\PicoDI.Aop\PicoDI.Aop.csproj" />
         <ProjectReference Include="..\..\src\PicoDI.Gen\PicoDI.Gen.csproj" OutputItemType="Analyzer" />
     </ItemGroup>
 

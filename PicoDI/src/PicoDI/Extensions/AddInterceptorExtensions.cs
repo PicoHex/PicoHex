@@ -1,4 +1,4 @@
-namespace PicoDI.Aop;
+namespace PicoDI;
 
 public static class SvcContainerAddInterceptorExtensions
 {

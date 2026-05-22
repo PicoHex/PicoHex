@@ -14,8 +14,7 @@ public class DecoratorGenerationTests
         var inputSource = """
             using PicoDI;
             using PicoDI.Abs;
-            using PicoDI.Aop;
-
+            
             public interface IGreeter
             {
                 string Greet(string name);
@@ -91,8 +90,7 @@ public class DecoratorGenerationTests
         var inputSource = """
             using PicoDI;
             using PicoDI.Abs;
-            using PicoDI.Aop;
-
+            
             public interface IGreeter
             {
                 string Greet(string name);
