@@ -394,10 +394,12 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             sb.AppendLine($"    public {resultName} Result {{ get; set; }}");
             sb.AppendLine();
 
-            var paramDecl = string.Join(", ", paramList.Select(
-                p => $"{p.Type.ToDisplayString()} {p.Name}"));
+            var paramDecl = paramList.Count > 0
+                ? ", " + string.Join(", ", paramList.Select(
+                    p => $"{p.Type.ToDisplayString()} {p.Name}"))
+                : "";
             sb.AppendLine(
-                $"    public {structName}({svcName} target, {paramDecl}, ISvcScope? scope)");
+                $"    public {structName}({svcName} target{paramDecl}, ISvcScope? scope)");
             sb.AppendLine("    {");
             sb.AppendLine("        _target = target;");
             foreach (var p in paramList)
@@ -407,7 +409,9 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             sb.AppendLine("    }");
             sb.AppendLine();
 
-            var paramArgs = string.Join(", ", paramList.Select(p => $"_{p.Name}"));
+            var paramArgs = paramList.Count > 0
+                ? ", " + string.Join(", ", paramList.Select(p => $"_{p.Name}"))
+                : "";
             sb.AppendLine(
                 $"    public {resultName} InvokeTarget() => _target.{method.Name}({paramArgs});");
             sb.AppendLine("}");
