@@ -70,13 +70,19 @@ public class DecoratorGenerationTests
             .ToImmutableArray();
 
         await Assert.That(generatedSources.Length).IsGreaterThan(0);
+        await Assert.That(
+            generatedSources.Any(s =>
+                s.HintName.Contains("InterceptorRegistrations", StringComparison.Ordinal))
+        ).IsTrue();
 
-        var interceptorSource = generatedSources.First(
-            s => s.HintName.Contains("InterceptorRegistrations", StringComparison.Ordinal)
-        );
+        // Verify generated output compilation emits successfully
+        var emitDiags = outputCompilation.GetDiagnostics()
+            .Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+        await Assert.That(emitDiags).IsEmpty();
 
-        var generatedTree = CSharpSyntaxTree.ParseText(interceptorSource.SourceText, parseOptions);
-        await Assert.That(generatedTree).IsNotNull();
+        using var ms = new MemoryStream();
+        var emitResult = outputCompilation.Emit(ms);
+        await Assert.That(emitResult.Success).IsTrue();
     }
 
     [Test]
@@ -151,6 +157,7 @@ public class DecoratorGenerationTests
             typeof(SvcContainer).Assembly.Location,
             typeof(ISvcContainer).Assembly.Location,
             typeof(IInterceptor).Assembly.Location,
+            typeof(SvcContainerInterceptorExtensions).Assembly.Location,
         };
 
         return trustedPlatformAssemblies
