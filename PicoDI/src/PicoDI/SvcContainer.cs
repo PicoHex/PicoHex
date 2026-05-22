@@ -36,6 +36,18 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
 
     bool IGeneratedConfigurationStateContainer.IsGeneratedConfigurationApplied { get; set; }
 
+    /// <summary>
+    /// Interceptor filters registered via AddInterceptor&lt;T&gt;().Where*().
+    /// Source generators evaluate filters at compile time. Runtime evaluation exists
+    /// as a fallback for non-generator scenarios.
+    /// </summary>
+    internal readonly List<IInterceptorFilter> InterceptorFilters = [];
+
+    /// <summary>
+    /// Service-level interceptor exclusions registered via WithoutInterceptor&lt;T&gt;().
+    /// </summary>
+    internal readonly List<IInterceptorExclusion> InterceptorExclusions = [];
+
     private int _disposed;
 
     /// <inheritdoc />
