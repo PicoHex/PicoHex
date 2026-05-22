@@ -240,8 +240,25 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             // Globals first (outer), per-service second (inner)
             interceptorList.InsertRange(0, globalMatches);
 
+            // PICO013: check for conflicting global+per-service declarations
+            foreach (var g in globalMatches)
+            {
+                if (info.WithoutInterceptorTypes.Contains(g, SymbolEqualityComparer.Default))
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        InterceptorDiagnostics.ConflictingInterceptorDeclaration,
+                        Location.None, g.ToDisplayString(), serviceType.ToDisplayString()));
+                }
+            }
+
             if (interceptorList.Count == 0)
+            {
+                // PICO012: warn that no interceptors matched
+                spc.ReportDiagnostic(Diagnostic.Create(
+                    InterceptorDiagnostics.ZeroInterceptorsMatched,
+                    Location.None, serviceType.ToDisplayString()));
                 continue;
+            }
 
             for (var i = 0; i < interceptorList.Count; i++)
             {
