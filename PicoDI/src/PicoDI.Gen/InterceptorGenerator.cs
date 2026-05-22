@@ -108,12 +108,8 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         }
 
         // current should now be the Register call or end of chain
-        if (
-            current.Expression is MemberAccessExpressionSyntax
-            {
-                Name: GenericNameSyntax { Identifier.ValueText: "Register" } registerName
-            }
-        )
+        if (current.Expression is MemberAccessExpressionSyntax memAccess
+            && memAccess.Name.Identifier.ValueText == "Register")
         {
             registerCall = current;
         }
@@ -121,15 +117,32 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         if (registerCall is null || interceptorArgTypes.Count == 0)
             return null;
 
-        // Extract service and implementation types from Register<T, Impl>()
+        // Extract service and implementation types from Register call
         var registerSymbol = semanticModel.GetSymbolInfo(registerCall).Symbol as IMethodSymbol;
-        if (registerSymbol is not { TypeArguments.Length: >= 1 })
-            return null;
+        ITypeSymbol? serviceType = null;
+        ITypeSymbol? implType = null;
 
-        var serviceType = registerSymbol.TypeArguments[0];
-        var implType = registerSymbol.TypeArguments.Length >= 2
-            ? registerSymbol.TypeArguments[1]
-            : null;
+        if (registerSymbol is { TypeArguments.Length: >= 1 })
+        {
+            // Pattern: Register<T, Impl>(lifetime)
+            serviceType = registerSymbol.TypeArguments[0];
+            implType = registerSymbol.TypeArguments.Length >= 2
+                ? registerSymbol.TypeArguments[1] : null;
+        }
+        else if (registerCall.ArgumentList.Arguments.Count >= 2)
+        {
+            // Pattern: Register(typeof(T), typeof(Impl), lifetime)
+            var firstArg = registerCall.ArgumentList.Arguments[0].Expression;
+            if (firstArg is TypeOfExpressionSyntax { Type: var typeSyntax })
+                serviceType = semanticModel.GetTypeInfo(typeSyntax).Type;
+
+            var secondArg = registerCall.ArgumentList.Arguments[1].Expression;
+            if (secondArg is TypeOfExpressionSyntax { Type: var implSyntax })
+                implType = semanticModel.GetTypeInfo(implSyntax).Type;
+        }
+
+        if (serviceType is null)
+            return null;
 
         return new InterceptionInfo(
             serviceType, implType, interceptorArgTypes,
@@ -227,6 +240,16 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             var globalMatches = new List<ITypeSymbol>();
             foreach (var g in globals.OfType<GlobalInterceptorInfo>())
             {
+                // PICO011: validate interface filter type is actually an interface
+                if (g.InterfaceFilter is INamedTypeSymbol ifaceSym
+                    && ifaceSym.TypeKind != TypeKind.Interface)
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        InterceptorDiagnostics.FilterRequiresInterface,
+                        Location.None, g.InterfaceFilter.ToDisplayString()));
+                    continue;
+                }
+
                 if (MatchesGlobalFilter(serviceType, g)
                     && !info.WithoutInterceptorTypes.Contains(g.InterceptorType, SymbolEqualityComparer.Default))
                 {
