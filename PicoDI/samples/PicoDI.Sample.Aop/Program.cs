@@ -8,9 +8,12 @@ Console.WriteLine("=== PicoDI AOP / Interceptor Demo ===\n");
 // The source generator (PicoDI.Gen) detects these calls and emits:
 //   1. Invocation structs (per-method, captures parameters)
 //   2. Decorator classes (wraps the service, delegates to interceptor)
-//   3. A ModuleInitializer that registers decorator chains into the DI
+//   3. A ModuleInitializer that auto-registers decorator chains into the DI
 //
 // All decorator wiring is resolved at compile time — zero reflection.
+//
+// Note: Use Register<TService, TImplementation>(lifetime) — the generator
+// needs the implementation type to auto-generate DI registrations.
 
 var container = new SvcContainer();
 
@@ -20,7 +23,8 @@ container.RegisterSingleton<TimingInterceptor>();
 container.RegisterSingleton<ValidationInterceptor>();
 container.RegisterSingleton<RetryInterceptor>(_ => new RetryInterceptor(3));
 
-// Register services with InterceptBy markers (triggers generator)
+// Register services with InterceptBy markers — these are compile-time markers
+// that trigger the source generator to emit decorator class definitions
 container.Register<ICalculator>(_ => new Calculator(), SvcLifetime.Scoped)
     .InterceptBy<LoggingInterceptor>();
 container.Register<ICalculator>(_ => new Calculator(), SvcLifetime.Scoped)
@@ -34,7 +38,8 @@ container.Build();
 
 await using var scope = container.CreateScope();
 
-// Resolve services and interceptors
+// The source generator has emitted decorator DI registrations via
+// ModuleInitializer. We can now resolve services and build chains.
 var calcInner = scope.GetService<ICalculator>()!;
 var flaky = scope.GetService<IFlakyService>()!;
 var log = scope.GetService<LoggingInterceptor>()!;
@@ -42,12 +47,10 @@ var timer = scope.GetService<TimingInterceptor>()!;
 var valid = scope.GetService<ValidationInterceptor>()!;
 var retry = scope.GetService<RetryInterceptor>()!;
 
-// Build decorator chains manually
-// Pattern: new {Service}_{Interceptor}Decorator(inner, interceptor)
+// Build decorator chains: outermost interceptor wraps innermost
 var withLog = new ICalculator_LoggingInterceptorDecorator(calcInner, log);
 var withTime = new ICalculator_TimingInterceptorDecorator(withLog, timer);
 var calc = new ICalculator_ValidationInterceptorDecorator(withTime, valid);
-
 var flakyDecorated = new IFlakyService_RetryInterceptorDecorator(flaky, retry);
 
 // ── Demo ─────────────────────────────────────────────────────────────
@@ -56,9 +59,8 @@ Console.WriteLine($"  Add(3, 4)     = {calc.Add(3, 4)}");
 Console.WriteLine($"  Multiply(6, 7) = {calc.Multiply(6, 7)}");
 Console.WriteLine($"  Divide(10, 0)  = {calc.Divide(10, 0)}");
 Console.WriteLine();
-
 Console.WriteLine("--- 2. Retry ---");
-try { Console.WriteLine($"  TryGetValue()  = {flakyDecorated.TryGetValue(0)}"); }
+try { Console.WriteLine($"  TryGetValue()  = {flakyDecorated.TryGetValue()}"); }
 catch (Exception ex) { Console.WriteLine($"  Failed: {ex.Message}"); }
 
 Console.WriteLine("\n=== AOP Demo Complete ===");
@@ -80,13 +82,13 @@ public sealed class Calculator : ICalculator
 
 public interface IFlakyService
 {
-    int TryGetValue(int _);
+    int TryGetValue();
 }
 
 public sealed class FlakyService : IFlakyService
 {
     private int _calls;
-    public int TryGetValue(int _)
+    public int TryGetValue()
     {
         _calls++;
         if (_calls <= 2) throw new InvalidOperationException($"Svc failed (attempt {_calls})");
