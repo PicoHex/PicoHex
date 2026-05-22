@@ -65,4 +65,13 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
             SvcContainerAutoConfiguration.TryApplyConfiguration(this);
         }
     }
+
+    /// <summary>
+    /// Container-local monotonic counter for LIFO singleton disposal ordering.
+    /// </summary>
+    private long _singletonCreationOrder;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal long NextSingletonCreationOrder() =>
+        Interlocked.Increment(ref _singletonCreationOrder);
 }

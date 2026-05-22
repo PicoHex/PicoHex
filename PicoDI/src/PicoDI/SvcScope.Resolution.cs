@@ -5,9 +5,12 @@ public sealed partial class SvcScope
     private const string SourceGenReminder =
         "Use PicoDI.Gen source generator or register with a factory delegate.";
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Core resolution logic shared by GetService and TryGetService.
+    /// Returns null when the service is not found — caller decides whether to throw.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public object GetService(Type serviceType)
+    private object? ResolveServiceCore(Type serviceType)
     {
         ArgumentNullException.ThrowIfNull(serviceType);
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
@@ -19,35 +22,37 @@ public sealed partial class SvcScope
         }
 
         if (!_registrationCache.TryGetValue(serviceType, out var registrations))
-            return HandleServiceNotFound(serviceType);
+            return null;
 
-        var registration = registrations[^1];
-
-        return ResolveByLifetime(serviceType, registration);
+        return ResolveByLifetime(serviceType, registrations[^1]);
     }
+
+    /// <inheritdoc />
+    public object GetService(Type serviceType) =>
+        ResolveServiceCore(serviceType) ?? HandleServiceNotFound(serviceType);
 
     /// <inheritdoc />
     public bool TryGetService(Type serviceType, [MaybeNullWhen(false)] out object? service)
     {
+        service = ResolveServiceCore(serviceType);
+        return service is not null;
+    }
+
+    /// <summary>
+    /// Core multi-resolution logic shared by GetServices and TryGetServices.
+    /// Returns null when the service type is not registered.
+    /// </summary>
+    private IReadOnlyList<object>? ResolveServicesCore(Type serviceType)
+    {
         ArgumentNullException.ThrowIfNull(serviceType);
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
 
-        if (_singletonCache.TryGetValue(serviceType, out var singletonRegistration))
-        {
-            var instance = singletonRegistration.GetSingletonInstance();
-            service = instance ?? GetOrCreateSingletonSlow(serviceType, singletonRegistration);
-            return true;
-        }
-
         if (!_registrationCache.TryGetValue(serviceType, out var registrations))
-        {
-            service = null;
-            return false;
-        }
+            return null;
 
-        var registration = registrations[^1];
-        service = ResolveByLifetime(serviceType, registration);
-        return true;
+        return registrations
+            .Select(r => ResolveByLifetime(serviceType, r))
+            .ToArray();
     }
 
     /// <inheritdoc />
@@ -56,32 +61,17 @@ public sealed partial class SvcScope
         [MaybeNullWhen(false)] out IReadOnlyList<object> services
     )
     {
-        ArgumentNullException.ThrowIfNull(serviceType);
-        DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
-
-        if (!_registrationCache.TryGetValue(serviceType, out var registrations))
-        {
-            services = null;
-            return false;
-        }
-
-        services = registrations
-            .Select(registration => ResolveByLifetime(serviceType, registration))
-            .ToArray();
-        return true;
+        services = ResolveServicesCore(serviceType);
+        return services is not null;
     }
 
     /// <inheritdoc />
     public IReadOnlyList<object> GetServices(Type serviceType)
     {
-        ArgumentNullException.ThrowIfNull(serviceType);
-        DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
-        if (!_registrationCache.TryGetValue(serviceType, out var registrations))
-            throw new PicoDiException($"Service type '{serviceType.FullName}' is not registered.");
-
-        return registrations
-            .Select(registration => ResolveByLifetime(serviceType, registration))
-            .ToArray();
+        return ResolveServicesCore(serviceType)
+            ?? throw new PicoDiException(
+                $"Service type '{serviceType.FullName}' is not registered."
+            );
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -211,25 +201,20 @@ public sealed partial class SvcScope
             // disposal pass can release singletons in reverse construction
             // order (LIFO) — a singleton may rely on its dependencies inside
             // its own Dispose method.
-            singletonState.CreationOrder = NextSingletonCreationOrder();
+            singletonState.CreationOrder = OwningContainer!.NextSingletonCreationOrder();
             Volatile.Write(ref singletonState.Instance, candidate);
             return candidate;
         }
     }
 
-    // Process-wide monotonic counter. Cross-container ordering is irrelevant —
-    // the disposal pass only compares tags belonging to the same container.
-    private static long s_singletonCreationCounter;
+    /// <summary>
+    /// Scope-local monotonic counter for LIFO scoped-instance disposal ordering.
+    /// </summary>
+    private long _scopedCreationCounter;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static long NextSingletonCreationOrder() =>
-        Interlocked.Increment(ref s_singletonCreationCounter);
-
-    private static long s_scopedCreationCounter;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static long NextScopedCreationOrder() =>
-        Interlocked.Increment(ref s_scopedCreationCounter);
+    private long NextScopedCreationOrder() =>
+        Interlocked.Increment(ref _scopedCreationCounter);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private object GetOrAddScopedInstance(SvcRuntimeRegistration registration)
