@@ -172,7 +172,7 @@ internal static partial class ServiceRegistrationSourceEmitter
     )
     {
         var lifetimeEnum = $"global::PicoDI.Abs.SvcLifetime.{reg.Lifetime}";
-        sb.AppendLine("        container.Register(new global::PicoDI.Abs.SvcDescriptor(");
+        sb.AppendLine("        container.Register(global::PicoDI.Abs.SvcDescriptor.Create(");
         sb.AppendLine($"            typeof({reg.ServiceTypeFullName}),");
 
         if (reg.ConstructorParameters.IsEmpty)
@@ -202,7 +202,7 @@ internal static partial class ServiceRegistrationSourceEmitter
                 .Select(g => g.Key)
         )
         {
-            sb.AppendLine("        container.Register(new global::PicoDI.Abs.SvcDescriptor(");
+            sb.AppendLine("        container.Register(global::PicoDI.Abs.SvcDescriptor.Create(");
             sb.AppendLine(
                 $"            typeof(global::System.Collections.Generic.IEnumerable<{serviceTypeFullName}>),"
             );

@@ -814,10 +814,10 @@ public sealed class SvcContainerExtensionsTests
         var writes = new ConcurrentQueue<string>();
 
         container.Register(
-            new SvcDescriptor(typeof(ILogSink), _ => new OrderingSink("first", writes))
+            SvcDescriptor.Create(typeof(ILogSink), _ => new OrderingSink("first", writes))
         );
         container.Register(
-            new SvcDescriptor(typeof(ILogSink), _ => new OrderingSink("second", writes))
+            SvcDescriptor.Create(typeof(ILogSink), _ => new OrderingSink("second", writes))
         );
 
         container.AddPicoLog(options =>
@@ -841,7 +841,7 @@ public sealed class SvcContainerExtensionsTests
         ISvcContainer container = new SvcContainer();
         var sink = new RecordingSink();
 
-        container.Register(new SvcDescriptor(typeof(ILogSink), _ => sink));
+        container.Register(SvcDescriptor.Create(typeof(ILogSink), _ => sink));
 
         container.AddPicoLog(options =>
         {
@@ -861,7 +861,7 @@ public sealed class SvcContainerExtensionsTests
         ISvcContainer container = new SvcContainer();
         var sink = new RecordingFlushableSink();
 
-        container.Register(new SvcDescriptor(typeof(ILogSink), _ => sink));
+        container.Register(SvcDescriptor.Create(typeof(ILogSink), _ => sink));
 
         container.AddPicoLog(options =>
         {
@@ -889,7 +889,7 @@ public sealed class SvcContainerExtensionsTests
         var writes = new ConcurrentQueue<string>();
 
         container.Register(
-            new SvcDescriptor(typeof(ILogSink), _ => new OrderingSink("registered", writes))
+            SvcDescriptor.Create(typeof(ILogSink), _ => new OrderingSink("registered", writes))
         );
 
         container.AddPicoLog(options =>
@@ -941,7 +941,7 @@ public sealed class SvcContainerExtensionsTests
         var fallbackSink = new RecordingSink();
 
         container.Register(
-            new SvcDescriptor(
+            SvcDescriptor.Create(
                 typeof(ILogSink),
                 _ => throw new InvalidOperationException("sink activation failed")
             )
@@ -976,7 +976,7 @@ public sealed class SvcContainerExtensionsTests
         ISvcContainer container = new SvcContainer();
         var sink = new RecordingSink();
 
-        container.Register(new SvcDescriptor(typeof(ILogSink), _ => sink));
+        container.Register(SvcDescriptor.Create(typeof(ILogSink), _ => sink));
 
         container.AddPicoLog(options =>
         {

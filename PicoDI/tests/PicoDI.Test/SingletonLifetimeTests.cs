@@ -64,7 +64,7 @@ public class SingletonLifetimeTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterSingleton(typeof(ISimpleService), static _ => new SimpleService());
+        container.RegisterSingleton<ISimpleService>(static _=> new SimpleService());
         await using var scope = container.CreateScope();
 
         // Act
@@ -376,11 +376,7 @@ public class SingletonLifetimeTests
     public async Task Register_SharedSingletonDescriptorAcrossContainers_RemainsIsolated()
     {
         // Arrange
-        var sharedDescriptor = new SvcDescriptor(
-            typeof(ISimpleService),
-            static _ => new SimpleService(),
-            SvcLifetime.Singleton
-        );
+        var sharedDescriptor = SvcDescriptor.Create(typeof(ISimpleService), static _ => new SimpleService(), SvcLifetime.Singleton);
 
         await using var container1 = new SvcContainer(autoConfigureFromGenerator: false);
         await using var container2 = new SvcContainer(autoConfigureFromGenerator: false);
