@@ -182,7 +182,7 @@ internal static class RegistrationSemanticPipeline
         };
     }
 
-    private static bool IsFactoryRegistration(
+    internal static bool IsFactoryRegistration(
         InvocationExpressionSyntax invocation,
         IMethodSymbol methodSymbol,
         SemanticModel semanticModel
