@@ -496,19 +496,12 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         var svcName = serviceType.ToDisplayString();
         var intName = interceptorType.ToDisplayString();
 
-        // When implType is null (factory-based registration) or serviceType == implType
-        // (self-registration), resolve the service type itself as the inner implementation.
-        // This works because the generated DI registration is appended AFTER the original
-        // registration — the last registration wins, and this decorator wraps the original.
-        var hasImplType = implType is not null
-            && !SymbolEqualityComparer.Default.Equals(serviceType, implType);
-        var resolveType = hasImplType && isLast ? implType.ToDisplayString() : svcName;
+        if (implType is null
+            || SymbolEqualityComparer.Default.Equals(serviceType, implType))
+            return;
 
-        sb.AppendLine(
-            $"        container.Register<{svcName}>(scope =>");
-        sb.AppendLine("        {");
-        sb.AppendLine(
-            $"            var inner = scope.GetService<{resolveType}>();");
+        var implName = implType.ToDisplayString();
+        var resolveType = isLast ? implName : svcName;
         sb.AppendLine(
             $"            var i0 = scope.GetService<{intName}>();");
         sb.AppendLine(
