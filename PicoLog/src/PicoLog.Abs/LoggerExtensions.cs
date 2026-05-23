@@ -17,33 +17,77 @@ public static partial class LoggerExtensions
         public void Log(LogLevel logLevel, string message, Exception? exception = null) =>
             logger.Log(logLevel, message, null, exception);
 
+        public void Log(LogLevel logLevel, string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null) =>
+            logger.Log(logLevel, message, properties, exception);
+
         public Task LogAsync(LogLevel logLevel, string message,
             Exception? exception = null, CancellationToken cancellationToken = default) =>
             logger.LogAsync(logLevel, message, null, exception, cancellationToken);
 
+        public Task LogAsync(LogLevel logLevel, string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, message, properties, exception, cancellationToken);
+
+        // EventId + string
+
         public void Log(LogLevel logLevel, EventId eventId, string message, Exception? exception = null) =>
             logger.Log(logLevel, eventId, message, null, exception);
+
+        public void Log(LogLevel logLevel, EventId eventId, string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null) =>
+            logger.Log(logLevel, eventId, message, properties, exception);
 
         public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
             Exception? exception = null, CancellationToken cancellationToken = default) =>
             logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
+
+        public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, eventId, message, properties, exception, cancellationToken);
 
         // FormattableString
 
         public void Log(LogLevel logLevel, FormattableString message, Exception? exception = null) =>
             logger.Log(logLevel, message, null, exception);
 
+        public void Log(LogLevel logLevel, FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null) =>
+            logger.Log(logLevel, message, properties, exception);
+
         public Task LogAsync(LogLevel logLevel, FormattableString message,
             Exception? exception = null, CancellationToken cancellationToken = default) =>
             logger.LogAsync(logLevel, message, null, exception, cancellationToken);
+
+        public Task LogAsync(LogLevel logLevel, FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, message, properties, exception, cancellationToken);
+
+        // EventId + FormattableString
 
         public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
             Exception? exception = null) =>
             logger.Log(logLevel, eventId, message, null, exception);
 
+        public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null) =>
+            logger.Log(logLevel, eventId, message, properties, exception);
+
         public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
             Exception? exception = null, CancellationToken cancellationToken = default) =>
             logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
+
+        public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, eventId, message, properties, exception, cancellationToken);
     }
 
     extension(ILogger logger)
