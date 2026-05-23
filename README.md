@@ -62,7 +62,8 @@ dotnet add package PicoDI
 var container = new SvcContainer();
 container.RegisterSingleton<IService>(scope => new MyService());
 container.Build();
-var svc = container.CreateScope().GetService<IService>();
+await using var scope = container.CreateScope();
+var svc = scope.GetService<IService>();
 ```
 
 ### Just Logging
