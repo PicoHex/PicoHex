@@ -213,8 +213,8 @@ public class KeyPerFileCfgTests
             await using var root = await Cfg.CreateBuilder().AddKeyPerFile(dir).BuildAsync();
 
             using var cts = new CancellationTokenSource();
-            cts.CancelAfter(TimeSpan.FromMilliseconds(10));
-            await Task.Delay(20);
+            cts.CancelAfter(TimeSpan.FromMilliseconds(50));
+            await Task.Delay(100);
 
             await Assert
                 .That(async () => await root.ReloadAsync(cts.Token))
