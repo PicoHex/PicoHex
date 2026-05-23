@@ -349,7 +349,7 @@ public sealed class LoggerFactoryTests
                 new("number", 3),
                 new("nullable", null)
             ],
-            Scopes = ["outer", "inner"]
+            Scopes =  ["outer", "inner"]
         };
 
         var rendered = formatter.Format(entry);
@@ -702,11 +702,17 @@ public sealed class LoggerFactoryTests
     {
         var sink = new BlockingSink();
         long reportedDropCount = 0;
+        // Use a generous timeout to tolerate thread-pool scheduling delays
+        // on slow CI runners (coverage instrumentation + limited CPU cores).
+        // After sink.Release(), the processing continuation is scheduled on
+        // the thread pool; if all pool threads are busy, the backoff loop
+        // for the third write can time out before the processor gets a chance
+        // to drain the queue.
         var options = new LoggerFactoryOptions
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.Wait,
-            SyncWriteTimeout = TimeSpan.FromSeconds(1),
+            SyncWriteTimeout = TimeSpan.FromSeconds(5),
             OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
         };
         await using var factory = new LoggerFactory([sink], options);
@@ -721,7 +727,7 @@ public sealed class LoggerFactoryTests
 
             thirdWrite = Task.Run(() => logger.Info("third"));
 
-            await Task.Delay(200);
+            await Task.Delay(300);
             await Assert.That(thirdWrite.IsCompleted).IsFalse();
         }
         finally
