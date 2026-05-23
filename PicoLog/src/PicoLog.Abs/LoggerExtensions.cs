@@ -8,6 +8,44 @@
 /// </summary>
 public static partial class LoggerExtensions
 {
+    // ── Convenience overloads (default parameters) moved from ILogger interface ──
+
+    extension(ILogger logger)
+    {
+        // string
+
+        public void Log(LogLevel logLevel, string message, Exception? exception = null) =>
+            logger.Log(logLevel, message, null, exception);
+
+        public Task LogAsync(LogLevel logLevel, string message,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, message, null, exception, cancellationToken);
+
+        public void Log(LogLevel logLevel, EventId eventId, string message, Exception? exception = null) =>
+            logger.Log(logLevel, eventId, message, null, exception);
+
+        public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
+
+        // FormattableString
+
+        public void Log(LogLevel logLevel, FormattableString message, Exception? exception = null) =>
+            logger.Log(logLevel, message, null, exception);
+
+        public Task LogAsync(LogLevel logLevel, FormattableString message,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, message, null, exception, cancellationToken);
+
+        public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
+            Exception? exception = null) =>
+            logger.Log(logLevel, eventId, message, null, exception);
+
+        public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
+            Exception? exception = null, CancellationToken cancellationToken = default) =>
+            logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
+    }
+
     extension(ILogger logger)
     {
         /// <summary>
