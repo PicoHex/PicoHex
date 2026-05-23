@@ -44,6 +44,8 @@ internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
         if (Volatile.Read(ref _disposed) == 1)
             throw new ObjectDisposedException(nameof(CfgRoot));
 
+        ct.ThrowIfCancellationRequested();
+
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
             ct,
             _disposeCts.Token
