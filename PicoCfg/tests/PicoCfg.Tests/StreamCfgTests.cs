@@ -16,7 +16,7 @@ public class StreamCfgTests
                 () =>
                     TestCfgFactory.CreateStreamProvider(
                         null!,
-                        streamParser: CfgBuilder.CreateDefaultStreamParser(),
+                        streamParser: static (s, ct) => Task.FromResult(new Dictionary<string, string>()),
                         state: TestCfgFactory.CreateProviderState()
                     )
             )

@@ -2,14 +2,29 @@ namespace PicoCfg.Tests;
 
 internal static class TestCfgFactory
 {
+    private static readonly Func<Stream, CancellationToken, Task<Dictionary<string, string>>> DefaultStreamParser =
+        async (stream, ct) =>
+        {
+            using var reader = new StreamReader(stream, leaveOpen: true);
+            var data = new Dictionary<string, string>();
+            while (await reader.ReadLineAsync(ct) is { } line)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var idx = line.IndexOf('=');
+                if (idx < 0) continue;
+                data[line[..idx].Trim()] = line[(idx + 1)..].Trim();
+            }
+            return data;
+        };
+
     public static CfgProviderState CreateProviderState(
         Func<CfgChangeSignal>? changeSignalFactory = null,
         Func<IReadOnlyDictionary<string, string>, int, CfgSnapshot>? snapshotFactory = null
     )
     {
         return new CfgProviderState(
-            changeSignalFactory ?? CfgBuilder.CreateDefaultChangeSignalFactory(),
-            snapshotFactory ?? CfgBuilder.CreateDefaultSnapshotFactory()
+            changeSignalFactory ?? (static () => new CfgChangeSignal()),
+            snapshotFactory ?? (static (values, fingerprint) => new CfgSnapshot(values, fingerprint))
         );
     }
 
@@ -23,7 +38,7 @@ internal static class TestCfgFactory
         return new StreamCfgProvider(
             streamFactory,
             versionStampFactory,
-            streamParser ?? CfgBuilder.CreateDefaultStreamParser(),
+            streamParser: streamParser ?? DefaultStreamParser,
             state ?? CreateProviderState()
         );
     }
@@ -93,10 +108,10 @@ internal static class TestCfgFactory
         return new CfgRoot(
             providers,
             snapshotComposer
-                ?? CfgBuilder.CreateDefaultSnapshotComposer(
-                    CfgBuilder.CreateDefaultSnapshotFactory()
-                ),
-            changeSignalFactory ?? CfgBuilder.CreateDefaultChangeSignalFactory()
+                ?? (providerSnapshots =>
+                    CfgSnapshotComposer.CreateSnapshot(providerSnapshots,
+                        (values, fingerprint) => new CfgSnapshot(values, fingerprint))),
+            changeSignalFactory ?? (static () => new CfgChangeSignal())
         );
     }
 

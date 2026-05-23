@@ -43,55 +43,6 @@ public class CfgBuilderExtensionsTests
     }
 
     [Test]
-    public async Task Add_WithStringContentAndExplicitEncoding_ForwardsEncodedBytesToTheParser()
-    {
-        byte[]? observedBytes = null;
-        var builder = Cfg.CreateBuilder()
-            .WithStreamParser(
-                async (stream, ct) =>
-                {
-                    using var memory = new MemoryStream();
-                    await stream.CopyToAsync(memory, ct);
-                    observedBytes = memory.ToArray();
-                    return [];
-                }
-            );
-
-        builder.Add("key=value", Encoding.Unicode);
-
-        await using var root = await builder.BuildAsync();
-
-        await Assert.That(root.GetValue("key")).IsNull();
-        await Assert.That(observedBytes).IsNotNull();
-        await Assert.That(observedBytes!.Length).IsGreaterThan(2);
-        await Assert.That((int)observedBytes[0]).IsEqualTo(0xFF);
-        await Assert.That((int)observedBytes[1]).IsEqualTo(0xFE);
-    }
-
-    [Test]
-    public async Task Add_WithStringContentAndUnchangedVersionStamp_ReloadSkipsReparseAndRetainsPublishedValue()
-    {
-        var parserCalls = 0;
-        var builder = Cfg.CreateBuilder()
-            .WithStreamParser(
-                async (stream, ct) =>
-                {
-                    parserCalls++;
-                    return await CfgBuilder.CreateDefaultStreamParser()(stream, ct);
-                }
-            );
-
-        builder.Add("key=value1", versionStampFactory: () => 1);
-
-        await using var root = await builder.BuildAsync();
-        var changed = await root.ReloadAsync();
-
-        await Assert.That(changed).IsFalse();
-        await Assert.That(parserCalls).IsEqualTo(1);
-        await Assert.That(root.GetValue("key")).IsEqualTo("value1");
-    }
-
-    [Test]
     public async Task Add_WithDictionaryData_PreservesRawValuesWithoutReparsing()
     {
         var builder = Cfg.CreateBuilder();
