@@ -73,7 +73,10 @@ var container = new SvcContainer();
 container.RegisterSingleton<IService>(scope => new MyService());
 container.Build();
 
-var svc = container.CreateScope().GetService<IService>();
+await using var scope = container.CreateScope();
+var svc = scope.GetService<IService>();
+```n
+PicoDI unterstützt auch **AOP/Interceptoren zur Kompilierzeit** — verketten Sie .InterceptBy<TInterceptor>() nach Register() und der Quellgenerator erzeugt Decorator-Klassen zur Build-Zeit. [Mehr erfahren →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 ```
 
 ### Nur Logging
@@ -117,7 +120,8 @@ var cfg = await Cfg.CreateBuilder()
     .BuildAsync();
 container.RegisterCfgRoot(cfg);
 container.AddPicoLog(o => { o.MinLevel = LogLevel.Info; o.WriteTo.ColoredConsole(); });
-var logger = container.CreateScope().GetService<ILogger<Program>>();
+await using var scope = container.CreateScope();
+var logger = scope.GetService<ILogger<Program>>();
 ```
 
 ---

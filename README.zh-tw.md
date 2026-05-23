@@ -73,7 +73,10 @@ var container = new SvcContainer();
 container.RegisterSingleton<IService>(scope => new MyService());
 container.Build();
 
-var svc = container.CreateScope().GetService<IService>();
+await using var scope = container.CreateScope();
+var svc = scope.GetService<IService>();
+```n
+PicoDI 也支援**編譯期 AOP/攔截器**——在 Register() 後鏈式調用 .InterceptBy<TInterceptor>()，原始碼產生器會在編譯時產生裝飾器類別。[了解更多 →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 ```
 
 ### 只要日誌
@@ -117,7 +120,8 @@ var cfg = await Cfg.CreateBuilder()
     .BuildAsync();
 container.RegisterCfgRoot(cfg);
 container.AddPicoLog(o => { o.MinLevel = LogLevel.Info; o.WriteTo.ColoredConsole(); });
-var logger = container.CreateScope().GetService<ILogger<Program>>();
+await using var scope = container.CreateScope();
+var logger = scope.GetService<ILogger<Program>>();
 ```
 
 ---

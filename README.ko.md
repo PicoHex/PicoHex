@@ -96,7 +96,8 @@ var cfg = await Cfg.CreateBuilder()
     .BuildAsync();
 container.RegisterCfgRoot(cfg);
 container.AddPicoLog(o => { o.MinLevel = LogLevel.Info; o.WriteTo.ColoredConsole(); });
-var logger = container.CreateScope().GetService<ILogger<Program>>();
+await using var scope = container.CreateScope();
+var logger = scope.GetService<ILogger<Program>>();
 ```
 
 ---
