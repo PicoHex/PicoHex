@@ -66,6 +66,8 @@ await using var scope = container.CreateScope();
 var svc = scope.GetService<IService>();
 ```
 
+PicoDI also supports **compile-time AOP/interceptors** — chain `.InterceptBy<TInterceptor>()` after `Register()` and the source generator emits decorator classes at build time. [Learn more →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
+
 ### Just Logging
 
 ```shell
