@@ -16,7 +16,7 @@ var container = new SvcContainer();
 container.RegisterSingleton<IService>(scope => new MyService());
 container.Build();
 
-using var scope = container.CreateScope();
+await using var scope = container.CreateScope();
 var svc = scope.GetService<IService>();
 ```
 
@@ -218,6 +218,85 @@ await host.StopAsync();
 ```
 
 Startup order follows registration order. Shutdown reverses it (LIFO). Each hosted service is a one-shot — once stopped, it cannot be restarted without creating a new container.
+
+## Interceptor / AOP (Compile-Time Decorators)
+
+Add `PicoDI.Gen` as an analyzer to enable compile-time interceptor generation:
+
+```xml
+<PackageReference Include="PicoDI.Gen" PrivateAssets="all" />
+```
+
+### How it works
+
+1. Write interceptors extending `InterceptorBase`
+2. Register them as services in the container
+3. Chain `.InterceptBy<TInterceptor>()` after `Register()` — the source generator detects these calls at compile time and emits decorator classes
+4. Manually wire decorator chains using the generated classes
+
+```csharp
+// Step 1: Define interceptors
+public sealed class LoggingInterceptor : InterceptorBase
+{
+    public override TResult Invoke<TResult>(
+        IInvocation<TResult> inv, Func<IInvocation<TResult>, TResult> next)
+    {
+        Console.WriteLine($"[LOG] {inv.ServiceType.Name}.{inv.MethodName}()");
+        var result = next(inv);
+        Console.WriteLine($"[LOG] → {result}");
+        return result;
+    }
+}
+
+public sealed class RetryInterceptor(int maxRetries) : InterceptorBase
+{
+    public override TResult Invoke<TResult>(
+        IInvocation<TResult> inv, Func<IInvocation<TResult>, TResult> next)
+    {
+        for (var i = 1; ; i++)
+        {
+            try { return next(inv); }
+            catch (Exception ex) when (i < maxRetries)
+                => Console.WriteLine($"[RETRY] attempt {i}: {ex.Message}");
+        }
+    }
+}
+```
+
+```csharp
+// Step 2: Register interceptors + services
+var container = new SvcContainer();
+
+container.RegisterSingleton<LoggingInterceptor>();
+container.RegisterSingleton<RetryInterceptor>(_ => new RetryInterceptor(3));
+
+// InterceptBy<T>() is a compile-time marker — detected by the source generator
+container.Register<ICalculator>(_ => new Calculator(), SvcLifetime.Scoped)
+    .InterceptBy<LoggingInterceptor>();
+container.Register<IApiClient>(_ => new FlakyApiClient(), SvcLifetime.Scoped)
+    .InterceptBy<RetryInterceptor>();
+
+container.Build();
+```
+
+```csharp
+// Step 3: Resolve and manually build decorator chains
+await using var scope = container.CreateScope();
+
+var calc = scope.GetService<ICalculator>()!;
+var api = scope.GetService<IApiClient>()!;
+var log = scope.GetService<LoggingInterceptor>()!;
+var retry = scope.GetService<RetryInterceptor>()!;
+
+// Generated class names: {ServiceType}_{InterceptorType}Decorator
+var calcDecorated = new ICalculator_LoggingInterceptorDecorator(calc, log);
+var apiDecorated = new IApiClient_RetryInterceptorDecorator(api, retry);
+
+calcDecorated.Add(3, 4);    // [LOG] ICalculator.Add() → 7
+apiDecorated.Fetch();        // [RETRY] attempt 1: API down...
+```
+
+All wiring is resolved at compile time — zero reflection. See [PicoDI.Sample.Aop](samples/PicoDI.Sample.Aop/) for a complete working example with Logging, Timing, Validation, and Retry interceptors.
 
 ## Error Handling
 

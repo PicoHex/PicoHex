@@ -94,7 +94,7 @@ public sealed class OrderService(ILoggerFactory factory)
 
 ### Extension Methods
 
-Level-specific helpers on `ILogger`:
+Level-specific convenience helpers provided as extension methods on `ILogger`. Not part of the interface contract — consumers only implement the 8 core interface methods.
 
 ```csharp
 logger.Trace("Detailed diagnostic");

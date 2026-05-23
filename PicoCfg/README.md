@@ -150,6 +150,8 @@ var settings = options.Value;
 
 ## Validation
 
+Fully AOT-compatible — uses source-generated binding and `IValidatableObject`, neither of which require runtime reflection.
+
 ```csharp
 // Implement IValidatableObject on your binding types
 public sealed class AppSettings : IValidatableObject
