@@ -73,9 +73,9 @@ container.Build();
 
 await using var scope = container.CreateScope();
 var svc = scope.GetService<IService>();
-```n
-PicoDI también soporta **AOP/interceptores en tiempo de compilación** — encadena .InterceptBy<TInterceptor>() después de Register() y el generador de código fuente emite clases decoradoras en tiempo de compilación. [Más información →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 ```
+
+PicoDI también soporta **AOP/interceptores en tiempo de compilación** — encadena .InterceptBy<TInterceptor>() después de Register() y el generador de código fuente emite clases decoradoras en tiempo de compilación. [Más información →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 
 ### Solo Registro (Logging)
 
@@ -121,6 +121,8 @@ container.AddPicoLog(o => { o.MinLevel = LogLevel.Info; o.WriteTo.ColoredConsole
 await using var scope = container.CreateScope();
 var logger = scope.GetService<ILogger<Program>>();
 ```
+
+PicoDI también soporta **AOP/interceptores en tiempo de compilación** — encadena .InterceptBy<TInterceptor>() después de Register() y el generador de código fuente emite clases decoradoras en tiempo de compilación. [Más información →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 
 ---
 

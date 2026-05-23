@@ -64,7 +64,8 @@ dotnet add package PicoDI
 var container = new SvcContainer();
 container.RegisterSingleton<IService>(scope => new MyService());
 container.Build();
-var svc = container.CreateScope().GetService<IService>();
+await using var scope = container.CreateScope();
+var svc = scope.GetService<IService>();
 ```
 
 ### 로깅만 필요할 때
@@ -99,6 +100,8 @@ container.AddPicoLog(o => { o.MinLevel = LogLevel.Info; o.WriteTo.ColoredConsole
 await using var scope = container.CreateScope();
 var logger = scope.GetService<ILogger<Program>>();
 ```
+
+PicoDI는 **컴파일 타임 AOP/인터셉터**도 지원합니다 — Register() 뒤에 .InterceptBy<TInterceptor>()를 체이닝하면 소스 생성기가 빌드 시점에 데코레이터 클래스를 생성합니다.[자세히 →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 
 ---
 

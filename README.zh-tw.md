@@ -75,9 +75,9 @@ container.Build();
 
 await using var scope = container.CreateScope();
 var svc = scope.GetService<IService>();
-```n
-PicoDI 也支援**編譯期 AOP/攔截器**——在 Register() 後鏈式調用 .InterceptBy<TInterceptor>()，原始碼產生器會在編譯時產生裝飾器類別。[了解更多 →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 ```
+
+PicoDI 也支援**編譯期 AOP/攔截器**——在 Register() 後鏈式調用 .InterceptBy<TInterceptor>()，原始碼產生器會在編譯時產生裝飾器類別。[了解更多 →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 
 ### 只要日誌
 
@@ -123,6 +123,8 @@ container.AddPicoLog(o => { o.MinLevel = LogLevel.Info; o.WriteTo.ColoredConsole
 await using var scope = container.CreateScope();
 var logger = scope.GetService<ILogger<Program>>();
 ```
+
+PicoDI 也支援**編譯期 AOP/攔截器**——在 Register() 後鏈式調用 .InterceptBy<TInterceptor>()，原始碼產生器會在編譯時產生裝飾器類別。[了解更多 →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
 
 ---
 
