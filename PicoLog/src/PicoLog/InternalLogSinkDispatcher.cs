@@ -60,7 +60,9 @@ internal sealed class InternalLogSinkDispatcher : IDisposable
         {
             _drainCancellationSource.Cancel();
         }
-        catch (ObjectDisposedException) { }
+        catch (ObjectDisposedException)
+        { /* CTS may already be disposed */
+        }
     }
 
     private async Task WriteToSinkAsync(

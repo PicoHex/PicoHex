@@ -21,39 +21,75 @@ public interface ILogger
 
     // ── string ──
 
-    void Log(LogLevel logLevel, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception);
+    void Log(
+        LogLevel logLevel,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    );
 
-    Task LogAsync(LogLevel logLevel, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken);
+    Task LogAsync(
+        LogLevel logLevel,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    );
 
     // ── EventId + string ──
 
-    void Log(LogLevel logLevel, EventId eventId, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception);
+    void Log(
+        LogLevel logLevel,
+        EventId eventId,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    );
 
-    Task LogAsync(LogLevel logLevel, EventId eventId, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken);
+    Task LogAsync(
+        LogLevel logLevel,
+        EventId eventId,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    );
 
     // ── FormattableString ──
 
-    void Log(LogLevel logLevel, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception);
+    void Log(
+        LogLevel logLevel,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    );
 
-    Task LogAsync(LogLevel logLevel, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken);
+    Task LogAsync(
+        LogLevel logLevel,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    );
 
     // ── EventId + FormattableString ──
 
-    void Log(LogLevel logLevel, EventId eventId, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception);
+    void Log(
+        LogLevel logLevel,
+        EventId eventId,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    );
 
-    Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken);
+    Task LogAsync(
+        LogLevel logLevel,
+        EventId eventId,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    );
 }
 
 public interface ILogger<out TCategory> : ILogger;

@@ -160,7 +160,9 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
             {
                 await task.ConfigureAwait(false);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            { /* task was cancelled during shutdown */
+            }
             catch (Exception ex)
             {
                 Trace.WriteLine($"Background service faulted during disposal: {ex}");

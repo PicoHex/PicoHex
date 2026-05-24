@@ -571,12 +571,16 @@ public class ContainerLifecycleTests
                 {
                     scope.GetService<ISimpleService>();
                 }
-                catch (ObjectDisposedException) { }
+                catch (ObjectDisposedException)
+                { /* scope disposed concurrently — expected */
+                }
                 try
                 {
                     scope.GetService<IDisposableService>();
                 }
-                catch (ObjectDisposedException) { }
+                catch (ObjectDisposedException)
+                { /* scope disposed concurrently — expected */
+                }
             });
             var disposeTask = scope.DisposeAsync().AsTask();
 

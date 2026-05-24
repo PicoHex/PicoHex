@@ -69,7 +69,9 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
             {
                 await pendingReload.ConfigureAwait(false);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            { /* reload cancelled during shutdown */
+            }
             catch (Exception ex)
             {
                 if (OnError is not null)
