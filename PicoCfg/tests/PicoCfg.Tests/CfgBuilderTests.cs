@@ -2,9 +2,6 @@ namespace PicoCfg.Tests;
 
 public class CfgBuilderTests
 {
-    private static ICfgSnapshot SnapshotOf(ICfgRoot root) =>
-        ((IInternalCfgRootSnapshotAccessor)root).CurrentSnapshot;
-
     [Test]
     public async Task AddSource_AddsSourceToBuilder()
     {
