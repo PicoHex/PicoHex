@@ -17,7 +17,7 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
     /// Expected exceptions include <see cref="IOException"/> (file locked/deleted),
     /// <see cref="ObjectDisposedException"/> (provider already disposed), etc.
     /// </summary>
-    internal static Action<string, Exception>? OnError;
+    internal Action<string, Exception>? OnError;
 
     internal FileWatchingCfgProvider(
         ICfgProvider inner,
@@ -48,10 +48,8 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         }
         catch (Exception ex)
         {
-            if (OnError is not null)
-                OnError("dispose", ex);
-            else
-                Trace.TraceError($"[PicoCfg] File watching dispose error: {ex}");
+            OnError?.Invoke("dispose", ex);
+            Trace.TraceError($"[PicoCfg] File watching dispose error: {ex}");
         }
 
         Task? pendingReload;
@@ -74,10 +72,8 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
             }
             catch (Exception ex)
             {
-                if (OnError is not null)
-                    OnError("reload", ex);
-                else
-                    Trace.TraceError($"[PicoCfg] File watching reload error during dispose: {ex}");
+                OnError?.Invoke("reload", ex);
+                Trace.TraceError($"[PicoCfg] File watching reload error during dispose: {ex}");
             }
         }
 
@@ -123,10 +119,8 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception ex)
         {
-            if (OnError is not null)
-                OnError("reload", ex);
-            else
-                Trace.TraceError($"[PicoCfg] File watching reload error: {ex}");
+            OnError?.Invoke("reload", ex);
+            Trace.TraceError($"[PicoCfg] File watching reload error: {ex}");
         }
     }
 
@@ -141,10 +135,8 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         }
         catch (Exception ex)
         {
-            if (OnError is not null)
-                OnError("cleanup", ex);
-            else
-                Trace.TraceError($"[PicoCfg] File watching cleanup error: {ex}");
+            OnError?.Invoke("cleanup", ex);
+            Trace.TraceError($"[PicoCfg] File watching cleanup error: {ex}");
         }
 
         if (Volatile.Read(ref _disposed) == 1)
