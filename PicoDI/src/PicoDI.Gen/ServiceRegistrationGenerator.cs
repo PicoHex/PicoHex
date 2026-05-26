@@ -165,7 +165,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         {
             serviceTypes.Add(reg.ServiceTypeFullName);
             if (!dependencyGraph.ContainsKey(reg.ServiceTypeFullName))
-                dependencyGraph[reg.ServiceTypeFullName] = [];
+                dependencyGraph[reg.ServiceTypeFullName] =  [];
 
             foreach (var paramTypeFullName in reg.ConstructorParameters)
             {

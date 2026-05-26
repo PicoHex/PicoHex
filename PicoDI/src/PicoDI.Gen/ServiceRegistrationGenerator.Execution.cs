@@ -14,12 +14,14 @@ internal static class RegistrationPlanBuilder
         var registrations = normalizedRegistrations.Registrations.ToList();
         var openGenericBatch = CollectOpenGenericRegistrations(openGenericInvocations);
         var openGenerics = openGenericBatch.OpenGenerics.ToList();
-        var closedUsages = ClosedGenericAnalyzer.Default.CollectClosedGenericUsages(
-            closedGenericUsages,
-            closedGenericDeclarations,
-            ctorClosedGenerics,
-            registrations
-        );
+        var closedUsages = ClosedGenericAnalyzer
+            .Default
+            .CollectClosedGenericUsages(
+                closedGenericUsages,
+                closedGenericDeclarations,
+                ctorClosedGenerics,
+                registrations
+            );
 
         var discoveredOpenGenerics =
             OpenGenericMetadataContract.DiscoverOpenGenericsFromReferencedAssemblies(
@@ -29,9 +31,8 @@ internal static class RegistrationPlanBuilder
         MergeDistinct(openGenerics, discoveredOpenGenerics);
 
         var generatedClosedGenerics = new ClosedGenericGenerator(
-                new TypeParameterSubstitutor()
-            )
-            .GenerateClosedGenericRegistrations(openGenerics, closedUsages);
+            new TypeParameterSubstitutor()
+        ).GenerateClosedGenericRegistrations(openGenerics, closedUsages);
         var allRegistrations = registrations
             .Concat(generatedClosedGenerics)
             .Distinct()
@@ -60,10 +61,9 @@ internal static class RegistrationPlanBuilder
             if (openGenericInvocation is not { } candidate)
                 continue;
 
-            var outcome = OpenGenericScanner.Default.AnalyzeOpenGenericInvocation(
-                candidate.Invocation,
-                candidate.SemanticModel
-            );
+            var outcome = OpenGenericScanner
+                .Default
+                .AnalyzeOpenGenericInvocation(candidate.Invocation, candidate.SemanticModel);
 
             if (outcome.Registration is { } registration && seenRegistrations.Add(registration))
                 registrations.Add(registration);

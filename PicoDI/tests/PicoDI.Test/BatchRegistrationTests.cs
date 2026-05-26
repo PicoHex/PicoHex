@@ -12,9 +12,21 @@ public class BatchRegistrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var descriptors = new[]
         {
-            SvcDescriptor.Create(typeof(ISimpleService), static _ => new SimpleService(), SvcLifetime.Transient),
-            SvcDescriptor.Create(typeof(ILevelOneService), static _ => new LevelOneService(), SvcLifetime.Scoped),
-            SvcDescriptor.Create(typeof(IConfigurableService), static _ => new ConfigurableService("test"), SvcLifetime.Singleton)
+            SvcDescriptor.Create(
+                typeof(ISimpleService),
+                static _ => new SimpleService(),
+                SvcLifetime.Transient
+            ),
+            SvcDescriptor.Create(
+                typeof(ILevelOneService),
+                static _ => new LevelOneService(),
+                SvcLifetime.Scoped
+            ),
+            SvcDescriptor.Create(
+                typeof(IConfigurableService),
+                static _ => new ConfigurableService("test"),
+                SvcLifetime.Singleton
+            )
         };
         container.RegisterRange(descriptors);
         await using var scope = container.CreateScope();
@@ -38,9 +50,21 @@ public class BatchRegistrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var descriptors = new[]
         {
-            SvcDescriptor.Create(typeof(INotificationService), static _ => new EmailNotificationService(), SvcLifetime.Transient),
-            SvcDescriptor.Create(typeof(INotificationService), static _ => new SmsNotificationService(), SvcLifetime.Transient),
-            SvcDescriptor.Create(typeof(INotificationService), static _ => new PushNotificationService(), SvcLifetime.Transient)
+            SvcDescriptor.Create(
+                typeof(INotificationService),
+                static _ => new EmailNotificationService(),
+                SvcLifetime.Transient
+            ),
+            SvcDescriptor.Create(
+                typeof(INotificationService),
+                static _ => new SmsNotificationService(),
+                SvcLifetime.Transient
+            ),
+            SvcDescriptor.Create(
+                typeof(INotificationService),
+                static _ => new PushNotificationService(),
+                SvcLifetime.Transient
+            )
         };
         container.RegisterRange(descriptors);
         await using var scope = container.CreateScope();
@@ -64,9 +88,21 @@ public class BatchRegistrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var descriptors = new[]
         {
-            SvcDescriptor.Create(typeof(ISimpleService), static _ => new SimpleService(), SvcLifetime.Transient),
-            SvcDescriptor.Create(typeof(ISimpleService), static _ => new SimpleService(), SvcLifetime.Scoped),
-            SvcDescriptor.Create(typeof(ISimpleService), static _ => new SimpleService(), SvcLifetime.Singleton)
+            SvcDescriptor.Create(
+                typeof(ISimpleService),
+                static _ => new SimpleService(),
+                SvcLifetime.Transient
+            ),
+            SvcDescriptor.Create(
+                typeof(ISimpleService),
+                static _ => new SimpleService(),
+                SvcLifetime.Scoped
+            ),
+            SvcDescriptor.Create(
+                typeof(ISimpleService),
+                static _ => new SimpleService(),
+                SvcLifetime.Singleton
+            )
         };
         container.RegisterRange(descriptors);
         await using var scope1 = container.CreateScope();

@@ -110,11 +110,7 @@ public sealed class SvcDescriptor(
         return new SvcDescriptor(typeof(T), s => factory(s)!, lifetime);
     }
 
-    internal SvcDescriptor(
-        Type serviceType,
-        Func<ISvcScope, object> factory,
-        SvcLifetime lifetime
-    )
+    internal SvcDescriptor(Type serviceType, Func<ISvcScope, object> factory, SvcLifetime lifetime)
         : this(serviceType, serviceType, lifetime) =>
         Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 }

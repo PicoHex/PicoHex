@@ -119,7 +119,9 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances).ConfigureAwait(false);
+                await DisposalHelpers
+                    .DisposeInstanceAsync(instance, disposedInstances)
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -153,7 +155,9 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances).ConfigureAwait(false);
+                await DisposalHelpers
+                    .DisposeInstanceAsync(instance, disposedInstances)
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {

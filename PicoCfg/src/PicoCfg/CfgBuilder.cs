@@ -56,10 +56,14 @@ public sealed class CfgBuilder
     {
         ArgumentNullException.ThrowIfNull(streamFactory);
         return new StreamCfgSource(
-            () => new StreamCfgProvider(
-                streamFactory, versionStampFactory,
-                (stream, ct) => ParseStreamAsync(stream, ct, encoding),
-                CreateProviderState()));
+            () =>
+                new StreamCfgProvider(
+                    streamFactory,
+                    versionStampFactory,
+                    (stream, ct) => ParseStreamAsync(stream, ct, encoding),
+                    CreateProviderState()
+                )
+        );
     }
 
     internal ICfgSource CreateStreamSource(
@@ -91,29 +95,42 @@ public sealed class CfgBuilder
     {
         ArgumentNullException.ThrowIfNull(dataFactory);
         return new DictionaryCfgSource(
-            () => new DictionaryCfgProvider(dataFactory, versionStampFactory, CreateProviderState()));
+            () => new DictionaryCfgProvider(dataFactory, versionStampFactory, CreateProviderState())
+        );
     }
 
     internal CfgProviderState CreateProviderState() =>
-        new(static () => new CfgChangeSignal(),
-            static (values, fingerprint) => new CfgSnapshot(values, fingerprint));
+        new(
+            static () => new CfgChangeSignal(),
+            static (values, fingerprint) => new CfgSnapshot(values, fingerprint)
+        );
 
     internal Func<IReadOnlyList<ICfgSnapshot>, ICfgSnapshot> CreateSnapshotComposer() =>
         providerSnapshots =>
-            CfgSnapshotComposer.CreateSnapshot(providerSnapshots,
-                static (values, fingerprint) => new CfgSnapshot(values, fingerprint));
+            CfgSnapshotComposer.CreateSnapshot(
+                providerSnapshots,
+                static (values, fingerprint) => new CfgSnapshot(values, fingerprint)
+            );
 
     private static async ValueTask DisposeProvidersAsync(IReadOnlyList<ICfgProvider> providers)
     {
         for (var i = providers.Count - 1; i >= 0; i--)
         {
-            try { await providers[i].DisposeAsync(); }
-            catch { /* best-effort */ }
+            try
+            {
+                await providers[i].DisposeAsync();
+            }
+            catch
+            { /* best-effort */
+            }
         }
     }
 
     private static async Task<Dictionary<string, string>> ParseStreamAsync(
-        Stream stream, CancellationToken ct, Encoding? encoding = null)
+        Stream stream,
+        CancellationToken ct,
+        Encoding? encoding = null
+    )
     {
         using var reader = encoding is null
             ? new StreamReader(stream, leaveOpen: true)
@@ -122,9 +139,11 @@ public sealed class CfgBuilder
         var newData = new Dictionary<string, string>();
         while (await reader.ReadLineAsync(ct) is { } line)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
             var separatorIndex = line.IndexOf('=');
-            if (separatorIndex < 0) continue;
+            if (separatorIndex < 0)
+                continue;
             var key = line[..separatorIndex].Trim();
             var value = line[(separatorIndex + 1)..].Trim();
             newData[key] = value;

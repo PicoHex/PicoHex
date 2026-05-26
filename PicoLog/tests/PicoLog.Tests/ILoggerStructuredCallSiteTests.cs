@@ -65,8 +65,12 @@ public sealed class ILoggerStructuredCallSiteTests
         public IDisposable BeginScope<TState>(TState state)
             where TState : notnull => NoopDisposable.Instance;
 
-        public void Log(LogLevel logLevel, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception)
+        public void Log(
+            LogLevel logLevel,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        )
         {
             if (properties is not null)
                 SyncStructuredEntries.Add((logLevel, message, properties, exception));
@@ -74,37 +78,71 @@ public sealed class ILoggerStructuredCallSiteTests
                 SyncEntries.Add((logLevel, message, exception));
         }
 
-        public Task LogAsync(LogLevel logLevel, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken)
+        public Task LogAsync(
+            LogLevel logLevel,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        )
         {
             if (properties is not null)
-                AsyncStructuredEntries.Add((logLevel, message, properties, exception, cancellationToken));
+                AsyncStructuredEntries.Add(
+                    (logLevel, message, properties, exception, cancellationToken)
+                );
             else
                 AsyncEntries.Add((logLevel, message, exception, cancellationToken));
             return Task.CompletedTask;
         }
 
-        public void Log(LogLevel logLevel, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception) { }
+        public void Log(
+            LogLevel logLevel,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        ) { }
 
-        public Task LogAsync(LogLevel logLevel, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task LogAsync(
+            LogLevel logLevel,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        ) => Task.CompletedTask;
 
-        public void Log(LogLevel logLevel, EventId eventId, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception) { }
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        ) { }
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        ) => Task.CompletedTask;
 
-        public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception) { }
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        ) { }
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        ) => Task.CompletedTask;
     }
 
     private sealed class NoopDisposable : IDisposable

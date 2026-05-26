@@ -6,6 +6,7 @@ namespace PicoDI.Gen.OpenGeneric;
 internal sealed class ClosedGenericCollector
 {
     public static readonly ClosedGenericCollector Default = new();
+
     /// <summary>
     /// Gets closed generic type symbols from generic type declarations.
     /// </summary>

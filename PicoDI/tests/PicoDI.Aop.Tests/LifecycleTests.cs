@@ -4,19 +4,33 @@ using PicoDI.Generated.Aop;
 
 public class LifecycleTests
 {
-    public interface IGreeter { string Greet(string name); }
-    public sealed class Greeter : IGreeter { public string Greet(string name) => $"Hi {name}"; }
+    public interface IGreeter
+    {
+        string Greet(string name);
+    }
+
+    public sealed class Greeter : IGreeter
+    {
+        public string Greet(string name) => $"Hi {name}";
+    }
+
     public sealed class CallCounter : InterceptorBase
     {
         public int Count { get; private set; }
-        public override TResult Invoke<TResult>(IInvocation<TResult> inv,
-            Func<IInvocation<TResult>, TResult> next) { Count++; return next(inv); }
+
+        public override TResult Invoke<TResult>(
+            IInvocation<TResult> inv,
+            Func<IInvocation<TResult>, TResult> next
+        )
+        {
+            Count++;
+            return next(inv);
+        }
     }
 
     public static void TriggerGen(SvcContainer c)
     {
-        c.Register<IGreeter, Greeter>(SvcLifetime.Scoped)
-            .InterceptBy<CallCounter>();
+        c.Register<IGreeter, Greeter>(SvcLifetime.Scoped).InterceptBy<CallCounter>();
     }
 
     [Test]

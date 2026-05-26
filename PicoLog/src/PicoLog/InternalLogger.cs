@@ -19,51 +19,87 @@ internal sealed class InternalLogger(
 
     // ── string ──
 
-    public void Log(LogLevel logLevel, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception) =>
-        Write(logLevel, message, properties, exception);
+    public void Log(
+        LogLevel logLevel,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    ) => Write(logLevel, message, properties, exception);
 
-    public Task LogAsync(LogLevel logLevel, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken) =>
-        WriteAsync(logLevel, message, properties, exception, cancellationToken);
+    public Task LogAsync(
+        LogLevel logLevel,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    ) => WriteAsync(logLevel, message, properties, exception, cancellationToken);
 
     // ── EventId + string ──
 
-    public void Log(LogLevel logLevel, EventId eventId, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception)
+    public void Log(
+        LogLevel logLevel,
+        EventId eventId,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    )
     {
-        if (!CanAcceptWrite(logLevel)) return;
-        var entry = CreateEntry(logLevel, message, exception, properties) with { EventId = eventId };
+        if (!CanAcceptWrite(logLevel))
+            return;
+        var entry = CreateEntry(logLevel, message, exception, properties) with
+        {
+            EventId = eventId
+        };
         _pipeline.Write(entry);
     }
 
-    public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken)
+    public Task LogAsync(
+        LogLevel logLevel,
+        EventId eventId,
+        string message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    )
     {
-        if (!CanAcceptWrite(logLevel)) return Task.CompletedTask;
-        var entry = CreateEntry(logLevel, message, exception, properties) with { EventId = eventId };
+        if (!CanAcceptWrite(logLevel))
+            return Task.CompletedTask;
+        var entry = CreateEntry(logLevel, message, exception, properties) with
+        {
+            EventId = eventId
+        };
         return _pipeline.WriteAsync(entry, cancellationToken);
     }
 
     // ── FormattableString ──
 
-    public void Log(LogLevel logLevel, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception) =>
-        WriteFormatted(logLevel, message, properties, exception);
+    public void Log(
+        LogLevel logLevel,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    ) => WriteFormatted(logLevel, message, properties, exception);
 
-    public Task LogAsync(LogLevel logLevel, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken) =>
-        WriteFormattedAsync(logLevel, message, properties, exception, cancellationToken);
+    public Task LogAsync(
+        LogLevel logLevel,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    ) => WriteFormattedAsync(logLevel, message, properties, exception, cancellationToken);
 
     // ── EventId + FormattableString ──
 
-    public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception)
+    public void Log(
+        LogLevel logLevel,
+        EventId eventId,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception
+    )
     {
-        if (!CanAcceptWrite(logLevel)) return;
+        if (!CanAcceptWrite(logLevel))
+            return;
         var entry = CreateEntry(logLevel, message: null, exception, properties) with
         {
             MessageTemplate = message.Format,
@@ -73,11 +109,17 @@ internal sealed class InternalLogger(
         _pipeline.Write(entry);
     }
 
-    public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
-        IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-        CancellationToken cancellationToken)
+    public Task LogAsync(
+        LogLevel logLevel,
+        EventId eventId,
+        FormattableString message,
+        IReadOnlyList<KeyValuePair<string, object?>>? properties,
+        Exception? exception,
+        CancellationToken cancellationToken
+    )
     {
-        if (!CanAcceptWrite(logLevel)) return Task.CompletedTask;
+        if (!CanAcceptWrite(logLevel))
+            return Task.CompletedTask;
         var entry = CreateEntry(logLevel, message: null, exception, properties) with
         {
             MessageTemplate = message.Format,

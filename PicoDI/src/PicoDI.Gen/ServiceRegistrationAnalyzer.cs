@@ -47,7 +47,13 @@ public class ServiceRegistrationAnalyzer : DiagnosticAnalyzer
             return;
 
         // Delegate to shared factory detection logic (also used by the generator pipeline)
-        if (RegistrationSemanticPipeline.IsFactoryRegistration(invocation, methodSymbol, context.SemanticModel))
+        if (
+            RegistrationSemanticPipeline.IsFactoryRegistration(
+                invocation,
+                methodSymbol,
+                context.SemanticModel
+            )
+        )
             return;
 
         // Extract type arguments

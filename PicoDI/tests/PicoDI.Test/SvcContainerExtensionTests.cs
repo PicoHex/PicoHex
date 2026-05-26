@@ -629,7 +629,7 @@ public class SvcContainerExtensionTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
         // Act
-        container.RegisterTransient<ISimpleService>(static _=> new SimpleService());
+        container.RegisterTransient<ISimpleService>(static _ => new SimpleService());
         await using var scope = container.CreateScope();
 
         // Assert
@@ -665,7 +665,7 @@ public class SvcContainerExtensionTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
         // Act
-        container.RegisterScoped<ISimpleService>(static _=> new SimpleService());
+        container.RegisterScoped<ISimpleService>(static _ => new SimpleService());
         await using var scope = container.CreateScope();
 
         // Assert
@@ -701,7 +701,7 @@ public class SvcContainerExtensionTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
         // Act
-        container.RegisterSingleton<ISimpleService>(static _=> new SimpleService());
+        container.RegisterSingleton<ISimpleService>(static _ => new SimpleService());
         await using var scope1 = container.CreateScope();
         await using var scope2 = container.CreateScope();
 
@@ -785,7 +785,11 @@ public class SvcContainerExtensionTests
             .RegisterRange(
                 new[]
                 {
-                    SvcDescriptor.Create(typeof(ILevelTwoService), static s => new LevelTwoService(s.GetService<ILevelOneService>()), SvcLifetime.Transient)
+                    SvcDescriptor.Create(
+                        typeof(ILevelTwoService),
+                        static s => new LevelTwoService(s.GetService<ILevelOneService>()),
+                        SvcLifetime.Transient
+                    )
                 }
             );
 

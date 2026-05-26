@@ -243,89 +243,185 @@ public sealed class LoggerExtensionsTests
 
         // ── string ──
 
-        public void Log(LogLevel logLevel, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception)
+        public void Log(
+            LogLevel logLevel,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        )
         {
             if (properties is not null)
-                SyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message, properties, exception, default));
+                SyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(logLevel, message, properties, exception, default)
+                );
             else
                 SyncEntries.Add(new RecordedEntry(logLevel, message, exception, default));
         }
 
-        public Task LogAsync(LogLevel logLevel, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken)
+        public Task LogAsync(
+            LogLevel logLevel,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        )
         {
             if (properties is not null)
-                AsyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message, properties, exception, cancellationToken));
+                AsyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(
+                        logLevel,
+                        message,
+                        properties,
+                        exception,
+                        cancellationToken
+                    )
+                );
             else
-                AsyncEntries.Add(new RecordedEntry(logLevel, message, exception, cancellationToken));
+                AsyncEntries.Add(
+                    new RecordedEntry(logLevel, message, exception, cancellationToken)
+                );
             return Task.CompletedTask;
         }
 
         // ── EventId + string ──
 
-        public void Log(LogLevel logLevel, EventId eventId, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception)
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        )
         {
             if (properties is not null)
-                SyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message, properties, exception, default));
+                SyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(logLevel, message, properties, exception, default)
+                );
             else
                 SyncEntries.Add(new RecordedEntry(logLevel, message, exception, default));
         }
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken)
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        )
         {
             if (properties is not null)
-                AsyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message, properties, exception, cancellationToken));
+                AsyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(
+                        logLevel,
+                        message,
+                        properties,
+                        exception,
+                        cancellationToken
+                    )
+                );
             else
-                AsyncEntries.Add(new RecordedEntry(logLevel, message, exception, cancellationToken));
+                AsyncEntries.Add(
+                    new RecordedEntry(logLevel, message, exception, cancellationToken)
+                );
             return Task.CompletedTask;
         }
 
         // ── FormattableString ──
 
-        public void Log(LogLevel logLevel, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception)
+        public void Log(
+            LogLevel logLevel,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        )
         {
             if (properties is not null)
-                SyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message.Format, properties, exception, default));
+                SyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(
+                        logLevel,
+                        message.Format,
+                        properties,
+                        exception,
+                        default
+                    )
+                );
             else
                 SyncEntries.Add(new RecordedEntry(logLevel, message.Format, exception, default));
         }
 
-        public Task LogAsync(LogLevel logLevel, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken)
+        public Task LogAsync(
+            LogLevel logLevel,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        )
         {
             if (properties is not null)
-                AsyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message.Format, properties, exception, cancellationToken));
+                AsyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(
+                        logLevel,
+                        message.Format,
+                        properties,
+                        exception,
+                        cancellationToken
+                    )
+                );
             else
-                AsyncEntries.Add(new RecordedEntry(logLevel, message.Format, exception, cancellationToken));
+                AsyncEntries.Add(
+                    new RecordedEntry(logLevel, message.Format, exception, cancellationToken)
+                );
             return Task.CompletedTask;
         }
 
         // ── EventId + FormattableString ──
 
-        public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception)
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception
+        )
         {
             if (properties is not null)
-                SyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message.Format, properties, exception, default));
+                SyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(
+                        logLevel,
+                        message.Format,
+                        properties,
+                        exception,
+                        default
+                    )
+                );
             else
                 SyncEntries.Add(new RecordedEntry(logLevel, message.Format, exception, default));
         }
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
-            IReadOnlyList<KeyValuePair<string, object?>>? properties, Exception? exception,
-            CancellationToken cancellationToken)
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
+            IReadOnlyList<KeyValuePair<string, object?>>? properties,
+            Exception? exception,
+            CancellationToken cancellationToken
+        )
         {
             if (properties is not null)
-                AsyncStructuredEntries.Add(new StructuredRecordedEntry(logLevel, message.Format, properties, exception, cancellationToken));
+                AsyncStructuredEntries.Add(
+                    new StructuredRecordedEntry(
+                        logLevel,
+                        message.Format,
+                        properties,
+                        exception,
+                        cancellationToken
+                    )
+                );
             else
-                AsyncEntries.Add(new RecordedEntry(logLevel, message.Format, exception, cancellationToken));
+                AsyncEntries.Add(
+                    new RecordedEntry(logLevel, message.Format, exception, cancellationToken)
+                );
             return Task.CompletedTask;
         }
     }

@@ -55,7 +55,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
 
             lock (_registrationsLock)
             {
-                registrations = [.. _registrations.Values];
+                registrations =  [.. _registrations.Values];
             }
 
             Task[] pipelineFlushTasks = registrations
@@ -79,7 +79,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch when (whenAll.Exception is not null)
                 {
-                    (exceptions ??= []).AddRange(whenAll.Exception.Flatten().InnerExceptions);
+                    (exceptions ??=  []).AddRange(whenAll.Exception.Flatten().InnerExceptions);
                 }
             }
 
@@ -94,7 +94,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??= []).Add(ex);
+                    (exceptions ??=  []).Add(ex);
                 }
             }
 
@@ -126,7 +126,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 if (!_runtime.TryBeginShutdown())
                     return;
 
-                registrations = [.. _registrations.Values];
+                registrations =  [.. _registrations.Values];
                 _registrations.Clear();
             }
 
@@ -138,7 +138,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??= []).Add(ex);
+                    (exceptions ??=  []).Add(ex);
                 }
             }
 
@@ -152,7 +152,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??= []).Add(ex);
+                    (exceptions ??=  []).Add(ex);
                 }
             }
         }
@@ -184,7 +184,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
         foreach (var task in tasks)
         {
             if (task is { IsCompletedSuccessfully: false, IsFaulted: true })
-                (exceptions ??= []).AddRange(task.Exception!.Flatten().InnerExceptions);
+                (exceptions ??=  []).AddRange(task.Exception!.Flatten().InnerExceptions);
         }
     }
 

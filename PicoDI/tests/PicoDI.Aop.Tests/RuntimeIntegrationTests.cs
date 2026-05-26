@@ -18,8 +18,10 @@ public class RuntimeIntegrationTests
     {
         public int CallCount { get; private set; }
 
-        public override TResult Invoke<TResult>(IInvocation<TResult> inv,
-            Func<IInvocation<TResult>, TResult> next)
+        public override TResult Invoke<TResult>(
+            IInvocation<TResult> inv,
+            Func<IInvocation<TResult>, TResult> next
+        )
         {
             CallCount++;
             return next(inv);
@@ -28,8 +30,10 @@ public class RuntimeIntegrationTests
 
     public sealed class DoublingInterceptor : InterceptorBase
     {
-        public override TResult Invoke<TResult>(IInvocation<TResult> inv,
-            Func<IInvocation<TResult>, TResult> next)
+        public override TResult Invoke<TResult>(
+            IInvocation<TResult> inv,
+            Func<IInvocation<TResult>, TResult> next
+        )
         {
             var original = next(inv);
             return (TResult)(object)((int)(object)original! * 2);
@@ -43,9 +47,11 @@ public class RuntimeIntegrationTests
     {
         container.RegisterSingleton<CallTrackingInterceptor>(_ => new CallTrackingInterceptor());
         container.RegisterSingleton<DoublingInterceptor>(_ => new DoublingInterceptor());
-        container.Register<ICalculator>(scope => new Calculator(), SvcLifetime.Scoped)
+        container
+            .Register<ICalculator>(scope => new Calculator(), SvcLifetime.Scoped)
             .InterceptBy<CallTrackingInterceptor>();
-        container.Register<ICalculator>(scope => new Calculator(), SvcLifetime.Scoped)
+        container
+            .Register<ICalculator>(scope => new Calculator(), SvcLifetime.Scoped)
             .InterceptBy<DoublingInterceptor>();
     }
 
@@ -59,7 +65,11 @@ public class RuntimeIntegrationTests
         await using var scope = container.CreateScope();
         var inner = scope.GetService<ICalculator>()!;
         var interceptor = scope.GetService<CallTrackingInterceptor>();
-        var decorator = new PicoDI_Aop_Tests_RuntimeIntegrationTests_ICalculator_CallTrackingInterceptorDecorator(inner, interceptor!);
+        var decorator =
+            new PicoDI_Aop_Tests_RuntimeIntegrationTests_ICalculator_CallTrackingInterceptorDecorator(
+                inner,
+                interceptor!
+            );
 
         var result = decorator.Add(3, 4);
 
@@ -77,7 +87,11 @@ public class RuntimeIntegrationTests
         await using var scope = container.CreateScope();
         var inner = scope.GetService<ICalculator>()!;
         var interceptor = scope.GetService<DoublingInterceptor>();
-        var decorator = new PicoDI_Aop_Tests_RuntimeIntegrationTests_ICalculator_DoublingInterceptorDecorator(inner, interceptor!);
+        var decorator =
+            new PicoDI_Aop_Tests_RuntimeIntegrationTests_ICalculator_DoublingInterceptorDecorator(
+                inner,
+                interceptor!
+            );
 
         var result = decorator.Add(3, 4);
 

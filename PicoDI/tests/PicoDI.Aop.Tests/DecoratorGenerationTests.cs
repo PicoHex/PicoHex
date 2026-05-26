@@ -1,7 +1,7 @@
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Collections.Immutable;
 using PicoDI.Gen;
 
 namespace PicoDI.Aop.Tests;
@@ -64,19 +64,25 @@ public class DecoratorGenerationTests
         await Assert.That(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)).IsEmpty();
 
         var runResult = driver.GetRunResult();
-        var generatedSources = runResult.Results
+        var generatedSources = runResult
+            .Results
             .SelectMany(static r => r.GeneratedSources)
             .ToImmutableArray();
 
         await Assert.That(generatedSources.Length).IsGreaterThan(0);
-        await Assert.That(
-            generatedSources.Any(s =>
-                s.HintName.Contains("InterceptorRegistrations", StringComparison.Ordinal))
-        ).IsTrue();
+        await Assert
+            .That(
+                generatedSources.Any(
+                    s => s.HintName.Contains("InterceptorRegistrations", StringComparison.Ordinal)
+                )
+            )
+            .IsTrue();
 
         // Verify generated output compilation emits successfully
-        var emitDiags = outputCompilation.GetDiagnostics()
-            .Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+        var emitDiags = outputCompilation
+            .GetDiagnostics()
+            .Where(d => d.Severity == DiagnosticSeverity.Error)
+            .ToList();
         await Assert.That(emitDiags).IsEmpty();
 
         using var ms = new MemoryStream();
@@ -127,21 +133,21 @@ public class DecoratorGenerationTests
             parseOptions: parseOptions
         );
 
-        driver = driver.RunGeneratorsAndUpdateCompilation(
-            compilation,
-            out _,
-            out var diagnostics
-        );
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
 
         var runResult = driver.GetRunResult();
-        var generatedSources = runResult.Results
+        var generatedSources = runResult
+            .Results
             .SelectMany(static r => r.GeneratedSources)
             .ToImmutableArray();
 
-        await Assert.That(
-            generatedSources.Any(s =>
-                s.HintName.Contains("InterceptorRegistrations", StringComparison.Ordinal))
-        ).IsFalse();
+        await Assert
+            .That(
+                generatedSources.Any(
+                    s => s.HintName.Contains("InterceptorRegistrations", StringComparison.Ordinal)
+                )
+            )
+            .IsFalse();
     }
 
     private static MetadataReference[] GetMetadataReferences()

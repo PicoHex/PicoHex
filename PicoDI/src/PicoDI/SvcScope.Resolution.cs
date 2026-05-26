@@ -50,9 +50,7 @@ public sealed partial class SvcScope
         if (!_registrationCache.TryGetValue(serviceType, out var registrations))
             return null;
 
-        return registrations
-            .Select(r => ResolveByLifetime(serviceType, r))
-            .ToArray();
+        return registrations.Select(r => ResolveByLifetime(serviceType, r)).ToArray();
     }
 
     /// <inheritdoc />
@@ -213,8 +211,7 @@ public sealed partial class SvcScope
     private long _scopedCreationCounter;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private long NextScopedCreationOrder() =>
-        Interlocked.Increment(ref _scopedCreationCounter);
+    private long NextScopedCreationOrder() => Interlocked.Increment(ref _scopedCreationCounter);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private object GetOrAddScopedInstance(SvcRuntimeRegistration registration)

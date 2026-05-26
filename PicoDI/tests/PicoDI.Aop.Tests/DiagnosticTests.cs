@@ -44,14 +44,11 @@ public class DiagnosticTests
             parseOptions: parseOptions
         );
 
-        driver.RunGeneratorsAndUpdateCompilation(
-            compilation,
-            out _,
-            out var diagnostics
-        );
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
 
         var pico010 = diagnostics.FirstOrDefault(
-            d => d.Id == "PICO010" && d.Severity == DiagnosticSeverity.Error);
+            d => d.Id == "PICO010" && d.Severity == DiagnosticSeverity.Error
+        );
         await Assert.That(pico010).IsNotNull();
         await Assert.That(pico010!.GetMessage()).Contains("IInterceptor");
     }
