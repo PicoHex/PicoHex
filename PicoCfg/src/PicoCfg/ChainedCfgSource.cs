@@ -2,16 +2,12 @@ namespace PicoCfg;
 
 internal sealed class ChainedCfgProvider : ICfgProvider
 {
-    private readonly ICfg _chainedConfig;
-    private readonly CfgProviderState _state;
     private readonly ChainedSnapshot _snapshot;
 
     internal ChainedCfgProvider(ICfg chainedConfig, CfgProviderState state)
     {
         ArgumentNullException.ThrowIfNull(chainedConfig);
         ArgumentNullException.ThrowIfNull(state);
-        _chainedConfig = chainedConfig;
-        _state = state;
         _snapshot = new ChainedSnapshot(chainedConfig);
     }
 
