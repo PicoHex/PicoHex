@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoCfg.Gen" />
+        <PackageReference Include="PicoCfg.Gen" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>

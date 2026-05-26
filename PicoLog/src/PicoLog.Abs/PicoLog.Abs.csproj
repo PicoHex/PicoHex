@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoLog.Gen" />
+        <PackageReference Include="PicoLog.Gen" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
