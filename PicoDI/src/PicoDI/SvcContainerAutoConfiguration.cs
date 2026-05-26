@@ -8,6 +8,7 @@ public static class SvcContainerAutoConfiguration
 {
     private static readonly ConfiguratorRegistry Configurators = new();
     private static readonly GeneratedConfigurationStateRegistry ConfigurationStates = new();
+    private static readonly Lock _applyLock = new();
 
     private sealed class ConfiguratorRegistry
     {
@@ -132,20 +133,23 @@ public static class SvcContainerAutoConfiguration
         if (container is null)
             throw new ArgumentNullException(nameof(container));
 
-        if (HasAppliedGeneratedConfiguration(container))
-            return false;
-
-        var configurators = Configurators.SnapshotInApplyOrder();
-        if (configurators.Length is 0)
-            return false;
-
-        foreach (var configurator in configurators)
+        lock (_applyLock)
         {
-            configurator(container);
-        }
+            if (HasAppliedGeneratedConfiguration(container))
+                return false;
 
-        MarkGeneratedConfigurationApplied(container);
-        return true;
+            var configurators = Configurators.SnapshotInApplyOrder();
+            if (configurators.Length is 0)
+                return false;
+
+            foreach (var configurator in configurators)
+            {
+                configurator(container);
+            }
+
+            MarkGeneratedConfigurationApplied(container);
+            return true;
+        }
     }
 
     /// <summary>
