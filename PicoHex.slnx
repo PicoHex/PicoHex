@@ -7,6 +7,7 @@
   </Folder>
   <Folder Name="/PicoDI/tests/">
     <Project Path="PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj" />
+    <Project Path="PicoDI/tests/PicoDI.Aop.Tests/PicoDI.Aop.Tests.csproj" />
   </Folder>
   <Folder Name="/PicoDI/samples/">
     <Project Path="PicoDI/samples/PicoDI.Sample.Host/PicoDI.Sample.Host.csproj" />
