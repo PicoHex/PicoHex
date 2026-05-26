@@ -32,7 +32,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="buildTransitive/PicoCfg.Gen/analyzers/dotnet/cs" Visible="false" />
+        <None Include="buildTransitive\PicoCfg.Gen.props" Pack="true" PackagePath="buildTransitive/PicoCfg.Gen.props" Visible="false" />
     </ItemGroup>
 
     <ItemGroup>
