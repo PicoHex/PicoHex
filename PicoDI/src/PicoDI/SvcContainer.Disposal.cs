@@ -9,11 +9,11 @@ public sealed partial class SvcContainer
             return;
 
         // Gracefully stop hosted services before disposal
-        await StopHostedServicesAsync();
+        await StopHostedServicesAsync().ConfigureAwait(false);
 
-        await DisposeSingletonInstancesAsync();
-        await DisposeHostingScopeAsync();
-        await DisposeRootScopesAsync();
+        await DisposeSingletonInstancesAsync().ConfigureAwait(false);
+        await DisposeHostingScopeAsync().ConfigureAwait(false);
+        await DisposeRootScopesAsync().ConfigureAwait(false);
     }
 
     private async ValueTask DisposeHostingScopeAsync()
@@ -23,7 +23,7 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await scope.DisposeAsync();
+                await scope.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -38,7 +38,7 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await scope.DisposeAsync();
+                await scope.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -119,7 +119,7 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances);
+                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -153,7 +153,7 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances);
+                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
