@@ -43,8 +43,6 @@ PicoLog/src/       .Abs           netstandard2.0   Interfaces + bundles .Gen as 
 
 **Gen-Abs architecture**: .Gen projects have zero PicoHex dependencies — they resolve Abs types via Roslyn's semantic model using string-based type names (e.g. `"PicoDI.Abs.ISvcContainer"`). This allows .Abs to ProjectReference .Gen as Analyzer (`ReferenceOutputAssembly=false`) without creating a circular project graph.
 
-**Pack layer order**: Gen first (no PicoHex deps) → Abs second (depends on Gen via PackageRef PrivateAssets=all) → Core/DI last.
-
 **Pack layer order**: Gen first → Abs second → Core/DI last. Gen has zero PicoHex deps so packs without waiting for anything. Abs depends on Gen via PackageRef PrivateAssets=all. Consumers reference Abs to get full functionality.
 
 ## Critical Build Config
@@ -79,14 +77,14 @@ PicoLog/src/       .Abs           netstandard2.0   Interfaces + bundles .Gen as 
 - **Nullable enabled** everywhere.
 - **XML docs** required on public APIs (`CS1591` suppressed for non-packable projects).
 - **No reflection**: No `Activator.CreateInstance`, `Expression.Compile`, or runtime emit. Use source generators or factory delegates.
-- **Trimming warnings as errors**: AOT-compatible code only.
+- **AOT-compatible only**: zero trimming warnings.
 - `dotnet csharpier PicoHex.slnx` before commit (CSharpier installed as global dotnet tool, no config needed).
 
 ## CI
 
 - **5-platform matrix**: win-x64, win-arm64, linux-x64, linux-arm64, osx-arm64.
 - **Path-filtered**: Each module's CI job only runs when its files or root build files change.
-- **Linux AOT needs**: `clang`, `zlib1g-dev` (and `gcc-aarch64-linux-gnu` for arm64).
+- **Linux AOT needs**: `clang`, `zlib1g-dev`. Native arm64 runners also need `gcc` and `binutils`; cross-compiling from x64 requires `gcc-aarch64-linux-gnu`.
 - **CI package validation**: Packs with `UseProjectReferences=false` to validate consumer experience.
 - **Release**: Tag `v*` triggers pack→publish. Phase 1: Gen → Phase 2: Abs → Phase 3: Core + .DI packages (inter-package dependencies via `RestoreAdditionalProjectSources` pointing to just-built nupkgs).
 
@@ -102,4 +100,4 @@ PicoLog/src/       .Abs           netstandard2.0   Interfaces + bundles .Gen as 
 - Add package versions directly to csproj (use Directory.Packages.props)
 - Run `dotnet test` with `--filter` (TUnit uses `--` separator)
 - Commit `.verified.g.cs` golden files without checking they match current generator output
-- Change package layering (Abs → Gen → Core/DI dependency chain)
+- Change package layering (Gen → Abs → Core/DI dependency chain)
