@@ -1,4 +1,7 @@
-namespace PicoDI;
+namespace PicoAop.DI;
+
+using PicoAop.Abs;
+using PicoDI.Abs;
 
 /// <summary>
 /// Compile-time interceptor registration methods.
