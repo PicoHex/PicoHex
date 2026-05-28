@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PublishAot>false</PublishAot>
+        <IsPackable>true</IsPackable>
+        <PackageId>PicoAop.Abs</PackageId>
+        <Description>Abstractions for PicoAop — compile-time AOP interceptors for PicoDI</Description>
+        <PackageTags>PicoHex;AOP;DI;Interceptor;Abstractions</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <GenerateDependencyFile>false</GenerateDependencyFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+        <ProjectReference Include="..\PicoAop.Gen\PicoAop.Gen.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+        <PackageReference Include="PicoAop.Gen" PrivateAssets="all" />
+        <PackageReference Include="PicoDI.Abs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    </ItemGroup>
+
+</Project>

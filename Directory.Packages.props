@@ -23,6 +23,9 @@
     <PackageVersion Include="PicoLog" Version="$(Version)" />
     <PackageVersion Include="PicoLog.Abs" Version="$(Version)" />
     <PackageVersion Include="PicoLog.Gen" Version="$(Version)" />
+    <PackageVersion Include="PicoAop.Abs" Version="$(Version)" />
+    <PackageVersion Include="PicoAop.Gen" Version="$(Version)" />
+    <PackageVersion Include="PicoAop.DI" Version="$(Version)" />
     <PackageVersion Include="TUnit" Version="1.44.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.3" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.3" />

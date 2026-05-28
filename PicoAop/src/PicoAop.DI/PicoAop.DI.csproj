@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>true</IsPackable>
+        <PackageId>PicoAop.DI</PackageId>
+        <Description>PicoDI registration extensions for PicoAop interceptors</Description>
+        <PackageTags>PicoHex;AOP;DI;Interceptor;Extension</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+        <ProjectReference Include="..\PicoAop.Abs\PicoAop.Abs.csproj" />
+        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+        <PackageReference Include="PicoAop.Abs" />
+        <PackageReference Include="PicoDI" />
+    </ItemGroup>
+
+</Project>
