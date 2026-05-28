@@ -37,6 +37,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="PicoAop.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
         <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" PrivateAssets="all" />
     </ItemGroup>
