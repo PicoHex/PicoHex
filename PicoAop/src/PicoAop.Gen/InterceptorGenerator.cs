@@ -40,12 +40,31 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                 predicate: static (node, _) =>
                     node
                         is InvocationExpressionSyntax
-                        {
-                            Expression: MemberAccessExpressionSyntax
                             {
-                                Name: GenericNameSyntax { Identifier.ValueText: "AddInterceptor" }
+                                Expression: MemberAccessExpressionSyntax
+                                {
+                                    Name: GenericNameSyntax
+                                    {
+                                        Identifier.ValueText: "AddInterceptor"
+                                    }
+                                }
                             }
-                        },
+                            or InvocationExpressionSyntax
+                            {
+                                Expression: MemberAccessExpressionSyntax
+                                {
+                                    Expression: InvocationExpressionSyntax
+                                    {
+                                        Expression: MemberAccessExpressionSyntax
+                                        {
+                                            Name: GenericNameSyntax
+                                            {
+                                                Identifier.ValueText: "AddInterceptor"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                 transform: static (ctx, ct) => ExtractGlobalInterceptorInfo(ctx, ct)
             )
             .Where(static info => info is not null);
@@ -177,6 +196,21 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         ITypeSymbol? interfaceFilter = null;
         var excludedTypes = new List<ITypeSymbol>();
 
+        // Check the outermost invocation first (standalone AddInterceptor call).
+        if (
+            invocation.Expression
+                is MemberAccessExpressionSyntax
+                {
+                    Name: GenericNameSyntax { Identifier.ValueText: "AddInterceptor" } addGen
+                }
+            && addGen.TypeArgumentList.Arguments.Count > 0
+        )
+        {
+            interceptorType = ctx.SemanticModel
+                .GetTypeInfo(addGen.TypeArgumentList.Arguments[0])
+                .Type;
+        }
+
         while (
             current.Expression
                 is MemberAccessExpressionSyntax
@@ -229,6 +263,24 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             }
 
             current = next;
+        }
+
+        if (interceptorType is null)
+        {
+            // Check the innermost invocation (AddInterceptor as the first call in a chain).
+            if (
+                current.Expression
+                    is MemberAccessExpressionSyntax
+                    {
+                        Name: GenericNameSyntax { Identifier.ValueText: "AddInterceptor" } innerGen
+                    }
+                && innerGen.TypeArgumentList.Arguments.Count > 0
+            )
+            {
+                interceptorType = ctx.SemanticModel
+                    .GetTypeInfo(innerGen.TypeArgumentList.Arguments[0])
+                    .Type;
+            }
         }
 
         if (interceptorType is null)
