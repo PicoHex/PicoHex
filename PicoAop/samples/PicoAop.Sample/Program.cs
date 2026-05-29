@@ -1,8 +1,3 @@
-using System.Diagnostics;
-using PicoAop.Abs;
-using PicoAop.DI;
-using PicoDI;
-using PicoDI.Abs;
 
 Console.WriteLine("=== PicoAop / Interceptor Demo ===\n");
 

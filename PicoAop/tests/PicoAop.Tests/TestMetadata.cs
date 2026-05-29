@@ -1,8 +1,3 @@
-using Microsoft.CodeAnalysis;
-using PicoAop.Abs;
-using PicoAop.DI;
-using PicoDI;
-using PicoDI.Abs;
 
 namespace PicoAop.Tests;
 

@@ -1,6 +1,5 @@
 namespace PicoDI.Test;
 
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 public sealed class PicoDISourceGeneratorTests
 {

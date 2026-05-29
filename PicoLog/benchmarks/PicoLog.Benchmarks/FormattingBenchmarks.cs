@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
-using PicoBench;
 using MelLoggerFactory = Microsoft.Extensions.Logging.LoggerFactory;
 using MelLogLevel = Microsoft.Extensions.Logging.LogLevel;
 using PicoLogLevel = PicoLog.Abs.LogLevel;

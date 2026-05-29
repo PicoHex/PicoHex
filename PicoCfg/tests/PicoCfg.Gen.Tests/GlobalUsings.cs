@@ -1,6 +1,7 @@
 // Global using directives
 
 global using System.Collections.Immutable;
+global using System.Diagnostics.CodeAnalysis;
 global using System.Reflection;
 global using Microsoft.CodeAnalysis;
 global using Microsoft.CodeAnalysis.CSharp;

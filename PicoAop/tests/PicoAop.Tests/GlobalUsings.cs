@@ -1,12 +1,12 @@
-global using System.Collections.Frozen;
 global using System.Collections.Immutable;
-global using System.Diagnostics.CodeAnalysis;
 global using Microsoft.CodeAnalysis;
 global using Microsoft.CodeAnalysis.CSharp;
-global using Microsoft.CodeAnalysis.CSharp.Syntax;
-global using Microsoft.CodeAnalysis.Diagnostics;
+global using PicoAop.Abs;
+global using PicoAop.DI;
+global using PicoAop.Gen;
+global using PicoAop.Generated;
+global using PicoDI;
 global using PicoDI.Abs;
-global using PicoDI.Gen;
 global using TUnit.Assertions;
 global using TUnit.Assertions.Extensions;
 global using TUnit.Core;

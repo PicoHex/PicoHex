@@ -1,12 +1,6 @@
-using PicoCfg.Gen;
 
 namespace PicoCfg.DI.Tests;
 
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoCfg.Abs;
-using PicoDI.Abs;
 
 public class PicoCfgDiGeneratorBridgeTests
 {
@@ -14,9 +8,6 @@ public class PicoCfgDiGeneratorBridgeTests
     public async Task RegisterCfgTransient_ClosedConcreteTarget_DoesNotProduceDiagnostics()
     {
         const string source = """
-using PicoCfg;
-using PicoCfg.DI;
-using PicoDI;
 
 var container = new SvcContainer();
 container.RegisterCfgTransient<AppSettings>("App");
@@ -44,8 +35,6 @@ public sealed class AppSettings
     public async Task RegisterCfgTransient_OpenGenericTarget_ProducesDiagnostic()
     {
         const string source = """
-using PicoCfg.DI;
-using PicoDI;
 
 public static class Entry<T>
 {

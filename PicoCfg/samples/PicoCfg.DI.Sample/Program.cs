@@ -1,9 +1,3 @@
-using PicoCfg;
-using PicoCfg.Abs;
-using PicoCfg.DI;
-using PicoCfg.Extensions;
-using PicoDI;
-using PicoDI.Abs;
 
 Console.WriteLine("=== PicoCfg.DI Sample ===");
 

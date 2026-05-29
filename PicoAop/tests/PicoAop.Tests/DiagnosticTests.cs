@@ -1,8 +1,5 @@
 namespace PicoAop.Tests;
 
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoAop.Gen;
 
 public class DiagnosticTests
 {

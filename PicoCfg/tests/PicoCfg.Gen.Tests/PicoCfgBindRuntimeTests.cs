@@ -1,6 +1,5 @@
 namespace PicoCfg.Gen.Tests;
 
-using System.Diagnostics.CodeAnalysis;
 
 public class PicoCfgBindRuntimeTests
 {

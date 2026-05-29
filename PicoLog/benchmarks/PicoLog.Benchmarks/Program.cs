@@ -1,6 +1,3 @@
-using PicoBench;
-using PicoBench.Formatters;
-using PicoLog.Benchmarks;
 
 var consoleFormatter = new ConsoleFormatter();
 var markdownFormatter = new MarkdownFormatter();

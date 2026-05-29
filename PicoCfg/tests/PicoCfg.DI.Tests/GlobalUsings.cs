@@ -1,6 +1,12 @@
+global using System.Collections.Immutable;
 global using System.Globalization;
+global using Microsoft.CodeAnalysis;
+global using Microsoft.CodeAnalysis.CSharp;
+global using PicoCfg;
 global using PicoCfg.Abs;
+global using PicoCfg.DI;
 global using PicoCfg.Extensions;
+global using PicoCfg.Gen;
 global using PicoDI;
 global using PicoDI.Abs;
 global using TUnit.Assertions;

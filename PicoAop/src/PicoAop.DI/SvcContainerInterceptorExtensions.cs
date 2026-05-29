@@ -1,7 +1,5 @@
 namespace PicoAop.DI;
 
-using PicoAop.Abs;
-using PicoDI.Abs;
 
 public static class SvcContainerInterceptorExtensions
 {

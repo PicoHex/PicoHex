@@ -1,8 +1,5 @@
 namespace PicoAop.Tests;
 
-using PicoAop.Abs;
-using PicoAop.DI;
-using PicoDI;
 
 public class DiExtensionTests
 {

@@ -1,6 +1,5 @@
 namespace PicoAop.Tests;
 
-using PicoAop.Gen;
 
 public class GeneratorNamesTests
 {

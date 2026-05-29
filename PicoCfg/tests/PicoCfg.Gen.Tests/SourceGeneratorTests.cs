@@ -1,6 +1,5 @@
 namespace PicoCfg.Gen.Tests;
 
-using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable CS0618
 

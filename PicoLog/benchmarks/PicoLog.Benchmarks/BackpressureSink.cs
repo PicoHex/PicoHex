@@ -1,4 +1,3 @@
-using PicoLog.Abs;
 
 namespace PicoLog.Benchmarks;
 

@@ -1,7 +1,5 @@
 namespace PicoAop.Tests;
 
-using Microsoft.CodeAnalysis;
-using PicoAop.Gen;
 
 public class GeneratorDiagParamsTests
 {

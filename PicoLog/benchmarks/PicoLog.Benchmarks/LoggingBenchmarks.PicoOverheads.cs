@@ -1,5 +1,3 @@
-using PicoBench;
-using PicoLog.Abs;
 using PicoLogLevel = PicoLog.Abs.LogLevel;
 
 namespace PicoLog.Benchmarks;

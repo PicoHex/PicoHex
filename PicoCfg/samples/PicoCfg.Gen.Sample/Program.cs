@@ -1,5 +1,3 @@
-using PicoCfg;
-using PicoCfg.Extensions;
 
 Console.WriteLine("=== PicoCfg.Gen AOT Binding Sample ===");
 

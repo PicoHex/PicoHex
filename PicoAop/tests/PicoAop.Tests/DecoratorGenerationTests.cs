@@ -1,9 +1,5 @@
 namespace PicoAop.Tests;
 
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoAop.Gen;
 
 public class DecoratorGenerationTests
 {

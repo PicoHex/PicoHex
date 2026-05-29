@@ -1,10 +1,5 @@
 namespace PicoAop.Tests;
 
-using PicoAop.Abs;
-using PicoAop.DI;
-using PicoAop.Generated;
-using PicoDI;
-using PicoDI.Abs;
 
 public class LifecycleTests
 {
