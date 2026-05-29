@@ -46,4 +46,28 @@ public class RuntimeSelfRegisterTests
         var result = decorator!.Do();
         await Assert.That(result).IsEqualTo("work");
     }
+
+    [Test]
+    public async Task SelfRegister_InterceptorResolvedFromDI()
+    {
+        var container = new SvcContainer(autoConfigureFromGenerator: true);
+        container.RegisterSingleton<LogInterceptor>(_ => new LogInterceptor());
+        container.Build();
+
+        await using var scope = container.CreateScope();
+        var interceptor = scope.GetService<LogInterceptor>();
+        await Assert.That(interceptor).IsNotNull();
+    }
+
+    [Test]
+    public async Task SelfRegister_InterceptorIsResolvable()
+    {
+        var container = new SvcContainer(autoConfigureFromGenerator: true);
+        container.RegisterSingleton<LogInterceptor>(_ => new LogInterceptor());
+        container.Build();
+
+        await using var scope = container.CreateScope();
+        var interceptor = scope.GetService<LogInterceptor>();
+        await Assert.That(interceptor).IsNotNull();
+    }
 }

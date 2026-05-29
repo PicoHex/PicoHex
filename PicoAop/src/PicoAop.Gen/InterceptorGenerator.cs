@@ -555,21 +555,30 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             sb.AppendLine();
 
             var paramArgs = string.Join(", ", paramList.Select(p => $"_{p.Name}"));
-            sb.AppendLine(
-                $"    public {resultName} InvokeTarget() => _target.{method.Name}({paramArgs});"
-            );
-
-            // Generate async InvokeTargetAsync for methods returning Task/ValueTask.
+            // For async return types, InvokeTarget needs the original return type
+            // (e.g. Task<int>), while InvokeTargetAsync uses the unwrapped type.
             var isAsyncReturn =
                 retType
                     is INamedTypeSymbol
                     {
                         MetadataName: "ValueTask`1" or "Task`1" or "ValueTask" or "Task"
                     };
+            var isVoidAsync = retType is INamedTypeSymbol { MetadataName: "ValueTask" or "Task" };
+            var invokeTargetReturnType = isAsyncReturn ? retType.ToDisplayString() : resultName;
+            sb.AppendLine(
+                $"    public {invokeTargetReturnType} InvokeTarget() => _target.{method.Name}({paramArgs});"
+            );
+
             if (isAsyncReturn)
             {
+                // InvokeTargetAsync must return an awaitable type.
+                // For ValueTask<T>/Task<T>: returns ValueTask<T>.
+                // For ValueTask/Task: returns ValueTask.
+                var asyncReturn = isVoidAsync
+                    ? "global::System.Threading.Tasks.ValueTask"
+                    : $"global::System.Threading.Tasks.ValueTask<{resultName}>";
                 sb.AppendLine(
-                    $"    public async {retType.ToDisplayString()} InvokeTargetAsync() => await _target.{method.Name}({paramArgs});"
+                    $"    public async {asyncReturn} InvokeTargetAsync() => await _target.{method.Name}({paramArgs});"
                 );
             }
 
@@ -624,6 +633,8 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                 method.ReturnType is INamedTypeSymbol { MetadataName: "ValueTask" or "Task" };
             var isTaskOf =
                 method.ReturnType is INamedTypeSymbol { MetadataName: "ValueTask`1" or "Task`1" };
+            var isSystemTask =
+                method.ReturnType is INamedTypeSymbol { MetadataName: "Task" or "Task`1" };
             var isVoid = isVoidTask || method.ReturnType.SpecialType == SpecialType.System_Void;
 
             var paramDecl = string.Join(
@@ -644,13 +655,27 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             // scope when constructing the invocation manually.
             sb.AppendLine($"        var inv = new {structRef}(_inner{paramArgs}, scope: null);");
             if (isVoidTask)
-                sb.AppendLine(
-                    "        return _i0.InvokeAsyncVoid(inv, async _ => { await inv.InvokeTargetAsync(); }).AsTask();"
-                );
+            {
+                if (isSystemTask)
+                    sb.AppendLine(
+                        "        return _i0.InvokeAsyncVoid(inv, async _ => { await inv.InvokeTargetAsync(); }).AsTask();"
+                    );
+                else
+                    sb.AppendLine(
+                        "        return _i0.InvokeAsyncVoid(inv, async _ => { await inv.InvokeTargetAsync(); });"
+                    );
+            }
             else if (isTaskOf)
-                sb.AppendLine(
-                    "        return _i0.InvokeAsync(inv, async _ => await inv.InvokeTargetAsync()).AsTask();"
-                );
+            {
+                if (isSystemTask)
+                    sb.AppendLine(
+                        "        return _i0.InvokeAsync(inv, async _ => await inv.InvokeTargetAsync()).AsTask();"
+                    );
+                else
+                    sb.AppendLine(
+                        "        return _i0.InvokeAsync(inv, async _ => await inv.InvokeTargetAsync());"
+                    );
+            }
             else if (isVoid)
                 sb.AppendLine("        _i0.InvokeVoid(inv, _ => inv.InvokeTarget());");
             else
