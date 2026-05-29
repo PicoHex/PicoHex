@@ -1,4 +1,11 @@
 var target = args.FirstOrDefault()?.ToLowerInvariant();
+var config = new BenchmarkConfig
+{
+    WarmupIterations = BenchmarkConfig.Default.WarmupIterations,
+    SampleCount = BenchmarkConfig.Default.SampleCount,
+    IterationsPerSample = BenchmarkConfig.Default.IterationsPerSample / 10,
+    RetainSamples = BenchmarkConfig.Default.RetainSamples
+};
 var consoleFormatter = new PicoBench.Formatters.ConsoleFormatter();
 var markdownFormatter = new MarkdownFormatter();
 var sections = new List<string>();
@@ -6,7 +13,7 @@ var markdownSections = new List<string>();
 
 if (target is null or "main")
 {
-    var suite = BenchmarkRunner.Run<LoggingBenchmarks>();
+    var suite = BenchmarkRunner.Run<LoggingBenchmarks>(config);
     sections.Add(consoleFormatter.Format(suite));
     markdownSections.Add(markdownFormatter.Format(suite));
     await WriteSuiteMarkdownAsync("main", markdownFormatter.Format(suite));
@@ -14,7 +21,7 @@ if (target is null or "main")
 
 if (target is null or "format")
 {
-    var suite = BenchmarkRunner.Run<FormattingBenchmarks>();
+    var suite = BenchmarkRunner.Run<FormattingBenchmarks>(config);
     sections.Add(consoleFormatter.Format(suite));
     markdownSections.Add(markdownFormatter.Format(suite));
     await WriteSuiteMarkdownAsync("format", markdownFormatter.Format(suite));
@@ -22,7 +29,7 @@ if (target is null or "format")
 
 if (target is null or "wait")
 {
-    var suite = BenchmarkRunner.Run<WaitLoggingBenchmarks>();
+    var suite = BenchmarkRunner.Run<WaitLoggingBenchmarks>(config);
     sections.Add(consoleFormatter.Format(suite));
     markdownSections.Add(markdownFormatter.Format(suite));
     await WriteSuiteMarkdownAsync("wait", markdownFormatter.Format(suite));
