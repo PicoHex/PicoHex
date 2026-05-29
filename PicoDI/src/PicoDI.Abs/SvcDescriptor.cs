@@ -67,7 +67,7 @@ public sealed class SvcDescriptor(
     /// Negative values indicate runtime-registered services that use the Factory delegate.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public int GeneratedFactoryId { get; internal set; } = -1;
+    public int GeneratedFactoryId { get; set; } = -1;
 
     /// <summary>
     /// Gets the service lifetime.
