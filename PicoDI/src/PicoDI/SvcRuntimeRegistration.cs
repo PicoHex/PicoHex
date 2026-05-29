@@ -4,18 +4,21 @@ internal sealed class SvcRuntimeRegistration
 {
     internal readonly Type ServiceType;
     internal readonly Func<ISvcScope, object>? Factory;
+    internal readonly int GeneratedFactoryId;
     internal readonly SvcLifetime Lifetime;
     internal readonly SvcRuntimeSingletonState? SingletonState;
 
     private SvcRuntimeRegistration(
         Type serviceType,
         Func<ISvcScope, object>? factory,
+        int generatedFactoryId,
         SvcLifetime lifetime,
         SvcRuntimeSingletonState? singletonState
     )
     {
         ServiceType = serviceType;
         Factory = factory;
+        GeneratedFactoryId = generatedFactoryId;
         Lifetime = lifetime;
         SingletonState = singletonState;
     }
@@ -48,6 +51,7 @@ internal sealed class SvcRuntimeRegistration
         return new SvcRuntimeRegistration(
             descriptor.ServiceType,
             descriptor.Factory,
+            descriptor.GeneratedFactoryId,
             descriptor.Lifetime,
             singletonState
         );

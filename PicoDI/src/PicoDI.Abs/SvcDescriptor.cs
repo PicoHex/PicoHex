@@ -63,6 +63,13 @@ public sealed class SvcDescriptor(
     public Func<ISvcScope, object>? Factory { get; }
 
     /// <summary>
+    /// Gets the generated factory identifier for SG-registered services.
+    /// Negative values indicate runtime-registered services that use the Factory delegate.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public int GeneratedFactoryId { get; internal set; } = -1;
+
+    /// <summary>
     /// Gets the service lifetime.
     /// </summary>
     public SvcLifetime Lifetime { get; } = lifetime;
