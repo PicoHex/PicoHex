@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace PicoAop.Gen;
 
 internal static class InterceptorDiagParams

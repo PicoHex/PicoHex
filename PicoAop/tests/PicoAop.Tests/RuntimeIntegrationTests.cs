@@ -50,10 +50,11 @@ public class RuntimeIntegrationTests
         await using var scope = container.CreateScope();
         var inner = scope.GetService<ICalculator>()!;
         var interceptor = scope.GetService<CallTrackingInterceptor>();
-        var decorator = new PicoAop_Tests_RuntimeIntegrationTests_ICalculator_CallTrackingInterceptorDecorator(
-            inner,
-            interceptor!
-        );
+        var decorator =
+            new PicoAop_Tests_RuntimeIntegrationTests_ICalculator_CallTrackingInterceptorDecorator(
+                inner,
+                interceptor!
+            );
 
         var result = decorator.Add(3, 4);
         await Assert.That(result).IsEqualTo(7);

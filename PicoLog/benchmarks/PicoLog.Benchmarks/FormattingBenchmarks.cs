@@ -76,6 +76,7 @@ public partial class FormattingBenchmarks
 
         _filePath = Path.Combine(Path.GetTempPath(), $"picolog-bench-{Guid.NewGuid():N}.log");
         _picoFileFactory = new LoggerFactory(
+
             [
                 new FileSink(
                     new ConsoleFormatter(),
@@ -100,6 +101,7 @@ public partial class FormattingBenchmarks
             $"picolog-bench-dual-{Guid.NewGuid():N}.log"
         );
         _picoDualFactory = new LoggerFactory(
+
             [
                 new ConsoleSink(new ConsoleFormatter(), TextWriter.Null),
                 new FileSink(

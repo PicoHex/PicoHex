@@ -3,7 +3,6 @@ using PicoAop.Abs;
 using PicoAop.DI;
 using PicoDI;
 using PicoDI.Abs;
-using System.Collections.Immutable;
 
 namespace PicoAop.Tests;
 
@@ -11,8 +10,9 @@ internal static class TestMetadata
 {
     public static MetadataReference[] GetReferences()
     {
-        var trustedPlatformAssemblies = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))!
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+        var trustedPlatformAssemblies = (
+            (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
+        )!.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
         var explicitAssemblies = new[]
         {

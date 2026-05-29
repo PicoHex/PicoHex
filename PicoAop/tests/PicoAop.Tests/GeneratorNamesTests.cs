@@ -23,12 +23,16 @@ public class GeneratorNamesTests
     public async Task TypeNames_AreCorrect()
     {
         await Assert.That(PicoAopNames.IInterceptorFull).IsEqualTo("PicoAop.Abs.IInterceptor");
-        await Assert.That(PicoAopNames.InterceptorBaseFull).IsEqualTo("PicoAop.Abs.InterceptorBase");
+        await Assert
+            .That(PicoAopNames.InterceptorBaseFull)
+            .IsEqualTo("PicoAop.Abs.InterceptorBase");
         await Assert.That(PicoAopNames.VoidResultFull).IsEqualTo("PicoAop.Abs.VoidResult");
         await Assert.That(PicoAopNames.IInvocationFull).IsEqualTo("PicoAop.Abs.IInvocation`1");
         await Assert.That(PicoAopNames.ISvcContainerFull).IsEqualTo("PicoDI.Abs.ISvcContainer");
         await Assert.That(PicoAopNames.ISvcScopeFull).IsEqualTo("PicoDI.Abs.ISvcScope");
         await Assert.That(PicoAopNames.SvcContainerFull).IsEqualTo("PicoDI.SvcContainer");
-        await Assert.That(PicoAopNames.SvcContainerAutoConfigFull).IsEqualTo("PicoDI.SvcContainerAutoConfiguration");
+        await Assert
+            .That(PicoAopNames.SvcContainerAutoConfigFull)
+            .IsEqualTo("PicoDI.SvcContainerAutoConfiguration");
     }
 }

@@ -48,7 +48,13 @@ public class CoreAbstractionsTests
         var called = false;
         var interceptor = new PassthroughInterceptor();
         var inv = new MockVoidInvocation(MethodName: "VoidTest", ServiceType: typeof(string));
-        interceptor.InvokeVoid(inv, _ => { called = true; });
+        interceptor.InvokeVoid(
+            inv,
+            _ =>
+            {
+                called = true;
+            }
+        );
         await Assert.That(called).IsTrue();
     }
 

@@ -23,10 +23,8 @@ container.RegisterSingleton<TimingInterceptor>();
 
 // Register services with InterceptBy markers — these are compile-time markers
 // that trigger the source generator to emit decorator class definitions
-container.Register<IGreeter, Greeter>(SvcLifetime.Scoped)
-    .InterceptBy<LoggingInterceptor>();
-container.Register<IGreeter, Greeter>(SvcLifetime.Scoped)
-    .InterceptBy<TimingInterceptor>();
+container.Register<IGreeter, Greeter>(SvcLifetime.Scoped).InterceptBy<LoggingInterceptor>();
+container.Register<IGreeter, Greeter>(SvcLifetime.Scoped).InterceptBy<TimingInterceptor>();
 
 container.Build();
 
@@ -57,7 +55,9 @@ public sealed class Greeter : IGreeter
 public sealed class LoggingInterceptor : InterceptorBase
 {
     public override TResult Invoke<TResult>(
-        IInvocation<TResult> inv, Func<IInvocation<TResult>, TResult> next)
+        IInvocation<TResult> inv,
+        Func<IInvocation<TResult>, TResult> next
+    )
     {
         Console.WriteLine($"  [LOG] {inv.ServiceType.Name}.{inv.MethodName}()");
         var result = next(inv);
@@ -69,7 +69,9 @@ public sealed class LoggingInterceptor : InterceptorBase
 public sealed class TimingInterceptor : InterceptorBase
 {
     public override TResult Invoke<TResult>(
-        IInvocation<TResult> inv, Func<IInvocation<TResult>, TResult> next)
+        IInvocation<TResult> inv,
+        Func<IInvocation<TResult>, TResult> next
+    )
     {
         var sw = Stopwatch.StartNew();
         var result = next(inv);

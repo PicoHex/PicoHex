@@ -2,11 +2,7 @@ namespace PicoAop.Tests;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using PicoAop.Abs;
-using PicoAop.DI;
 using PicoAop.Gen;
-using PicoDI;
-using PicoDI.Abs;
 
 public class DiagnosticTests
 {
@@ -51,7 +47,9 @@ public class DiagnosticTests
 
         driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
 
-        var pico010 = diagnostics.FirstOrDefault(d => d.Id == "PICO010" && d.Severity == DiagnosticSeverity.Error);
+        var pico010 = diagnostics.FirstOrDefault(
+            d => d.Id == "PICO010" && d.Severity == DiagnosticSeverity.Error
+        );
         await Assert.That(pico010).IsNotNull();
         await Assert.That(pico010!.GetMessage()).Contains("IInterceptor");
     }
