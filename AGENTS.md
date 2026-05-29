@@ -5,6 +5,9 @@ AOT-first .NET 10 monorepo: three modules (PicoDI, PicoCfg, PicoLog), eleven pac
 ## Quick Commands
 
 ```bash
+# Install pre-commit hooks (run once after clone)
+bash scripts/install-hooks.sh
+
 # Build everything
 dotnet build PicoHex.slnx
 
