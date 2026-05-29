@@ -58,11 +58,12 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 registrations =  [.. _registrations.Values];
             }
 
-            Task[] pipelineFlushTasks = registrations
-                .Select(
-                    registration => registration.Pipeline.FlushAsync(cancellationToken).AsTask()
-                )
-                .ToArray();
+            var pipelineFlushTasks = new Task[registrations.Length];
+            for (int i = 0; i < registrations.Length; i++)
+                pipelineFlushTasks[i] = registrations[i]
+                    .Pipeline
+                    .FlushAsync(cancellationToken)
+                    .AsTask();
 
             if (pipelineFlushTasks.Length != 0)
             {
