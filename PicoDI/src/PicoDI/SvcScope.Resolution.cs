@@ -15,6 +15,13 @@ public sealed partial class SvcScope
         ArgumentNullException.ThrowIfNull(serviceType);
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
 
+        // Fast path: cached singleton instance (bypasses all registration lookup)
+        if (
+            _singletonInstances is not null
+            && _singletonInstances.TryGetValue(serviceType, out var cached)
+        )
+            return cached;
+
         if (!_registrationCache.TryGetValue(serviceType, out var registrations))
             return null;
 
@@ -22,7 +29,14 @@ public sealed partial class SvcScope
         if (last.Lifetime == SvcLifetime.Singleton)
         {
             var instance = last.GetSingletonInstance();
-            return instance ?? GetOrCreateSingletonSlow(serviceType, last);
+            if (instance is not null)
+            {
+                CacheSingleton(serviceType, instance);
+                return instance;
+            }
+            var created = GetOrCreateSingletonSlow(serviceType, last);
+            CacheSingleton(serviceType, created);
+            return created;
         }
 
         return ResolveByLifetime(serviceType, last);
@@ -71,6 +85,13 @@ public sealed partial class SvcScope
             ?? throw new PicoDiException(
                 $"Service type '{serviceType.FullName}' is not registered."
             );
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void CacheSingleton(Type serviceType, object instance)
+    {
+        var cache = LazyInitializer.EnsureInitialized(ref _singletonInstances);
+        cache.TryAdd(serviceType, instance);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

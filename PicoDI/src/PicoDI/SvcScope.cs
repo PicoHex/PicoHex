@@ -8,6 +8,10 @@ public sealed partial class SvcScope : ISvcScope
 {
     private readonly FrozenDictionary<Type, SvcRuntimeRegistration[]> _registrationCache;
 
+    // Fast singleton instance cache — bypasses registration lookup on warm path.
+    // Lazily initialized and populated on first resolution of each singleton.
+    private ConcurrentDictionary<Type, object>? _singletonInstances;
+
     // Scoped instances: ConcurrentDictionary with Lazy<T>(ExecutionAndPublication).
     // The Lazy wrapper ensures the factory is called at most once, even under
     // contention where ConcurrentDictionary.GetOrAdd may invoke the valueFactory
