@@ -11,17 +11,25 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                 predicate: static (node, _) =>
                     node
                         is InvocationExpressionSyntax
-                        {
-                            Expression: MemberAccessExpressionSyntax
                             {
-                                Name: GenericNameSyntax
+                                Expression: MemberAccessExpressionSyntax
                                 {
-                                    Identifier.ValueText: "InterceptBy"
-                                        or "WithoutInterceptor"
-                                        or "WithoutInterceptors"
+                                    Name: GenericNameSyntax
+                                    {
+                                        Identifier.ValueText: "InterceptBy" or "WithoutInterceptor"
+                                    }
                                 }
                             }
-                        },
+                            or InvocationExpressionSyntax
+                            {
+                                Expression: MemberAccessExpressionSyntax
+                                {
+                                    Name: IdentifierNameSyntax
+                                    {
+                                        Identifier.ValueText: "WithoutInterceptors"
+                                    }
+                                }
+                            },
                 transform: static (ctx, ct) => ExtractInterceptionInfo(ctx, ct)
             )
             .Where(static info => info is not null);
@@ -292,8 +300,13 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             if (info.ServiceType is not INamedTypeSymbol serviceType)
                 continue;
 
-            // Merge global interceptors (matching) with per-service interceptors
-            var interceptorList = new List<ITypeSymbol>(info.InterceptorTypes);
+            // Merge global interceptors (matching) with per-service interceptors.
+            // Filter out any per-service interceptors that appear in the without-list.
+            var interceptorList = new List<ITypeSymbol>(
+                info.InterceptorTypes.Where(
+                    t => !info.WithoutInterceptorTypes.Contains(t, SymbolEqualityComparer.Default)
+                )
+            );
 
             // Add matching global interceptors (outermost first)
             var globalMatches = new List<ITypeSymbol>();
@@ -328,7 +341,10 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             }
 
             if (info.WithoutInterceptors)
+            {
                 globalMatches.Clear();
+                interceptorList.Clear();
+            }
 
             // Globals first (outer), per-service second (inner)
             interceptorList.InsertRange(0, globalMatches);
@@ -620,18 +636,16 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         bool isLast
     )
     {
-        // Only skip when we genuinely cannot determine an implementation type.
-        // Self-registration (serviceType == implType) is valid — the decorator
-        // wraps the service, and the inner resolution uses the same type.
-        if (implType is null)
-            return;
+        // implType may be null for single-type-arg registrations like Register<Greeter>(lifetime).
+        // In that case, the service type IS the implementation type.
+        var effectiveImplType = implType ?? serviceType;
 
         var safeSvc = Sanitize(serviceType.ToDisplayString());
         var safeInt = Sanitize(interceptorType.Name);
         var decoratorClass = $"{safeSvc}_{safeInt}Decorator";
         var svcName = serviceType.ToDisplayString();
         var intName = interceptorType.ToDisplayString();
-        var implName = implType.ToDisplayString();
+        var implName = effectiveImplType.ToDisplayString();
         var resolveType = isLast ? implName : svcName;
 
         sb.AppendLine($"        container.Register<{svcName}>(scope =>");
