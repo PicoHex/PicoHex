@@ -94,3 +94,4 @@ File.WriteAllText(
 );
 
 Console.WriteLine($"\nResults saved to: {outputDir}");
+Environment.Exit(0);

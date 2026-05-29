@@ -1,6 +1,6 @@
+var target = args.FirstOrDefault()?.ToLowerInvariant();
 var consoleFormatter = new PicoBench.Formatters.ConsoleFormatter();
 var markdownFormatter = new MarkdownFormatter();
-var target = args.FirstOrDefault()?.ToLowerInvariant();
 var sections = new List<string>();
 var markdownSections = new List<string>();
 
@@ -34,6 +34,7 @@ var markdown = string.Join(Environment.NewLine + Environment.NewLine, markdownSe
 var markdownPath = Path.Combine(AppContext.BaseDirectory, "benchmark-results.md");
 await File.WriteAllTextAsync(markdownPath, markdown);
 Console.WriteLine($"\nMarkdown report saved to: {markdownPath}");
+Environment.Exit(0);
 
 static Task WriteSuiteMarkdownAsync(string suiteName, string markdown) =>
     File.WriteAllTextAsync(
