@@ -23,7 +23,42 @@ PicoLog vs Microsoft.Extensions.Logging on .NET 10.0.5 (Windows 10, X64, Release
 
 **Summary**: 13/30 wins, average **3.51x** speedup, max **25.76x**.
 
-At higher throughput (N=10~100), PicoLog trades raw speed for stronger delivery guarantees — every entry is timestamped, categorized, and dispatched through a bounded channel with configurable backpressure. For direct throughput comparisons, see [benchmark results](benchmarks/PicoLog.Benchmarks/bin/Release/net10.0/benchmark-results.md).
+PicoLog is faster than MEL on cached-message and allocation-heavy paths where
+source generation eliminates boxing and reflection. On single-message throughput
+(N=1), PicoLog is deliberately slower — roughly 700ns vs MEL's 200ns per call.
+This is not a bug; it's the cost of an **async-first pipeline architecture**.
+
+### Design Rationale: Async-First Pipeline
+
+Every `Log()` call traverses the same pipeline regardless of whether you call
+the synchronous or asynchronous overload:
+
+```
+Log() → CreateEntry → CategoryPipeline → Channel → ProcessEntriesAsync → DispatchEntryAsync → Sink
+```
+
+This is fundamentally different from MEL's synchronous model:
+
+```
+Log() → Logger.Log() → foreach (logger in loggers) → logger.Log()  // direct, no channel
+```
+
+| Aspect | PicoLog (async-first) | MEL (sync-first) |
+|---|---|---|
+| Delivery | Guaranteed through bounded channel | Best-effort; sync discard can drop if logger throws |
+| Backpressure | `DropOldest` / `DropWrite` / `Wait` — configurable per factory | None — calling thread blocks or message is lost |
+| Flush | `FlushAsync()` drains all pending entries before shutdown | No flush API; `Dispose()` is instant |
+| Timestamp | Precise — captured at `CreateEntry()` before enqueue | Captured inside logger, may be delayed |
+| Thread safety | Channel-based; no lock on hot path | Each logger manages its own synchronization |
+| Per-call overhead | ~500–800ns (Channel + dispatcher + sink) | ~100–200ns (direct dispatch) |
+
+PicoLog chose the async pipeline because production logging systems need
+**guaranteed delivery, backpressure, and graceful shutdown** more than they
+need the absolute lowest single-message latency. If you're logging at 1M msg/s,
+the per-message overhead dominates. If you're logging at 1K msg/s with flush
+semantics, PicoLog's guarantees matter more.
+
+For direct throughput comparisons across all scenarios, see [benchmark results](benchmarks/PicoLog.Benchmarks/bin/Release/net10.0/benchmark-results.md).
 
 ---
 
