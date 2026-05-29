@@ -36,12 +36,11 @@ public static class SvcContainerAutoConfiguration
                 if (_configurators.Count is 0)
                     return [];
 
-                Action<ISvcContainer>[] sorted =
-                [
-                    .. _configurators
-                        .OrderBy(static entry => entry.Key, StringComparer.Ordinal)
-                        .Select(static entry => entry.Value)
-                ];
+                var list = new List<KeyValuePair<string, Action<ISvcContainer>>>(_configurators);
+                list.Sort(static (a, b) => string.CompareOrdinal(a.Key, b.Key));
+                Action<ISvcContainer>[] sorted = new Action<ISvcContainer>[list.Count];
+                for (int i = 0; i < list.Count; i++)
+                    sorted[i] = list[i].Value;
 
                 Volatile.Write(ref _sortedSnapshot, sorted);
                 return sorted;
