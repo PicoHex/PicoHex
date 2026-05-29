@@ -64,29 +64,8 @@ public sealed partial class SvcContainer
                 static kvp => kvp.Key,
                 static kvp => kvp.Value.ToArray()
             );
-            Volatile.Write(ref _singletonCache, BuildSingletonCache(frozenCache));
-            // Write _frozenCache LAST — serves as the "both caches ready" signal.
-            // Readers only need to check _frozenCache; if non-null, _singletonCache
-            // is guaranteed to be visible.
             Volatile.Write(ref _frozenCache, frozenCache);
             Volatile.Write(ref _registrationCache, null);
         }
-    }
-
-    private static FrozenDictionary<Type, SvcRuntimeRegistration> BuildSingletonCache(
-        FrozenDictionary<Type, SvcRuntimeRegistration[]> cache
-    )
-    {
-        var singletonDict = new Dictionary<Type, SvcRuntimeRegistration>();
-        foreach (var kvp in cache)
-        {
-            var lastRegistration = kvp.Value[^1];
-            if (lastRegistration.Lifetime == SvcLifetime.Singleton)
-            {
-                singletonDict[kvp.Key] = lastRegistration;
-            }
-        }
-
-        return singletonDict.ToFrozenDictionary();
     }
 }

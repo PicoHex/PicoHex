@@ -180,7 +180,6 @@ public sealed partial class SvcContainer
         // observe intermediate states after _disposed has been set to 1 at the
         // entry of DisposeAsync (checked by DisposalGuards.ThrowIfDisposed).
         Volatile.Write(ref _registrationCache, null);
-        Volatile.Write(ref _singletonCache, null);
         Volatile.Write(ref _frozenCache, null);
     }
 }

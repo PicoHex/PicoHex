@@ -29,11 +29,6 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
     /// </summary>
     private FrozenDictionary<Type, SvcRuntimeRegistration[]>? _frozenCache;
 
-    /// <summary>
-    /// Fast singleton cache: Type -> runtime registration (for singleton services only).
-    /// </summary>
-    private FrozenDictionary<Type, SvcRuntimeRegistration>? _singletonCache;
-
     bool IGeneratedConfigurationStateContainer.IsGeneratedConfigurationApplied { get; set; }
 
     private int _disposed;

@@ -15,16 +15,17 @@ public sealed partial class SvcScope
         ArgumentNullException.ThrowIfNull(serviceType);
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
 
-        if (_singletonCache.TryGetValue(serviceType, out var singletonRegistration))
-        {
-            var instance = singletonRegistration.GetSingletonInstance();
-            return instance ?? GetOrCreateSingletonSlow(serviceType, singletonRegistration);
-        }
-
         if (!_registrationCache.TryGetValue(serviceType, out var registrations))
             return null;
 
-        return ResolveByLifetime(serviceType, registrations[^1]);
+        var last = registrations[^1];
+        if (last.Lifetime == SvcLifetime.Singleton)
+        {
+            var instance = last.GetSingletonInstance();
+            return instance ?? GetOrCreateSingletonSlow(serviceType, last);
+        }
+
+        return ResolveByLifetime(serviceType, last);
     }
 
     /// <inheritdoc />

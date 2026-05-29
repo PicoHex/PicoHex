@@ -7,7 +7,7 @@ public sealed partial class SvcScope
     {
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
 
-        var childScope = new SvcScope(_registrationCache, _singletonCache);
+        var childScope = new SvcScope(_registrationCache);
 
         childScope.ParentScope = this;
 
