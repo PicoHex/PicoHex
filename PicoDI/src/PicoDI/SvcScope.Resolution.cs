@@ -15,12 +15,19 @@ public sealed partial class SvcScope
         ArgumentNullException.ThrowIfNull(serviceType);
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
 
-        // Fast path: cached singleton instance (bypasses all registration lookup)
-        if (
-            _singletonInstances is not null
-            && _singletonInstances.TryGetValue(serviceType, out var cached)
-        )
-            return cached;
+        // Fast path: direct Volatile.Read for single-singleton (~2ns)
+        if (ReferenceEquals(Volatile.Read(ref _lastSingletonType), serviceType))
+            return Volatile.Read(ref _lastSingletonInstance)!;
+
+        // Medium path: Dictionary+lock for multi-singleton (~20ns)
+        if (_singletonInstances is not null)
+        {
+            lock (_singletonCacheLock)
+            {
+                if (_singletonInstances.TryGetValue(serviceType, out var cached))
+                    return cached;
+            }
+        }
 
         if (!_registrationCache.TryGetValue(serviceType, out var registrations))
             return null;
@@ -87,11 +94,13 @@ public sealed partial class SvcScope
             );
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CacheSingleton(Type serviceType, object instance)
     {
+        Volatile.Write(ref _lastSingletonType, serviceType);
+        Volatile.Write(ref _lastSingletonInstance, instance);
         var cache = LazyInitializer.EnsureInitialized(ref _singletonInstances);
-        cache.TryAdd(serviceType, instance);
+        lock (_singletonCacheLock)
+            cache.TryAdd(serviceType, instance);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
