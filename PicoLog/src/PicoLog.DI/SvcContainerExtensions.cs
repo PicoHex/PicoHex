@@ -6,7 +6,6 @@ public static class SvcContainerExtensions
     {
         public ISvcContainer AddPicoLog(Action<LoggingOptions> configure) =>
             AddPicoLogCore(container, configure);
-
     }
 
 #pragma warning disable IDE0051 // called by extension method AddPicoLog

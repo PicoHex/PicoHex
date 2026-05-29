@@ -1,6 +1,5 @@
 namespace PicoAop.DI;
 
-
 public static class SvcContainerInterceptorExtensions
 {
     extension(ISvcContainer container)

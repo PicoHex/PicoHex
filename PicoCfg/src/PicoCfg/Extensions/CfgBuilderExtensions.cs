@@ -121,8 +121,7 @@ public static class CfgBuilderExtensions
         /// </summary>
         public CfgBuilder AddEnvironmentVariables(string? prefix = null) =>
             builder.AddSource(
-                new EnvCfgSource(
-                    () => new EnvCfgProvider(prefix, builder.CreateProviderState())
+                new EnvCfgSource(() => new EnvCfgProvider(prefix, builder.CreateProviderState())
                 )
             );
 
@@ -135,8 +134,7 @@ public static class CfgBuilderExtensions
         /// </summary>
         public CfgBuilder AddCommandLine(string[] args, string? prefix = null) =>
             builder.AddSource(
-                new CmdLineCfgSource(
-                    () => new CmdLineCfgProvider(args, prefix, builder.CreateProviderState())
+                new CmdLineCfgSource(() => new CmdLineCfgProvider(args, prefix, builder.CreateProviderState())
                 )
             );
 
@@ -150,8 +148,8 @@ public static class CfgBuilderExtensions
         /// </summary>
         public CfgBuilder AddKeyPerFile(string directoryPath, Func<string, bool>? keyFilter = null) =>
             builder.AddSource(
-                new KeyPerFileCfgSource(
-                    () => new KeyPerFileCfgProvider(directoryPath, keyFilter, builder.CreateProviderState())
+                new KeyPerFileCfgSource(() =>
+                    new KeyPerFileCfgProvider(directoryPath, keyFilter, builder.CreateProviderState())
                 )
             );
 
@@ -164,8 +162,7 @@ public static class CfgBuilderExtensions
         /// </summary>
         public CfgBuilder AddConfiguration(ICfg chainedConfig) =>
             builder.AddSource(
-                new ChainedCfgSource(
-                    () => new ChainedCfgProvider(chainedConfig, builder.CreateProviderState())
+                new ChainedCfgSource(() => new ChainedCfgProvider(chainedConfig, builder.CreateProviderState())
                 )
             );
     }
