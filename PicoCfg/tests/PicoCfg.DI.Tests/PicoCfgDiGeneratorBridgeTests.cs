@@ -6,6 +6,8 @@ public class PicoCfgDiGeneratorBridgeTests
     public async Task RegisterCfgTransient_ClosedConcreteTarget_DoesNotProduceDiagnostics()
     {
         const string source = """
+using PicoDI;
+using PicoCfg.DI;
 
 var container = new SvcContainer();
 container.RegisterCfgTransient<AppSettings>("App");
@@ -33,6 +35,7 @@ public sealed class AppSettings
     public async Task RegisterCfgTransient_OpenGenericTarget_ProducesDiagnostic()
     {
         const string source = """
+using PicoDI;
 
 public static class Entry<T>
 {
