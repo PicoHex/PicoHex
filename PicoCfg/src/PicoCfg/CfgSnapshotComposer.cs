@@ -105,6 +105,12 @@ internal static class CfgSnapshotComposer
             return false;
         }
 
+        /// <summary>
+        /// Returns all configuration values from native <see cref="CfgSnapshot"/> providers.
+        /// Non-native <see cref="ICfgSnapshot"/> implementations are skipped because
+        /// the interface does not expose a bulk-read operation — their values remain
+        /// accessible through <see cref="TryGetValue"/> but are not included here.
+        /// </summary>
         internal IReadOnlyDictionary<string, string> GetAllValues()
         {
             var capacity = 0;

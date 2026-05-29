@@ -81,7 +81,7 @@ public partial class FormattingBenchmarks
                     {
                         FilePath = _filePath,
                         BatchSize = 32,
-                        FlushInterval = TimeSpan.Zero
+                        AllowFlushInterrupt = false
                     }
                 )
             ],
@@ -107,7 +107,7 @@ public partial class FormattingBenchmarks
                     {
                         FilePath = _dualFilePath,
                         BatchSize = 32,
-                        FlushInterval = TimeSpan.Zero
+                        AllowFlushInterrupt = false
                     }
                 )
             ],

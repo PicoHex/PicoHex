@@ -58,13 +58,15 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         {
             fileStream.Seek(0, SeekOrigin.End);
             _writer = new StreamWriter(fileStream, Encoding.UTF8);
+            _processingTask = ProcessWritesAsync();
         }
         catch
         {
+            // If ProcessWritesAsync throws synchronously, clean up the writer and stream.
+            _writer?.Dispose();
             fileStream.Dispose();
             throw;
         }
-        _processingTask = ProcessWritesAsync();
     }
 
     public async Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
@@ -160,7 +162,7 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
     private async ValueTask DrainBatchAsync(List<string> batch)
     {
-        if (_options.FlushInterval > TimeSpan.Zero)
+        if (_options.AllowFlushInterrupt)
         {
             while (batch.Count < _options.BatchSize)
             {

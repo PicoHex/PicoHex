@@ -419,6 +419,12 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         spc.AddSource("InterceptorRegistrations.g.cs", sb.ToString());
     }
 
+    /// <summary>
+    /// Generates the invocation struct for a single method. Currently does NOT support:
+    /// - <c>ref</c> / <c>out</c> / <c>in</c> parameters (would require parameter modifiers)
+    /// - Generic methods (type parameter substitution not implemented)
+    /// These are future enhancements tracked in the AOP roadmap.
+    /// </summary>
     private static void EmitInvocationStruct(
         StringBuilder sb,
         INamedTypeSymbol serviceType,
@@ -484,6 +490,21 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             sb.AppendLine(
                 $"    public {resultName} InvokeTarget() => _target.{method.Name}({paramArgs});"
             );
+
+            // Generate async InvokeTargetAsync for methods returning Task/ValueTask.
+            var isAsyncReturn =
+                retType
+                    is INamedTypeSymbol
+                    {
+                        MetadataName: "ValueTask`1" or "Task`1" or "ValueTask" or "Task"
+                    };
+            if (isAsyncReturn)
+            {
+                sb.AppendLine(
+                    $"    public async {retType.ToDisplayString()} InvokeTargetAsync() => await _target.{method.Name}({paramArgs});"
+                );
+            }
+
             sb.AppendLine("}");
             sb.AppendLine();
         }
@@ -548,14 +569,19 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
 
             sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
             sb.AppendLine("    {");
+            // Note: scope is always null in the generated decorator because interceptors
+            // should obtain any required services through constructor injection (DI).
+            // IInvocation.Scope is provided for advanced scenarios where interception-time
+            // resolution is unavoidable; it is the consumer's responsibility to supply a
+            // scope when constructing the invocation manually.
             sb.AppendLine($"        var inv = new {structRef}(_inner{paramArgs}, scope: null);");
             if (isVoidTask)
                 sb.AppendLine(
-                    "        _i0.InvokeVoid(inv, _ => inv.InvokeTarget()); return global::System.Threading.Tasks.Task.CompletedTask;"
+                    "        return _i0.InvokeAsyncVoid(inv, async _ => { await inv.InvokeTargetAsync(); }).AsTask();"
                 );
             else if (isTaskOf)
                 sb.AppendLine(
-                    "        var r = _i0.Invoke(inv, _ => inv.InvokeTarget()); return global::System.Threading.Tasks.Task.FromResult(r);"
+                    "        return _i0.InvokeAsync(inv, async _ => await inv.InvokeTargetAsync()).AsTask();"
                 );
             else if (isVoid)
                 sb.AppendLine("        _i0.InvokeVoid(inv, _ => inv.InvokeTarget());");
@@ -569,6 +595,14 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine();
     }
 
+    /// <summary>
+    /// Produces a legal C# identifier from a type name by replacing special characters
+    /// with underscores. Two distinct types may produce the same sanitized name
+    /// (e.g. <c>Dictionary_A_B_C</c> and <c>Dictionary_A_B_C</c> from different
+    /// generic parameter combinations). This is expected to be extremely rare in
+    /// practice. When it occurs, the second type silently falls back to manual
+    /// decorator instantiation.
+    /// </summary>
     private static string Sanitize(string name)
     {
         return name.Replace("<", "_")
@@ -586,7 +620,10 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         bool isLast
     )
     {
-        if (implType is null || SymbolEqualityComparer.Default.Equals(serviceType, implType))
+        // Only skip when we genuinely cannot determine an implementation type.
+        // Self-registration (serviceType == implType) is valid — the decorator
+        // wraps the service, and the inner resolution uses the same type.
+        if (implType is null)
             return;
 
         var safeSvc = Sanitize(serviceType.ToDisplayString());
@@ -618,11 +655,14 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
         )
             return false;
 
-        // Namespace filter
+        // Namespace filter (prefix match so "MyApp" matches "MyApp.Services" etc.)
         if (filter.NamespaceFilter is not null)
         {
             var ns = serviceType.ContainingNamespace?.ToDisplayString() ?? "";
-            if (ns != filter.NamespaceFilter)
+            if (
+                !ns.StartsWith(filter.NamespaceFilter, StringComparison.Ordinal)
+                && ns != filter.NamespaceFilter
+            )
                 return false;
         }
 
@@ -647,8 +687,15 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             if (iface.ToDisplayString() == PicoAopNames.IInterceptorFull)
                 return true;
         }
-        return type.ToDisplayString() == PicoAopNames.IInterceptorFull
-            || type.BaseType?.ToDisplayString() == PicoAopNames.InterceptorBaseFull;
+
+        // Walk base type chain for InterceptorBase inheritance.
+        for (var baseType = type.BaseType; baseType is not null; baseType = baseType.BaseType)
+        {
+            if (baseType.ToDisplayString() == PicoAopNames.InterceptorBaseFull)
+                return true;
+        }
+
+        return type.ToDisplayString() == PicoAopNames.IInterceptorFull;
     }
 
     private sealed record InterceptionInfo(

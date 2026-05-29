@@ -12,7 +12,7 @@ public sealed class LoggerFactoryTests
             {
                 FilePath = filePath,
                 BatchSize = 8,
-                FlushInterval = TimeSpan.FromMilliseconds(5)
+                AllowFlushInterrupt = true
             }
         );
 
@@ -97,7 +97,7 @@ public sealed class LoggerFactoryTests
                 {
                     FilePath = filePath,
                     BatchSize = 16,
-                    FlushInterval = TimeSpan.FromMilliseconds(10)
+                    AllowFlushInterrupt = true
                 }
             );
 

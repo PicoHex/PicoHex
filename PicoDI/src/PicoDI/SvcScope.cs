@@ -4,6 +4,12 @@ namespace PicoDI;
 /// Represents a service scope that manages the lifetime of scoped service instances.
 /// Supports hierarchical scopes where child scopes are automatically disposed when the parent is disposed.
 /// </summary>
+/// <remarks>
+/// <para>Scope disposal order: when scopes are created in sequence (A → B → C) but
+/// disposed out of order (e.g. A before B), the disposal path correctly walks the
+/// parent chain via <c>FindNearestActiveAncestor</c> to find the still-active scope.
+/// This is safe but non-standard — the expected pattern is LIFO (C → B → A).</para>
+/// </remarks>
 public sealed partial class SvcScope : ISvcScope
 {
     private readonly FrozenDictionary<Type, SvcRuntimeRegistration[]> _registrationCache;

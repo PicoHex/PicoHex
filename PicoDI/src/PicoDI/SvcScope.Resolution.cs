@@ -137,9 +137,21 @@ public sealed partial class SvcScope
             // Guard: concurrent DisposeAsync may have blown away the old queue
             // between the implicit first _disposed check (ResolveByLifetime does
             // not check _disposed for transients) and the call above, creating an
-            // orphan collection. Null it out so the field stays clean after dispose.
+            // orphan collection. Drain the abandoned queue to prevent leaking
+            // instances enqueued by other racing threads. The current instance
+            // is skipped here — it will be disposed by the re-check below.
             if (Volatile.Read(ref _disposed) != 0)
-                _ = Interlocked.Exchange(ref _trackedTransients, null);
+            {
+                var abandoned = Interlocked.Exchange(ref _trackedTransients, null);
+                if (abandoned is not null)
+                {
+                    while (abandoned.TryDequeue(out var orphan))
+                    {
+                        if (!ReferenceEquals(orphan, instance))
+                            DisposeTrackedInstance(orphan);
+                    }
+                }
+            }
         }
 
         // Re-check after enqueue: if the scope was disposed during factory

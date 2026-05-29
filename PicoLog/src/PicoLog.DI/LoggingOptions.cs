@@ -62,7 +62,7 @@ public sealed class LoggingOptions
         {
             BatchSize = File.BatchSize,
             QueueCapacity = File.QueueCapacity,
-            FlushInterval = File.FlushInterval
+            AllowFlushInterrupt = File.AllowFlushInterrupt
         };
 
         if (File.HasExplicitFilePath)

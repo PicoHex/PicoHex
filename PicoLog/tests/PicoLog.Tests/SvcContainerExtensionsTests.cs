@@ -160,7 +160,7 @@ public sealed class SvcContainerExtensionsTests
                 options.Factory.QueueCapacity = 8;
                 options.Factory.QueueFullMode = LogQueueFullMode.Wait;
                 options.File.BatchSize = 4;
-                options.File.FlushInterval = TimeSpan.FromMilliseconds(5);
+                options.File.AllowFlushInterrupt = true;
             });
 
             await using var scope = container.CreateScope();
@@ -583,7 +583,7 @@ public sealed class SvcContainerExtensionsTests
                 options.Formatter = new PrefixFormatter("write-to");
                 options.File.FilePath = filePath;
                 options.File.BatchSize = 4;
-                options.File.FlushInterval = TimeSpan.FromMilliseconds(5);
+                options.File.AllowFlushInterrupt = true;
                 options.WriteTo.File();
             });
 
@@ -657,7 +657,7 @@ public sealed class SvcContainerExtensionsTests
                     {
                         file.FilePath = filePath;
                         file.BatchSize = 2;
-                        file.FlushInterval = TimeSpan.FromMilliseconds(5);
+                        file.AllowFlushInterrupt = true;
                     });
             });
 
