@@ -14,6 +14,7 @@ public static class CfgValidator
     /// <returns>A list of validation errors, or an empty list when the instance is valid.</returns>
     public static List<ValidationResult> Validate<T>(T instance)
     {
+#if !PICOCFG_NO_VALIDATION
         var results = new List<ValidationResult>();
         if (instance is IValidatableObject validatable)
         {
@@ -29,6 +30,9 @@ public static class CfgValidator
             }
         }
         return results;
+#else
+        return [];
+#endif
     }
 
     /// <summary>
