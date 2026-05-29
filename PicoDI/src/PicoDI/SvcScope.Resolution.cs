@@ -297,10 +297,10 @@ public sealed partial class SvcScope
     ///
     /// INTENTIONAL sync-over-async bridge: race-path orphan cleanup requires deterministic
     /// disposal for file handles, sockets, and transactions. Fire-and-forget is unsafe here.
-    /// The <c>Task.Run</c> wrapper prevents deadlocks on threads with a <c>SynchronizationContext</c>
-    /// (WPF, WinForms). Types that implement both <c>IDisposable</c> and
-    /// <c>IAsyncDisposable</c> take the faster sync path (checked first); only
-    /// <c>IAsyncDisposable</c>-only types may block a ThreadPool thread here.
+    /// Types that implement both <c>IDisposable</c> and <c>IAsyncDisposable</c>
+    /// take the faster sync path (checked first); only <c>IAsyncDisposable</c>-only
+    /// types may block here, which is acceptable in AOT-first environments without
+    /// a <c>SynchronizationContext</c>.
     /// </summary>
     private void DisposeTrackedInstance(object instance)
     {
@@ -320,22 +320,7 @@ public sealed partial class SvcScope
             case IAsyncDisposable ad:
                 try
                 {
-                    var vt = ad.DisposeAsync();
-                    if (!vt.IsCompletedSuccessfully)
-                    {
-                        // Only block a ThreadPool thread for truly async disposal.
-                        // The Task.Run wrapper prevents deadlocks on threads with a
-                        // SynchronizationContext (WPF, WinForms, legacy ASP.NET).
-                        Task.Run(() => vt.AsTask().GetAwaiter().GetResult())
-                            .GetAwaiter()
-                            .GetResult();
-                    }
-                    else
-                    {
-                        // Synchronous completion: no async work needed, no blocking.
-                        // Completing the ValueTask observable for correctness.
-                        vt.GetAwaiter().GetResult();
-                    }
+                    ad.DisposeAsync().AsTask().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {
