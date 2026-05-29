@@ -1,4 +1,3 @@
-
 var consoleFormatter = new ConsoleFormatter();
 var markdownFormatter = new MarkdownFormatter();
 var target = args.FirstOrDefault()?.ToLowerInvariant();

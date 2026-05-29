@@ -1,4 +1,3 @@
-
 namespace PicoAop.Tests;
 
 internal static class TestMetadata

@@ -1,6 +1,5 @@
 namespace PicoCfg.Gen.Tests;
 
-
 #pragma warning disable CS0618
 
 public sealed class PicoCfgSourceGeneratorTests

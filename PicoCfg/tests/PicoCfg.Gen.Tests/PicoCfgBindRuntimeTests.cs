@@ -1,6 +1,5 @@
 namespace PicoCfg.Gen.Tests;
 
-
 public class PicoCfgBindRuntimeTests
 {
     [Test]

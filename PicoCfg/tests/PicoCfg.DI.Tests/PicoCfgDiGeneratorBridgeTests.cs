@@ -1,6 +1,4 @@
-
 namespace PicoCfg.DI.Tests;
-
 
 public class PicoCfgDiGeneratorBridgeTests
 {

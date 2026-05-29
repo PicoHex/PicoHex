@@ -1,6 +1,5 @@
 namespace PicoAop.Tests;
 
-
 public class GeneratorDiagParamsTests
 {
     [Test]

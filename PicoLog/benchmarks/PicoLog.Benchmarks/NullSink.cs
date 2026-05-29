@@ -1,4 +1,3 @@
-
 namespace PicoLog.Benchmarks;
 
 /// <summary>

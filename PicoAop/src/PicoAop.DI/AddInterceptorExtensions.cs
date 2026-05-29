@@ -1,6 +1,5 @@
 namespace PicoAop.DI;
 
-
 /// <summary>
 /// Compile-time interceptor registration methods.
 /// These methods are compile-time markers — the actual interceptor wiring

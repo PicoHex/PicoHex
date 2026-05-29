@@ -1,4 +1,3 @@
-
 Console.WriteLine("=== PicoAop / Interceptor Demo ===\n");
 
 // ── How PicoAop works ─────────────────────────────────────────────

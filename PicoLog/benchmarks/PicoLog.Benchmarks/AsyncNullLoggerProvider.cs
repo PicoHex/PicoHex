@@ -1,4 +1,3 @@
-
 namespace PicoLog.Benchmarks;
 
 internal sealed class AsyncNullLoggerProvider

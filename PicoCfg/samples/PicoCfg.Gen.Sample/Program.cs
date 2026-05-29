@@ -1,4 +1,3 @@
-
 Console.WriteLine("=== PicoCfg.Gen AOT Binding Sample ===");
 
 await using var root = await Cfg.CreateBuilder()

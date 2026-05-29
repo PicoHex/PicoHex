@@ -1,6 +1,5 @@
 namespace PicoDI.Test;
 
-
 public sealed class PicoDISourceGeneratorTests
 {
     [Test]

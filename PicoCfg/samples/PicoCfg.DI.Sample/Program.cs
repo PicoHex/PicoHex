@@ -1,4 +1,3 @@
-
 Console.WriteLine("=== PicoCfg.DI Sample ===");
 
 await using var root = await Cfg.CreateBuilder()

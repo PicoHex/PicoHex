@@ -1,6 +1,5 @@
 namespace PicoAop.Tests;
 
-
 public class LifecycleTests
 {
     public interface IGreeter

@@ -1,6 +1,5 @@
 namespace PicoAop.Tests;
 
-
 public class DiExtensionTests
 {
     public sealed class TestInterceptor : InterceptorBase { }
