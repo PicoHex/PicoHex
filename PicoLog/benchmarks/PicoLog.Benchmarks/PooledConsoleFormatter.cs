@@ -1,3 +1,5 @@
+using LogLevel = PicoLog.Abs.LogLevel;
+
 namespace PicoLog.Benchmarks;
 
 internal sealed class PooledConsoleFormatter : ILogFormatter

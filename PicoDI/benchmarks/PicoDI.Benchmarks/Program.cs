@@ -161,15 +161,19 @@ public static class ContainerSetup
         {
             case ServiceComplexity.NoDependency:
                 container.Register(
-                    new SvcDescriptor(typeof(ISimpleService), Factories.SimpleService, svcLifetime)
+                    SvcDescriptor.Create(
+                        typeof(ISimpleService),
+                        Factories.SimpleService,
+                        svcLifetime
+                    )
                 );
                 break;
             case ServiceComplexity.SingleDependency:
                 container.Register(
-                    new SvcDescriptor(typeof(ILogger), Factories.Logger, svcLifetime)
+                    SvcDescriptor.Create(typeof(ILogger), Factories.Logger, svcLifetime)
                 );
                 container.Register(
-                    new SvcDescriptor(
+                    SvcDescriptor.Create(
                         typeof(IServiceWithDep),
                         Factories.ServiceWithDep,
                         svcLifetime
@@ -178,13 +182,13 @@ public static class ContainerSetup
                 break;
             case ServiceComplexity.MultipleDependencies:
                 container.Register(
-                    new SvcDescriptor(typeof(ILogger), Factories.Logger, svcLifetime)
+                    SvcDescriptor.Create(typeof(ILogger), Factories.Logger, svcLifetime)
                 );
                 container.Register(
-                    new SvcDescriptor(typeof(IRepository), Factories.Repository, svcLifetime)
+                    SvcDescriptor.Create(typeof(IRepository), Factories.Repository, svcLifetime)
                 );
                 container.Register(
-                    new SvcDescriptor(
+                    SvcDescriptor.Create(
                         typeof(IServiceWithMultipleDeps),
                         Factories.ServiceWithMultipleDeps,
                         svcLifetime
@@ -193,19 +197,19 @@ public static class ContainerSetup
                 break;
             case ServiceComplexity.DeepChain:
                 container.Register(
-                    new SvcDescriptor(typeof(ILevel1), Factories.Level1, svcLifetime)
+                    SvcDescriptor.Create(typeof(ILevel1), Factories.Level1, svcLifetime)
                 );
                 container.Register(
-                    new SvcDescriptor(typeof(ILevel2), Factories.Level2, svcLifetime)
+                    SvcDescriptor.Create(typeof(ILevel2), Factories.Level2, svcLifetime)
                 );
                 container.Register(
-                    new SvcDescriptor(typeof(ILevel3), Factories.Level3, svcLifetime)
+                    SvcDescriptor.Create(typeof(ILevel3), Factories.Level3, svcLifetime)
                 );
                 container.Register(
-                    new SvcDescriptor(typeof(ILevel4), Factories.Level4, svcLifetime)
+                    SvcDescriptor.Create(typeof(ILevel4), Factories.Level4, svcLifetime)
                 );
                 container.Register(
-                    new SvcDescriptor(typeof(ILevel5), Factories.Level5, svcLifetime)
+                    SvcDescriptor.Create(typeof(ILevel5), Factories.Level5, svcLifetime)
                 );
                 break;
         }

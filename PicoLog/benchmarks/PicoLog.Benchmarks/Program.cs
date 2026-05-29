@@ -1,4 +1,4 @@
-var consoleFormatter = new ConsoleFormatter();
+var consoleFormatter = new PicoBench.Formatters.ConsoleFormatter();
 var markdownFormatter = new MarkdownFormatter();
 var target = args.FirstOrDefault()?.ToLowerInvariant();
 var sections = new List<string>();
