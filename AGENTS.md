@@ -79,6 +79,7 @@ PicoLog/src/       .Abs           netstandard2.0   Interfaces + bundles .Gen as 
 - **No reflection**: No `Activator.CreateInstance`, `Expression.Compile`, or runtime emit. Use source generators or factory delegates.
 - **AOT-compatible only**: zero trimming warnings.
 - `dotnet csharpier PicoHex.slnx` before commit (CSharpier installed as global dotnet tool, no config needed).
+- **Pre-commit hook** (`.git/hooks/pre-commit`) enforces CSharpier automatically on every `git commit` — do not bypass it with `--no-verify`.
 
 ## CI
 
