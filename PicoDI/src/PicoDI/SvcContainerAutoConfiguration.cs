@@ -7,7 +7,6 @@ namespace PicoDI;
 public static class SvcContainerAutoConfiguration
 {
     private static readonly ConfiguratorRegistry Configurators = new();
-    private static readonly GeneratedConfigurationStateRegistry ConfigurationStates = new();
     private static readonly Lock _applyLock = new();
 
     private sealed class ConfiguratorRegistry
@@ -68,36 +67,16 @@ public static class SvcContainerAutoConfiguration
         }
     }
 
-    private sealed class GeneratedConfigurationStateRegistry
+    private static void MarkApplied(ISvcContainer container)
     {
-        private sealed class ConfigurationState
-        {
-            public bool IsGeneratedConfigurationApplied;
-        }
+        if (container is IGeneratedConfigurationStateContainer s)
+            s.IsGeneratedConfigurationApplied = true;
+    }
 
-        private readonly ConditionalWeakTable<ISvcContainer, ConfigurationState> _states = new();
-
-        public void MarkApplied(ISvcContainer container)
-        {
-            if (container is IGeneratedConfigurationStateContainer generatedStateContainer)
-            {
-                generatedStateContainer.IsGeneratedConfigurationApplied = true;
-                return;
-            }
-
-            _states.GetOrCreateValue(container).IsGeneratedConfigurationApplied = true;
-        }
-
-        public bool HasApplied(ISvcContainer container)
-        {
-            if (container is IGeneratedConfigurationStateContainer generatedStateContainer)
-            {
-                return generatedStateContainer.IsGeneratedConfigurationApplied;
-            }
-
-            return _states.TryGetValue(container, out var state)
-                && state.IsGeneratedConfigurationApplied;
-        }
+    private static bool HasApplied(ISvcContainer container)
+    {
+        return container is IGeneratedConfigurationStateContainer s
+            && s.IsGeneratedConfigurationApplied;
     }
 
     /// <summary>
@@ -158,24 +137,14 @@ public static class SvcContainerAutoConfiguration
     /// <param name="container">The configured container.</param>
     public static void MarkGeneratedConfigurationApplied(ISvcContainer container)
     {
-        if (container is null)
-            throw new ArgumentNullException(nameof(container));
-
-        ConfigurationStates.MarkApplied(container);
+        ArgumentNullException.ThrowIfNull(container);
+        MarkApplied(container);
     }
 
-    /// <summary>
-    /// Gets a value indicating whether source-generated registrations were already applied
-    /// to the given container instance.
-    /// </summary>
-    /// <param name="container">The container to inspect.</param>
-    /// <returns>True if generated registrations have been applied to this container.</returns>
     public static bool HasAppliedGeneratedConfiguration(ISvcContainer container)
     {
-        if (container is null)
-            throw new ArgumentNullException(nameof(container));
-
-        return ConfigurationStates.HasApplied(container);
+        ArgumentNullException.ThrowIfNull(container);
+        return HasApplied(container);
     }
 
     /// <summary>

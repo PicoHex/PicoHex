@@ -544,8 +544,10 @@ public class ErrorHandlingTests
         public string Configuration { get; } = configuration;
     }
 
-    private sealed class FakeContainer : ISvcContainer
+    private sealed class FakeContainer : ISvcContainer, IGeneratedConfigurationStateContainer
     {
+        public bool IsGeneratedConfigurationApplied { get; set; }
+
         public ISvcContainer Register(SvcDescriptor descriptor)
         {
             return this;
