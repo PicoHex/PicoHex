@@ -5,15 +5,23 @@ if (!BenchmarkRunPlan.TryParse(args, out var runPlan, out var error))
     return;
 }
 
+var config = new BenchmarkConfig
+{
+    WarmupIterations = BenchmarkConfig.Default.WarmupIterations,
+    SampleCount = BenchmarkConfig.Default.SampleCount,
+    IterationsPerSample = BenchmarkConfig.Default.IterationsPerSample / 10,
+    RetainSamples = BenchmarkConfig.Default.RetainSamples
+};
+
 BenchmarkSuite? buildSuite = null;
 BenchmarkSuite? lookupSuite = null;
 if (runPlan.IncludeBaselines)
 {
-    buildSuite = BenchmarkRunner.Run<BuildBenchmarks>(BenchmarkConfig.Default);
-    lookupSuite = BenchmarkRunner.Run<LookupBenchmarks>(BenchmarkConfig.Default);
+    buildSuite = BenchmarkRunner.Run<BuildBenchmarks>(config);
+    lookupSuite = BenchmarkRunner.Run<LookupBenchmarks>(config);
 }
 
-var mixedConfig = runPlan.MixedScenario is null ? BenchmarkConfig.Default : BenchmarkConfig.Quick;
+var mixedConfig = runPlan.MixedScenario is null ? config : config;
 
 BenchmarkSuite mixedSuite;
 if (runPlan.MixedScenario is { } mixedScenario)
@@ -37,8 +45,8 @@ BenchmarkSuite? reloadSuite = null;
 BenchmarkSuite? reloadControlSuite = null;
 if (runPlan.IncludeReload)
 {
-    reloadSuite = BenchmarkRunner.Run<ReloadBenchmarks>(BenchmarkConfig.Default);
-    reloadControlSuite = BenchmarkRunner.Run<ReloadControlBenchmarks>(BenchmarkConfig.Default);
+    reloadSuite = BenchmarkRunner.Run<ReloadBenchmarks>(config);
+    reloadControlSuite = BenchmarkRunner.Run<ReloadControlBenchmarks>(config);
 }
 
 var formatter = new ConsoleFormatter();
