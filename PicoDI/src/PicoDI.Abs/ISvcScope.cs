@@ -45,22 +45,14 @@ public static class SvcProviderExtensions
         /// <typeparam name="T">The type of service to resolve.</typeparam>
         /// <returns>The resolved service instance.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T GetService<T>() => (T)provider.GetService(TypeCache<T>.Value);
+        public T GetService<T>() => (T)provider.GetService(typeof(T));
 
         /// <summary>
         /// Resolves all services of the specified type.
         /// </summary>
         /// <typeparam name="T">The type of services to resolve.</typeparam>
         /// <returns>A read-only list of all registered service instances of the specified type.</returns>
-        public IReadOnlyList<T> GetServices<T>() => provider.GetServices(TypeCache<T>.Value).Cast<T>().ToArray();
+        public IReadOnlyList<T> GetServices<T>() => provider.GetServices(typeof(T)).Cast<T>().ToArray();
     }
 
-    /// <summary>
-    /// Static generic class for caching Type objects.
-    /// Each unique T gets its own static field, avoiding typeof(T) reflection overhead.
-    /// </summary>
-    private static class TypeCache<T>
-    {
-        public static readonly Type Value = typeof(T);
-    }
 }
