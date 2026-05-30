@@ -46,10 +46,8 @@ internal sealed class InternalLogger(
     {
         if (!CanAcceptWrite(logLevel))
             return;
-        var entry = CreateEntry(logLevel, message, exception, properties) with
-        {
-            EventId = eventId
-        };
+        var entry = CreateEntry(logLevel, message, exception, properties);
+        entry.EventId = eventId;
         _pipeline.Write(entry);
     }
 
@@ -64,10 +62,8 @@ internal sealed class InternalLogger(
     {
         if (!CanAcceptWrite(logLevel))
             return Task.CompletedTask;
-        var entry = CreateEntry(logLevel, message, exception, properties) with
-        {
-            EventId = eventId
-        };
+        var entry = CreateEntry(logLevel, message, exception, properties);
+        entry.EventId = eventId;
         return _pipeline.WriteAsync(entry, cancellationToken);
     }
 
@@ -100,12 +96,10 @@ internal sealed class InternalLogger(
     {
         if (!CanAcceptWrite(logLevel))
             return;
-        var entry = CreateEntry(logLevel, message: null, exception, properties) with
-        {
-            MessageTemplate = message.Format,
-            MessageArgs = message.GetArguments(),
-            EventId = eventId
-        };
+        var entry = CreateEntry(logLevel, message: null, exception, properties);
+        entry.MessageTemplate = message.Format;
+        entry.MessageArgs = message.GetArguments();
+        entry.EventId = eventId;
         _pipeline.Write(entry);
     }
 
@@ -120,12 +114,10 @@ internal sealed class InternalLogger(
     {
         if (!CanAcceptWrite(logLevel))
             return Task.CompletedTask;
-        var entry = CreateEntry(logLevel, message: null, exception, properties) with
-        {
-            MessageTemplate = message.Format,
-            MessageArgs = message.GetArguments(),
-            EventId = eventId
-        };
+        var entry = CreateEntry(logLevel, message: null, exception, properties);
+        entry.MessageTemplate = message.Format;
+        entry.MessageArgs = message.GetArguments();
+        entry.EventId = eventId;
         return _pipeline.WriteAsync(entry, cancellationToken);
     }
 
@@ -169,11 +161,9 @@ internal sealed class InternalLogger(
         if (!CanAcceptWrite(logLevel))
             return;
 
-        var entry = CreateEntry(logLevel, message: null, exception, properties) with
-        {
-            MessageTemplate = message.Format,
-            MessageArgs = message.GetArguments()
-        };
+        var entry = CreateEntry(logLevel, message: null, exception, properties);
+        entry.MessageTemplate = message.Format;
+        entry.MessageArgs = message.GetArguments();
         _pipeline.Write(entry);
     }
 
@@ -188,11 +178,9 @@ internal sealed class InternalLogger(
         if (!CanAcceptWrite(logLevel))
             return Task.CompletedTask;
 
-        var entry = CreateEntry(logLevel, message: null, exception, properties) with
-        {
-            MessageTemplate = message.Format,
-            MessageArgs = message.GetArguments()
-        };
+        var entry = CreateEntry(logLevel, message: null, exception, properties);
+        entry.MessageTemplate = message.Format;
+        entry.MessageArgs = message.GetArguments();
 
         return _pipeline.WriteAsync(entry, cancellationToken);
     }
@@ -213,7 +201,7 @@ internal sealed class InternalLogger(
     )
     {
         var scopeSnapshot = _runtime.CaptureScopes();
-        return new()
+        return new LogEntry
         {
             Timestamp = GetTimestamp(),
             Level = logLevel,
