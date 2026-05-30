@@ -201,17 +201,16 @@ internal sealed class InternalLogger(
     )
     {
         var scopeSnapshot = _runtime.CaptureScopes();
-        return new LogEntry
-        {
-            Timestamp = GetTimestamp(),
-            Level = logLevel,
-            Category = categoryName,
-            Message = message,
-            Exception = exception,
-            Scopes = scopeSnapshot.Scopes,
-            Properties = SnapshotProperties(properties),
-            ScopeProperties = scopeSnapshot.Properties
-        };
+        var entry = _runtime.CanFastPath ? LogEntryPool.Rent() : new LogEntry();
+        entry.Timestamp = GetTimestamp();
+        entry.Level = logLevel;
+        entry.Category = categoryName;
+        entry.Message = message;
+        entry.Exception = exception;
+        entry.Scopes = scopeSnapshot.Scopes;
+        entry.Properties = SnapshotProperties(properties);
+        entry.ScopeProperties = scopeSnapshot.Properties;
+        return entry;
     }
 
     private static IReadOnlyList<KeyValuePair<string, object?>>? SnapshotProperties(

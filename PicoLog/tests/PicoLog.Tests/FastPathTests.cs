@@ -4,16 +4,14 @@ public sealed class FastPathTests
 {
     private sealed class FastSink : IFastLogSink
     {
-        private readonly ConcurrentQueue<LogEntry> _entries = new();
-        private int _writeCallCount;
+        private readonly ConcurrentQueue<string> _messages = new();
 
-        public IReadOnlyCollection<LogEntry> Entries => _entries.ToArray();
-        public int WriteCallCount => Volatile.Read(ref _writeCallCount);
+        public IReadOnlyCollection<string> Messages => _messages.ToArray();
 
         public Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
         {
-            Interlocked.Increment(ref _writeCallCount);
-            _entries.Enqueue(entry);
+            // Copy — entry may be returned to pool after dispatch
+            _messages.Enqueue(entry.Message ?? string.Empty);
             return Task.CompletedTask;
         }
 
@@ -33,8 +31,7 @@ public sealed class FastPathTests
         logger.Info("hello");
 
         // Fast path: entries should be written synchronously without going through queue
-        // No need to flush — entry should already be in the sink
-        await Assert.That(sink.WriteCallCount).IsEqualTo(1);
-        await Assert.That(sink.Entries.Single().Message).IsEqualTo("hello");
+        await Assert.That(sink.Messages.Count).IsEqualTo(1);
+        await Assert.That(sink.Messages.Single()).IsEqualTo("hello");
     }
 }

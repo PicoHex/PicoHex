@@ -35,6 +35,7 @@ internal sealed class CategoryPipeline : IAsyncDisposable
         if (_runtime.CanFastPath)
         {
             _sinkDispatcher.DispatchEntrySync(entry);
+            LogEntryPool.Return(entry);
             return;
         }
 
