@@ -489,7 +489,7 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
 
     /// <summary>
     /// Generates the invocation struct for a single method. Currently does NOT support:
-    /// - <c>ref</c> / <c>out</c> / <c>in</c> parameters (would require parameter modifiers)
+    /// - <c>ref</c> / <c>out</c> / <c>in</c> parameters (delegated directly without interception)
     /// - Generic methods (type parameter substitution not implemented)
     /// These are future enhancements tracked in the AOP roadmap.
     /// </summary>
@@ -506,7 +506,7 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             var method in serviceType
                 .GetMembers()
                 .OfType<IMethodSymbol>()
-                .Where(m => m.MethodKind == MethodKind.Ordinary)
+                .Where(m => m.MethodKind == MethodKind.Ordinary && !HasRefLikeParameters(m))
         )
         {
             var retType = method.ReturnType;
@@ -644,7 +644,7 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             var method in serviceType
                 .GetMembers()
                 .OfType<IMethodSymbol>()
-                .Where(m => m.MethodKind == MethodKind.Ordinary)
+                .Where(m => m.MethodKind == MethodKind.Ordinary && !HasRefLikeParameters(m))
         )
         {
             var retType = method.ReturnType.ToDisplayString();
@@ -739,6 +739,35 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                     $"        init {{ /* init-only: silently no-op; _inner already constructed */ }}"
                 );
             sb.AppendLine("    }");
+            sb.AppendLine();
+        }
+
+        // Emit direct delegation for ref/out/in parameter methods.
+        // These cannot be intercepted because ref-like parameters cannot be
+        // stored in struct fields (C# language limitation).
+        foreach (
+            var method in serviceType
+                .GetMembers()
+                .OfType<IMethodSymbol>()
+                .Where(m => m.MethodKind == MethodKind.Ordinary && HasRefLikeParameters(m))
+        )
+        {
+            var retType = method.ReturnType.ToDisplayString();
+            var paramDecl = string.Join(
+                ", ",
+                method
+                    .Parameters
+                    .Select(
+                        p => $"{GetRefKindPrefix(p.RefKind)}{p.Type.ToDisplayString()} {p.Name}"
+                    )
+            );
+            var paramArgs = string.Join(
+                ", ",
+                method.Parameters.Select(p => $"{GetRefKindPrefix(p.RefKind)}{p.Name}")
+            );
+
+            sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
+            sb.AppendLine($"        => _inner.{method.Name}({paramArgs});");
             sb.AppendLine();
         }
 
@@ -846,6 +875,22 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
 
         return type.ToDisplayString() == PicoAopNames.IInterceptorFull;
     }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the method has <c>ref</c>, <c>out</c>, or <c>in</c>
+    /// parameters which cannot be stored in invocation struct fields.
+    /// </summary>
+    private static bool HasRefLikeParameters(IMethodSymbol method) =>
+        method.Parameters.Any(p => p.RefKind != RefKind.None);
+
+    private static string GetRefKindPrefix(RefKind refKind) =>
+        refKind switch
+        {
+            RefKind.Ref => "ref ",
+            RefKind.Out => "out ",
+            RefKind.In => "in ",
+            _ => ""
+        };
 
     private sealed record InterceptionInfo(
         ITypeSymbol ServiceType,

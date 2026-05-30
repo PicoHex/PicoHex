@@ -120,10 +120,10 @@ public sealed class LimitationVerificationTests : GeneratorTestBase
         await Assert.That(errors).IsEmpty();
     }
 
-    // ── #3: ref parameter ──
+    // ── #3: ref/out/in — skipped with diagnostic (C# language limitation) ──
 
     [Test]
-    public async Task RefParameter_CausesCompilationError()
+    public async Task RefParameter_CompilesButSkipped()
     {
         var source = """
             using PicoAop.DI;
@@ -131,10 +131,11 @@ public sealed class LimitationVerificationTests : GeneratorTestBase
             using PicoDI;
             using PicoDI.Abs;
 
-            public interface IFoo { void Parse(ref int x); }
+            public interface IFoo { void Parse(ref int x); void Do(); }
             public sealed class Foo : IFoo
             {
                 public void Parse(ref int x) { x = 42; }
+                public void Do() { }
             }
             public sealed class MyInterceptor : InterceptorBase { }
 
@@ -149,15 +150,16 @@ public sealed class LimitationVerificationTests : GeneratorTestBase
 
         var (compilation, diags) = RunGenerator(source);
 
-        var compilationErrors = compilation
+        var errors = compilation
             .GetDiagnostics()
             .Where(d => d.Severity == DiagnosticSeverity.Error)
             .ToList();
 
-        foreach (var e in compilationErrors)
-            Console.WriteLine($"  error: {e.GetMessage()}");
+        foreach (var e in errors)
+            Console.WriteLine($"  ERROR: {e}");
 
-        await Assert.That(compilationErrors.Count).IsGreaterThan(0);
+        // Compilation should succeed — ref method is delegated directly
+        await Assert.That(errors).IsEmpty();
     }
 
     // ── #4: Generic method ──
@@ -200,10 +202,10 @@ public sealed class LimitationVerificationTests : GeneratorTestBase
         await Assert.That(compilationErrors.Count).IsGreaterThan(0);
     }
 
-    // ── #3b: out parameter ──
+    // ── #3b: out parameter (NOW WORKS — delegated directly) ──
 
     [Test]
-    public async Task OutParameter_CausesCompilationError()
+    public async Task OutParameter_NowCompiles()
     {
         var source = """
             using PicoAop.DI;
@@ -229,15 +231,12 @@ public sealed class LimitationVerificationTests : GeneratorTestBase
 
         var (compilation, diags) = RunGenerator(source);
 
-        var compilationErrors = compilation
+        var errors = compilation
             .GetDiagnostics()
             .Where(d => d.Severity == DiagnosticSeverity.Error)
             .ToList();
 
-        foreach (var e in compilationErrors)
-            Console.WriteLine($"  error: {e.GetMessage()}");
-
-        await Assert.That(compilationErrors.Count).IsGreaterThan(0);
+        await Assert.That(errors).IsEmpty();
     }
 
     // ── #6: Task return type should actually WORK (verify it's NOT broken) ──
