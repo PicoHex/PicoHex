@@ -565,9 +565,21 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                     };
             var isVoidAsync = retType is INamedTypeSymbol { MetadataName: "ValueTask" or "Task" };
             var invokeTargetReturnType = isAsyncReturn ? retType.ToDisplayString() : resultName;
-            sb.AppendLine(
-                $"    public {invokeTargetReturnType} InvokeTarget() => _target.{method.Name}({paramArgs});"
-            );
+            var isVoidSync = retType.SpecialType == SpecialType.System_Void;
+
+            if (isVoidSync)
+            {
+                // void methods: call target then return default(VoidResult)
+                sb.AppendLine(
+                    $"    public {invokeTargetReturnType} InvokeTarget() {{ _target.{method.Name}({paramArgs}); return default; }}"
+                );
+            }
+            else
+            {
+                sb.AppendLine(
+                    $"    public {invokeTargetReturnType} InvokeTarget() => _target.{method.Name}({paramArgs});"
+                );
+            }
 
             if (isAsyncReturn)
             {
