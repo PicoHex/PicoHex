@@ -150,6 +150,14 @@ public static class ContainerFactory
         container.RegisterSingleton<N4>();
         container.RegisterSingleton<N5>();
 
+        // Register concrete implementations as themselves (required by PicoAop.Gen
+        // decorator chain resolution — the innermost decorator resolves the concrete
+        // implementation type directly).
+        container.Register<VoidSvc>(SvcLifetime.Scoped);
+        container.Register<ReturnSvc>(SvcLifetime.Scoped);
+        container.Register<TaskVoidSvc>(SvcLifetime.Scoped);
+        container.Register<TaskReturnSvc>(SvcLifetime.Scoped);
+
         // — void Do() —
         container.Register<IVoidSvc_D0, VoidSvc>(SvcLifetime.Scoped);
         container.Register<IVoidSvc_D1, VoidSvc>(SvcLifetime.Scoped).InterceptBy<N1>();
