@@ -40,10 +40,10 @@ public sealed class LimitationVerificationTests : GeneratorTestBase
         await Assert.That(errors).IsEmpty();
     }
 
-    // ── #2: Method overload collision ──
+    // ── #2: Method overload (NOW FIXED — includes param types in struct name) ──
 
     [Test]
-    public async Task MethodOverload_CausesDuplicateTypeName()
+    public async Task MethodOverload_NowCompiles()
     {
         var source = """
             using PicoAop.DI;
@@ -74,23 +74,12 @@ public sealed class LimitationVerificationTests : GeneratorTestBase
 
         var (compilation, diags) = RunGenerator(source);
 
-        var compilationErrors = compilation
+        var errors = compilation
             .GetDiagnostics()
             .Where(d => d.Severity == DiagnosticSeverity.Error)
             .ToList();
 
-        foreach (var e in compilationErrors)
-            Console.WriteLine($"  error: {e.GetMessage()}");
-
-        await Assert
-            .That(
-                compilationErrors.Any(
-                    e =>
-                        e.GetMessage().Contains("already contains a definition")
-                        || e.GetMessage().Contains("duplicate")
-                )
-            )
-            .IsTrue();
+        await Assert.That(errors).IsEmpty();
     }
 
     // ── #10: init-only property (NOW COMPILES but setter is no-op) ──

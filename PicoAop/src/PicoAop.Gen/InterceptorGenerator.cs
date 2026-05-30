@@ -518,9 +518,16 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
                     ? PicoAopNames.VoidResultFull
                     : retType.ToDisplayString();
 
-            var structName = $"{safeSvc}_{safeInt}_{method.Name}_Invocation";
             var svcName = serviceType.ToDisplayString();
             var paramList = method.Parameters.ToList();
+
+            var structName = $"{safeSvc}_{safeInt}_{method.Name}";
+            if (paramList.Count > 0)
+            {
+                foreach (var p in paramList)
+                    structName += $"_{Sanitize(p.Type.Name)}";
+            }
+            structName += "_Invocation";
 
             sb.AppendLine($"internal struct {structName} : IInvocation<{resultName}>");
             sb.AppendLine("{");
@@ -656,7 +663,13 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             var paramArgs = method.Parameters.Any()
                 ? ", " + string.Join(", ", method.Parameters.Select(p => p.Name))
                 : "";
-            var structRef = $"{safeSvc}_{safeInt}_{method.Name}_Invocation";
+            var paramTypeSuffix = "";
+            if (method.Parameters.Length > 0)
+            {
+                foreach (var p in method.Parameters)
+                    paramTypeSuffix += $"_{Sanitize(p.Type.Name)}";
+            }
+            var structRef = $"{safeSvc}_{safeInt}_{method.Name}{paramTypeSuffix}_Invocation";
 
             sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
             sb.AppendLine("    {");
