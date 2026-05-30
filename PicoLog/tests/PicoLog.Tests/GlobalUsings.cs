@@ -2,6 +2,7 @@ global using System.Collections.Concurrent;
 global using System.Collections.Immutable;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Diagnostics.Metrics;
+global using System.Net;
 global using Microsoft.CodeAnalysis;
 global using Microsoft.CodeAnalysis.CSharp;
 global using PicoDI;
