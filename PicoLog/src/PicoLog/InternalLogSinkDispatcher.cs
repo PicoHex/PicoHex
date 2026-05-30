@@ -54,6 +54,51 @@ internal sealed class InternalLogSinkDispatcher : IDisposable
             await WriteToSinkAsync(sink, entry, token).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Dispatches a batch of log entries to all registered sinks.
+    /// For sinks implementing <see cref="IBatchingLogSink"/>, the entire batch
+    /// is sent in one call. For other sinks, entries are dispatched individually.
+    /// </summary>
+    internal async Task DispatchBatchAsync(IReadOnlyList<LogEntry> batch)
+    {
+        if (batch.Count == 0)
+            return;
+
+        var token = _drainCancellationSource.Token;
+
+        foreach (ILogSink sink in _sinks)
+        {
+            if (sink is IBatchingLogSink batchingSink)
+            {
+                await WriteBatchToSinkAsync(batchingSink, batch, token).ConfigureAwait(false);
+            }
+            else
+            {
+                foreach (var entry in batch)
+                    await WriteToSinkAsync(sink, entry, token).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task WriteBatchToSinkAsync(
+        IBatchingLogSink sink,
+        IReadOnlyList<LogEntry> batch,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await sink.WriteBatchAsync(batch, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _runtime.RecordSinkFailure();
+            // Fall back to per-entry write for error reporting
+            foreach (var entry in batch)
+                await HandleSinkWriteFailureAsync(sink, entry, ex).ConfigureAwait(false);
+        }
+    }
+
     private void CancelDrain()
     {
         try

@@ -158,39 +158,36 @@ internal sealed class CategoryPipeline : IAsyncDisposable
         _runtime.ReportDroppedMessages(_categoryName, dropped);
     }
 
+    private static readonly int MaxBatchSize = 64;
+
     private async Task ProcessEntriesAsync()
     {
         try
         {
+            var batch = new List<LogEntry>(MaxBatchSize);
+
             while (await _queue.WaitToReadAsync().ConfigureAwait(false))
             {
-                while (true)
+                while (batch.Count < MaxBatchSize && _queue.TryRead(out var entry))
                 {
                     BeginDequeuedEntry();
+                    batch.Add(entry);
+                    EndDequeuedEntry();
+                }
 
-                    if (!_queue.TryRead(out var entry))
-                    {
-                        EndDequeuedEntry();
-                        break;
-                    }
+                if (batch.Count == 0)
+                    continue;
 
-                    try
-                    {
-                        BeginDispatch();
+                BeginDispatch();
 
-                        try
-                        {
-                            await _sinkDispatcher.DispatchEntryAsync(entry).ConfigureAwait(false);
-                        }
-                        finally
-                        {
-                            EndDispatch();
-                        }
-                    }
-                    finally
-                    {
-                        EndDequeuedEntry();
-                    }
+                try
+                {
+                    await _sinkDispatcher.DispatchBatchAsync(batch).ConfigureAwait(false);
+                }
+                finally
+                {
+                    EndDispatch();
+                    batch.Clear();
                 }
             }
         }

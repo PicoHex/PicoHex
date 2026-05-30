@@ -13,3 +13,19 @@ public interface ILogSink : IAsyncDisposable
     /// </remarks>
     Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Optional interface for sinks that can efficiently handle batch writes.
+/// When a sink implements this interface, the logging pipeline dispatches
+/// entries in batches rather than one-at-a-time, reducing per-entry overhead.
+/// </summary>
+public interface IBatchingLogSink : ILogSink
+{
+    /// <summary>
+    /// Writes a batch of log entries to the sink in a single operation.
+    /// </summary>
+    ValueTask WriteBatchAsync(
+        IReadOnlyList<LogEntry> batch,
+        CancellationToken cancellationToken = default
+    );
+}
