@@ -41,6 +41,32 @@ internal sealed class InternalLogSinkDispatcher : IDisposable
     }
 
     /// <summary>
+    /// Synchronously dispatches a log entry to all sinks. Only used on the fast path
+    /// when all sinks implement <see cref="IFastLogSink"/> (WriteAsync never blocks).
+    /// </summary>
+    internal void DispatchEntrySync(LogEntry entry)
+    {
+        foreach (ILogSink sink in _sinks)
+        {
+            try
+            {
+                // Fast sinks always return a completed task — safe to call synchronously
+                sink.WriteAsync(entry).GetAwaiter().GetResult();
+                if (sink is IBatchingLogSink)
+                {
+                    // Single-entry batch dispatch not needed for sync path —
+                    // the fast path skips the queue entirely so entries are never batched.
+                }
+            }
+            catch (Exception ex)
+            {
+                _runtime.RecordSinkFailure();
+                HandleSinkWriteFailureAsync(sink, entry, ex).GetAwaiter().GetResult();
+            }
+        }
+    }
+
+    /// <summary>
     /// Dispatches a log entry to all registered sinks sequentially.
     /// A slow sink (e.g. a remote HTTP sink) will delay subsequent sinks
     /// for the same entry. This is a deliberate design choice to avoid

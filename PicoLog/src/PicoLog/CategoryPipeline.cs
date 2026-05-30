@@ -32,6 +32,12 @@ internal sealed class CategoryPipeline : IAsyncDisposable
 
     public void Write(LogEntry entry)
     {
+        if (_runtime.CanFastPath)
+        {
+            _sinkDispatcher.DispatchEntrySync(entry);
+            return;
+        }
+
         try
         {
             EnterWriteOperationSync();

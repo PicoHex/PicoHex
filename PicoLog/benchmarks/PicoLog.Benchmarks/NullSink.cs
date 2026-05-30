@@ -4,7 +4,7 @@ namespace PicoLog.Benchmarks;
 /// A no-op sink that discards all log entries.
 /// Used to measure pure logging pipeline overhead without I/O.
 /// </summary>
-internal sealed class NullSink : ILogSink
+internal sealed class NullSink : IFastLogSink
 {
     public Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default) =>
         Task.CompletedTask;

@@ -28,9 +28,17 @@ internal sealed class LoggerFactoryRuntime
 
         _options = (options ?? new LoggerFactoryOptions()).CreateValidatedCopy();
         _minLevel = (int)_options.MinLevel;
+
+        CanFastPath = Array.TrueForAll(Sinks, static s => s is IFastLogSink);
     }
 
     public ILogSink[] Sinks { get; }
+
+    /// <summary>
+    /// When <see langword="true"/>, all registered sinks implement <see cref="IFastLogSink"/>
+    /// and the pipeline can dispatch entries synchronously without the async queue.
+    /// </summary>
+    public bool CanFastPath { get; }
 
     public LogLevel MinLevel
     {

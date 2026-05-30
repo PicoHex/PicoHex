@@ -29,3 +29,11 @@ public interface IBatchingLogSink : ILogSink
         CancellationToken cancellationToken = default
     );
 }
+
+/// <summary>
+/// Marker interface for sinks whose <see cref="ILogSink.WriteAsync"/> never
+/// performs asynchronous I/O or blocks. When all sinks in a factory implement
+/// this interface, the logging pipeline skips the async queue and dispatches
+/// entries synchronously on the calling thread.
+/// </summary>
+public interface IFastLogSink : ILogSink { }
