@@ -696,6 +696,39 @@ public sealed class InterceptorGenerator : IIncrementalGenerator
             sb.AppendLine();
         }
 
+        // Emit property delegation for interface properties.
+        // Properties are NOT intercepted (invocation structs are for methods only).
+        // The decorator delegates property access directly to _inner.
+        foreach (
+            var prop in serviceType
+                .GetMembers()
+                .OfType<IPropertySymbol>()
+                .Where(p => !p.IsIndexer && !p.IsStatic)
+        )
+        {
+            var propType = prop.Type.ToDisplayString();
+            var hasGetter = prop.GetMethod is { DeclaredAccessibility: Accessibility.Public };
+            var hasSetter =
+                prop.SetMethod is { DeclaredAccessibility: Accessibility.Public }
+                && !prop.SetMethod.IsInitOnly;
+            var isInitOnly =
+                prop.SetMethod is { DeclaredAccessibility: Accessibility.Public }
+                && prop.SetMethod.IsInitOnly;
+
+            sb.AppendLine($"    public {propType} {prop.Name}");
+            sb.AppendLine("    {");
+            if (hasGetter)
+                sb.AppendLine($"        get => _inner.{prop.Name};");
+            if (hasSetter)
+                sb.AppendLine($"        set => _inner.{prop.Name} = value;");
+            if (isInitOnly)
+                sb.AppendLine(
+                    $"        init {{ /* init-only: silently no-op; _inner already constructed */ }}"
+                );
+            sb.AppendLine("    }");
+            sb.AppendLine();
+        }
+
         sb.AppendLine("}");
         sb.AppendLine();
     }
