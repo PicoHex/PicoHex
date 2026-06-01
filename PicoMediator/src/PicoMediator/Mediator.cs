@@ -63,16 +63,35 @@ public sealed class Mediator(ISvcScope scope) : IMediator
             return;
         }
 
-        var tasks = new Task[handlers.Count];
-        for (var i = 0; i < handlers.Count; i++)
-            tasks[i] = HandleSafelyAsync(handlers[i], notification, ct);
+        var count = handlers.Count;
+        var tasks = new Task[count];
+        var exceptions = new Exception?[count];
+
+        for (var i = 0; i < count; i++)
+        {
+            var idx = i;
+            tasks[i] = HandleSafelyAsync(handlers[idx], notification, ct, exceptions, idx);
+        }
+
         await Task.WhenAll(tasks);
+
+        var actual = new List<Exception>(count);
+        foreach (var e in exceptions)
+        {
+            if (e is not null)
+                actual.Add(e);
+        }
+
+        if (actual.Count > 0)
+            throw new AggregateException(actual);
     }
 
     private static async Task HandleSafelyAsync<TNotification>(
         INotificationHandler<TNotification> handler,
         TNotification notification,
-        CancellationToken ct
+        CancellationToken ct,
+        Exception?[] exceptions,
+        int index
     )
         where TNotification : INotification
     {
@@ -80,6 +99,9 @@ public sealed class Mediator(ISvcScope scope) : IMediator
         {
             await handler.Handle(notification, ct);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            exceptions[index] = ex;
+        }
     }
 }

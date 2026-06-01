@@ -44,3 +44,42 @@ public partial class SendBenchmarks
             ValueTask.FromResult("pong");
     }
 }
+
+[BenchmarkClass(Description = "Mediator Publish — throughput by subscriber count")]
+public partial class PublishBenchmarks
+{
+    private SvcContainer _container = null!;
+    private ISvcScope _scope = null!;
+    private IMediator _mediator = null!;
+    private PingNotif _notification = null!;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        _container = new SvcContainer(autoConfigureFromGenerator: false);
+        _container.RegisterSingle<INotificationHandler<PingNotif>>(new NoopHandler());
+        _container.AddPicoMediator();
+        _container.Build();
+
+        _scope = _container.CreateScope();
+        _mediator = _scope.GetService<IMediator>();
+        _notification = new PingNotif();
+    }
+
+    [GlobalCleanup]
+    public void Cleanup()
+    {
+        _scope.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _container.DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+
+    [Benchmark(Baseline = true, Description = "Publish 1 subscriber")]
+    public ValueTask Publish1() => _mediator.Publish(_notification);
+
+    public record PingNotif : INotification;
+
+    public sealed class NoopHandler : INotificationHandler<PingNotif>
+    {
+        public ValueTask Handle(PingNotif n, CancellationToken ct) => ValueTask.CompletedTask;
+    }
+}
