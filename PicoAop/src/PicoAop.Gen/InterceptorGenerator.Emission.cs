@@ -29,6 +29,8 @@ public sealed partial class InterceptorGenerator
 
             var svcName = serviceType.ToDisplayString();
             var paramList = method.Parameters.ToList();
+            var typeParams = method.TypeParameters;
+            var isGeneric = typeParams.Length > 0;
 
             var structName = $"{safeSvc}_{safeInt}_{method.Name}";
             if (paramList.Count > 0)
@@ -38,7 +40,15 @@ public sealed partial class InterceptorGenerator
             }
             structName += "_Invocation";
 
-            sb.AppendLine($"internal struct {structName} : IInvocation<{resultName}>");
+            var typeParamDecl = "";
+            if (isGeneric)
+            {
+                typeParamDecl = "<" + string.Join(", ", typeParams.Select(tp => tp.Name)) + ">";
+            }
+
+            sb.AppendLine(
+                $"internal struct {structName}{typeParamDecl} : IInvocation<{resultName}>"
+            );
             sb.AppendLine("{");
             sb.AppendLine($"    private readonly {svcName} _target;");
             foreach (var p in paramList)
@@ -57,7 +67,7 @@ public sealed partial class InterceptorGenerator
                             paramList.Select(p => $"{p.Type.ToDisplayString()} {p.Name}")
                         )
                     : "";
-            sb.AppendLine($"    public {structName}({svcName} target{paramDecl})");
+            sb.AppendLine($"    public {structName}{typeParamDecl}({svcName} target{paramDecl})");
             sb.AppendLine("    {");
             sb.AppendLine("        _target = target;");
             foreach (var p in paramList)
@@ -78,16 +88,20 @@ public sealed partial class InterceptorGenerator
             var invokeTargetReturnType = isAsyncReturn ? retType.ToDisplayString() : resultName;
             var isVoidSync = retType.SpecialType == SpecialType.System_Void;
 
+            var methodTypeArgs = isGeneric
+                ? "<" + string.Join(", ", typeParams.Select(tp => tp.Name)) + ">"
+                : "";
+
             if (isVoidSync)
             {
                 sb.AppendLine(
-                    $"    public {invokeTargetReturnType} InvokeTarget() {{ _target.{method.Name}({paramArgs}); return default; }}"
+                    $"    public {invokeTargetReturnType} InvokeTarget() {{ _target.{method.Name}{methodTypeArgs}({paramArgs}); return default; }}"
                 );
             }
             else
             {
                 sb.AppendLine(
-                    $"    public {invokeTargetReturnType} InvokeTarget() => _target.{method.Name}({paramArgs});"
+                    $"    public {invokeTargetReturnType} InvokeTarget() => _target.{method.Name}{methodTypeArgs}({paramArgs});"
                 );
             }
 
@@ -98,11 +112,11 @@ public sealed partial class InterceptorGenerator
                     : $"global::System.Threading.Tasks.ValueTask<{resultName}>";
                 if (isSystemTask)
                     sb.AppendLine(
-                        $"    public async {asyncReturn} InvokeTargetAsync() => await _target.{method.Name}({paramArgs});"
+                        $"    public async {asyncReturn} InvokeTargetAsync() => await _target.{method.Name}{methodTypeArgs}({paramArgs});"
                     );
                 else
                     sb.AppendLine(
-                        $"    public {asyncReturn} InvokeTargetAsync() => _target.{method.Name}({paramArgs});"
+                        $"    public {asyncReturn} InvokeTargetAsync() => _target.{method.Name}{methodTypeArgs}({paramArgs});"
                     );
             }
 
@@ -168,6 +182,14 @@ public sealed partial class InterceptorGenerator
             var paramArgs = method.Parameters.Any()
                 ? ", " + string.Join(", ", method.Parameters.Select(p => p.Name))
                 : "";
+
+            // Generic method support
+            var typeParams = method.TypeParameters;
+            var isGeneric = typeParams.Length > 0;
+            var methodTypeParams = isGeneric
+                ? "<" + string.Join(", ", typeParams.Select(tp => tp.Name)) + ">"
+                : "";
+
             var paramTypeSuffix = "";
             if (method.Parameters.Length > 0)
             {
@@ -176,38 +198,40 @@ public sealed partial class InterceptorGenerator
             }
             var structRef = $"{safeSvc}_{safeInt}_{method.Name}{paramTypeSuffix}_Invocation";
 
-            sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
+            sb.AppendLine($"    public {retType} {method.Name}{methodTypeParams}({paramDecl})");
             sb.AppendLine("    {");
-            sb.AppendLine($"        var inv = new {structRef}(_inner{paramArgs});");
+            sb.AppendLine(
+                $"        var inv = new {structRef}{methodTypeParams}(_inner{paramArgs});"
+            );
             if (isVoidTask)
             {
                 if (isSystemTask)
                     sb.AppendLine(
-                        $"        return _i0.InvokeAsyncVoid(inv, static async i => {{ await (({structRef})i).InvokeTargetAsync(); }}).AsTask();"
+                        $"        return _i0.InvokeAsyncVoid(inv, static async i => {{ await (({structRef}{methodTypeParams})i).InvokeTargetAsync(); }}).AsTask();"
                     );
                 else
                     sb.AppendLine(
-                        $"        return _i0.InvokeAsyncVoid(inv, static async i => {{ await (({structRef})i).InvokeTargetAsync(); }});"
+                        $"        return _i0.InvokeAsyncVoid(inv, static async i => {{ await (({structRef}{methodTypeParams})i).InvokeTargetAsync(); }});"
                     );
             }
             else if (isTaskOf)
             {
                 if (isSystemTask)
                     sb.AppendLine(
-                        $"        return _i0.InvokeAsync(inv, static async i => await (({structRef})i).InvokeTargetAsync()).AsTask();"
+                        $"        return _i0.InvokeAsync(inv, static async i => await (({structRef}{methodTypeParams})i).InvokeTargetAsync()).AsTask();"
                     );
                 else
                     sb.AppendLine(
-                        $"        return _i0.InvokeAsync(inv, static async i => await (({structRef})i).InvokeTargetAsync());"
+                        $"        return _i0.InvokeAsync(inv, static async i => await (({structRef}{methodTypeParams})i).InvokeTargetAsync());"
                     );
             }
             else if (isVoid)
                 sb.AppendLine(
-                    $"        _i0.InvokeVoid(inv, static i => (({structRef})i).InvokeTarget());"
+                    $"        _i0.InvokeVoid(inv, static i => (({structRef}{methodTypeParams})i).InvokeTarget());"
                 );
             else
                 sb.AppendLine(
-                    $"        return _i0.Invoke(inv, static i => (({structRef})i).InvokeTarget());"
+                    $"        return _i0.Invoke(inv, static i => (({structRef}{methodTypeParams})i).InvokeTarget());"
                 );
             sb.AppendLine("    }");
             sb.AppendLine();

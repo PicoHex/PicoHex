@@ -94,7 +94,7 @@ public class GeneratorAsyncTests : GeneratorTestBase
 
         var (compilation, diags) = RunGenerator(source);
         var generated = string.Join("", compilation.SyntaxTrees.Skip(1).Select(t => t.ToString()));
-        await Assert.That(generated.Contains("InvokeVoid(inv, _ => inv.InvokeTarget())")).IsTrue();
+        await Assert.That(generated.Contains("InvokeVoid(inv, static i =>")).IsTrue();
     }
 
     [Test]
@@ -122,7 +122,7 @@ public class GeneratorAsyncTests : GeneratorTestBase
 
         var (compilation, diags) = RunGenerator(source);
         var generated = string.Join("", compilation.SyntaxTrees.Skip(1).Select(t => t.ToString()));
-        await Assert.That(generated.Contains("_i0.Invoke(inv, _ => inv.InvokeTarget())")).IsTrue();
+        await Assert.That(generated.Contains("_i0.Invoke(inv, static i =>")).IsTrue();
     }
 
     [Test]

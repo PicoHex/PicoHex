@@ -5,34 +5,46 @@ public class DiExtensionTests
     public sealed class TestInterceptor : InterceptorBase { }
 
     [Test]
-    public async Task InterceptBy_ReturnsSameContainer()
+    public async Task InterceptBy_ThrowsWithoutGenerator()
     {
         var container = new SvcContainer();
-        var result = container.InterceptBy<TestInterceptor>();
-        await Assert.That(result).IsSameReferenceAs(container);
+        await Assert.ThrowsAsync(() =>
+        {
+            container.InterceptBy<TestInterceptor>();
+            return Task.CompletedTask;
+        });
     }
 
     [Test]
-    public async Task WithoutInterceptors_ReturnsSameContainer()
+    public async Task WithoutInterceptors_ThrowsWithoutGenerator()
     {
         var container = new SvcContainer();
-        var result = container.WithoutInterceptors();
-        await Assert.That(result).IsSameReferenceAs(container);
+        await Assert.ThrowsAsync(() =>
+        {
+            container.WithoutInterceptors();
+            return Task.CompletedTask;
+        });
     }
 
     [Test]
-    public async Task WithoutInterceptor_ReturnsSameContainer()
+    public async Task WithoutInterceptor_ThrowsWithoutGenerator()
     {
         var container = new SvcContainer();
-        var result = container.WithoutInterceptor<TestInterceptor>();
-        await Assert.That(result).IsSameReferenceAs(container);
+        await Assert.ThrowsAsync(() =>
+        {
+            container.WithoutInterceptor<TestInterceptor>();
+            return Task.CompletedTask;
+        });
     }
 
     [Test]
-    public async Task AddInterceptor_ReturnsSameContainer()
+    public async Task AddInterceptor_ThrowsWithoutGenerator()
     {
         var container = new SvcContainer();
-        var result = container.AddInterceptor<TestInterceptor>();
-        await Assert.That(result).IsSameReferenceAs(container);
+        await Assert.ThrowsAsync(() =>
+        {
+            container.AddInterceptor<TestInterceptor>();
+            return Task.CompletedTask;
+        });
     }
 }
