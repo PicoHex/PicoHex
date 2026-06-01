@@ -169,6 +169,7 @@ container.Register<IHealthCheck, HealthCheck>()
 | PICO012 | Warning | No interceptors matched for service |
 | PICO013 | Error | Interceptor both globally declared and per-service excluded |
 | PICO014 | Warning | InterceptBy<T>() follows multiple Register calls |
+| PICO015 | Warning | Sanitized type names collide — second type skipped |
 
 ## Packages
 
@@ -177,5 +178,27 @@ container.Register<IHealthCheck, HealthCheck>()
 | **PicoAop.Abs** | `IInterceptor`, `IInvocation<TResult>`, `InterceptorBase` |
 | **PicoAop.Gen** | Roslyn source generator — emits decorator classes |
 | **PicoAop.DI** | DI extensions: `InterceptBy<T>()`, `AddInterceptor<T>()` |
+
+## Thread Safety
+
+All wiring is resolved at compile time. At runtime:
+
+- **Interceptors** must be thread-safe if registered as Singleton (shared across concurrent requests)
+- **Decorators** are stateless wrappers — thread safety depends on the inner service
+- **Invocation structs** are stack-allocated value types — never shared across threads
+
+## Comparison
+
+| | PicoAop | Castle.DynamicProxy | Metalama |
+|---|---|---|---|
+| **Weaving** | Source generator (build time) | Runtime IL emit | Build-time IL rewrite |
+| **AOT compatible** | ✅ Yes | ❌ No | ✅ Yes |
+| **Zero runtime reflection** | ✅ | ❌ | ✅ |
+| **Debug generated code** | ✅ Readable C# | ❌ IL | ❌ IL |
+| **Interceptor interface** | 4 methods | `IInterceptor` (1 method) | Override aspect class |
+| **Method interception** | ✅ | ✅ | ✅ |
+| **Property interception** | ❌ Delegated | ✅ | ✅ |
+| **ref/out/in params** | ❌ Delegated | ✅ | ✅ |
+| **Generic methods** | ❌ Future | ✅ | ✅ |
 
 [← Back to PicoHex](../README.md)

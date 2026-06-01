@@ -53,4 +53,14 @@ internal static class InterceptorDiagParams
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true
         );
+
+    public static readonly DiagnosticDescriptor NameCollision =
+        new(
+            "PICO015",
+            "Sanitized decorator name collision",
+            "Sanitized names for types '{0}' and '{1}' collide at '{2}'. The second type will not be intercepted.",
+            Category,
+            DiagnosticSeverity.Warning,
+            isEnabledByDefault: true
+        );
 }
