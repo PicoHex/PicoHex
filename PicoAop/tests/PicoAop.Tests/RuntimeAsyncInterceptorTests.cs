@@ -1,6 +1,3 @@
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-
 namespace PicoAop.Tests;
 
 public class RuntimeAsyncInterceptorTests

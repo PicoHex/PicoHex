@@ -1,6 +1,3 @@
-using PicoDI.Abs;
-using PicoMediator.Abs;
-
 namespace PicoMediator;
 
 public sealed class Mediator(ISvcScope scope) : IMediator

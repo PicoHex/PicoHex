@@ -1,6 +1,3 @@
-using PicoDI.Abs;
-using PicoMediator.Abs;
-
 namespace PicoMediator.DI;
 
 /// <summary>

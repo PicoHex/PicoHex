@@ -1,5 +1,3 @@
-using System;
-
 namespace PicoAop.DI;
 
 /// <summary>

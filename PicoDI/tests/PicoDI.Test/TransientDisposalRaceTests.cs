@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace PicoDI.Test;
 
 public class TransientDisposalRaceTests
