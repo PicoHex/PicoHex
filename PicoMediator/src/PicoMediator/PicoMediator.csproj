@@ -28,6 +28,8 @@
 
     <ItemGroup>
         <InternalsVisibleTo Include="PicoMediator.Tests" />
+        <InternalsVisibleTo Include="PicoMediator.Benchmarks" />
+        <InternalsVisibleTo Include="PicoMediator.Sample" />
     </ItemGroup>
 
 </Project>
