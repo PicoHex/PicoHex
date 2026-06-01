@@ -14,7 +14,7 @@
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <PackageId>PicoMediator.Gen</PackageId>
         <Description>Source generator for PicoMediator — generates AOT-compatible request dispatch at compile time</Description>
-        <PackageTags>PicoHex;Mediator;Source Generator;Roslyn;Analyzer</PackageTags>
+        <PackageTags>PicoHex;Mediator;AOT;Source Generator;Roslyn;Analyzer</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
@@ -32,8 +32,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="buildTransitive/PicoMediator.Gen/analyzers/dotnet/cs" Visible="false" />
-        <None Include="buildTransitive\PicoMediator.Gen.props" Pack="true" PackagePath="buildTransitive/PicoMediator.Gen.props" Visible="false" />
+        <None Include="$(OutputPath)/$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
 
     <ItemGroup>
