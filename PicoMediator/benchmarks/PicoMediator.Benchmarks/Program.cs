@@ -1,5 +1,3 @@
-using PicoBench;
-
 PicoBench.Runner.Initialize();
 var send = BenchmarkRunner.Run<SendBenchmarks>(BenchmarkConfig.Default);
 var pub = BenchmarkRunner.Run<PublishBenchmarks>(BenchmarkConfig.Default);
