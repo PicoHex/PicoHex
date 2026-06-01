@@ -32,6 +32,8 @@ jobs:
       pico-di: ${{ steps.filter.outputs.pico-di }}
       pico-cfg: ${{ steps.filter.outputs.pico-cfg }}
       pico-log: ${{ steps.filter.outputs.pico-log }}
+      pico-aop: ${{ steps.filter.outputs.pico-aop }}
+      pico-mediator: ${{ steps.filter.outputs.pico-mediator }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,15 +50,36 @@ jobs:
               - 'Directory.Packages.props'
               - '.github/**'
               - 'global.json'
+            pico-mediator:
+              - 'PicoMediator/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - '.github/**'
+              - 'global.json'
             pico-cfg:
               - 'PicoCfg/**'
               - 'Directory.Build.props'
               - 'Directory.Build.targets'
               - 'Directory.Packages.props'
               - '.github/**'
+            pico-aop:
+              - 'PicoAop/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - '.github/**'
+              - 'global.json'
               - 'global.json'
             pico-log:
               - 'PicoLog/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - '.github/**'
+              - 'global.json'
+            pico-mediator:
+              - 'PicoMediator/**'
               - 'Directory.Build.props'
               - 'Directory.Build.targets'
               - 'Directory.Packages.props'
@@ -425,3 +448,85 @@ jobs:
             -p:RestoreSources="$NUGET_SOURCE" \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
             -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/di"
+
+  # ---------------------------------------------------------------------------
+  # PicoAop
+  # ---------------------------------------------------------------------------
+  validate-picoaop:
+    name: PicoAop (${{ matrix.logical-target }})
+    needs: changes
+    if: needs.changes.outputs.pico-aop == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - logical-target: win-x64
+            runs-on: windows-latest
+            rid: win-x64
+          - logical-target: linux-x64
+            runs-on: ubuntu-latest
+            rid: linux-x64
+          - logical-target: osx-arm64
+            runs-on: macos-latest
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Install Linux AOT prerequisites
+        if: startsWith(matrix.rid, 'linux-')
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+      - name: Build and test
+        run: |
+          dotnet restore PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj -p:UseProjectReferences=true
+          dotnet build PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet test --project PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release --no-build -p:UseProjectReferences=true
+
+  # ---------------------------------------------------------------------------
+  # PicoMediator
+  # ---------------------------------------------------------------------------
+  validate-picomediator:
+    name: PicoMediator (${{ matrix.logical-target }})
+    needs: changes
+    if: needs.changes.outputs.pico-mediator == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - logical-target: win-x64
+            runs-on: windows-latest
+            rid: win-x64
+          - logical-target: linux-x64
+            runs-on: ubuntu-latest
+            rid: linux-x64
+          - logical-target: osx-arm64
+            runs-on: macos-latest
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Install Linux AOT prerequisites
+        if: startsWith(matrix.rid, 'linux-')
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+      - name: Build and test
+        run: |
+          dotnet restore PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj -p:UseProjectReferences=true
+          dotnet build PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet test --project PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj --configuration Release --no-build -p:UseProjectReferences=true
