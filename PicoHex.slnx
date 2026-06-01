@@ -1,5 +1,8 @@
 <Solution>
   <!-- PicoDI -->
+  <Folder Name="/PicoDI/benchmarks/">
+    <Project Path="PicoDI/benchmarks/PicoDI.Benchmarks/PicoDI.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/PicoDI/src/">
     <Project Path="PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj" />
     <Project Path="PicoDI/src/PicoDI/PicoDI.csproj" />
@@ -23,6 +26,9 @@
   <Folder Name="/PicoAop/tests/">
     <Project Path="PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj" />
   </Folder>
+  <Folder Name="/PicoAop/benchmarks/">
+    <Project Path="PicoAop/benchmarks/PicoAop.Benchmarks/PicoAop.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/PicoAop/samples/">
     <Project Path="PicoAop/samples/PicoAop.Sample/PicoAop.Sample.csproj" />
   </Folder>
@@ -33,6 +39,9 @@
     <Project Path="PicoCfg/src/PicoCfg/PicoCfg.csproj" />
     <Project Path="PicoCfg/src/PicoCfg.DI/PicoCfg.DI.csproj" />
     <Project Path="PicoCfg/src/PicoCfg.Gen/PicoCfg.Gen.csproj" />
+  </Folder>
+  <Folder Name="/PicoCfg/benchmarks/">
+    <Project Path="PicoCfg/benchmarks/PicoCfg.Benchmarks/PicoCfg.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/PicoCfg/tests/">
     <Project Path="PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj" />
@@ -46,6 +55,9 @@
   </Folder>
 
   <!-- PicoLog -->
+  <Folder Name="/PicoLog/benchmarks/">
+    <Project Path="PicoLog/benchmarks/PicoLog.Benchmarks/PicoLog.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/PicoLog/src/">
     <Project Path="PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj" />
     <Project Path="PicoLog/src/PicoLog/PicoLog.csproj" />
@@ -57,5 +69,22 @@
   </Folder>
   <Folder Name="/PicoLog/samples/">
     <Project Path="PicoLog/samples/PicoLog.Sample/PicoLog.Sample.csproj" />
+  </Folder>
+
+  <!-- PicoMediator -->
+  <Folder Name="/PicoMediator/src/">
+    <Project Path="PicoMediator/src/PicoMediator.Abs/PicoMediator.Abs.csproj" />
+    <Project Path="PicoMediator/src/PicoMediator/PicoMediator.csproj" />
+    <Project Path="PicoMediator/src/PicoMediator.Gen/PicoMediator.Gen.csproj" />
+    <Project Path="PicoMediator/src/PicoMediator.DI/PicoMediator.DI.csproj" />
+  </Folder>
+  <Folder Name="/PicoMediator/tests/">
+    <Project Path="PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj" />
+  </Folder>
+  <Folder Name="/PicoMediator/benchmarks/">
+    <Project Path="PicoMediator/benchmarks/PicoMediator.Benchmarks/PicoMediator.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/PicoMediator/samples/">
+    <Project Path="PicoMediator/samples/PicoMediator.Sample/PicoMediator.Sample.csproj" />
   </Folder>
 </Solution>
