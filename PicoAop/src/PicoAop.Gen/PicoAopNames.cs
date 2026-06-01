@@ -15,7 +15,7 @@ internal static class PicoAopNames
     // PicoAop type names (for semantic matching)
     public const string IInterceptorFull = "PicoAop.Abs.IInterceptor";
     public const string InterceptorBaseFull = "PicoAop.Abs.InterceptorBase";
-    public const string VoidResultFull = "PicoAop.Abs.VoidResult";
+    public const string VoidResultFull = "PicoDI.Abs.VoidResult";
     public const string IInvocationFull = "PicoAop.Abs.IInvocation`1";
 
     // PicoDI type names (for semantic matching — cross-package references)

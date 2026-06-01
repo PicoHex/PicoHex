@@ -8,8 +8,8 @@ public abstract class InterceptorBase : IInterceptor
     ) => next(invocation);
 
     public virtual void InvokeVoid(
-        IInvocation<VoidResult> invocation,
-        Action<IInvocation<VoidResult>> next
+        IInvocation<PicoDI.Abs.VoidResult> invocation,
+        Action<IInvocation<PicoDI.Abs.VoidResult>> next
     ) => next(invocation);
 
     public virtual ValueTask<TResult> InvokeAsync<TResult>(
@@ -18,7 +18,7 @@ public abstract class InterceptorBase : IInterceptor
     ) => next(invocation);
 
     public virtual ValueTask InvokeAsyncVoid(
-        IInvocation<VoidResult> invocation,
-        Func<IInvocation<VoidResult>, ValueTask> next
+        IInvocation<PicoDI.Abs.VoidResult> invocation,
+        Func<IInvocation<PicoDI.Abs.VoidResult>, ValueTask> next
     ) => next(invocation);
 }

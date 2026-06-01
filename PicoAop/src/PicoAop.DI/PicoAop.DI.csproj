@@ -18,12 +18,12 @@
 
     <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
         <ProjectReference Include="..\PicoAop.Abs\PicoAop.Abs.csproj" />
-        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
+        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
         <PackageReference Include="PicoAop.Abs" />
-        <PackageReference Include="PicoDI" />
+        <PackageReference Include="PicoDI.Abs" />
     </ItemGroup>
 
 </Project>

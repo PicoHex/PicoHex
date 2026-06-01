@@ -5,8 +5,8 @@ public class CoreAbstractionsTests
     [Test]
     public async Task VoidResult_IsDefaultStruct()
     {
-        var v = new PicoAop.Abs.VoidResult();
-        await Assert.That(v.Equals(default(PicoAop.Abs.VoidResult))).IsTrue();
+        var v = new PicoDI.Abs.VoidResult();
+        await Assert.That(v.Equals(default(PicoDI.Abs.VoidResult))).IsTrue();
     }
 
     [Test]
@@ -14,13 +14,6 @@ public class CoreAbstractionsTests
     {
         var inv = new MockInvocation<int>(MethodName: "Test", ServiceType: typeof(string));
         await Assert.That(inv.MethodName).IsEqualTo("Test");
-    }
-
-    [Test]
-    public async Task IInvocation_ScopeCanBeNull()
-    {
-        var inv = new MockInvocation<int>(MethodName: "Test", ServiceType: typeof(string));
-        await Assert.That(inv.Scope).IsNull();
     }
 
     [Test]
@@ -72,27 +65,19 @@ public class CoreAbstractionsTests
         }
     }
 
-    private sealed class MockVoidInvocation(
-        string MethodName,
-        Type ServiceType,
-        PicoDI.Abs.ISvcScope? Scope = null
-    ) : PicoAop.Abs.IInvocation<PicoAop.Abs.VoidResult>
+    private sealed class MockVoidInvocation(string MethodName, Type ServiceType)
+        : PicoAop.Abs.IInvocation<PicoDI.Abs.VoidResult>
     {
         public string MethodName { get; } = MethodName;
         public Type ServiceType { get; } = ServiceType;
-        public PicoDI.Abs.ISvcScope? Scope { get; } = Scope;
-        public PicoAop.Abs.VoidResult Result { get; set; }
+        public PicoDI.Abs.VoidResult Result { get; set; }
     }
 
-    private sealed class MockInvocation<TResult>(
-        string MethodName,
-        Type ServiceType,
-        PicoDI.Abs.ISvcScope? Scope = null
-    ) : PicoAop.Abs.IInvocation<TResult>
+    private sealed class MockInvocation<TResult>(string MethodName, Type ServiceType)
+        : PicoAop.Abs.IInvocation<TResult>
     {
         public string MethodName { get; } = MethodName;
         public Type ServiceType { get; } = ServiceType;
-        public PicoDI.Abs.ISvcScope? Scope { get; } = Scope;
         public TResult Result { get; set; } = default!;
     }
 }

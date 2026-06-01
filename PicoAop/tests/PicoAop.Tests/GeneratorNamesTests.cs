@@ -24,7 +24,7 @@ public class GeneratorNamesTests
         await Assert
             .That(PicoAopNames.InterceptorBaseFull)
             .IsEqualTo("PicoAop.Abs.InterceptorBase");
-        await Assert.That(PicoAopNames.VoidResultFull).IsEqualTo("PicoAop.Abs.VoidResult");
+        await Assert.That(PicoAopNames.VoidResultFull).IsEqualTo("PicoDI.Abs.VoidResult");
         await Assert.That(PicoAopNames.IInvocationFull).IsEqualTo("PicoAop.Abs.IInvocation`1");
         await Assert.That(PicoAopNames.ISvcContainerFull).IsEqualTo("PicoDI.Abs.ISvcContainer");
         await Assert.That(PicoAopNames.ISvcScopeFull).IsEqualTo("PicoDI.Abs.ISvcScope");

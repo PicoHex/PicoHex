@@ -39,8 +39,8 @@ public class RuntimeAsyncInterceptorTests
         }
 
         public override ValueTask InvokeAsyncVoid(
-            IInvocation<VoidResult> inv,
-            Func<IInvocation<VoidResult>, ValueTask> next
+            IInvocation<PicoDI.Abs.VoidResult> inv,
+            Func<IInvocation<PicoDI.Abs.VoidResult>, ValueTask> next
         )
         {
             Calls.Add($"InvokeAsyncVoid:{inv.MethodName}");

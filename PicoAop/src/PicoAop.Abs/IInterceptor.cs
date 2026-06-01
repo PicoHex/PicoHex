@@ -7,7 +7,10 @@ public interface IInterceptor
         Func<IInvocation<TResult>, TResult> next
     );
 
-    void InvokeVoid(IInvocation<VoidResult> invocation, Action<IInvocation<VoidResult>> next);
+    void InvokeVoid(
+        IInvocation<PicoDI.Abs.VoidResult> invocation,
+        Action<IInvocation<PicoDI.Abs.VoidResult>> next
+    );
 
     ValueTask<TResult> InvokeAsync<TResult>(
         IInvocation<TResult> invocation,
@@ -15,7 +18,7 @@ public interface IInterceptor
     );
 
     ValueTask InvokeAsyncVoid(
-        IInvocation<VoidResult> invocation,
-        Func<IInvocation<VoidResult>, ValueTask> next
+        IInvocation<PicoDI.Abs.VoidResult> invocation,
+        Func<IInvocation<PicoDI.Abs.VoidResult>, ValueTask> next
     );
 }
