@@ -49,9 +49,7 @@ public sealed class MediatorGenerator : IIncrementalGenerator
 
             return new HandlerInfo(
                 iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                iface.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                typeSymbol.ContainingNamespace?.ToDisplayString()
+                iface.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
             );
         }
 
@@ -82,7 +80,6 @@ public sealed class MediatorGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("internal static class GeneratedMediatorDispatch");
         sb.AppendLine("{");
-
         sb.AppendLine(
             "    internal static global::System.Threading.Tasks.ValueTask<TResponse> Send<TRequest, TResponse>("
         );
@@ -102,8 +99,9 @@ public sealed class MediatorGenerator : IIncrementalGenerator
                 $"                var handler = scope.GetService<global::PicoMediator.Abs.IRequestHandler<{h.RequestType}, {h.ResponseType}>>();"
             );
             sb.AppendLine(
-                $"                return UnsafeCast<{h.ResponseType}, TResponse>(handler.Handle(({h.RequestType})(object)request!, ct));"
+                $"                var vt = handler.Handle(({h.RequestType})(object)request!, ct);"
             );
+            sb.AppendLine($"                return UnsafeCast<{h.ResponseType}, TResponse>(vt);");
             sb.AppendLine("            }");
         }
 
@@ -119,7 +117,6 @@ public sealed class MediatorGenerator : IIncrementalGenerator
         sb.AppendLine("            $\"No handler registered for {typeof(TRequest).FullName}.\");");
         sb.AppendLine("    }");
         sb.AppendLine();
-
         sb.AppendLine("    [MethodImpl(MethodImplOptions.AggressiveInlining)]");
         sb.AppendLine(
             "    private static global::System.Threading.Tasks.ValueTask<TResponse> UnsafeCast<TActual, TResponse>("
@@ -137,15 +134,11 @@ public sealed class MediatorGenerator : IIncrementalGenerator
     {
         public string RequestType { get; }
         public string ResponseType { get; }
-        public string HandlerType { get; }
-        public string? Namespace { get; }
 
-        public HandlerInfo(string requestType, string responseType, string handlerType, string? ns)
+        public HandlerInfo(string requestType, string responseType)
         {
             RequestType = requestType;
             ResponseType = responseType;
-            HandlerType = handlerType;
-            Namespace = ns;
         }
     }
 }

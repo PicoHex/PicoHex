@@ -38,6 +38,12 @@ public interface IPublisher
 {
     ValueTask Publish<TNotification>(TNotification notification, CancellationToken ct = default)
         where TNotification : INotification;
+
+    ValueTask PublishParallel<TNotification>(
+        TNotification notification,
+        CancellationToken ct = default
+    )
+        where TNotification : INotification;
 }
 
 /// <summary>Combined REQ + PUB socket. Only for orchestration-level code.</summary>
