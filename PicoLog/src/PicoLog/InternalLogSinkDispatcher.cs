@@ -1,5 +1,7 @@
 namespace PicoLog;
 
+internal interface IConsoleFallbackSink : ILogSink;
+
 internal sealed class InternalLogSinkDispatcher : IDisposable
 {
     private readonly ILogSink[] _sinks;

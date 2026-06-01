@@ -1,5 +1,10 @@
 namespace PicoDI;
 
+internal interface IGeneratedConfigurationStateContainer
+{
+    public bool IsGeneratedConfigurationApplied { get; set; }
+}
+
 /// <summary>
 /// Coordinates source-generated container configuration.
 /// The global configurator registry is separate from the per-container generated-state gate.

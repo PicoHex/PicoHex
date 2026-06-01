@@ -1,5 +1,10 @@
 namespace PicoCfg;
 
+internal interface IInternalCfgRootSnapshotAccessor
+{
+    ICfgSnapshot CurrentSnapshot { get; }
+}
+
 internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
 {
     private readonly Lock _disposeSyncRoot = new();

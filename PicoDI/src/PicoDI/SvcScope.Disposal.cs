@@ -54,7 +54,7 @@ public sealed partial class SvcScope
             {
                 try
                 {
-                    await DisposalHelpers.DisposeInstanceAsync(svc, disposedInstances);
+                    await DisposalGuards.DisposeInstanceAsync(svc, disposedInstances);
                 }
                 catch (Exception ex)
                 {
@@ -89,7 +89,7 @@ public sealed partial class SvcScope
 
             try
             {
-                await DisposalHelpers.DisposeInstanceAsync(svc, disposedInstances);
+                await DisposalGuards.DisposeInstanceAsync(svc, disposedInstances);
             }
             catch (Exception ex)
             {
@@ -116,7 +116,7 @@ public sealed partial class SvcScope
         {
             try
             {
-                await DisposalHelpers.DisposeInstanceAsync(instance, disposedInstances);
+                await DisposalGuards.DisposeInstanceAsync(instance, disposedInstances);
             }
             catch (Exception ex)
             {

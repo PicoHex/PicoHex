@@ -119,7 +119,7 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await DisposalHelpers
+                await DisposalGuards
                     .DisposeInstanceAsync(instance, disposedInstances)
                     .ConfigureAwait(false);
             }
@@ -155,7 +155,7 @@ public sealed partial class SvcContainer
         {
             try
             {
-                await DisposalHelpers
+                await DisposalGuards
                     .DisposeInstanceAsync(instance, disposedInstances)
                     .ConfigureAwait(false);
             }
