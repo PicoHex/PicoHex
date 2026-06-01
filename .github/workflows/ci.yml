@@ -70,7 +70,6 @@ jobs:
               - 'Directory.Packages.props'
               - '.github/**'
               - 'global.json'
-              - 'global.json'
             pico-log:
               - 'PicoLog/**'
               - 'Directory.Build.props'
@@ -465,9 +464,15 @@ jobs:
           - logical-target: win-x64
             runs-on: windows-latest
             rid: win-x64
+          - logical-target: win-arm64
+            runs-on: windows-11-arm
+            rid: win-arm64
           - logical-target: linux-x64
             runs-on: ubuntu-latest
             rid: linux-x64
+          - logical-target: linux-arm64
+            runs-on: ubuntu-24.04-arm
+            rid: linux-arm64
           - logical-target: osx-arm64
             runs-on: macos-latest
             rid: osx-arm64
@@ -506,9 +511,15 @@ jobs:
           - logical-target: win-x64
             runs-on: windows-latest
             rid: win-x64
+          - logical-target: win-arm64
+            runs-on: windows-11-arm
+            rid: win-arm64
           - logical-target: linux-x64
             runs-on: ubuntu-latest
             rid: linux-x64
+          - logical-target: linux-arm64
+            runs-on: ubuntu-24.04-arm
+            rid: linux-arm64
           - logical-target: osx-arm64
             runs-on: macos-latest
             rid: osx-arm64
