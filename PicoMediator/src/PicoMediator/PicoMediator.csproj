@@ -26,4 +26,8 @@
         <PackageReference Include="PicoDI.Abs" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="PicoMediator.Tests" />
+    </ItemGroup>
+
 </Project>
