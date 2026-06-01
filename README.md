@@ -27,7 +27,7 @@ Every application reads configuration, assembles its internals, and produces out
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **Packages** | 40+ | 11 |
+| **Packages** | 40+ | 18 |
 | **Runtime reflection** | Heavy (`Activator.CreateInstance`, Expression trees) | Zero (source generators) |
 | **AOT ready** | Requires opt-in and careful config | AOT First — compiles natively out of the box |
 | **HostBuilder required** | Yes | No — `new SvcContainer()` is all you need |
@@ -67,6 +67,35 @@ var svc = scope.GetService<IService>();
 ```
 
 PicoDI also supports **compile-time AOP/interceptors** — chain `.InterceptBy<TInterceptor>()` after `Register()` and the source generator emits decorator classes at build time. [Learn more →](PicoDI/README.md#interceptor--aop-compile-time-decorators)
+
+### Just AOP
+
+```shell
+dotnet add package PicoAop
+```
+
+```csharp
+container.Register<IGreeter, Greeter>(SvcLifetime.Scoped)
+    .InterceptBy<LoggingInterceptor>()
+    .InterceptBy<TimingInterceptor>();
+// Decorator chain generated at compile time — no runtime proxy
+```
+
+### Just Mediator
+
+```shell
+dotnet add package PicoMediator
+```
+
+```csharp
+container.Register<IRequestHandler<Ping, string>, PingHandler>(SvcLifetime.Transient);
+container.AddPicoMediator();
+container.Build();
+var mediator = scope.GetService<IMediator>();
+var result = await mediator.Send<Ping, string>(new Ping());
+```
+
+Pipeline behaviors = PicoAop interceptors. Mediator does routing, AOP does decoration.
 
 ### Just Logging
 
@@ -109,6 +138,10 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 | **PicoDI** | Zero-reflection DI container |
 | **PicoDI.Abs** | DI abstractions |
 | **PicoDI.Gen** | Compile-time registration source generator |
+| **PicoAop** | Compile-time AOP decorator generation |
+| **PicoAop.Abs** | Interceptor abstractions |
+| **PicoAop.Gen** | Decorator + invocation source generator |
+| **PicoAop.DI** | DI integration for PicoAop |
 | **PicoCfg** | Async-first configuration |
 | **PicoCfg.Abs** | Configuration abstractions |
 | **PicoCfg.Gen** | Typed binding source generator |
@@ -117,6 +150,10 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 | **PicoLog.Abs** | Logging abstractions |
 | **PicoLog.Gen** | `[PicoLogMessage]` source generator |
 | **PicoLog.DI** | DI integration for PicoLog |
+| **PicoMediator** | Compile-time request/notification dispatch |
+| **PicoMediator.Abs** | Mediator abstractions (ISender/IPublisher/IMediator) |
+| **PicoMediator.Gen** | Handler → switch dispatch source generator |
+| **PicoMediator.DI** | DI integration for PicoMediator |
 
 ---
 
@@ -135,8 +172,10 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 ## Learn More
 
 - [PicoDI](PicoDI/README.md) — DI container, registration, source generator
+- [PicoAop](PicoAop/README.md) — Compile-time decorator generation
 - [PicoCfg](PicoCfg/README.md) — Configuration providers, binding, file watching
 - [PicoLog](PicoLog/README.md) — Structured logging, sinks, message templates
+- [PicoMediator](PicoMediator/README.md) — Request/notification dispatch
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 
