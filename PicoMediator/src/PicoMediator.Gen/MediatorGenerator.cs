@@ -32,7 +32,7 @@ public sealed class MediatorGenerator : IIncrementalGenerator
             return null;
 
         var typeSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl, ct) as INamedTypeSymbol;
-        if (typeSymbol is null || typeSymbol.IsAbstract)
+        if (typeSymbol is null || typeSymbol.IsAbstract || typeSymbol.IsGenericType)
             return null;
 
         foreach (var iface in typeSymbol.AllInterfaces)
