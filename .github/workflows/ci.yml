@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       force-all:
-        description: 'Force run all modules (ignore path filter)'
+        description: "Force run all modules (ignore path filter)"
         type: boolean
         default: false
 
@@ -63,6 +63,7 @@ jobs:
               - 'Directory.Build.targets'
               - 'Directory.Packages.props'
               - '.github/**'
+              - 'global.json'
             pico-aop:
               - 'PicoAop/**'
               - 'Directory.Build.props'
@@ -72,13 +73,6 @@ jobs:
               - 'global.json'
             pico-log:
               - 'PicoLog/**'
-              - 'Directory.Build.props'
-              - 'Directory.Build.targets'
-              - 'Directory.Packages.props'
-              - '.github/**'
-              - 'global.json'
-            pico-mediator:
-              - 'PicoMediator/**'
               - 'Directory.Build.props'
               - 'Directory.Build.targets'
               - 'Directory.Packages.props'
