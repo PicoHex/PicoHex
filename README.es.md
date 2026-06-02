@@ -150,7 +150,7 @@ PicoDI también soporta **AOP/interceptores en tiempo de compilación** — enca
 
 **专注 (Enfoque)** — Cada módulo hace una sola cosa. PicoDI es un contenedor, no un localizador de servicios. PicoCfg es configuración, no un sistema de banderas de funcionalidad. PicoLog es registro, no una tubería de telemetría. Especialización profunda sobre generalidad superficial.
 
-**优雅 (Elegancia)** — Las APIs son mínimas. Los generadores de código realizan las conexiones en tiempo de compilación. El desarrollador escribe código directo; las herramientas manejan la complejidad. `new SvcContainer()` reemplaza más de 100 líneas de ceremonia con `Host.CreateDefaultBuilder()`.
+**优雅 (Elegancia)** — Las APIs son mínimas. Los generadores de código realizan las conexiones en tiempo de compilación. El desarrollador escribe código directo; las herramientas manejan la complejidad. `new SvcContainer()` reemplaza páginas de ceremonia con `Host.CreateDefaultBuilder()`.
 
 **高效 (Eficiencia)** — AOT First no es una ocurrencia tardía, es la base. Cero reflexión. Cero sobrecarga en ejecución. Todo lo que puede resolverse en compilación se resuelve en compilación. Binarios mínimos, arranques en frío rápidos, rendimiento predecible.
 

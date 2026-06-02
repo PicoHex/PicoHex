@@ -21,7 +21,7 @@ Configuration  ──→  Dependency Injection  ──→  Logging
   (입력)              (핵심)                   (출력)
 ```
 
-모든 애플리케이션은 설정을 읽고, 내부를 조립하며, 출력을 생성합니다. **PicoHex**는 .NET Native AOT를 위해 이 세 가지 메타 연산을 최소한으로 구현한 것입니다 &mdash; 런타임 리플렉션 대신 컴파일 타임 코드 생성을 근간으로 설계되었습니다.
+모든 애플리케이션은 설정을 읽고, 내부를 조립하며, 출력을 생성합니다. **PicoHex**는 이러한 작업을 .NET에서 최소한의 AOT-first로 구현합니다 &mdash; 설정(PicoCfg), 의존성 주입(PicoDI), 로깅(PicoLog), 그리고 컴파일 타임 AOP(PicoAop)와 중재자 디스패치(PicoMediator). 모두 런타임 리플렉션 대신 소스 생성기를 기반으로 합니다.
 
 ---
 

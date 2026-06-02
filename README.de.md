@@ -21,7 +21,7 @@ Configuration  ──→  Dependency Injection  ──→  Logging
   (Input)              (Core)                   (Output)
 ```
 
-Jede Anwendung liest Konfiguration ein, setzt ihre internen Abhängigkeiten zusammen und erzeugt Ausgabe. **PicoHex** ist die minimale Implementierung dieser drei Meta-Operationen für .NET Native AOT &mdash; von Grund auf für Codegenerierung zur Kompilierzeit anstelle von Laufzeit-Reflection konzipiert.
+Jede Anwendung liest Konfiguration ein, setzt ihre internen Abhängigkeiten zusammen und erzeugt Ausgabe. **PicoHex** bietet die minimale, AOT-First Implementierung dieser Operationen für .NET &mdash; Konfiguration (PicoCfg), Dependency Injection (PicoDI), Logging (PicoLog), sowie Compile-Time AOP (PicoAop) und Mediator-Dispatch (PicoMediator). Alles basiert auf Source-Generatoren statt Laufzeit-Reflection.
 
 ---
 

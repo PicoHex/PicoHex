@@ -19,7 +19,7 @@ Configuration  ──→  Dependency Injection  ──→  Logging
   (Input)              (Core)                   (Output)
 ```
 
-Every application reads configuration, assembles its internals, and produces output. **PicoHex** is the minimal implementation of these three meta-operations for .NET Native AOT — designed from the ground up for compile-time code generation instead of runtime reflection.
+Every application reads configuration, assembles its internals, and produces output. **PicoHex** provides the minimal, AOT-first implementation of these operations for .NET — configuration (PicoCfg), dependency injection (PicoDI), logging (PicoLog), plus compile-time AOP (PicoAop) and mediator dispatch (PicoMediator). All built on source generators instead of runtime reflection.
 
 ---
 
@@ -158,7 +158,7 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 
 ## Design Philosophy
 
-**克制 (Restraint)** — Only DI, Config, Logging. No Web, no ORM, no message queue. The common denominator every app needs.
+**克制 (Restraint)** — DI, Config, Logging, AOP, Mediator. The common infrastructure every app needs. No Web, no ORM, no message queue.
 
 **专注 (Focus)** — Each module does one thing. Deep specialization over shallow generality.
 

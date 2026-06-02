@@ -127,7 +127,7 @@ PicoDI prend également en charge l'**AOP/les intercepteurs à la compilation** 
 
 **专注 (Concentration)** — Chaque module fait une seule chose. La spécialisation profonde plutôt que la généralité superficielle.
 
-**优雅 (Élégance)** — `new SvcContainer()` remplace 100+ lignes de cérémonie `Host.CreateDefaultBuilder()`. Les générateurs de source effectuent le câblage à la compilation.
+**优雅 (Élégance)** — `new SvcContainer()` remplace des pages de cérémonie `Host.CreateDefaultBuilder()`. Les générateurs de source effectuent le câblage à la compilation.
 
 **高效 (Efficacité)** — AOT First. Zéro réflexion. Tout ce qui peut être résolu à la compilation l'est à la compilation.
 
