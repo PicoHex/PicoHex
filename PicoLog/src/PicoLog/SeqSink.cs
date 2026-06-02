@@ -29,7 +29,7 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
         HttpClient httpClient,
         string? apiKey = null,
         TimeSpan? flushInterval = null,
-        bool enableConsoleFallback = true
+        bool enableConsoleFallback = false
     )
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));

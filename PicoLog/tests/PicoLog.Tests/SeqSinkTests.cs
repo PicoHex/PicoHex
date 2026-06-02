@@ -88,7 +88,7 @@ public sealed class SeqSinkTests
             _ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
         );
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5341") };
-        var sink = new SeqSink(httpClient);
+        var sink = new SeqSink(httpClient, enableConsoleFallback: true);
 
         await sink.WriteBatchAsync([new LogEntry { Message = "fail" }]);
         await sink.FlushAsync();

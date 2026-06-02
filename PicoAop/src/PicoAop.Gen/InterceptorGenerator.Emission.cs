@@ -47,7 +47,7 @@ public sealed partial class InterceptorGenerator
             }
 
             sb.AppendLine(
-                $"internal struct {structName}{typeParamDecl} : IInvocation<{resultName}>"
+                $"internal struct {structName}{typeParamDecl}{typeParamConstraints} : IInvocation<{resultName}>"
             );
             sb.AppendLine("{");
             sb.AppendLine($"    internal readonly {svcName} _target;");
@@ -95,13 +95,13 @@ public sealed partial class InterceptorGenerator
             if (isVoidSync)
             {
                 sb.AppendLine(
-                    $"    public {invokeTargetReturnType} InvokeTarget(){typeParamConstraints} {{ _target.{method.Name}{methodTypeArgs}({paramArgs}); return default; }}"
+                    $"    public {invokeTargetReturnType} InvokeTarget() {{ _target.{method.Name}{methodTypeArgs}({paramArgs}); return default; }}"
                 );
             }
             else
             {
                 sb.AppendLine(
-                    $"    public {invokeTargetReturnType} InvokeTarget(){typeParamConstraints} => _target.{method.Name}{methodTypeArgs}({paramArgs});"
+                    $"    public {invokeTargetReturnType} InvokeTarget() => _target.{method.Name}{methodTypeArgs}({paramArgs});"
                 );
             }
 

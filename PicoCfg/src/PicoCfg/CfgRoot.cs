@@ -100,8 +100,10 @@ internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
         Volatile.Write(ref _disposed, 1);
         _disposeCts.Cancel();
 
-        // Wait for any in-flight reload to settle. The cancellation above unblocks cooperative
-        // providers. The timeout is a safety cap for non-cooperative ones so dispose does not hang.
+        // Wait for any in-flight reload to settle. The cancellation above unblocks
+        // cooperative providers. The timeout is a safety cap for non-cooperative ones;
+        // when exceeded, we wait without a deadline for the reload to release the gate
+        // (disposing a held SemaphoreSlim causes ObjectDisposedException in the reload).
         var entered = await _reloadGate.WaitAsync(TimeSpan.FromSeconds(10), CancellationToken.None);
         try
         {
