@@ -12,12 +12,24 @@ internal static partial class ServiceRegistrationSourceEmitter
     {
         var assemblyName = compilation.AssemblyName ?? "Unknown";
         var safeAssemblyName = SanitizeIdentifier(assemblyName);
-        var source = BuildSource(plan.Registrations, compilation, assemblyName, safeAssemblyName);
 
-        context.AddSource(
-            $"PicoDI.ServiceRegistrations.{safeAssemblyName}.g.cs",
-            SourceText.From(source, Encoding.UTF8)
-        );
+        // Only emit ServiceRegistrations when there are concrete (non-open-generic-only)
+        // registrations. Libraries that only use Register(typeof(X<>), typeof(Y<>)) do not
+        // need the Registration file, which references PicoDI.SvcContainerAutoConfiguration
+        // and would force an unnecessary PicoDI dependency.
+        if (!plan.Registrations.IsDefaultOrEmpty)
+        {
+            var source = BuildSource(
+                plan.Registrations,
+                compilation,
+                assemblyName,
+                safeAssemblyName
+            );
+            context.AddSource(
+                $"PicoDI.ServiceRegistrations.{safeAssemblyName}.g.cs",
+                SourceText.From(source, Encoding.UTF8)
+            );
+        }
 
         if (plan.OpenGenerics.IsDefaultOrEmpty)
             return;
