@@ -183,7 +183,7 @@ internal static class OpenGenericMetadataContract
         var typeParameterNames = string.Join("\", \"", openGeneric.TypeParameterNames);
 
         sb.AppendLine(
-            $"    /// <summary>Open generic mapping: {openGeneric.OpenServiceTypeFullName} -> {openGeneric.OpenImplementationTypeFullName}</summary>"
+            $"    /// <summary>Open generic mapping: {EscapeXml(openGeneric.OpenServiceTypeFullName)} -&gt; {EscapeXml(openGeneric.OpenImplementationTypeFullName)}</summary>"
         );
 
         if (openGeneric.ConstructorParameters.Length > 0)
@@ -208,6 +208,9 @@ internal static class OpenGenericMetadataContract
         sb.AppendLine($"    public static readonly int Registration{index};");
         sb.AppendLine();
     }
+
+    private static string EscapeXml(string value) =>
+        value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
     private static void AppendPicoDiOpenGenericAttributeDefinition(StringBuilder sb)
     {

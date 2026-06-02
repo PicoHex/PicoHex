@@ -161,19 +161,15 @@ public static class ContainerSetup
         {
             case ServiceComplexity.NoDependency:
                 container.Register(
-                    SvcDescriptor.Create(
-                        typeof(ISimpleService),
-                        Factories.SimpleService,
-                        svcLifetime
-                    )
+                    new SvcDescriptor(typeof(ISimpleService), Factories.SimpleService, svcLifetime)
                 );
                 break;
             case ServiceComplexity.SingleDependency:
                 container.Register(
-                    SvcDescriptor.Create(typeof(ILogger), Factories.Logger, svcLifetime)
+                    new SvcDescriptor(typeof(ILogger), Factories.Logger, svcLifetime)
                 );
                 container.Register(
-                    SvcDescriptor.Create(
+                    new SvcDescriptor(
                         typeof(IServiceWithDep),
                         Factories.ServiceWithDep,
                         svcLifetime
@@ -182,13 +178,13 @@ public static class ContainerSetup
                 break;
             case ServiceComplexity.MultipleDependencies:
                 container.Register(
-                    SvcDescriptor.Create(typeof(ILogger), Factories.Logger, svcLifetime)
+                    new SvcDescriptor(typeof(ILogger), Factories.Logger, svcLifetime)
                 );
                 container.Register(
-                    SvcDescriptor.Create(typeof(IRepository), Factories.Repository, svcLifetime)
+                    new SvcDescriptor(typeof(IRepository), Factories.Repository, svcLifetime)
                 );
                 container.Register(
-                    SvcDescriptor.Create(
+                    new SvcDescriptor(
                         typeof(IServiceWithMultipleDeps),
                         Factories.ServiceWithMultipleDeps,
                         svcLifetime
@@ -197,19 +193,19 @@ public static class ContainerSetup
                 break;
             case ServiceComplexity.DeepChain:
                 container.Register(
-                    SvcDescriptor.Create(typeof(ILevel1), Factories.Level1, svcLifetime)
+                    new SvcDescriptor(typeof(ILevel1), Factories.Level1, svcLifetime)
                 );
                 container.Register(
-                    SvcDescriptor.Create(typeof(ILevel2), Factories.Level2, svcLifetime)
+                    new SvcDescriptor(typeof(ILevel2), Factories.Level2, svcLifetime)
                 );
                 container.Register(
-                    SvcDescriptor.Create(typeof(ILevel3), Factories.Level3, svcLifetime)
+                    new SvcDescriptor(typeof(ILevel3), Factories.Level3, svcLifetime)
                 );
                 container.Register(
-                    SvcDescriptor.Create(typeof(ILevel4), Factories.Level4, svcLifetime)
+                    new SvcDescriptor(typeof(ILevel4), Factories.Level4, svcLifetime)
                 );
                 container.Register(
-                    SvcDescriptor.Create(typeof(ILevel5), Factories.Level5, svcLifetime)
+                    new SvcDescriptor(typeof(ILevel5), Factories.Level5, svcLifetime)
                 );
                 break;
         }
@@ -310,21 +306,6 @@ public static class ContainerSetup
 #endregion
 
 #region Benchmark Helpers
-
-/// <summary>
-/// Extension method that mirrors MSDI's GetRequiredService&lt;T&gt;() semantics.
-/// Throws if the service is not registered, enabling fair comparison with
-/// Microsoft's GetRequiredService&lt;T&gt;() in benchmarks.
-/// </summary>
-internal static class SvcScopeBenchmarkExtensions
-{
-    public static T GetRequiredService<T>(this ISvcScope scope) =>
-        scope.GetService<T>() is T service
-            ? service
-            : throw new InvalidOperationException(
-                $"No service for type '{typeof(T)}' has been registered."
-            );
-}
 
 /// <summary>
 /// Wraps an ISvcScope to implement IDisposable, enabling PicoBench's RunScoped&lt;TScope&gt;
