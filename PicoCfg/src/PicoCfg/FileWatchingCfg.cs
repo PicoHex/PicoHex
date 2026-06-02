@@ -5,11 +5,13 @@ internal sealed class FileWatchingCfgSource : ICfgSource
     private readonly ICfgSource _innerSource;
     private readonly string _filePath;
     private readonly TimeSpan? _debounceInterval;
+    private readonly Action<string, Exception>? _onError;
 
     internal FileWatchingCfgSource(
         ICfgSource innerSource,
         string filePath,
-        TimeSpan? debounceInterval
+        TimeSpan? debounceInterval,
+        Action<string, Exception>? onError = null
     )
     {
         ArgumentNullException.ThrowIfNull(innerSource);
@@ -17,12 +19,16 @@ internal sealed class FileWatchingCfgSource : ICfgSource
         _innerSource = innerSource;
         _filePath = filePath;
         _debounceInterval = debounceInterval;
+        _onError = onError;
     }
 
     public async ValueTask<ICfgProvider> OpenAsync(CancellationToken ct = default)
     {
         var inner = await _innerSource.OpenAsync(ct);
-        return new FileWatchingCfgProvider(inner, _filePath, _debounceInterval);
+        return new FileWatchingCfgProvider(inner, _filePath, _debounceInterval)
+        {
+            OnError = _onError
+        };
     }
 }
 
@@ -43,7 +49,7 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
     /// Expected exceptions include <see cref="IOException"/> (file locked/deleted),
     /// <see cref="ObjectDisposedException"/> (provider already disposed), etc.
     /// </summary>
-    internal Action<string, Exception>? OnError;
+    public Action<string, Exception>? OnError;
 
     internal FileWatchingCfgProvider(
         ICfgProvider inner,

@@ -42,10 +42,10 @@ internal static class GeneratedDispatch
     )
         where TRequest : IRequest<TResponse>
     {
-        List<Func<Type, ISvcScope, object, CancellationToken, object?>>? switches;
+        Func<Type, ISvcScope, object, CancellationToken, object?>[]? switches;
         lock (_switchesLock)
         {
-            switches = _switches;
+            switches = _switches?.ToArray();
         }
 
         if (switches is not null)

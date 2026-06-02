@@ -43,4 +43,45 @@ public sealed partial class InterceptorGenerator
             RefKind.In => "in ",
             _ => ""
         };
+
+    /// <summary>
+    /// Builds C# where clauses for generic method type parameters.
+    /// Example: "where T : class, IComparable<T>, new()"
+    /// </summary>
+    private static string BuildGenericConstraints(
+        System.Collections.Immutable.ImmutableArray<ITypeParameterSymbol> typeParams
+    )
+    {
+        var sb = new StringBuilder();
+        foreach (var tp in typeParams)
+        {
+            var constraints = new List<string>();
+
+            if (tp.HasReferenceTypeConstraint)
+                constraints.Add("class");
+            else if (tp.HasValueTypeConstraint)
+                constraints.Add("struct");
+
+            if (tp.HasNotNullConstraint)
+                constraints.Add("notnull");
+
+            if (tp.HasUnmanagedTypeConstraint)
+                constraints.Add("unmanaged");
+
+            foreach (var ct in tp.ConstraintTypes)
+                constraints.Add(ct.ToDisplayString());
+
+            if (tp.HasConstructorConstraint)
+                constraints.Add("new()");
+
+            if (constraints.Count > 0)
+            {
+                sb.Append(" where ");
+                sb.Append(tp.Name);
+                sb.Append(" : ");
+                sb.Append(string.Join(", ", constraints));
+            }
+        }
+        return sb.ToString();
+    }
 }

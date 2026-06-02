@@ -16,6 +16,7 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
     private long _bufferBytes;
     private long _failureCount;
     private long _lastFailureTicks;
+    private readonly bool _enableConsoleFallback;
     private int _disposed;
 
     public long FailureCount => Interlocked.Read(ref _failureCount);
@@ -24,11 +25,17 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
             ? null
             : new DateTimeOffset(Interlocked.Read(ref _lastFailureTicks), TimeSpan.Zero);
 
-    public SeqSink(HttpClient httpClient, string? apiKey = null, TimeSpan? flushInterval = null)
+    public SeqSink(
+        HttpClient httpClient,
+        string? apiKey = null,
+        TimeSpan? flushInterval = null,
+        bool enableConsoleFallback = true
+    )
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _apiKey = apiKey ?? string.Empty;
         _flushInterval = flushInterval ?? DefaultFlushInterval;
+        _enableConsoleFallback = enableConsoleFallback;
         _timerTask = RunPeriodicFlushAsync(_timerCts.Token);
     }
 
@@ -152,19 +159,22 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
 
     private async Task SendBatchAsync(IReadOnlyList<LogEntry> batch, CancellationToken ct)
     {
+        // Serialize once — the JSON is immutable across retries.
         var json = SerializeBatch(batch);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/events/raw")
-        {
-            Content = content
-        };
-
-        if (_apiKey.Length > 0)
-            request.Headers.Add("X-Seq-ApiKey", _apiKey);
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
+            // HttpRequestMessage and StringContent are single-use;
+            // recreate them for every attempt.
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/events/raw")
+            {
+                Content = content
+            };
+
+            if (_apiKey.Length > 0)
+                request.Headers.Add("X-Seq-ApiKey", _apiKey);
+
             try
             {
                 var response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
@@ -172,7 +182,7 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
                 Interlocked.Exchange(ref _failureCount, 0);
                 return;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 if (attempt == 2)
                 {
@@ -186,8 +196,11 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
         }
     }
 
-    private static void FallbackToConsole(IReadOnlyList<LogEntry> batch, Exception ex)
+    private void FallbackToConsole(IReadOnlyList<LogEntry> batch, Exception ex)
     {
+        if (!_enableConsoleFallback)
+            return;
+
         try
         {
             foreach (var entry in batch)

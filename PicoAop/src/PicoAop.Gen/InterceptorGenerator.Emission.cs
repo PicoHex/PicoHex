@@ -41,9 +41,11 @@ public sealed partial class InterceptorGenerator
             structName += "_Invocation";
 
             var typeParamDecl = "";
+            var typeParamConstraints = "";
             if (isGeneric)
             {
                 typeParamDecl = "<" + string.Join(", ", typeParams.Select(tp => tp.Name)) + ">";
+                typeParamConstraints = BuildGenericConstraints(typeParams);
             }
 
             sb.AppendLine(
@@ -95,13 +97,13 @@ public sealed partial class InterceptorGenerator
             if (isVoidSync)
             {
                 sb.AppendLine(
-                    $"    public {invokeTargetReturnType} InvokeTarget() {{ _target.{method.Name}{methodTypeArgs}({paramArgs}); return default; }}"
+                    $"    public {invokeTargetReturnType} InvokeTarget(){typeParamConstraints} {{ _target.{method.Name}{methodTypeArgs}({paramArgs}); return default; }}"
                 );
             }
             else
             {
                 sb.AppendLine(
-                    $"    public {invokeTargetReturnType} InvokeTarget() => _target.{method.Name}{methodTypeArgs}({paramArgs});"
+                    $"    public {invokeTargetReturnType} InvokeTarget(){typeParamConstraints} => _target.{method.Name}{methodTypeArgs}({paramArgs});"
                 );
             }
 
@@ -183,12 +185,13 @@ public sealed partial class InterceptorGenerator
                 ? ", " + string.Join(", ", method.Parameters.Select(p => p.Name))
                 : "";
 
-            // Generic method support
+            // Generic method support — emit <T1, T2> and any where constraints
             var typeParams = method.TypeParameters;
             var isGeneric = typeParams.Length > 0;
             var methodTypeParams = isGeneric
                 ? "<" + string.Join(", ", typeParams.Select(tp => tp.Name)) + ">"
                 : "";
+            var methodConstraints = isGeneric ? BuildGenericConstraints(typeParams) : "";
 
             var paramTypeSuffix = "";
             if (method.Parameters.Length > 0)
@@ -198,7 +201,9 @@ public sealed partial class InterceptorGenerator
             }
             var structRef = $"{safeSvc}_{safeInt}_{method.Name}{paramTypeSuffix}_Invocation";
 
-            sb.AppendLine($"    public {retType} {method.Name}{methodTypeParams}({paramDecl})");
+            sb.AppendLine(
+                $"    public {retType} {method.Name}{methodTypeParams}({paramDecl}){methodConstraints}"
+            );
             sb.AppendLine("    {");
             sb.AppendLine(
                 $"        var inv = new {structRef}{methodTypeParams}(_inner{paramArgs});"

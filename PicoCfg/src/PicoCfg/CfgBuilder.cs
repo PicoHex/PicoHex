@@ -12,6 +12,12 @@ public sealed class CfgBuilder
     /// Adds a source to the builder.
     /// Sources are evaluated in insertion order, and later sources override earlier ones.
     /// </summary>
+    /// <summary>
+    /// Optional callback for observing file watching errors (reload failures,
+    /// watcher cleanup errors, dispose errors). Receives context string and exception.
+    /// </summary>
+    public Action<string, Exception>? OnFileWatchError { get; set; }
+
     internal CfgBuilder AddSource(ICfgSource source)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -76,7 +82,7 @@ public sealed class CfgBuilder
     {
         ArgumentNullException.ThrowIfNull(filePath);
         var innerSource = CreateStreamSource(streamFactory, versionStampFactory, encoding);
-        return new FileWatchingCfgSource(innerSource, filePath, debounceInterval);
+        return new FileWatchingCfgSource(innerSource, filePath, debounceInterval, OnFileWatchError);
     }
 
     internal ICfgSource CreateDictionarySource(
