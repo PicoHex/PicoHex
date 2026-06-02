@@ -12,8 +12,8 @@ internal sealed class InternalLogSinkDispatcher : IDisposable
     private int _disposeState;
 
     // Assign once at startup (single-threaded); read on rare sink-failure path.
-    // Instance field — each dispatcher owns its own error callback.
-    internal Action<string, Exception>? OnFallbackError;
+    // Public so consumers (e.g. PicoLog.DI) can wire their own error observers.
+    public Action<string, Exception>? OnFallbackError;
 
     public InternalLogSinkDispatcher(LoggerFactoryRuntime runtime)
     {

@@ -18,6 +18,13 @@ public sealed class CfgBuilder
     /// </summary>
     public Action<string, Exception>? OnFileWatchError { get; set; }
 
+    /// <summary>
+    /// Optional callback for observing format errors during configuration parsing.
+    /// Receives the malformed line content and its line number (0-based).
+    /// Lines without a '=' separator are silently skipped if this is null.
+    /// </summary>
+    public Action<string, int>? OnFormatError { get; set; }
+
     internal CfgBuilder AddSource(ICfgSource source)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -61,12 +68,13 @@ public sealed class CfgBuilder
     )
     {
         ArgumentNullException.ThrowIfNull(streamFactory);
+        var onFormatError = OnFormatError;
         return new StreamCfgSource(
             () =>
                 new StreamCfgProvider(
                     streamFactory,
                     versionStampFactory,
-                    (stream, ct) => ParseStreamAsync(stream, ct, encoding),
+                    (stream, ct) => ParseStreamAsync(stream, ct, encoding, onFormatError),
                     CreateProviderState()
                 )
         );
@@ -135,7 +143,8 @@ public sealed class CfgBuilder
     private static async Task<Dictionary<string, string>> ParseStreamAsync(
         Stream stream,
         CancellationToken ct,
-        Encoding? encoding = null
+        Encoding? encoding = null,
+        Action<string, int>? onFormatError = null
     )
     {
         using var reader = encoding is null
@@ -143,13 +152,18 @@ public sealed class CfgBuilder
             : new StreamReader(stream, encoding, leaveOpen: true);
 
         var newData = new Dictionary<string, string>();
+        var lineNumber = 0;
         while (await reader.ReadLineAsync(ct) is { } line)
         {
+            lineNumber++;
             if (string.IsNullOrWhiteSpace(line))
                 continue;
             var separatorIndex = line.IndexOf('=');
             if (separatorIndex < 0)
+            {
+                onFormatError?.Invoke(line, lineNumber);
                 continue;
+            }
             var key = line[..separatorIndex].Trim();
             var value = line[(separatorIndex + 1)..].Trim();
             newData[key] = value;

@@ -27,7 +27,7 @@ public sealed partial class SvcScope
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"Error disposing orphaned child scope: {ex}");
+                OwningContainer?.OnError?.Invoke(ex, "Error disposing orphaned child scope");
             }
             throw;
         }
