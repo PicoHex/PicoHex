@@ -8,14 +8,16 @@ public sealed partial class InterceptorGenerator
         IReadOnlyList<ITypeSymbol> InterceptorTypes,
         IReadOnlyList<ITypeSymbol> WithoutInterceptorTypes,
         bool WithoutInterceptors,
-        bool HasMultipleRegisters = false
+        bool HasMultipleRegisters = false,
+        Location? Location = null
     );
 
     private sealed record GlobalInterceptorInfo(
         ITypeSymbol InterceptorType,
         string? NamespaceFilter = null,
         ITypeSymbol? InterfaceFilter = null,
-        List<ITypeSymbol>? ExcludedTypes = null
+        List<ITypeSymbol>? ExcludedTypes = null,
+        Location? Location = null
     );
 
     private static InterceptionInfo? ExtractInterceptionInfo(
@@ -122,7 +124,8 @@ public sealed partial class InterceptorGenerator
             interceptorArgTypes,
             withoutInterceptorTypes,
             hasWithoutInterceptors,
-            HasMultipleRegisters: registerCount > 1
+            HasMultipleRegisters: registerCount > 1,
+            Location: invocation.GetLocation()
         );
     }
 
@@ -232,7 +235,8 @@ public sealed partial class InterceptorGenerator
             interceptorType,
             namespaceFilter,
             interfaceFilter,
-            excludedTypes.Count > 0 ? excludedTypes : null
+            excludedTypes.Count > 0 ? excludedTypes : null,
+            Location: invocation.GetLocation()
         );
     }
 

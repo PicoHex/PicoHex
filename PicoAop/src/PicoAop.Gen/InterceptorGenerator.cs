@@ -103,7 +103,9 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                         .OfType<ITypeSymbol>()
                         .ToList(),
                     existing.WithoutInterceptors || info.WithoutInterceptors,
-                    HasMultipleRegisters: existing.HasMultipleRegisters || info.HasMultipleRegisters
+                    HasMultipleRegisters: existing.HasMultipleRegisters
+                        || info.HasMultipleRegisters,
+                    Location: existing.Location ?? info.Location
                 );
             }
             else
@@ -175,7 +177,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 spc.ReportDiagnostic(
                     Diagnostic.Create(
                         InterceptorDiagParams.AmbiguousInterceptBy,
-                        Location.None,
+                        info.Location ?? Location.None,
                         serviceType.ToDisplayString()
                     )
                 );
@@ -198,7 +200,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                     spc.ReportDiagnostic(
                         Diagnostic.Create(
                             InterceptorDiagParams.FilterRequiresInterface,
-                            Location.None,
+                            g.Location ?? Location.None,
                             g.InterfaceFilter.ToDisplayString()
                         )
                     );
@@ -232,7 +234,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                     spc.ReportDiagnostic(
                         Diagnostic.Create(
                             InterceptorDiagParams.ConflictingInterceptorDeclaration,
-                            Location.None,
+                            info.Location ?? Location.None,
                             g.ToDisplayString(),
                             serviceType.ToDisplayString()
                         )
@@ -245,7 +247,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 spc.ReportDiagnostic(
                     Diagnostic.Create(
                         InterceptorDiagParams.ZeroInterceptorsMatched,
-                        Location.None,
+                        info.Location ?? Location.None,
                         serviceType.ToDisplayString()
                     )
                 );
@@ -261,7 +263,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 spc.ReportDiagnostic(
                     Diagnostic.Create(
                         InterceptorDiagParams.RefLikeMethodDelegated,
-                        Location.None,
+                        info.Location ?? Location.None,
                         method.Name,
                         serviceType.ToDisplayString()
                     )
@@ -276,7 +278,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 spc.ReportDiagnostic(
                     Diagnostic.Create(
                         InterceptorDiagParams.SealedTypeIntercepted,
-                        Location.None,
+                        info.Location ?? Location.None,
                         serviceType.ToDisplayString()
                     )
                 );
@@ -293,7 +295,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                     spc.ReportDiagnostic(
                         Diagnostic.Create(
                             InterceptorDiagParams.InterceptorTypeMismatch,
-                            Location.None,
+                            info.Location ?? Location.None,
                             interceptorNamed.Name,
                             "IInterceptor"
                         )
