@@ -30,6 +30,10 @@ public abstract class GeneratorTestBase
             out var diagnostics
         );
 
+        // TODO: also include outputCompilation.GetDiagnostics() to catch
+        // generated-code compilation errors. Currently blocked by pre-existing
+        // generic method bugs (CS errors in generated decorator code).
+
         return (outputCompilation, diagnostics);
     }
 }

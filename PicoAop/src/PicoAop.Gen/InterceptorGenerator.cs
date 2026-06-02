@@ -268,6 +268,21 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 );
             }
 
+            // PICO017: the decorator inherits from serviceType. If serviceType
+            // is a sealed class (not an interface), the decorator cannot subclass it.
+            // Interface registrations (e.g. Register<IMySvc, MySealedImpl>) are fine.
+            if (serviceType.IsSealed)
+            {
+                spc.ReportDiagnostic(
+                    Diagnostic.Create(
+                        InterceptorDiagParams.SealedTypeIntercepted,
+                        Location.None,
+                        serviceType.ToDisplayString()
+                    )
+                );
+                continue;
+            }
+
             for (var i = 0; i < interceptorList.Count; i++)
             {
                 if (interceptorList[i] is not INamedTypeSymbol interceptorNamed)

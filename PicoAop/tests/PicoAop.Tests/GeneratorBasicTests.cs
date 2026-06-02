@@ -144,7 +144,7 @@ public class GeneratorBasicTests : GeneratorTestBase
             using PicoDI;
             using PicoDI.Abs;
 
-            public sealed class Greeter { public string Say() => "hi"; }
+            public class Greeter { public string Say() => "hi"; }
             public sealed class LogInterceptor : InterceptorBase { }
 
             public static class Setup
@@ -161,6 +161,33 @@ public class GeneratorBasicTests : GeneratorTestBase
 
         var generated = string.Join("", compilation.SyntaxTrees.Skip(1).Select(t => t.ToString()));
         await Assert.That(generated.Contains("container.Register<")).IsTrue();
+    }
+
+    [Test]
+    public async Task SealedClass_EmitsPICO017()
+    {
+        var source = """
+            using PicoAop.DI;
+            using PicoAop.Abs;
+            using PicoDI;
+            using PicoDI.Abs;
+
+            public sealed class SealedSvc { public void Work() { } }
+            public sealed class LogInterceptor : InterceptorBase { }
+
+            public static class Setup
+            {
+                public static void Configure(SvcContainer c)
+                {
+                    c.Register<SealedSvc>(SvcLifetime.Scoped).InterceptBy<LogInterceptor>();
+                }
+            }
+            """;
+
+        var (compilation, diags) = RunGenerator(source);
+        var pico017 = diags.FirstOrDefault(d => d.Id == "PICO017");
+        await Assert.That(pico017).IsNotNull();
+        await Assert.That(pico017!.Severity).IsEqualTo(DiagnosticSeverity.Error);
     }
 
     [Test]

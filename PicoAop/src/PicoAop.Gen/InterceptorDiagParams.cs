@@ -73,4 +73,14 @@ internal static class InterceptorDiagParams
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true
         );
+
+    public static readonly DiagnosticDescriptor SealedTypeIntercepted =
+        new(
+            "PICO017",
+            "Sealed type cannot be intercepted",
+            "Type '{0}' is sealed and cannot be subclassed by the generated decorator. Use an interface registration (e.g. Register<IMySvc, MySealedImpl>) or unseal the class.",
+            Category,
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true
+        );
 }
