@@ -63,4 +63,14 @@ internal static class InterceptorDiagParams
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true
         );
+
+    public static readonly DiagnosticDescriptor RefLikeMethodDelegated =
+        new(
+            "PICO016",
+            "Method with ref/out/in parameter delegated without interception",
+            "Method '{0}' on type '{1}' has ref/out/in parameters and will be delegated directly without interception.",
+            Category,
+            DiagnosticSeverity.Warning,
+            isEnabledByDefault: true
+        );
 }

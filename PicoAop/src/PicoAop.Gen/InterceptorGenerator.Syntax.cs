@@ -7,7 +7,8 @@ public sealed partial class InterceptorGenerator
         ITypeSymbol? ImplType,
         IReadOnlyList<ITypeSymbol> InterceptorTypes,
         IReadOnlyList<ITypeSymbol> WithoutInterceptorTypes,
-        bool WithoutInterceptors
+        bool WithoutInterceptors,
+        bool HasMultipleRegisters = false
     );
 
     private sealed record GlobalInterceptorInfo(
@@ -32,6 +33,7 @@ public sealed partial class InterceptorGenerator
         var interceptorArgTypes = new List<ITypeSymbol>();
         var hasWithoutInterceptors = false;
         var withoutInterceptorTypes = new List<ITypeSymbol>();
+        var registerCount = 0;
 
         while (
             current.Expression
@@ -68,6 +70,10 @@ public sealed partial class InterceptorGenerator
             {
                 hasWithoutInterceptors = true;
             }
+            else if (methodName == "Register")
+            {
+                registerCount++;
+            }
 
             current = nextInvocation;
         }
@@ -82,6 +88,9 @@ public sealed partial class InterceptorGenerator
 
         if (registerCall is null || interceptorArgTypes.Count == 0)
             return null;
+
+        // The final Register call (that stopped the walk loop) was not counted
+        registerCount++;
 
         var registerSymbol = semanticModel.GetSymbolInfo(registerCall).Symbol as IMethodSymbol;
         ITypeSymbol? serviceType = null;
@@ -112,7 +121,8 @@ public sealed partial class InterceptorGenerator
             implType,
             interceptorArgTypes,
             withoutInterceptorTypes,
-            hasWithoutInterceptors
+            hasWithoutInterceptors,
+            HasMultipleRegisters: registerCount > 1
         );
     }
 

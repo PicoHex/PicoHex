@@ -91,6 +91,10 @@ public sealed class MediatorGenerator : IIncrementalGenerator
                 sb.AppendLine(
                     $"                var handler = scope.GetService<global::PicoMediator.Abs.IRequestHandler<{h.RequestType}, {h.ResponseType}>>();"
                 );
+                sb.AppendLine("                if (handler is null)");
+                sb.AppendLine(
+                    "                    return null; // fall through to runtime dispatch"
+                );
                 sb.AppendLine($"                var vt = handler.Handle(typed, ct);");
                 sb.AppendLine($"                return vt; // boxed as object");
                 sb.AppendLine("            }");
@@ -102,14 +106,14 @@ public sealed class MediatorGenerator : IIncrementalGenerator
             sb.AppendLine("}");
             sb.AppendLine();
 
-            // ModuleInitializer wires it into GeneratedDispatch.Switch
+            // ModuleInitializer wires it into GeneratedDispatch via RegisterSwitch
             sb.AppendLine("internal static class MediatorSwitchInitializer");
             sb.AppendLine("{");
             sb.AppendLine("    [global::System.Runtime.CompilerServices.ModuleInitializer]");
             sb.AppendLine("    internal static void Init()");
             sb.AppendLine("    {");
             sb.AppendLine(
-                "        global::PicoMediator.GeneratedDispatch.Switch = MediatorSwitchDispatch.Dispatch;"
+                "        global::PicoMediator.GeneratedDispatch.RegisterSwitch(MediatorSwitchDispatch.Dispatch);"
             );
             sb.AppendLine("    }");
             sb.AppendLine("}");

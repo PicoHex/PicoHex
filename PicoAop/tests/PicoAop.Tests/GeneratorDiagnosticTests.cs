@@ -62,6 +62,76 @@ public class GeneratorDiagnosticTests : GeneratorTestBase
     }
 
     [Test]
+    public async Task MultipleRegisterWithInterceptBy_EmitsPICO014()
+    {
+        var source = """
+            using PicoAop.DI;
+            using PicoAop.Abs;
+            using PicoDI;
+            using PicoDI.Abs;
+
+            public interface IFoo { void Do(); }
+            public sealed class Foo1 : IFoo { public void Do() { } }
+            public sealed class Foo2 : IFoo { public void Do() { } }
+            public sealed class MyInterceptor : InterceptorBase { }
+
+            public static class Setup
+            {
+                public static void Configure(SvcContainer c)
+                {
+                    c.Register<IFoo, Foo1>(SvcLifetime.Scoped)
+                        .Register<IFoo, Foo2>(SvcLifetime.Scoped)
+                        .InterceptBy<MyInterceptor>();
+                }
+            }
+            """;
+
+        var (compilation, diags) = RunGenerator(source);
+        var pico014 = diags.FirstOrDefault(
+            d => d.Id == "PICO014" && d.Severity == DiagnosticSeverity.Warning
+        );
+        await Assert.That(pico014).IsNotNull();
+    }
+
+    [Test]
+    public async Task NameCollision_EmitsPICO015()
+    {
+        var source = """
+            using PicoAop.DI;
+            using PicoAop.Abs;
+            using PicoDI;
+            using PicoDI.Abs;
+
+            namespace Ns {
+                public interface IAlpha { void Run(); }
+                public sealed class Alpha : IAlpha { public void Run() { } }
+            }
+            // Ns.IAlpha sanitizes to Ns_IAlpha — this type matches:
+            public interface Ns_IAlpha { void Run(); }
+            public sealed class AlphaImpl : Ns_IAlpha { public void Run() { } }
+
+            public sealed class InterceptorX : InterceptorBase { }
+
+            public static class Setup
+            {
+                public static void Configure(SvcContainer c)
+                {
+                    c.Register<Ns.IAlpha, Ns.Alpha>(SvcLifetime.Scoped)
+                        .InterceptBy<InterceptorX>();
+                    c.Register<global::Ns_IAlpha, AlphaImpl>(SvcLifetime.Scoped)
+                        .InterceptBy<InterceptorX>();
+                }
+            }
+            """;
+
+        var (compilation, diags) = RunGenerator(source);
+        var pico015 = diags.FirstOrDefault(
+            d => d.Id == "PICO015" && d.Severity == DiagnosticSeverity.Warning
+        );
+        await Assert.That(pico015).IsNotNull();
+    }
+
+    [Test]
     public async Task AllDiagnosticDescriptors_HaveCorrectIds()
     {
         await Assert.That(InterceptorDiagParams.InterceptorTypeMismatch.Id).IsEqualTo("PICO010");

@@ -805,4 +805,70 @@ public class SvcContainerExtensionTests
     }
 
     #endregion
+
+    #region ISvcScope TryGetService / TryGetServices
+
+    [Test]
+    public async Task TryGetService_Registered_ReturnsTrue()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        // Use string type — won't be auto-registered by source generator
+        container.RegisterSingle(typeof(string), "hello");
+        await using var scope = container.CreateScope();
+
+        var found = CallTryGetService(scope, typeof(string), out var svc);
+
+        await Assert.That(found).IsTrue();
+        await Assert.That(svc).IsEqualTo("hello");
+    }
+
+    [Test]
+    public async Task TryGetService_Unregistered_ReturnsFalse()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        await using var scope = container.CreateScope();
+
+        var found = CallTryGetService(scope, typeof(IDisposable), out var svc);
+
+        await Assert.That(found).IsFalse();
+        await Assert.That(svc).IsNull();
+    }
+
+    [Test]
+    public async Task TryGetServices_Registered_ReturnsTrue()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        container.RegisterSingle(typeof(string), "hello");
+        await using var scope = container.CreateScope();
+
+        var found = CallTryGetServices(scope, typeof(string), out var svcs);
+
+        await Assert.That(found).IsTrue();
+        await Assert.That(svcs).IsNotNull();
+        await Assert.That(svcs!.Count).IsGreaterThanOrEqualTo(1);
+    }
+
+    [Test]
+    public async Task TryGetServices_Unregistered_ReturnsFalse()
+    {
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        await using var scope = container.CreateScope();
+
+        var found = CallTryGetServices(scope, typeof(IDisposable), out var svcs);
+
+        await Assert.That(found).IsFalse();
+        await Assert.That(svcs).IsNull();
+    }
+
+    // Call through ISvcScope interface to verify the interface contract is usable
+    private static bool CallTryGetService(ISvcScope scope, Type serviceType, out object? service) =>
+        scope.TryGetService(serviceType, out service);
+
+    private static bool CallTryGetServices(
+        ISvcScope scope,
+        Type serviceType,
+        out IReadOnlyList<object>? services
+    ) => scope.TryGetServices(serviceType, out services);
+
+    #endregion
 }

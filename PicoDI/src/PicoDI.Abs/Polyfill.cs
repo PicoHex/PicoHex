@@ -1,6 +1,14 @@
-// Polyfill for netstandard2.0 — provides trimmer annotations missing from the target framework.
+// Polyfill for netstandard2.0 — provides annotations missing from the target framework.
 
 namespace System.Diagnostics.CodeAnalysis;
+
+[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+internal sealed class MaybeNullWhenAttribute : Attribute
+{
+    public MaybeNullWhenAttribute(bool returnValue) => ReturnValue = returnValue;
+
+    public bool ReturnValue { get; }
+}
 
 [AttributeUsage(
     AttributeTargets.Class

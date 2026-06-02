@@ -98,6 +98,32 @@ public sealed class SeqSinkTests
     }
 
     [Test]
+    public async Task PeriodicFlush_SendsEntriesBelowBatchThreshold()
+    {
+        string? body = null;
+        var signal = new TaskCompletionSource();
+        var handler = new FakeHttpHandler(req =>
+        {
+            body = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            signal.TrySetResult();
+            return new HttpResponseMessage(HttpStatusCode.Created);
+        });
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5341") };
+        var sink = new SeqSink(httpClient, flushInterval: TimeSpan.FromMilliseconds(100));
+
+        // Write a single entry (below batch threshold)
+        await sink.WriteAsync(new LogEntry { Message = "periodic-flush" });
+
+        // Wait for the periodic timer to trigger (up to 5 seconds)
+        var completed = await Task.WhenAny(signal.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+        await Assert.That(completed).IsEqualTo(signal.Task);
+        await Assert.That(body).IsNotNull();
+        await Assert.That(body!).Contains("periodic-flush");
+
+        await sink.DisposeAsync();
+    }
+
+    [Test]
     public async Task DisposeAsync_FlushesRemainingEntries()
     {
         string? body = null;

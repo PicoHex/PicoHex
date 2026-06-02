@@ -29,6 +29,28 @@ public interface ISvcScope : IAsyncDisposable
     /// PicoDI throws to fail fast on misconfiguration.
     /// </exception>
     public IReadOnlyList<object> GetServices(Type serviceType);
+
+    /// <summary>
+    /// Attempts to resolve a service of the specified type without throwing.
+    /// </summary>
+    /// <param name="serviceType">The type of service to resolve.</param>
+    /// <param name="service">The resolved service instance, or null if not found.</param>
+    /// <returns><see langword="true"/> if the service was resolved; otherwise, <see langword="false"/>.</returns>
+    public bool TryGetService(
+        Type serviceType,
+        [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out object? service
+    );
+
+    /// <summary>
+    /// Attempts to resolve all services of the specified type without throwing.
+    /// </summary>
+    /// <param name="serviceType">The type of services to resolve.</param>
+    /// <param name="services">The resolved service instances, or null if the type is not registered.</param>
+    /// <returns><see langword="true"/> if the service type is registered; otherwise, <see langword="false"/>.</returns>
+    public bool TryGetServices(
+        Type serviceType,
+        [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out IReadOnlyList<object>? services
+    );
 }
 
 /// <summary>

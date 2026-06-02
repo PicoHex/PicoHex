@@ -4,12 +4,15 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
 {
     private const int MaxBatchEntries = 100;
     private const int MaxBatchBytes = 256 * 1024;
-    private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan DefaultFlushInterval = TimeSpan.FromSeconds(2);
 
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private readonly Lock _bufferLock = new();
     private readonly List<LogEntry> _buffer = [];
+    private readonly TimeSpan _flushInterval;
+    private readonly CancellationTokenSource _timerCts = new();
+    private readonly Task _timerTask;
     private long _bufferBytes;
     private long _failureCount;
     private long _lastFailureTicks;
@@ -21,10 +24,12 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
             ? null
             : new DateTimeOffset(Interlocked.Read(ref _lastFailureTicks), TimeSpan.Zero);
 
-    public SeqSink(HttpClient httpClient, string? apiKey = null)
+    public SeqSink(HttpClient httpClient, string? apiKey = null, TimeSpan? flushInterval = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _apiKey = apiKey ?? string.Empty;
+        _flushInterval = flushInterval ?? DefaultFlushInterval;
+        _timerTask = RunPeriodicFlushAsync(_timerCts.Token);
     }
 
     public Task WriteAsync(LogEntry entry, CancellationToken ct = default)
@@ -51,11 +56,42 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
         await SendBatchAsync(batch, ct).ConfigureAwait(false);
     }
 
+    private async Task RunPeriodicFlushAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(_flushInterval, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+
+            try
+            {
+                await DrainAndSendAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Best-effort: errors are logged inside DrainAndSendAsync
+            }
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
+        _timerCts.Cancel();
+        try
+        {
+            await _timerTask.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) { }
         await FlushAsync().ConfigureAwait(false);
+        _timerCts.Dispose();
         _httpClient.Dispose();
     }
 
@@ -70,7 +106,24 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
             }
 
             if (_buffer.Count >= MaxBatchEntries || _bufferBytes >= MaxBatchBytes)
-                _ = DrainAndSendAsync();
+                _ = SafeDrainAsync();
+        }
+    }
+
+    /// <summary>
+    /// Fire-and-forget drain that observes exceptions via await.
+    /// Unlike a raw <c>_ = DrainAndSendAsync()</c>, exceptions are caught and
+    /// logged here rather than becoming unobserved task exceptions.
+    /// </summary>
+    private async Task SafeDrainAsync()
+    {
+        try
+        {
+            await DrainAndSendAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[SeqSink] SafeDrain error: {ex}");
         }
     }
 

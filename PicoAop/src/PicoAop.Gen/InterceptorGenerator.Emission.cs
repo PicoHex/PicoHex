@@ -50,9 +50,9 @@ public sealed partial class InterceptorGenerator
                 $"internal struct {structName}{typeParamDecl} : IInvocation<{resultName}>"
             );
             sb.AppendLine("{");
-            sb.AppendLine($"    private readonly {svcName} _target;");
+            sb.AppendLine($"    internal readonly {svcName} _target;");
             foreach (var p in paramList)
-                sb.AppendLine($"    private readonly {p.Type.ToDisplayString()} _{p.Name};");
+                sb.AppendLine($"    internal readonly {p.Type.ToDisplayString()} _{p.Name};");
 
             sb.AppendLine($"    public string MethodName => \"{method.Name}\";");
             sb.AppendLine($"    public System.Type ServiceType => typeof({svcName});");

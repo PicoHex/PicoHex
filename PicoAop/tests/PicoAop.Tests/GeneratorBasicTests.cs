@@ -164,6 +164,39 @@ public class GeneratorBasicTests : GeneratorTestBase
     }
 
     [Test]
+    public async Task InvocationStruct_HasInternalParameterFields()
+    {
+        var source = """
+            using PicoAop.DI;
+            using PicoAop.Abs;
+            using PicoDI;
+            using PicoDI.Abs;
+
+            public interface ICalc { int Add(int a, int b); }
+            public sealed class Calc : ICalc { public int Add(int a, int b) => a + b; }
+            public sealed class LogInterceptor : InterceptorBase { }
+
+            public static class Setup
+            {
+                public static void Configure(SvcContainer c)
+                {
+                    c.Register<ICalc, Calc>(SvcLifetime.Scoped)
+                        .InterceptBy<LogInterceptor>();
+                }
+            }
+            """;
+
+        var (compilation, diags) = RunGenerator(source);
+        await Assert.That(diags.Where(d => d.Severity == DiagnosticSeverity.Error)).IsEmpty();
+        var generated = string.Join("", compilation.SyntaxTrees.Skip(1).Select(t => t.ToString()));
+
+        // Verify parameters are internal (accessible by casting) not private
+        await Assert.That(generated.Contains("internal readonly")).IsTrue();
+        // Verify the struct implements IInvocation
+        await Assert.That(generated.Contains("IInvocation<")).IsTrue();
+    }
+
+    [Test]
     public async Task InterfaceWithImpl_DiResolvesConcreteImpl()
     {
         var source = """

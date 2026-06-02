@@ -102,7 +102,8 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                         .Distinct(SymbolEqualityComparer.Default)
                         .OfType<ITypeSymbol>()
                         .ToList(),
-                    existing.WithoutInterceptors || info.WithoutInterceptors
+                    existing.WithoutInterceptors || info.WithoutInterceptors,
+                    HasMultipleRegisters: existing.HasMultipleRegisters || info.HasMultipleRegisters
                 );
             }
             else
@@ -127,10 +128,58 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("using PicoAop.Abs;");
         sb.AppendLine();
 
+        // First pass: detect sanitized-name collisions across all services
+        var nameRegistry = new Dictionary<string, (ITypeSymbol Svc, ITypeSymbol Interceptor)>(
+            StringComparer.Ordinal
+        );
+        foreach (var info in deduped)
+        {
+            if (info.ServiceType is not INamedTypeSymbol svc)
+                continue;
+
+            var safeSvc = Sanitize(svc.ToDisplayString());
+            foreach (var intc in info.InterceptorTypes)
+            {
+                if (intc is not INamedTypeSymbol intcNamed)
+                    continue;
+
+                var safeInt = Sanitize(intcNamed.Name);
+                var className = $"{safeSvc}_{safeInt}Decorator";
+
+                if (nameRegistry.TryGetValue(className, out var existing))
+                {
+                    spc.ReportDiagnostic(
+                        Diagnostic.Create(
+                            InterceptorDiagParams.NameCollision,
+                            Location.None,
+                            existing.Svc.ToDisplayString(),
+                            svc.ToDisplayString(),
+                            className
+                        )
+                    );
+                }
+                else
+                {
+                    nameRegistry[className] = (svc, intcNamed);
+                }
+            }
+        }
+
         foreach (var info in deduped)
         {
             if (info.ServiceType is not INamedTypeSymbol serviceType)
                 continue;
+
+            if (info.HasMultipleRegisters)
+            {
+                spc.ReportDiagnostic(
+                    Diagnostic.Create(
+                        InterceptorDiagParams.AmbiguousInterceptBy,
+                        Location.None,
+                        serviceType.ToDisplayString()
+                    )
+                );
+            }
 
             var interceptorList = new List<ITypeSymbol>(
                 info.InterceptorTypes.Where(
@@ -201,6 +250,24 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                     )
                 );
                 continue;
+            }
+
+            // Emit PICO016 for ref/out/in methods that will be delegated without interception
+            foreach (
+                var method in serviceType
+                    .GetMembers()
+                    .OfType<IMethodSymbol>()
+                    .Where(m => m.MethodKind == MethodKind.Ordinary && HasRefLikeParameters(m))
+            )
+            {
+                spc.ReportDiagnostic(
+                    Diagnostic.Create(
+                        InterceptorDiagParams.RefLikeMethodDelegated,
+                        Location.None,
+                        method.Name,
+                        serviceType.ToDisplayString()
+                    )
+                );
             }
 
             for (var i = 0; i < interceptorList.Count; i++)
