@@ -2,7 +2,7 @@
 
 **AOT-First Universal Minimal Infrastructure for .NET**
 
-Three modules, eleven packages, zero runtime reflection.
+Five modules, 18 packages, zero runtime reflection.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/PicoHex/PicoHex/blob/main/LICENSE)
@@ -71,7 +71,7 @@ PicoDI also supports **compile-time AOP/interceptors** — chain `.InterceptBy<T
 ### Just AOP
 
 ```shell
-dotnet add package PicoAop
+dotnet add package PicoAop.DI
 ```
 
 ```csharp
@@ -138,7 +138,6 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 | **PicoDI** | Zero-reflection DI container |
 | **PicoDI.Abs** | DI abstractions |
 | **PicoDI.Gen** | Compile-time registration source generator |
-| **PicoAop** | Compile-time AOP decorator generation |
 | **PicoAop.Abs** | Interceptor abstractions |
 | **PicoAop.Gen** | Decorator + invocation source generator |
 | **PicoAop.DI** | DI integration for PicoAop |
