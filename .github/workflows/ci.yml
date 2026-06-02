@@ -485,6 +485,7 @@ jobs:
           sudo apt-get install -y clang zlib1g-dev
       - name: Build and test
         run: |
+          mkdir -p ./artifacts/nupkg
           dotnet restore PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj -p:UseProjectReferences=true
           dotnet build PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
           dotnet test --project PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release --no-build -p:UseProjectReferences=true
@@ -532,6 +533,7 @@ jobs:
           sudo apt-get install -y clang zlib1g-dev
       - name: Build and test
         run: |
+          mkdir -p ./artifacts/nupkg
           dotnet restore PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj -p:UseProjectReferences=true
           dotnet build PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
           dotnet test --project PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj --configuration Release --no-build -p:UseProjectReferences=true
