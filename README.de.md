@@ -2,7 +2,7 @@
 
 **AOT First 的 .NET 通用最小基础设施**
 
-Die minimale universelle Infrastruktur für produktionsreife .NET-Anwendungen &mdash; drei Module, elf Pakete, null Laufzeit-Reflection.
+Die minimale universelle Infrastruktur für produktionsreife .NET-Anwendungen &mdash; fünf Module, 18 Pakete, null Laufzeit-Reflection.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/PicoHex/PicoHex/blob/main/LICENSE)

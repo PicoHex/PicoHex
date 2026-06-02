@@ -2,7 +2,7 @@
 
 **AOT ファーストな .NET 汎用最小インフラストラクチャ**
 
-3 モジュール、11 パッケージ、ランタイムリフレクションゼロ。
+5 モジュール、18 パッケージ、ランタイムリフレクションゼロ。
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

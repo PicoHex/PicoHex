@@ -2,7 +2,7 @@
 
 **AOT-First 通用最小基础设施 for .NET**
 
-三个模块，十一个包，零运行时反射。
+五个模块，18 个包，零运行时反射。
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

@@ -2,7 +2,7 @@
 
 **A infraestrutura mínima universal para .NET com AOT First**
 
-A infraestrutura universal mínima para aplicações .NET de nível de produção &mdash; três módulos, onze pacotes, zero reflexão em tempo de execução.
+A infraestrutura universal mínima para aplicações .NET de nível de produção &mdash; cinco módulos, 18 pacotes, zero reflexão em tempo de execução.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

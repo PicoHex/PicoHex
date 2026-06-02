@@ -2,7 +2,7 @@
 
 **AOT First .NET 범용 최소 인프라**
 
-세 개의 모듈, 열한 개의 패키지, 런타임 리플렉션 제로.
+다섯 개의 모듈, 18개의 패키지, 런타임 리플렉션 제로.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
