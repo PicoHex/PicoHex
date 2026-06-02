@@ -12,9 +12,7 @@ public sealed partial class InterceptorGenerator
         var safeInt = Sanitize(interceptorType.Name);
 
         foreach (
-            var method in serviceType
-                .GetMembers()
-                .OfType<IMethodSymbol>()
+            var method in GetAllMethods(serviceType)
                 .Where(m => m.MethodKind == MethodKind.Ordinary && !HasRefLikeParameters(m))
         )
         {
@@ -162,9 +160,7 @@ public sealed partial class InterceptorGenerator
         sb.AppendLine();
 
         foreach (
-            var method in serviceType
-                .GetMembers()
-                .OfType<IMethodSymbol>()
+            var method in GetAllMethods(serviceType)
                 .Where(m => m.MethodKind == MethodKind.Ordinary && !HasRefLikeParameters(m))
         )
         {
@@ -243,12 +239,7 @@ public sealed partial class InterceptorGenerator
         }
 
         // Property delegation (not intercepted)
-        foreach (
-            var prop in serviceType
-                .GetMembers()
-                .OfType<IPropertySymbol>()
-                .Where(p => !p.IsIndexer && !p.IsStatic)
-        )
+        foreach (var prop in GetAllProperties(serviceType).Where(p => !p.IsIndexer && !p.IsStatic))
         {
             var propType = prop.Type.ToDisplayString();
             var hasGetter = prop.GetMethod is { DeclaredAccessibility: Accessibility.Public };
@@ -275,9 +266,7 @@ public sealed partial class InterceptorGenerator
 
         // ref/out/in methods — delegated directly
         foreach (
-            var method in serviceType
-                .GetMembers()
-                .OfType<IMethodSymbol>()
+            var method in GetAllMethods(serviceType)
                 .Where(m => m.MethodKind == MethodKind.Ordinary && HasRefLikeParameters(m))
         )
         {

@@ -164,6 +164,40 @@ public class GeneratorBasicTests : GeneratorTestBase
     }
 
     [Test]
+    public async Task InheritedInterfaceMembers_AreGenerated()
+    {
+        var source = """
+            using PicoAop.DI;
+            using PicoAop.Abs;
+            using PicoDI;
+            using PicoDI.Abs;
+
+            public interface IBase { void BaseMethod(); }
+            public interface IChild : IBase { void ChildMethod(); }
+            public sealed class Impl : IChild
+            {
+                public void BaseMethod() { }
+                public void ChildMethod() { }
+            }
+            public sealed class Audit : InterceptorBase { }
+
+            public static class Setup
+            {
+                public static void Configure(SvcContainer c)
+                {
+                    c.Register<IChild, Impl>(SvcLifetime.Scoped)
+                        .InterceptBy<Audit>();
+                }
+            }
+            """;
+
+        var (compilation, diags) = RunGenerator(source);
+        var generated = string.Join("", compilation.SyntaxTrees.Skip(1).Select(t => t.ToString()));
+        await Assert.That(generated.Contains("BaseMethod")).IsTrue();
+        await Assert.That(generated.Contains("ChildMethod")).IsTrue();
+    }
+
+    [Test]
     public async Task InvocationStruct_HasInternalParameterFields()
     {
         var source = """

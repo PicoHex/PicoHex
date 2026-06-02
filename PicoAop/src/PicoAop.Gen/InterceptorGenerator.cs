@@ -254,9 +254,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
 
             // Emit PICO016 for ref/out/in methods that will be delegated without interception
             foreach (
-                var method in serviceType
-                    .GetMembers()
-                    .OfType<IMethodSymbol>()
+                var method in GetAllMethods(serviceType)
                     .Where(m => m.MethodKind == MethodKind.Ordinary && HasRefLikeParameters(m))
             )
             {

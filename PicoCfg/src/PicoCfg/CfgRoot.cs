@@ -130,10 +130,25 @@ internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
         }
         finally
         {
-            // Only release when we actually acquired the gate; otherwise SemaphoreSlim throws
-            // SemaphoreFullException because the count would exceed its maximum.
             if (entered)
+            {
                 _reloadGate.Release();
+            }
+            else
+            {
+                // Timeout: a non-cooperative reload is still holding the gate.
+                // Wait for it to release before disposing to avoid
+                // ObjectDisposedException in the reload's finally block.
+                try
+                {
+                    await _reloadGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+                    _reloadGate.Release();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Already disposed by someone else.
+                }
+            }
             _disposeCts.Dispose();
             _reloadGate.Dispose();
         }

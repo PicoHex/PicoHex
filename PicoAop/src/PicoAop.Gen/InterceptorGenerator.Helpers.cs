@@ -35,6 +35,51 @@ public sealed partial class InterceptorGenerator
     private static bool HasRefLikeParameters(IMethodSymbol method) =>
         method.Parameters.Any(p => p.RefKind != RefKind.None);
 
+    /// <summary>
+    /// Returns all methods from <paramref name="type"/> including those inherited
+    /// from base interfaces. Standard <c>GetMembers()</c> does not return members
+    /// declared on parent interfaces.
+    /// </summary>
+    private static IEnumerable<IMethodSymbol> GetAllMethods(INamedTypeSymbol type)
+    {
+        var seen = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+        foreach (var m in type.GetMembers().OfType<IMethodSymbol>())
+        {
+            if (seen.Add(m))
+                yield return m;
+        }
+        foreach (var iface in type.AllInterfaces)
+        {
+            foreach (var m in iface.GetMembers().OfType<IMethodSymbol>())
+            {
+                if (seen.Add(m))
+                    yield return m;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns all properties from <paramref name="type"/> including those inherited
+    /// from base interfaces.
+    /// </summary>
+    private static IEnumerable<IPropertySymbol> GetAllProperties(INamedTypeSymbol type)
+    {
+        var seen = new HashSet<IPropertySymbol>(SymbolEqualityComparer.Default);
+        foreach (var p in type.GetMembers().OfType<IPropertySymbol>())
+        {
+            if (seen.Add(p))
+                yield return p;
+        }
+        foreach (var iface in type.AllInterfaces)
+        {
+            foreach (var p in iface.GetMembers().OfType<IPropertySymbol>())
+            {
+                if (seen.Add(p))
+                    yield return p;
+            }
+        }
+    }
+
     private static string GetRefKindPrefix(RefKind refKind) =>
         refKind switch
         {
