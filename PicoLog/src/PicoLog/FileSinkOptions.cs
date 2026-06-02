@@ -30,6 +30,19 @@ public sealed class FileSinkOptions
     /// </remarks>
     public bool AllowFlushInterrupt { get; set; } = true;
 
+    /// <summary>
+    /// Maximum file size in bytes before rotation. When the log file exceeds this
+    /// size, it is closed, renamed with a sequence number suffix (e.g. app.log → app.1.log),
+    /// and a new file is opened. Set to 0 or negative to disable. Default: disabled.
+    /// </summary>
+    public long MaxFileSizeBytes { get; set; }
+
+    /// <summary>
+    /// Maximum number of rotated files to retain. When exceeded, the oldest rotated
+    /// file is deleted. Set to 0 or negative to keep all. Default: 0 (keep all).
+    /// </summary>
+    public int MaxRetainedFiles { get; set; }
+
     public bool HasExplicitFilePath { get; private set; }
 
     public FileSinkOptions CreateValidatedCopy()
@@ -47,7 +60,9 @@ public sealed class FileSinkOptions
             FilePath = FilePath,
             BatchSize = BatchSize,
             QueueCapacity = QueueCapacity,
-            AllowFlushInterrupt = AllowFlushInterrupt
+            AllowFlushInterrupt = AllowFlushInterrupt,
+            MaxFileSizeBytes = MaxFileSizeBytes,
+            MaxRetainedFiles = MaxRetainedFiles
         };
     }
 }

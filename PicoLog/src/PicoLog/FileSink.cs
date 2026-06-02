@@ -5,13 +5,16 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
     private readonly Channel<string> _channel;
     private readonly ILogFormatter _formatter;
     private readonly FileSinkOptions _options;
-    private readonly StreamWriter _writer;
+    private readonly string _baseFilePath;
+    private readonly Lock _fileLock = new();
+    private StreamWriter _writer;
     private readonly Task _processingTask;
     private readonly SemaphoreSlim _flushSemaphore = new(1, 1);
     private readonly FlushQuiesceCoordinator _flushQuiesceCoordinator = new();
     private int _disposeState;
     private int _activeDequeuedMessages;
     private int _activeBatchOperations;
+    private int _rotationIndex;
     private Exception? _processingException;
 
     public FileSink(ILogFormatter formatter, string filePath = FileSinkOptions.DefaultFilePath)
@@ -24,18 +27,16 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
             options ?? throw new ArgumentNullException(nameof(options))
         ).CreateValidatedCopy();
 
-        var fullPath = Path.GetFullPath(_options.FilePath);
+        _baseFilePath = Path.GetFullPath(_options.FilePath);
         var directory =
-            Path.GetDirectoryName(fullPath)
+            Path.GetDirectoryName(_baseFilePath)
             ?? throw new ArgumentException(
                 $"File path must not be a root directory: '{_options.FilePath}'",
                 nameof(options)
             );
 
         if (!Directory.Exists(directory))
-        {
             Directory.CreateDirectory(directory);
-        }
 
         _channel = Channel.CreateBounded<string>(
             new BoundedChannelOptions(_options.QueueCapacity)
@@ -46,7 +47,7 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         );
 
         var fileStream = new FileStream(
-            fullPath,
+            _baseFilePath,
             FileMode.OpenOrCreate,
             FileAccess.Write,
             FileShare.Read,
@@ -54,19 +55,8 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
             useAsync: true
         );
 
-        try
-        {
-            fileStream.Seek(0, SeekOrigin.End);
-            _writer = new StreamWriter(fileStream, Encoding.UTF8);
-            _processingTask = ProcessWritesAsync();
-        }
-        catch
-        {
-            // If ProcessWritesAsync throws synchronously, clean up the writer and stream.
-            _writer?.Dispose();
-            fileStream.Dispose();
-            throw;
-        }
+        _writer = new StreamWriter(fileStream, Encoding.UTF8);
+        _processingTask = ProcessWritesAsync();
     }
 
     public async Task WriteAsync(LogEntry entry, CancellationToken cancellationToken = default)
@@ -193,6 +183,77 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
         await _writer.FlushAsync().ConfigureAwait(false);
         batch.Clear();
+
+        await RotateIfNeededAsync().ConfigureAwait(false);
+    }
+
+    private async ValueTask RotateIfNeededAsync()
+    {
+        if (_options.MaxFileSizeBytes <= 0)
+            return;
+
+        if (_writer.BaseStream.Length < _options.MaxFileSizeBytes)
+            return;
+
+        lock (_fileLock)
+        {
+            if (_writer.BaseStream.Length < _options.MaxFileSizeBytes)
+                return;
+
+            _writer.Dispose();
+
+            var rotatedPath = GetRotatedFilePath();
+            File.Move(_baseFilePath, rotatedPath, overwrite: true);
+            CleanUpOldFiles();
+
+            var fs = new FileStream(
+                _baseFilePath,
+                FileMode.OpenOrCreate,
+                FileAccess.Write,
+                FileShare.Read,
+                bufferSize: 4096,
+                useAsync: true
+            );
+            _writer = new StreamWriter(fs, Encoding.UTF8);
+            _rotationIndex++;
+        }
+    }
+
+    private string GetRotatedFilePath()
+    {
+        var dir = Path.GetDirectoryName(_baseFilePath)!;
+        var name = Path.GetFileNameWithoutExtension(_baseFilePath);
+        var ext = Path.GetExtension(_baseFilePath);
+        return Path.Combine(dir, $"{name}.{_rotationIndex + 1}{ext}");
+    }
+
+    private void CleanUpOldFiles()
+    {
+        if (_options.MaxRetainedFiles <= 0)
+            return;
+
+        var dir = Path.GetDirectoryName(_baseFilePath)!;
+        var name = Path.GetFileNameWithoutExtension(_baseFilePath);
+        var ext = Path.GetExtension(_baseFilePath);
+        var rotatedFiles = Directory
+            .GetFiles(dir, $"{name}.*{ext}")
+            .OrderBy(f =>
+            {
+                var fname = Path.GetFileNameWithoutExtension(f);
+                var suffix = fname.Substring(name.Length + 1);
+                return int.TryParse(suffix, out var n) ? n : 0;
+            })
+            .ToList();
+
+        while (rotatedFiles.Count > _options.MaxRetainedFiles)
+        {
+            try
+            {
+                File.Delete(rotatedFiles[0]);
+            }
+            catch { }
+            rotatedFiles.RemoveAt(0);
+        }
     }
 
     public async ValueTask DisposeAsync()

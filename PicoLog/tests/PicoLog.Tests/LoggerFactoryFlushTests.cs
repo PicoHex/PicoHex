@@ -320,6 +320,74 @@ public sealed class LoggerFactoryFlushTests
         }
     }
 
+    [Test]
+    public async Task FileSink_RotatesWhenExceedingMaxSize()
+    {
+        var basePath = Path.Combine(Path.GetTempPath(), $"pico-rotate-{Guid.NewGuid():N}.log");
+        var dir = Path.GetDirectoryName(basePath)!;
+        ILogSink? sink = null;
+
+        try
+        {
+            sink = new FileSink(
+                new ConsoleFormatter(),
+                new FileSinkOptions
+                {
+                    FilePath = basePath,
+                    BatchSize = 1,
+                    MaxFileSizeBytes = 100,
+                    MaxRetainedFiles = 2
+                }
+            );
+
+            // Each formatted message is ~90 bytes (timestamp + level + category + message).
+            // Write 10 messages to exceed 100-byte threshold.
+            for (var i = 0; i < 10; i++)
+            {
+                await sink.WriteAsync(
+                    new LogEntry
+                    {
+                        Timestamp = DateTimeOffset.UtcNow,
+                        Level = LogLevel.Info,
+                        Category = "t",
+                        Message = $"rotation-test-msg-{i:D3}"
+                    }
+                );
+            }
+
+            // Flush to ensure all messages are processed and rotation has happened.
+            await sink.FlushAsync();
+
+            // After rotation, the base file should exist and contain recent messages.
+            await Assert.That(File.Exists(basePath)).IsTrue();
+
+            // At least one rotated file should exist (original content was moved).
+            var prefix = Path.GetFileNameWithoutExtension(basePath);
+            var ext = Path.GetExtension(basePath);
+            var rotatedFiles = Directory
+                .GetFiles(dir, $"{prefix}.*{ext}")
+                .Where(f => f != basePath)
+                .ToList();
+            await Assert.That(rotatedFiles.Count).IsGreaterThan(0);
+        }
+        finally
+        {
+            if (sink is not null)
+                await sink.DisposeAsync();
+
+            var prefix = Path.GetFileNameWithoutExtension(basePath);
+            var ext = Path.GetExtension(basePath);
+            foreach (var f in Directory.GetFiles(dir, $"{prefix}*{ext}"))
+            {
+                try
+                {
+                    File.Delete(f);
+                }
+                catch { }
+            }
+        }
+    }
+
     private sealed class CollectingFlushableSink : IFlushableLogSink
     {
         private readonly ConcurrentQueue<LogEntry> _entries = [];
