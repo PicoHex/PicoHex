@@ -2,7 +2,7 @@
 
 **Infraestructura mínima universal para .NET, priorizando Native AOT**
 
-Infraestructura universal mínima para aplicaciones .NET de nivel de producción &mdash; cinco módulos, 18 paquetes, cero reflexión en tiempo de ejecución.
+Infraestructura universal mínima para aplicaciones .NET de nivel de producción &mdash; cinco módulos, cero reflexión en tiempo de ejecución.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)

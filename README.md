@@ -2,7 +2,7 @@
 
 **AOT-First Universal Minimal Infrastructure for .NET**
 
-Five modules, 18 packages, zero runtime reflection.
+Five modules, zero runtime reflection.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/PicoHex/PicoHex/blob/main/LICENSE)
@@ -27,7 +27,7 @@ Every application reads configuration, assembles its internals, and produces out
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **Packages** | 40+ | 18 |
+| **Packages** | Many | Minimal |
 | **Runtime reflection** | Heavy (`Activator.CreateInstance`, Expression trees) | Zero (source generators) |
 | **AOT ready** | Requires opt-in and careful config | AOT First — compiles natively out of the box |
 | **HostBuilder required** | Yes | No — `new SvcContainer()` is all you need |
@@ -162,7 +162,7 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 
 **专注 (Focus)** — Each module does one thing. Deep specialization over shallow generality.
 
-**优雅 (Elegance)** — `new SvcContainer()` replaces 100+ lines of `Host.CreateDefaultBuilder()` ceremony. Source generators handle wiring at compile time.
+**优雅 (Elegance)** — `new SvcContainer()` replaces pages of `Host.CreateDefaultBuilder()` ceremony. Source generators handle wiring at compile time.
 
 **高效 (Efficiency)** — AOT First. Zero reflection. Everything resolvable at compile time is resolved at compile time.
 
