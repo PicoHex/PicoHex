@@ -29,7 +29,7 @@
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **包数量** | 40+ | 11 |
+| **包数量** | 很多 | 极少 |
 | **运行时反射** | 大量 (`Activator.CreateInstance`、表达式树) | 零 (源代码生成器) |
 | **AOT 就绪** | 需要主动启用和精细配置 | AOT First——开箱即用地原生编译 |
 | **需要 HostBuilder** | 是——必须用它串联 DI + Config + Logging | 否——`new SvcContainer()` 即可 |
@@ -140,6 +140,9 @@ logger.Info("App started");
 | **PicoDI** | 零反射 DI 容器 |
 | **PicoDI.Abs** | DI 抽象层 |
 | **PicoDI.Gen** | 编译时注册源生成器 |
+| **PicoAop.Abs** | 拦截器抽象 |
+| **PicoAop.Gen** | 装饰器 + invocation 源生成器 |
+| **PicoAop.DI** | PicoAop 的 DI 集成 |
 | **PicoCfg** | 异步优先配置 |
 | **PicoCfg.Abs** | 配置抽象层 |
 | **PicoCfg.Gen** | 类型绑定源生成器 |
@@ -148,16 +151,20 @@ logger.Info("App started");
 | **PicoLog.Abs** | 日志抽象层 |
 | **PicoLog.Gen** | `[PicoLogMessage]` 源生成器 |
 | **PicoLog.DI** | PicoLog 的 DI 集成 |
+| **PicoMediator** | 编译期请求/通知派发 |
+| **PicoMediator.Abs** | 中介者抽象 (ISender/IPublisher/IMediator) |
+| **PicoMediator.Gen** | Handler → switch 派发源生成器 |
+| **PicoMediator.DI** | PicoMediator 的 DI 集成 |
 
 ---
 
 ## 设计哲学
 
-**克制** — 仅包含 DI、配置和日志。没有 Web 框架，没有 ORM，没有消息队列。不属于通用基础设施的，就不应该存在。PicoHex 是每个应用都需要的公共部分——不多不少。
+**克制** — DI、配置、日志、AOP、中介者。每个应用都需要的通用基础设施。没有 Web 框架，没有 ORM，没有消息队列。
 
 **专注** — 每个模块只做一件事。PicoDI 是容器，不是服务定位器。PicoCfg 是配置管理，不是功能开关系统。PicoLog 是日志记录，不是遥测管道。追求深度的专门化，而非浅层的泛化。
 
-**优雅** — API 保持最小化。源代码生成器在编译时完成组装。开发者编写直观的代码，工具处理复杂性。`new SvcContainer()` 替代了 `Host.CreateDefaultBuilder()` 那 100 多行的仪式性代码。
+**优雅** — API 保持最小化。源代码生成器在编译时完成组装。开发者编写直观的代码，工具处理复杂性。`new SvcContainer()` 替代了 `Host.CreateDefaultBuilder()` 那冗长的仪式性代码。
 
 **高效** — AOT First 并非事后补丁，而是基础设施。零反射，零运行时开销。一切能在编译时完成的工作，都在编译时完成。极小的二进制体积、快速的冷启动、可预测的性能。
 

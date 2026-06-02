@@ -29,7 +29,7 @@ Configuration  ──→  Dependency Injection  ──→  Logging
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **패키지 수** | 40+ | 11 |
+| **패키지 수** | 많음 | 최소 |
 | **런타임 리플렉션** | 과도함 (`Activator.CreateInstance`, Expression trees) | 없음 (소스 생성기) |
 | **AOT 지원** | 옵트인 및 세심한 설정 필요 | AOT First &mdash; 기본적으로 네이티브 컴파일 |
 | **HostBuilder 필요** | 예 &mdash; DI + Config + Logging 연결 필수 | 아니요 &mdash; `new SvcContainer()`면 충분 |
@@ -112,6 +112,9 @@ PicoDI는 **컴파일 타임 AOP/인터셉터**도 지원합니다 — Register(
 | **PicoDI** | 리플렉션 없는 DI 컨테이너 |
 | **PicoDI.Abs** | DI 추상화 |
 | **PicoDI.Gen** | 컴파일 타임 등록 소스 생성기 |
+| **PicoAop.Abs** | 인터셉터 추상화 |
+| **PicoAop.Gen** | 데코레이터 + invocation 소스 생성기 |
+| **PicoAop.DI** | PicoAop용 DI 통합 |
 | **PicoCfg** | 비동기 우선 설정 관리 |
 | **PicoCfg.Abs** | 설정 추상화 |
 | **PicoCfg.Gen** | 타입 바인딩 소스 생성기 |
@@ -120,16 +123,20 @@ PicoDI는 **컴파일 타임 AOP/인터셉터**도 지원합니다 — Register(
 | **PicoLog.Abs** | 로깅 추상화 |
 | **PicoLog.Gen** | `[PicoLogMessage]` 소스 생성기 |
 | **PicoLog.DI** | PicoLog용 DI 통합 |
+| **PicoMediator** | 컴파일 타임 요청/알림 디스패치 |
+| **PicoMediator.Abs** | 중재자 추상화 (ISender/IPublisher/IMediator) |
+| **PicoMediator.Gen** | Handler → switch 디스패치 소스 생성기 |
+| **PicoMediator.DI** | PicoMediator용 DI 통합 |
 
 ---
 
 ## 디자인 철학 (Design Philosophy)
 
-**克制 (Restraint)** &mdash; 오직 DI, Config, Logging만. 웹 프레임워크도, ORM도, 메시지 큐도 없습니다. 범용 인프라가 아니라면 포함되지 않습니다. PicoHex는 모든 애플리케이션이 필요로 하는 공통 분모입니다 &mdash; 그 이상도 이하도 아닙니다.
+**克制 (Restraint)** &mdash; DI, Config, Logging, AOP, Mediator. 모든 애플리케이션이 필요로 하는 공통 분모입니다. 웹 프레임워크도, ORM도, 메시지 큐도 없습니다.
 
 **专注 (Focus)** &mdash; 각 모듈은 한 가지 일만 합니다. PicoDI는 컨테이너이지 서비스 로케이터가 아닙니다. PicoCfg는 설정 관리이지 기능 플래그 시스템이 아닙니다. PicoLog는 로깅이지 텔레메트리 파이프라인이 아닙니다. 얕은 일반성보다 깊은 전문화.
 
-**优雅 (Elegance)** &mdash; `new SvcContainer()` 한 줄이 `Host.CreateDefaultBuilder()`의 100줄이 넘는 상용구를 대체합니다. 소스 생성기가 컴파일 타임에 연결합니다.
+**优雅 (Elegance)** &mdash; `new SvcContainer()` 한 줄이 `Host.CreateDefaultBuilder()`의 상용구를 대체합니다. 소스 생성기가 컴파일 타임에 연결합니다.
 
 **高效 (Efficiency)** &mdash; AOT First. 리플렉션 제로. 컴파일 타임에 해결할 수 있는 모든 것은 컴파일 타임에 해결합니다.
 

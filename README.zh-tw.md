@@ -21,7 +21,7 @@ Configuration  ──→  Dependency Injection  ──→  Logging
   (輸入)              (核心)                   (輸出)
 ```
 
-每個應用程式都需要讀取設定、組合內部元件、產出結果。**PicoHex** 是這三項後設操作在 .NET Native AOT 領域的最小化實作 &mdash; 從底層就為編譯期程式碼生成而設計，而非執行期反射。
+每個應用程式都需要讀取設定、組合內部元件、產出結果。**PicoHex** 提供這些操作在 .NET 下的最小化、AOT-first 實作——設定 (PicoCfg)、依賴注入 (PicoDI)、日誌 (PicoLog)，以及編譯期 AOP (PicoAop) 和中介者派發 (PicoMediator)。全部基於 source generators，零執行階段反射。
 
 ---
 
@@ -29,7 +29,7 @@ Configuration  ──→  Dependency Injection  ──→  Logging
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **套件數量** | 40+ | 11 |
+| **套件數量** | 很多 | 極少 |
 | **執行期反射** | 大量使用 (`Activator.CreateInstance`、Expression trees) | 零反射（source generators） |
 | **AOT 就緒** | 需手動啟用並謹慎設定 | AOT First &mdash; 開箱即用原生編譯 |
 | **需要 HostBuilder** | 是 &mdash; 必須用它來串接 DI + Config + Logging | 否 &mdash; `new SvcContainer()` 就夠了 |
@@ -135,6 +135,9 @@ PicoDI 也支援**編譯期 AOP/攔截器**——在 Register() 後鏈式調用 
 | **PicoDI** | 零反射的 DI 容器 |
 | **PicoDI.Abs** | DI 抽象層 |
 | **PicoDI.Gen** | 編譯期註冊原始碼生成器 |
+| **PicoAop.Abs** | 攔截器抽象 |
+| **PicoAop.Gen** | 裝飾器 + invocation 原始碼生成器 |
+| **PicoAop.DI** | PicoAop 的 DI 整合 |
 | **PicoCfg** | 非同步優先的設定管理 |
 | **PicoCfg.Abs** | 設定抽象層 |
 | **PicoCfg.Gen** | 型別化綁定原始碼生成器 |
@@ -143,16 +146,20 @@ PicoDI 也支援**編譯期 AOP/攔截器**——在 Register() 後鏈式調用 
 | **PicoLog.Abs** | 日誌抽象層 |
 | **PicoLog.Gen** | `[PicoLogMessage]` 原始碼生成器 |
 | **PicoLog.DI** | PicoLog 的 DI 整合 |
+| **PicoMediator** | 編譯期請求/通知派發 |
+| **PicoMediator.Abs** | 中介者抽象 (ISender/IPublisher/IMediator) |
+| **PicoMediator.Gen** | Handler → switch 派發原始碼生成器 |
+| **PicoMediator.DI** | PicoMediator 的 DI 整合 |
 
 ---
 
 ## 設計理念
 
-**克制 (Restraint)** — 只有 DI、Config、Logging。沒有 Web 框架、沒有 ORM、沒有訊息佇列。不屬於通用基礎設施的，就不該出現在這裡。PicoHex 是每個應用程式都需要的最小公分母 &mdash; 不多不少。
+**克制 (Restraint)** — DI、Config、Logging、AOP、Mediator。每個應用程式都需要的通用基礎設施。沒有 Web 框架、沒有 ORM、沒有訊息佇列。
 
 **專注 (Focus)** — 每個模組只做一件事。PicoDI 是一個容器，不是服務定位器。PicoCfg 是設定管理，不是功能開關系統。PicoLog 是日誌記錄，不是遙測管道。深耕專業，而非淺層通用。
 
-**優雅 (Elegance)** — API 極簡。Source generators 在編譯期完成接線。開發者撰寫直觀的程式碼，工具處理複雜的部分。`new SvcContainer()` 取代了 100 多行 `Host.CreateDefaultBuilder()` 的繁文縟節。
+**優雅 (Elegance)** — API 極簡。Source generators 在編譯期完成接線。開發者撰寫直觀的程式碼，工具處理複雜的部分。`new SvcContainer()` 取代了 `Host.CreateDefaultBuilder()` 那冗長的儀式性程式碼。
 
 **高效 (Efficiency)** — AOT First 不是事後補救 &mdash; 而是根本基石。零反射。零執行期開銷。所有能在編譯期決定的，就在編譯期決定。最小的二進位檔、快速的冷啟動、可預測的效能。
 

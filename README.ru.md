@@ -29,7 +29,7 @@
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **Пакеты** | 40+ | 11 |
+| **Пакеты** | Много | Минимум |
 | **Runtime-отражение** | Тяжёлое (`Activator.CreateInstance`, деревья выражений) | Отсутствует (source generators) |
 | **Готовность к AOT** | Требует ручного включения и тонкой настройки | AOT First — компилируется нативно «из коробки» |
 | **HostBuilder** | Обязателен для связки DI + Config + Logging | Не нужен — достаточно `new SvcContainer()` |

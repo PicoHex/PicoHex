@@ -29,7 +29,7 @@ Jede Anwendung liest Konfiguration ein, setzt ihre internen Abhängigkeiten zusa
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **Pakete** | 40+ | 11 |
+| **Pakete** | Viele | Minimal |
 | **Laufzeit-Reflection** | Umfangreich (`Activator.CreateInstance`, Expression Trees) | Keine (Source Generators) |
 | **AOT-tauglich** | Erfordert Opt-in und sorgfältige Konfiguration | AOT First &mdash; kompiliert nativ out of the box |
 | **HostBuilder nötig** | Ja &mdash; erforderlich, um DI + Config + Logging zu verdrahten | Nein &mdash; `new SvcContainer()` genügt |
@@ -135,6 +135,9 @@ PicoDI unterstützt auch **AOP/Interceptoren zur Kompilierzeit** — verketten S
 | **PicoDI** | Reflection-freier DI-Container |
 | **PicoDI.Abs** | DI-Abstraktionen |
 | **PicoDI.Gen** | Source Generator für Registrierung zur Kompilierzeit |
+| **PicoAop.Abs** | Interceptor-Abstraktionen |
+| **PicoAop.Gen** | Decorator + Invocation Source Generator |
+| **PicoAop.DI** | DI-Integration für PicoAop |
 | **PicoCfg** | Asynchron-first Konfigurationsverwaltung |
 | **PicoCfg.Abs** | Konfigurationsabstraktionen |
 | **PicoCfg.Gen** | Source Generator für typisierte Bindung |
@@ -143,6 +146,10 @@ PicoDI unterstützt auch **AOP/Interceptoren zur Kompilierzeit** — verketten S
 | **PicoLog.Abs** | Logging-Abstraktionen |
 | **PicoLog.Gen** | `[PicoLogMessage]` Source Generator |
 | **PicoLog.DI** | DI-Integration für PicoLog |
+| **PicoMediator** | Kompilierzeit Request/Notification Dispatch |
+| **PicoMediator.Abs** | Mediator-Abstraktionen (ISender/IPublisher/IMediator) |
+| **PicoMediator.Gen** | Handler → Switch Dispatch Source Generator |
+| **PicoMediator.DI** | DI-Integration für PicoMediator |
 
 ---
 

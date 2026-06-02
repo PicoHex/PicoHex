@@ -27,7 +27,7 @@
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **パッケージ数** | 40+ | 11 |
+| **パッケージ数** | 多数 | 最小限 |
 | **ランタイムリフレクション** | 多用（`Activator.CreateInstance`、式木） | ゼロ（ソースジェネレータ） |
 | **AOT 対応** | オプトインと注意深い設定が必要 | AOT ファースト &mdash; そのままネイティブコンパイル可能 |
 | **HostBuilder 必須** | はい &mdash; DI + Config + Logging の結合に必須 | いいえ &mdash; `new SvcContainer()` だけで十分 |

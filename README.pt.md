@@ -29,7 +29,7 @@ Toda aplicação lê configuração, monta seus componentes internos e produz sa
 
 | | Microsoft.Extensions | PicoHex |
 |---|---|---|
-| **Pacotes** | 40+ | 11 |
+| **Pacotes** | Muitos | Mínimo |
 | **Reflexão em runtime** | Pesada (`Activator.CreateInstance`, árvores de expressão) | Zero (source generators) |
 | **Pronto para AOT** | Exige opt-in e configuração cuidadosa | AOT First &mdash; compila nativamente de imediato |
 | **HostBuilder obrigatório** | Sim &mdash; necessário para integrar DI + Config + Logging | Não &mdash; `new SvcContainer()` é tudo que você precisa |
