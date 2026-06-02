@@ -176,7 +176,7 @@ Without the generator, `Mediator.Send()` still works via the runtime `GetService
 | Send — handler throws | Exception propagates to caller |
 | Publish — no subscribers | Silent (PUB/SUB semantics) |
 | Publish — one handler throws | Exception propagates to caller |
-| Publish — multiple handlers fail | `AggregateException` (future) |
+| Publish — multiple handlers fail | `AggregateException` |
 
 ## Packages
 

@@ -5,12 +5,16 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
     private const int MaxBatchEntries = 100;
     private const int MaxBatchBytes = 256 * 1024;
     private static readonly TimeSpan DefaultFlushInterval = TimeSpan.FromSeconds(2);
+    private const int DefaultMaxRetries = 3;
+    private const int DefaultRetryBaseDelayMs = 100;
 
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private readonly Lock _bufferLock = new();
     private readonly List<LogEntry> _buffer = [];
     private readonly TimeSpan _flushInterval;
+    private readonly int _maxRetries;
+    private readonly int _retryBaseDelayMs;
     private readonly CancellationTokenSource _timerCts = new();
     private readonly Task _timerTask;
     private long _bufferBytes;
@@ -29,13 +33,17 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
         HttpClient httpClient,
         string? apiKey = null,
         TimeSpan? flushInterval = null,
-        bool enableConsoleFallback = false
+        bool enableConsoleFallback = false,
+        int maxRetries = DefaultMaxRetries,
+        int retryBaseDelayMs = DefaultRetryBaseDelayMs
     )
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _apiKey = apiKey ?? string.Empty;
         _flushInterval = flushInterval ?? DefaultFlushInterval;
         _enableConsoleFallback = enableConsoleFallback;
+        _maxRetries = maxRetries > 0 ? maxRetries : DefaultMaxRetries;
+        _retryBaseDelayMs = retryBaseDelayMs > 0 ? retryBaseDelayMs : DefaultRetryBaseDelayMs;
         _timerTask = RunPeriodicFlushAsync(_timerCts.Token);
     }
 
@@ -162,7 +170,7 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
         // Serialize once — the JSON is immutable across retries.
         var json = SerializeBatch(batch);
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _maxRetries; attempt++)
         {
             // HttpRequestMessage and StringContent are single-use;
             // recreate them for every attempt.
@@ -184,14 +192,15 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
             }
             catch (Exception ex) when (!ct.IsCancellationRequested)
             {
-                if (attempt == 2)
+                if (attempt == _maxRetries - 1)
                 {
                     Interlocked.Increment(ref _failureCount);
                     Interlocked.Exchange(ref _lastFailureTicks, DateTimeOffset.UtcNow.Ticks);
                     FallbackToConsole(batch, ex);
                     return;
                 }
-                await Task.Delay((int)Math.Pow(2, attempt) * 100, ct).ConfigureAwait(false);
+                await Task.Delay(_retryBaseDelayMs * (int)Math.Pow(2, attempt), ct)
+                    .ConfigureAwait(false);
             }
         }
     }

@@ -2,6 +2,12 @@ namespace PicoMediator;
 
 public sealed class Mediator(ISvcScope scope) : IMediator
 {
+    /// <summary>
+    /// Optional callback invoked when a notification has no registered handlers.
+    /// Receives the notification type name. Silent drop by default (PUB/SUB semantics).
+    /// </summary>
+    public Action<string>? OnNoSubscribers { get; set; }
+
     public ValueTask<TResponse> Send<TRequest, TResponse>(
         TRequest request,
         CancellationToken ct = default
@@ -22,6 +28,7 @@ public sealed class Mediator(ISvcScope scope) : IMediator
         }
         catch (PicoDiException)
         {
+            OnNoSubscribers?.Invoke(typeof(TNotification).FullName!);
             return;
         }
 
@@ -57,6 +64,7 @@ public sealed class Mediator(ISvcScope scope) : IMediator
         }
         catch (PicoDiException)
         {
+            OnNoSubscribers?.Invoke(typeof(TNotification).FullName!);
             return;
         }
 
