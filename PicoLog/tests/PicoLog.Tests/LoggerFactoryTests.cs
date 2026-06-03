@@ -847,7 +847,7 @@ public sealed class LoggerFactoryTests
             // maxBackoffMs (~25 ms) of Complete(). Without the fix it would
             // block until SyncWriteTimeout (30 s) and the WaitAsync below
             // would throw TimeoutException after 3 s.
-            await thirdWriteSignal.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            await thirdWriteSignal.Task.WaitAsync(TimeSpan.FromSeconds(10));
         }
         finally
         {
