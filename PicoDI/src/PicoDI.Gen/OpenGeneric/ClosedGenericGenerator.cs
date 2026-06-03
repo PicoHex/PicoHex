@@ -31,8 +31,8 @@ internal sealed class ClosedGenericGenerator
 
         foreach (var usage in closedUsages)
         {
-            var openGeneric = openGenerics.FirstOrDefault(
-                og => og.OpenServiceTypeFullName == usage.OpenServiceTypeFullName
+            var openGeneric = openGenerics.FirstOrDefault(og =>
+                og.OpenServiceTypeFullName == usage.OpenServiceTypeFullName
             );
             if (openGeneric is null)
                 continue;
@@ -94,10 +94,8 @@ internal sealed class ClosedGenericGenerator
         }
 
         return openGeneric
-            .ConstructorParameters
-            .Select(
-                typeFullName =>
-                    _substitutor.SubstituteTypeParameters(typeFullName, typeParameterMap)
+            .ConstructorParameters.Select(typeFullName =>
+                _substitutor.SubstituteTypeParameters(typeFullName, typeParameterMap)
             )
             .ToImmutableArray();
     }

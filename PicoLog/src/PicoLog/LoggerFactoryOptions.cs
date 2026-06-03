@@ -50,7 +50,7 @@ public sealed class LoggerFactoryOptions
             OnMessagesDropped = OnMessagesDropped,
             TimestampProvider = TimestampProvider,
             ShutdownTimeout = ShutdownTimeout,
-            FilterRules =  [.. FilterRules]
+            FilterRules = [.. FilterRules],
         };
     }
 }

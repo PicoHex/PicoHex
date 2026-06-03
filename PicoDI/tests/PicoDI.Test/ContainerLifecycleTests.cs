@@ -17,9 +17,8 @@ public class ContainerLifecycleTests
 
         // Act & Assert
         await Assert
-            .That(
-                () =>
-                    container.RegisterTransient<ILevelOneService>(static _ => new LevelOneService())
+            .That(() =>
+                container.RegisterTransient<ILevelOneService>(static _ => new LevelOneService())
             )
             .Throws<InvalidOperationException>();
     }
@@ -84,8 +83,8 @@ public class ContainerLifecycleTests
 
         // Assert
         await Assert
-            .That(
-                () => container.RegisterTransient<ISimpleService>(static _ => new SimpleService())
+            .That(() =>
+                container.RegisterTransient<ISimpleService>(static _ => new SimpleService())
             )
             .Throws<ObjectDisposedException>();
     }
@@ -379,13 +378,12 @@ public class ContainerLifecycleTests
         // Act - Create many scopes concurrently
         var tasks = Enumerable
             .Range(0, 100)
-            .Select(
-                _ =>
-                    Task.Run(async () =>
-                    {
-                        await using var scope = container.CreateScope();
-                        return scope.GetService<ISimpleService>().InstanceId;
-                    })
+            .Select(_ =>
+                Task.Run(async () =>
+                {
+                    await using var scope = container.CreateScope();
+                    return scope.GetService<ISimpleService>().InstanceId;
+                })
             )
             .ToArray();
 
@@ -615,12 +613,11 @@ public class ContainerLifecycleTests
             type =
                 assembly
                     .GetTypes()
-                    .FirstOrDefault(
-                        t =>
-                            t.FullName?.StartsWith(
-                                "PicoDI.Generated.GeneratedServiceRegistrations_",
-                                StringComparison.Ordinal
-                            ) == true
+                    .FirstOrDefault(t =>
+                        t.FullName?.StartsWith(
+                            "PicoDI.Generated.GeneratedServiceRegistrations_",
+                            StringComparison.Ordinal
+                        ) == true
                     )
                 ?? throw new InvalidOperationException(
                     $"Generated configurator type not found. Expected '{typeName}' or a type "

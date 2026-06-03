@@ -41,7 +41,7 @@ public sealed class ILoggerStructuredCallSiteTests
     private sealed class RecordingLogger : ILogger
     {
         public List<(LogLevel Level, string Message, Exception? Exception)> SyncEntries { get; } =
-            [];
+        [];
         public List<(
             LogLevel Level,
             string Message,

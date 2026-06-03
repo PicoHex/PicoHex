@@ -83,9 +83,9 @@ public class MixedLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterSingleton<ISimpleService>(static _ => new SimpleService());
-        container.RegisterScoped<IServiceWithDependency>(
-            static scope => new ServiceWithDependency(scope.GetService<ISimpleService>())
-        );
+        container.RegisterScoped<IServiceWithDependency>(static scope => new ServiceWithDependency(
+            scope.GetService<ISimpleService>()
+        ));
         await using var scope1 = container.CreateScope();
         await using var scope2 = container.CreateScope();
 
@@ -108,9 +108,9 @@ public class MixedLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterTransient<ISimpleService>(static _ => new SimpleService());
-        container.RegisterScoped<IServiceWithDependency>(
-            static scope => new ServiceWithDependency(scope.GetService<ISimpleService>())
-        );
+        container.RegisterScoped<IServiceWithDependency>(static scope => new ServiceWithDependency(
+            scope.GetService<ISimpleService>()
+        ));
         await using var scope = container.CreateScope();
 
         // Act
@@ -193,14 +193,14 @@ public class MixedLifetimeTests
         container.RegisterSingleton<ILevelOneService>(static _ => new LevelOneService());
 
         // Level 2: Scoped (depends on Singleton)
-        container.RegisterScoped<ILevelTwoService>(
-            static scope => new LevelTwoService(scope.GetService<ILevelOneService>())
-        );
+        container.RegisterScoped<ILevelTwoService>(static scope => new LevelTwoService(
+            scope.GetService<ILevelOneService>()
+        ));
 
         // Level 3: Transient (depends on Scoped)
-        container.RegisterTransient<ILevelThreeService>(
-            static scope => new LevelThreeService(scope.GetService<ILevelTwoService>())
-        );
+        container.RegisterTransient<ILevelThreeService>(static scope => new LevelThreeService(
+            scope.GetService<ILevelTwoService>()
+        ));
 
         await using var scope1 = container.CreateScope();
         await using var scope2 = container.CreateScope();
@@ -279,12 +279,12 @@ public class MixedLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterTransient<ILevelOneService>(static _ => new LevelOneService());
-        container.RegisterScoped<ILevelTwoService>(
-            static scope => new LevelTwoService(scope.GetService<ILevelOneService>())
-        );
-        container.RegisterSingleton<ILevelThreeService>(
-            static scope => new LevelThreeService(scope.GetService<ILevelTwoService>())
-        );
+        container.RegisterScoped<ILevelTwoService>(static scope => new LevelTwoService(
+            scope.GetService<ILevelOneService>()
+        ));
+        container.RegisterSingleton<ILevelThreeService>(static scope => new LevelThreeService(
+            scope.GetService<ILevelTwoService>()
+        ));
 
         await using var parentScope = container.CreateScope();
         await using var childScope = parentScope.CreateScope();

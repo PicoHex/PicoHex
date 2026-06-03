@@ -62,7 +62,7 @@ public sealed class FileSinkOptions
             QueueCapacity = QueueCapacity,
             AllowFlushInterrupt = AllowFlushInterrupt,
             MaxFileSizeBytes = MaxFileSizeBytes,
-            MaxRetainedFiles = MaxRetainedFiles
+            MaxRetainedFiles = MaxRetainedFiles,
         };
     }
 }

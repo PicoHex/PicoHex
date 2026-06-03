@@ -16,8 +16,11 @@ public static class CfgOptionsExtensions
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
         public ISvcContainer RegisterCfgOptionsSingleton<T>(string? section = null)
-            where T : class
-            => container.RegisterSingleton<ICfgOptions<T>>(scope => new CfgOptions<T>(Resolve(scope), section));
+            where T : class =>
+            container.RegisterSingleton<ICfgOptions<T>>(scope => new CfgOptions<T>(
+                Resolve(scope),
+                section
+            ));
 
         /// <summary>
         /// Registers a scoped <see cref="ICfgOptions{T}"/> that rebinds the configuration value on every resolution.
@@ -25,7 +28,10 @@ public static class CfgOptionsExtensions
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
         public ISvcContainer RegisterCfgOptionsScoped<T>(string? section = null)
-            where T : class
-            => container.RegisterScoped<ICfgOptions<T>>(scope => new CfgOptionsSnapshot<T>(Resolve(scope), section));
+            where T : class =>
+            container.RegisterScoped<ICfgOptions<T>>(scope => new CfgOptionsSnapshot<T>(
+                Resolve(scope),
+                section
+            ));
     }
 }

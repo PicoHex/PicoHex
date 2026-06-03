@@ -1,20 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AotOptimizationLevel>aggressive</AotOptimizationLevel>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net10.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <AotOptimizationLevel>aggressive</AotOptimizationLevel>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\..\src\PicoCfg.Json\PicoCfg.Json.csproj" />
-        <ProjectReference Include="..\..\src\PicoCfg.Yaml\PicoCfg.Yaml.csproj" />
-        <ProjectReference Include="..\..\src\PicoCfg.Ini\PicoCfg.Ini.csproj" />
-        <ProjectReference Include="..\..\src\PicoCfg.Toml\PicoCfg.Toml.csproj" />
-        <ProjectReference Include="..\..\src\PicoCfg\PicoCfg.csproj" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PicoCfg.Json\PicoCfg.Json.csproj" />
+    <ProjectReference Include="..\..\src\PicoCfg.Yaml\PicoCfg.Yaml.csproj" />
+    <ProjectReference Include="..\..\src\PicoCfg.Ini\PicoCfg.Ini.csproj" />
+    <ProjectReference Include="..\..\src\PicoCfg.Toml\PicoCfg.Toml.csproj" />
+    <ProjectReference Include="..\..\src\PicoCfg\PicoCfg.csproj" />
+  </ItemGroup>
 </Project>

@@ -4,7 +4,7 @@ var config = new BenchmarkConfig
     WarmupIterations = BenchmarkConfig.Default.WarmupIterations,
     SampleCount = BenchmarkConfig.Default.SampleCount,
     IterationsPerSample = BenchmarkConfig.Default.IterationsPerSample / 10,
-    RetainSamples = BenchmarkConfig.Default.RetainSamples
+    RetainSamples = BenchmarkConfig.Default.RetainSamples,
 };
 var consoleFormatter = new PicoBench.Formatters.ConsoleFormatter();
 var markdownFormatter = new MarkdownFormatter();

@@ -14,7 +14,7 @@ public partial class LoggingBenchmarks
         new("iteration", 42),
         new("node", "edge-a"),
         new("success", true),
-        new("elapsedMs", 12.5)
+        new("elapsedMs", 12.5),
     ];
 
 #pragma warning disable IDE0052 // Fields prevent dead-code elimination in benchmarks
@@ -82,7 +82,7 @@ public partial class LoggingBenchmarks
                 Message = CachedMessage,
                 Exception = null,
                 Scopes = null,
-                Properties = null
+                Properties = null,
             };
         }
     }

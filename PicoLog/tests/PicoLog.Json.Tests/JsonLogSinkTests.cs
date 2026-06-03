@@ -14,7 +14,7 @@ public class JsonLogSinkTests
                 Timestamp = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 Level = LogLevel.Info,
                 Category = "Test",
-                Message = "Hello, world!"
+                Message = "Hello, world!",
             };
 
             await sink.WriteAsync(entry);
@@ -46,7 +46,7 @@ public class JsonLogSinkTests
                 Level = LogLevel.Error,
                 Category = "Test",
                 Message = "Error occurred",
-                Exception = new InvalidOperationException("Something went wrong")
+                Exception = new InvalidOperationException("Something went wrong"),
             };
 
             await sink.WriteAsync(entry);
@@ -76,7 +76,7 @@ public class JsonLogSinkTests
                     Timestamp = DateTimeOffset.UtcNow,
                     Level = LogLevel.Info,
                     Category = "Test",
-                    Message = "flushed"
+                    Message = "flushed",
                 }
             );
             await sink.FlushAsync();

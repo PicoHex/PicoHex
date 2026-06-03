@@ -178,9 +178,9 @@ public class TransientLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterTransient<ISimpleService>(static _ => new SimpleService());
-        container.RegisterTransient<IServiceWithDependency>(
-            static s => new ServiceWithDependency(s.GetService<ISimpleService>())
-        );
+        container.RegisterTransient<IServiceWithDependency>(static s => new ServiceWithDependency(
+            s.GetService<ISimpleService>()
+        ));
         await using var scope = container.CreateScope();
 
         // Act
@@ -200,12 +200,12 @@ public class TransientLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterTransient<ILevelOneService>(static _ => new LevelOneService());
-        container.RegisterTransient<ILevelTwoService>(
-            static s => new LevelTwoService(s.GetService<ILevelOneService>())
-        );
-        container.RegisterTransient<ILevelThreeService>(
-            static s => new LevelThreeService(s.GetService<ILevelTwoService>())
-        );
+        container.RegisterTransient<ILevelTwoService>(static s => new LevelTwoService(
+            s.GetService<ILevelOneService>()
+        ));
+        container.RegisterTransient<ILevelThreeService>(static s => new LevelThreeService(
+            s.GetService<ILevelTwoService>()
+        ));
         await using var scope = container.CreateScope();
 
         // Act

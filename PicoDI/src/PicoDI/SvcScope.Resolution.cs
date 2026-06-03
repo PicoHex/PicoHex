@@ -110,7 +110,7 @@ public sealed partial class SvcScope
             SvcLifetime.Transient => ResolveTransient(serviceType, registration),
             SvcLifetime.Scoped => GetOrAddScopedInstance(registration),
             SvcLifetime.Singleton => GetOrCreateSingleton(serviceType, registration),
-            _ => ThrowUnknownLifetime(registration.Lifetime)
+            _ => ThrowUnknownLifetime(registration.Lifetime),
         };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -296,29 +296,26 @@ public sealed partial class SvcScope
         var scope = this;
         var lazy = instances.GetOrAdd(
             registration,
-            _ =>
-                new Lazy<object>(
-                    () =>
-                    {
-                        if (Volatile.Read(ref scope._disposed) != 0)
-                            throw new ObjectDisposedException(nameof(SvcScope));
+            _ => new Lazy<object>(
+                () =>
+                {
+                    if (Volatile.Read(ref scope._disposed) != 0)
+                        throw new ObjectDisposedException(nameof(SvcScope));
 
-                        var instance =
-                            registration.Factory != null
-                                ? registration.Factory(scope)
-                                : throw new PicoDiException(
-                                    $"No factory registered for scoped service '{registration.ServiceType.FullName}'. "
-                                        + SourceGenReminder
-                                );
+                    var instance =
+                        registration.Factory != null
+                            ? registration.Factory(scope)
+                            : throw new PicoDiException(
+                                $"No factory registered for scoped service '{registration.ServiceType.FullName}'. "
+                                    + SourceGenReminder
+                            );
 
-                        var order = LazyInitializer.EnsureInitialized(
-                            ref scope._scopedCreationOrder
-                        );
-                        order.Enqueue((NextScopedCreationOrder(), instance));
-                        return instance;
-                    },
-                    LazyThreadSafetyMode.ExecutionAndPublication
-                )
+                    var order = LazyInitializer.EnsureInitialized(ref scope._scopedCreationOrder);
+                    order.Enqueue((NextScopedCreationOrder(), instance));
+                    return instance;
+                },
+                LazyThreadSafetyMode.ExecutionAndPublication
+            )
         );
 
         var instance = lazy.Value;

@@ -218,6 +218,6 @@ internal sealed class InternalLogSinkDispatcher : IDisposable
             Level = LogLevel.Error,
             Category = "PicoLog.SinkFailure",
             Message = $"Failed to write log entry to sink: {originalEntry.Message}",
-            Exception = exception
+            Exception = exception,
         };
 }

@@ -48,7 +48,7 @@ internal static class PicoDiNames
         Register,
         RegisterTransient,
         RegisterScoped,
-        RegisterSingleton
+        RegisterSingleton,
     ];
 
     /// <summary>

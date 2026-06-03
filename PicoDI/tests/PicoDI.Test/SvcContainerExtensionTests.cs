@@ -69,13 +69,12 @@ public class SvcContainerExtensionTests
 
         // Act & Assert - Non-generic types require source generator
         await Assert
-            .That(
-                () =>
-                    container.Register(
-                        typeof(ISimpleService),
-                        typeof(SimpleService),
-                        SvcLifetime.Transient
-                    )
+            .That(() =>
+                container.Register(
+                    typeof(ISimpleService),
+                    typeof(SimpleService),
+                    SvcLifetime.Transient
+                )
             )
             .Throws<InvalidOperationException>();
     }
@@ -376,9 +375,8 @@ public class SvcContainerExtensionTests
 
         // Act & Assert
         await Assert
-            .That(
-                () =>
-                    container.Register<ISimpleService>(typeof(SimpleService), SvcLifetime.Transient)
+            .That(() =>
+                container.Register<ISimpleService>(typeof(SimpleService), SvcLifetime.Transient)
             )
             .Throws<SourceGeneratorRequiredException>();
     }
@@ -789,7 +787,7 @@ public class SvcContainerExtensionTests
                         typeof(ILevelTwoService),
                         static s => new LevelTwoService(s.GetService<ILevelOneService>()),
                         SvcLifetime.Transient
-                    )
+                    ),
                 }
             );
 

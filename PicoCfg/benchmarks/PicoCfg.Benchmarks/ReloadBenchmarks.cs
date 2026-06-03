@@ -35,11 +35,8 @@ public partial class ReloadBenchmarks
         _dictionaryStampedRoot = stampedBuilder.BuildAsync().AsTask().GetAwaiter().GetResult();
 
         var streamBuilder = Cfg.CreateBuilder();
-        streamBuilder.Add(
-            ct =>
-                ValueTask.FromResult<Stream>(
-                    new MemoryStream(Encoding.UTF8.GetBytes(_streamContent))
-                )
+        streamBuilder.Add(ct =>
+            ValueTask.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes(_streamContent)))
         );
         _streamRoot = streamBuilder.BuildAsync().AsTask().GetAwaiter().GetResult();
 
@@ -108,9 +105,8 @@ public partial class ReloadBenchmarks
             Environment.NewLine,
             Enumerable
                 .Range(0, N)
-                .Select(
-                    i =>
-                        $"Section:Key{i}={(i == 0 ? $"Changed-{Environment.TickCount64}" : $"Value{i}")}"
+                .Select(i =>
+                    $"Section:Key{i}={(i == 0 ? $"Changed-{Environment.TickCount64}" : $"Value{i}")}"
                 )
         );
         _streamVersionStamp++;

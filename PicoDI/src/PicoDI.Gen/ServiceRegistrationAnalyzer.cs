@@ -7,13 +7,12 @@ namespace PicoDI.Gen;
 public class ServiceRegistrationAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-
         [
             DiagnosticDescriptors.CircularDependency,
             DiagnosticDescriptors.AbstractTypeRegistration,
             DiagnosticDescriptors.MissingPublicConstructor,
             DiagnosticDescriptors.MultipleMarkedConstructors,
-            DiagnosticDescriptors.GenericRegistrationOverload
+            DiagnosticDescriptors.GenericRegistrationOverload,
         ];
 
     public override void Initialize(AnalysisContext context)
@@ -32,7 +31,7 @@ public class ServiceRegistrationAnalyzer : DiagnosticAnalyzer
         var methodName = invocation.Expression switch
         {
             MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.Text,
-            _ => null
+            _ => null,
         };
 
         if (methodName is null || !IsRegisterMethod(methodName))
@@ -61,18 +60,16 @@ public class ServiceRegistrationAnalyzer : DiagnosticAnalyzer
         {
             MemberAccessExpressionSyntax { Name: GenericNameSyntax gn } => gn,
             GenericNameSyntax gn => gn,
-            _ => null
+            _ => null,
         };
 
         var typeOfExpressions = invocation
-            .ArgumentList
-            .Arguments
-            .Select(arg => arg.Expression)
+            .ArgumentList.Arguments.Select(arg => arg.Expression)
             .OfType<TypeOfExpressionSyntax>()
             .ToList();
         var explicitImplementationType = typeOfExpressions
-            .Select(
-                typeOfExpression => context.SemanticModel.GetTypeInfo(typeOfExpression.Type).Type
+            .Select(typeOfExpression =>
+                context.SemanticModel.GetTypeInfo(typeOfExpression.Type).Type
             )
             .OfType<INamedTypeSymbol>()
             .LastOrDefault();

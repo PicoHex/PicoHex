@@ -24,8 +24,8 @@ public sealed class AppSettings
 
         await Assert
             .That(
-                diagnostics.Where(
-                    static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error
+                diagnostics.Where(static diagnostic =>
+                    diagnostic.Severity == DiagnosticSeverity.Error
                 )
             )
             .IsEmpty();
@@ -69,7 +69,7 @@ public sealed class AppSettings<T>
             options: new CSharpCompilationOptions(OutputKind.ConsoleApplication)
         );
 
-        var generators = new ISourceGenerator[] { new PicoCfgBindGenerator().AsSourceGenerator(), };
+        var generators = new ISourceGenerator[] { new PicoCfgBindGenerator().AsSourceGenerator() };
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             generators,

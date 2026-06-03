@@ -1,35 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <PackageId>PicoMediator</PackageId>
+    <Description>Compile-time request/notification dispatch for PicoDI</Description>
+    <PackageTags>PicoHex;Mediator;Messaging;AOT</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <IsPackable>true</IsPackable>
-        <PackageId>PicoMediator</PackageId>
-        <Description>Compile-time request/notification dispatch for PicoDI</Description>
-        <PackageTags>PicoHex;Mediator;Messaging;AOT</PackageTags>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-    </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+    <ProjectReference Include="..\PicoMediator.Abs\PicoMediator.Abs.csproj" />
+    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\PicoMediator.Abs\PicoMediator.Abs.csproj" />
-        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoMediator.Abs" />
+    <PackageReference Include="PicoDI.Abs" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoMediator.Abs" />
-        <PackageReference Include="PicoDI.Abs" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <InternalsVisibleTo Include="PicoMediator.Tests" />
-        <InternalsVisibleTo Include="PicoMediator.Benchmarks" />
-        <InternalsVisibleTo Include="PicoMediator.Sample" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <InternalsVisibleTo Include="PicoMediator.Tests" />
+    <InternalsVisibleTo Include="PicoMediator.Benchmarks" />
+    <InternalsVisibleTo Include="PicoMediator.Sample" />
+  </ItemGroup>
 </Project>

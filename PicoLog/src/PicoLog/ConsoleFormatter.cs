@@ -20,12 +20,10 @@ public sealed class ConsoleFormatter : ILogFormatter
         {
             sb.Append('[')
                 .Append(
-                    entry
-                        .Timestamp
-                        .ToString(
-                            "yyyy-MM-dd HH:mm:ss.fff",
-                            System.Globalization.CultureInfo.InvariantCulture
-                        )
+                    entry.Timestamp.ToString(
+                        "yyyy-MM-dd HH:mm:ss.fff",
+                        System.Globalization.CultureInfo.InvariantCulture
+                    )
                 )
                 .Append("] ")
                 .Append(GetLevelText(entry.Level))
@@ -81,7 +79,7 @@ public sealed class ConsoleFormatter : ILogFormatter
             LogLevel.Critical => "CRITICAL ",
             LogLevel.Alert => "ALERT    ",
             LogLevel.Emergency => "EMERGENCY",
-            _ => "NONE     "
+            _ => "NONE     ",
         };
 
     private static void AppendScopes(StringBuilder builder, IReadOnlyList<object> scopes)

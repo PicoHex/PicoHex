@@ -37,10 +37,8 @@ public partial class MixedWorkloadBenchmarks
         for (var i = 0; i < _dataSets.Count; i++)
         {
             msBuilder.AddInMemoryCollection(
-                _dataSets[i].ToDictionary(
-                    static pair => pair.Key,
-                    static pair => (string?)pair.Value
-                )
+                _dataSets[i]
+                    .ToDictionary(static pair => pair.Key, static pair => (string?)pair.Value)
             );
         }
 

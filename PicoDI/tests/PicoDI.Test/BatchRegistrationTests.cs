@@ -26,7 +26,7 @@ public class BatchRegistrationTests
                 typeof(IConfigurableService),
                 static _ => new ConfigurableService("test"),
                 SvcLifetime.Singleton
-            )
+            ),
         };
         container.RegisterRange(descriptors);
         await using var scope = container.CreateScope();
@@ -64,7 +64,7 @@ public class BatchRegistrationTests
                 typeof(INotificationService),
                 static _ => new PushNotificationService(),
                 SvcLifetime.Transient
-            )
+            ),
         };
         container.RegisterRange(descriptors);
         await using var scope = container.CreateScope();
@@ -102,7 +102,7 @@ public class BatchRegistrationTests
                 typeof(ISimpleService),
                 static _ => new SimpleService(),
                 SvcLifetime.Singleton
-            )
+            ),
         };
         container.RegisterRange(descriptors);
         await using var scope1 = container.CreateScope();

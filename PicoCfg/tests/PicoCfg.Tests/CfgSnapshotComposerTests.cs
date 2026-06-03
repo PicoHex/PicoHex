@@ -13,8 +13,8 @@ public class CfgSnapshotComposerTests
     [Test]
     public async Task CreateSnapshot_WithSingleProviderSnapshot_ReturnsSameSnapshotReference()
     {
-        ICfgSnapshot providerSnapshot = new DelegatingSnapshot(
-            path => path == "key" ? "value" : null
+        ICfgSnapshot providerSnapshot = new DelegatingSnapshot(path =>
+            path == "key" ? "value" : null
         );
 
         var snapshot = CfgSnapshotComposer.CreateSnapshot([providerSnapshot], CreateSnapshot);
@@ -27,11 +27,11 @@ public class CfgSnapshotComposerTests
     {
         IReadOnlyDictionary<string, string>? mergedValues = null;
         var first = CreateSnapshot(
-            new Dictionary<string, string> { ["shared"] = "first", ["first-only"] = "1", },
+            new Dictionary<string, string> { ["shared"] = "first", ["first-only"] = "1" },
             10
         );
         var second = CreateSnapshot(
-            new Dictionary<string, string> { ["shared"] = "second", ["second-only"] = "2", },
+            new Dictionary<string, string> { ["shared"] = "second", ["second-only"] = "2" },
             20
         );
 

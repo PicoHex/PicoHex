@@ -33,7 +33,7 @@ public partial class LoggingBenchmarks
             new LoggerFactoryOptions
             {
                 MinLevel = PicoLogLevel.Trace,
-                QueueCapacity = BenchmarkQueueCapacity
+                QueueCapacity = BenchmarkQueueCapacity,
             }
         );
         _picoLogger = _picoFactory.CreateLogger("Benchmark");

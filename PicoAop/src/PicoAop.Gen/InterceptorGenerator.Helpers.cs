@@ -86,7 +86,7 @@ public sealed partial class InterceptorGenerator
             RefKind.Ref => "ref ",
             RefKind.Out => "out ",
             RefKind.In => "in ",
-            _ => ""
+            _ => "",
         };
 
     /// <summary>

@@ -51,11 +51,12 @@ internal sealed class DictionaryCfgProvider : ICfgProvider
     private Dictionary<string, string> CreateSnapshotData(CancellationToken ct)
     {
         var sourceData = _dataFactory();
-        var newData = sourceData is ICollection<KeyValuePair<string, string>> collection
-            ? new Dictionary<string, string>(collection.Count)
+        var newData =
+            sourceData is ICollection<KeyValuePair<string, string>> collection
+                ? new Dictionary<string, string>(collection.Count)
             : sourceData.TryGetNonEnumeratedCount(out var count)
                 ? new Dictionary<string, string>(count)
-                : new Dictionary<string, string>();
+            : new Dictionary<string, string>();
 
         foreach (var (key, value) in sourceData)
         {

@@ -24,8 +24,8 @@ public class GeneratorDiagnosticTests : GeneratorTestBase
             """;
 
         var (compilation, diags) = RunGenerator(source);
-        var pico010 = diags.FirstOrDefault(
-            d => d.Id == "PICO010" && d.Severity == DiagnosticSeverity.Error
+        var pico010 = diags.FirstOrDefault(d =>
+            d.Id == "PICO010" && d.Severity == DiagnosticSeverity.Error
         );
         await Assert.That(pico010).IsNotNull();
     }
@@ -55,8 +55,8 @@ public class GeneratorDiagnosticTests : GeneratorTestBase
             """;
 
         var (compilation, diags) = RunGenerator(source);
-        var pico012 = diags.FirstOrDefault(
-            d => d.Id == "PICO012" && d.Severity == DiagnosticSeverity.Warning
+        var pico012 = diags.FirstOrDefault(d =>
+            d.Id == "PICO012" && d.Severity == DiagnosticSeverity.Warning
         );
         await Assert.That(pico012).IsNotNull();
     }
@@ -87,8 +87,8 @@ public class GeneratorDiagnosticTests : GeneratorTestBase
             """;
 
         var (compilation, diags) = RunGenerator(source);
-        var pico014 = diags.FirstOrDefault(
-            d => d.Id == "PICO014" && d.Severity == DiagnosticSeverity.Warning
+        var pico014 = diags.FirstOrDefault(d =>
+            d.Id == "PICO014" && d.Severity == DiagnosticSeverity.Warning
         );
         await Assert.That(pico014).IsNotNull();
     }
@@ -125,8 +125,8 @@ public class GeneratorDiagnosticTests : GeneratorTestBase
             """;
 
         var (compilation, diags) = RunGenerator(source);
-        var pico015 = diags.FirstOrDefault(
-            d => d.Id == "PICO015" && d.Severity == DiagnosticSeverity.Warning
+        var pico015 = diags.FirstOrDefault(d =>
+            d.Id == "PICO015" && d.Severity == DiagnosticSeverity.Warning
         );
         await Assert.That(pico015).IsNotNull();
     }

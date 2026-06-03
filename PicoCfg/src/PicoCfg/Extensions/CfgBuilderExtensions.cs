@@ -29,29 +29,28 @@ public static class CfgBuilderExtensions
         /// reopening the stream. A changed stamp triggers a reread, but the current snapshot may still be
         /// retained when the reparsed content is unchanged.
         /// </summary>
-        public CfgBuilder Add(Func<CancellationToken, ValueTask<Stream>> streamFactory,
+        public CfgBuilder Add(
+            Func<CancellationToken, ValueTask<Stream>> streamFactory,
             Encoding? encoding = null,
             Func<object?>? versionStampFactory = null
         ) =>
-            builder.AddSource(builder.CreateStreamSource(streamFactory, versionStampFactory, encoding));
+            builder.AddSource(
+                builder.CreateStreamSource(streamFactory, versionStampFactory, encoding)
+            );
 
         /// <summary>
         /// Adds a stream-based source with file-change auto-reload.
         /// The stream provider is decorated with a <see cref="FileWatchingCfgProvider"/> that monitors
         /// <paramref name="watchPath"/> and triggers reloads on change events with a debounce interval.
         /// </summary>
-        public CfgBuilder Add(Func<CancellationToken, ValueTask<Stream>> streamFactory,
+        public CfgBuilder Add(
+            Func<CancellationToken, ValueTask<Stream>> streamFactory,
             string watchPath,
             Encoding? encoding = null,
             Func<object?>? versionStampFactory = null
         ) =>
             builder.AddSource(
-                builder.CreateStreamSource(
-                    streamFactory,
-                    watchPath,
-                    versionStampFactory,
-                    encoding
-                )
+                builder.CreateStreamSource(streamFactory, watchPath, versionStampFactory, encoding)
             );
 
         /// <summary>
@@ -64,7 +63,8 @@ public static class CfgBuilderExtensions
         /// reparsing the inline content. A changed stamp triggers reparsing, but the current snapshot may still
         /// be retained when the reparsed content is unchanged.
         /// </summary>
-        public CfgBuilder Add(string configContent,
+        public CfgBuilder Add(
+            string configContent,
             Encoding? encoding = null,
             Func<object?>? versionStampFactory = null
         ) =>
@@ -96,7 +96,8 @@ public static class CfgBuilderExtensions
         /// rereading the dictionary. A changed stamp triggers reread, but the current snapshot may still be
         /// retained when the visible dictionary content is unchanged.
         /// </summary>
-        public CfgBuilder Add(IDictionary<string, string> configData,
+        public CfgBuilder Add(
+            IDictionary<string, string> configData,
             Func<object?>? versionStampFactory = null
         ) => builder.AddSource(builder.CreateDictionarySource(configData, versionStampFactory));
 
@@ -121,8 +122,7 @@ public static class CfgBuilderExtensions
         /// </summary>
         public CfgBuilder AddEnvironmentVariables(string? prefix = null) =>
             builder.AddSource(
-                new EnvCfgSource(() => new EnvCfgProvider(prefix, builder.CreateProviderState())
-                )
+                new EnvCfgSource(() => new EnvCfgProvider(prefix, builder.CreateProviderState()))
             );
 
         /// <summary>
@@ -134,7 +134,8 @@ public static class CfgBuilderExtensions
         /// </summary>
         public CfgBuilder AddCommandLine(string[] args, string? prefix = null) =>
             builder.AddSource(
-                new CmdLineCfgSource(() => new CmdLineCfgProvider(args, prefix, builder.CreateProviderState())
+                new CmdLineCfgSource(() =>
+                    new CmdLineCfgProvider(args, prefix, builder.CreateProviderState())
                 )
             );
 
@@ -146,10 +147,17 @@ public static class CfgBuilderExtensions
         /// Subdirectories are not recursed into.
         /// An empty or missing directory produces an empty configuration set.
         /// </summary>
-        public CfgBuilder AddKeyPerFile(string directoryPath, Func<string, bool>? keyFilter = null) =>
+        public CfgBuilder AddKeyPerFile(
+            string directoryPath,
+            Func<string, bool>? keyFilter = null
+        ) =>
             builder.AddSource(
                 new KeyPerFileCfgSource(() =>
-                    new KeyPerFileCfgProvider(directoryPath, keyFilter, builder.CreateProviderState())
+                    new KeyPerFileCfgProvider(
+                        directoryPath,
+                        keyFilter,
+                        builder.CreateProviderState()
+                    )
                 )
             );
 
@@ -162,7 +170,8 @@ public static class CfgBuilderExtensions
         /// </summary>
         public CfgBuilder AddConfiguration(ICfg chainedConfig) =>
             builder.AddSource(
-                new ChainedCfgSource(() => new ChainedCfgProvider(chainedConfig, builder.CreateProviderState())
+                new ChainedCfgSource(() =>
+                    new ChainedCfgProvider(chainedConfig, builder.CreateProviderState())
                 )
             );
     }

@@ -17,15 +17,15 @@ builder.ConfigureServices(container =>
     container.RegisterSingleton<IGreeter, Greeter>();
 
     // ── Hosted services ────────────────────────────────────────────
-    container.RegisterHostedSvc<StartupHostedSvc>(
-        sp => new StartupHostedSvc(sp.GetService<IGreeter>()!)
-    );
-    container.RegisterHostedSvc<PeriodicBackgroundSvc>(
-        sp => new PeriodicBackgroundSvc(sp.GetService<IGreeter>()!)
-    );
-    container.RegisterHostedSvc<TimedLifecycleSvc>(
-        sp => new TimedLifecycleSvc(sp.GetService<IClock>()!)
-    );
+    container.RegisterHostedSvc<StartupHostedSvc>(sp => new StartupHostedSvc(
+        sp.GetService<IGreeter>()!
+    ));
+    container.RegisterHostedSvc<PeriodicBackgroundSvc>(sp => new PeriodicBackgroundSvc(
+        sp.GetService<IGreeter>()!
+    ));
+    container.RegisterHostedSvc<TimedLifecycleSvc>(sp => new TimedLifecycleSvc(
+        sp.GetService<IClock>()!
+    ));
 });
 
 // ── Build + Start (hosted services start automatically) ──────────────

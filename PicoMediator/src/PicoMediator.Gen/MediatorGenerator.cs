@@ -6,8 +6,7 @@ public sealed class MediatorGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var handlerDeclarations = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     node is ClassDeclarationSyntax c && c.BaseList?.Types.Count > 0,
                 transform: static (ctx, ct) => GetHandlerInfo(ctx, ct)

@@ -265,8 +265,8 @@ public class PicoCfgBindGeneratorDiagnosticsTests
     )
     {
         var matches = diagnostics
-            .Where(
-                diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.Id == id
+            .Where(diagnostic =>
+                diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.Id == id
             )
             .ToImmutableArray();
 

@@ -42,7 +42,7 @@ public sealed class Mediator(ISvcScope scope) : IMediator
             catch (Exception ex)
             {
                 if (exceptions is null)
-                    exceptions =  [];
+                    exceptions = [];
                 exceptions.Add(ex);
             }
         }

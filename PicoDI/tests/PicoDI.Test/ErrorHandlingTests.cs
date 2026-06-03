@@ -40,8 +40,8 @@ public class ErrorHandlingTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterTransient<ISimpleService>(
-            static _ => throw new InvalidOperationException("Factory failed")
+        container.RegisterTransient<ISimpleService>(static _ =>
+            throw new InvalidOperationException("Factory failed")
         );
         await using var scope = container.CreateScope();
 
@@ -80,8 +80,8 @@ public class ErrorHandlingTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterScoped<ISimpleService>(
-            static _ => throw new InvalidOperationException("Scoped factory failed")
+        container.RegisterScoped<ISimpleService>(static _ =>
+            throw new InvalidOperationException("Scoped factory failed")
         );
 
         await using var scope1 = container.CreateScope();
@@ -220,15 +220,15 @@ public class ErrorHandlingTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterTransient<IConfigurableService>(
-            static _ => new ConfigurableService("first")
-        );
-        container.RegisterTransient<IConfigurableService>(
-            static _ => new ConfigurableService("second")
-        );
-        container.RegisterTransient<IConfigurableService>(
-            static _ => new ConfigurableService("third")
-        );
+        container.RegisterTransient<IConfigurableService>(static _ => new ConfigurableService(
+            "first"
+        ));
+        container.RegisterTransient<IConfigurableService>(static _ => new ConfigurableService(
+            "second"
+        ));
+        container.RegisterTransient<IConfigurableService>(static _ => new ConfigurableService(
+            "third"
+        ));
         await using var scope = container.CreateScope();
 
         // Act
@@ -243,15 +243,15 @@ public class ErrorHandlingTests
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterTransient<IConfigurableService>(
-            static _ => new ConfigurableService("first")
-        );
-        container.RegisterTransient<IConfigurableService>(
-            static _ => new ConfigurableService("second")
-        );
-        container.RegisterTransient<IConfigurableService>(
-            static _ => new ConfigurableService("third")
-        );
+        container.RegisterTransient<IConfigurableService>(static _ => new ConfigurableService(
+            "first"
+        ));
+        container.RegisterTransient<IConfigurableService>(static _ => new ConfigurableService(
+            "second"
+        ));
+        container.RegisterTransient<IConfigurableService>(static _ => new ConfigurableService(
+            "third"
+        ));
         await using var scope = container.CreateScope();
 
         // Act

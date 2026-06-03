@@ -25,11 +25,10 @@ internal static class OpenGenericMetadataContract
             foreach (
                 var registration in metadataTypes
                     .Select(ExtractOpenGenericRegistrationsFromMetadata)
-                    .SelectMany(
-                        registrations =>
-                            registrations.Where(
-                                reg => !existingOpenNames.Contains(reg.OpenServiceTypeFullName)
-                            )
+                    .SelectMany(registrations =>
+                        registrations.Where(reg =>
+                            !existingOpenNames.Contains(reg.OpenServiceTypeFullName)
+                        )
                     )
             )
             {
@@ -137,13 +136,13 @@ internal static class OpenGenericMetadataContract
                         case "TypeParameterNames" when namedArg.Value.Values.Length > 0:
                             typeParameterNames =
                             [
-                                .. namedArg.Value.Values.Select(v => v.Value as string ?? "T")
+                                .. namedArg.Value.Values.Select(v => v.Value as string ?? "T"),
                             ];
                             break;
                         case "ConstructorParameters" when namedArg.Value.Values.Length > 0:
                             constructorParameters =
                             [
-                                .. namedArg.Value.Values.Select(v => v.Value as string ?? "")
+                                .. namedArg.Value.Values.Select(v => v.Value as string ?? ""),
                             ];
                             break;
                     }
@@ -153,7 +152,9 @@ internal static class OpenGenericMetadataContract
                 {
                     typeParameterNames =
                     [
-                        .. Enumerable.Range(0, typeParameterCount).Select(i => i is 0 ? "T" : $"T{i}")
+                        .. Enumerable
+                            .Range(0, typeParameterCount)
+                            .Select(i => i is 0 ? "T" : $"T{i}"),
                     ];
                 }
 

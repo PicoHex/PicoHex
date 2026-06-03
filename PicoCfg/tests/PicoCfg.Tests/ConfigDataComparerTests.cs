@@ -98,7 +98,7 @@ public class ConfigDataComparerTests
     [Test]
     public async Task EqualsSnapshot_WithDifferentCount_ReturnsFalse()
     {
-        var left = CreateSnapshot(new Dictionary<string, string> { ["alpha"] = "1", });
+        var left = CreateSnapshot(new Dictionary<string, string> { ["alpha"] = "1" });
         IReadOnlyDictionary<string, string> right = new Dictionary<string, string>
         {
             ["alpha"] = "1",
@@ -132,7 +132,7 @@ public class ConfigDataComparerTests
     public async Task EqualsSnapshot_WithMatchingFingerprintButDifferentValues_ReturnsFalse()
     {
         var left = CreateSnapshot(
-            new Dictionary<string, string> { ["alpha"] = "1", ["beta"] = "2", }
+            new Dictionary<string, string> { ["alpha"] = "1", ["beta"] = "2" }
         );
         IReadOnlyDictionary<string, string> right = new Dictionary<string, string>
         {

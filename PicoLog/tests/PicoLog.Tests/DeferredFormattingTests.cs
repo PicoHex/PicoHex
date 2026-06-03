@@ -71,7 +71,7 @@ public sealed class DeferredFormattingTests
         IReadOnlyList<KeyValuePair<string, object?>> properties =
         [
             new("tenant", "alpha"),
-            new("attempt", 3)
+            new("attempt", 3),
         ];
 
         logger.Log(LogLevel.Info, (FormattableString)$"Value is {42}", properties, exception: null);
@@ -122,7 +122,7 @@ public sealed class DeferredFormattingTests
             Category = "Tests.Formatting",
             Message = null,
             MessageTemplate = "Value is {0} and {1}",
-            MessageArgs = new object[] { 42, "hello" }
+            MessageArgs = new object[] { 42, "hello" },
         };
 
         var rendered = formatter.Format(entry);
@@ -140,7 +140,7 @@ public sealed class DeferredFormattingTests
             Category = "Tests.Formatting",
             Message = "plain message",
             MessageTemplate = null,
-            MessageArgs = null
+            MessageArgs = null,
         };
 
         var rendered = formatter.Format(entry);
@@ -198,7 +198,7 @@ public sealed class DeferredFormattingTests
             Category = "Tests.Formatting",
             Message = null,
             MessageTemplate = "Value is {0}",
-            MessageArgs = new object[] { 42 }
+            MessageArgs = new object[] { 42 },
         };
 
         var rendered = formatter.Format(entry);

@@ -2,22 +2,20 @@ namespace PicoAop.Benchmarks;
 
 public static class Program
 {
-    private static readonly BenchmarkConfig Config =
-        new()
-        {
-            WarmupIterations = BenchmarkConfig.Default.WarmupIterations,
-            SampleCount = BenchmarkConfig.Default.SampleCount,
-            IterationsPerSample = BenchmarkConfig.Default.IterationsPerSample / 10,
-            RetainSamples = BenchmarkConfig.Default.RetainSamples
-        };
+    private static readonly BenchmarkConfig Config = new()
+    {
+        WarmupIterations = BenchmarkConfig.Default.WarmupIterations,
+        SampleCount = BenchmarkConfig.Default.SampleCount,
+        IterationsPerSample = BenchmarkConfig.Default.IterationsPerSample / 10,
+        RetainSamples = BenchmarkConfig.Default.RetainSamples,
+    };
 
-    private static readonly FormatterOptions TableOptions =
-        new()
-        {
-            IncludePercentiles = true,
-            IncludeCpuCycles = true,
-            IncludeGcInfo = true
-        };
+    private static readonly FormatterOptions TableOptions = new()
+    {
+        IncludePercentiles = true,
+        IncludeCpuCycles = true,
+        IncludeGcInfo = true,
+    };
 
     public static void Main(string[] args)
     {
@@ -97,7 +95,7 @@ public static class Program
             CandidateLabel = "PicoAop",
             GroupByCategory = true,
             ShowDetailedTable = true,
-            ShowDuration = true
+            ShowDuration = true,
         };
         SummaryFormatter.Write(allComparisons, sw.Elapsed, summaryOptions);
 

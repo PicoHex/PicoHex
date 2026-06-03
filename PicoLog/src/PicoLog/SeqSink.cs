@@ -177,7 +177,7 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             using var request = new HttpRequestMessage(HttpMethod.Post, "/api/events/raw")
             {
-                Content = content
+                Content = content,
             };
 
             if (_apiKey.Length > 0)

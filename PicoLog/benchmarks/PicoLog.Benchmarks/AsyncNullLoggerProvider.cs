@@ -15,7 +15,7 @@ internal sealed class AsyncNullLoggerProvider
             {
                 FullMode = BoundedChannelFullMode.DropOldest,
                 SingleReader = true,
-                AllowSynchronousContinuations = false
+                AllowSynchronousContinuations = false,
             }
         );
         _consumerTask = Task.Run(ConsumeAsync);

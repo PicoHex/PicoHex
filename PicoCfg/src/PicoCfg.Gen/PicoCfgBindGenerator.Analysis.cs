@@ -48,8 +48,7 @@ public sealed partial class PicoCfgBindGenerator
         var hasPrimaryCtor =
             isRecordClass
             && namedType
-                .DeclaringSyntaxReferences
-                .Select(static r => r.GetSyntax())
+                .DeclaringSyntaxReferences.Select(static r => r.GetSyntax())
                 .OfType<RecordDeclarationSyntax>()
                 .Any(static r => r.ParameterList?.Parameters.Count > 0);
 
@@ -545,9 +544,8 @@ public sealed partial class PicoCfgBindGenerator
     }
 
     private static bool HasPublicParameterlessConstructor(INamedTypeSymbol type) =>
-        type.InstanceConstructors.Any(
-            ctor =>
-                ctor.DeclaredAccessibility == Accessibility.Public && ctor.Parameters.Length == 0
+        type.InstanceConstructors.Any(ctor =>
+            ctor.DeclaredAccessibility == Accessibility.Public && ctor.Parameters.Length == 0
         );
 
     private static void ReportAll(

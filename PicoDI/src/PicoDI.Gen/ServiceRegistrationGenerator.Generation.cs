@@ -285,16 +285,15 @@ internal static partial class ServiceRegistrationSourceEmitter
         if (reg.ConstructorParameters.IsEmpty)
             return $"new {reg.ImplementationTypeFullName}()";
 
-        var paramExpressions = reg.ConstructorParameters
-            .Select(
-                paramTypeFullName =>
-                    GenerateParameterExpression(
-                        paramTypeFullName,
-                        registrationLookup,
-                        visitedTypes,
-                        indentLevel + 1,
-                        scopeVarName
-                    )
+        var paramExpressions = reg
+            .ConstructorParameters.Select(paramTypeFullName =>
+                GenerateParameterExpression(
+                    paramTypeFullName,
+                    registrationLookup,
+                    visitedTypes,
+                    indentLevel + 1,
+                    scopeVarName
+                )
             )
             .ToList();
 

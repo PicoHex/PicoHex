@@ -46,7 +46,7 @@ public partial class FormattingBenchmarks
             new LoggerFactoryOptions
             {
                 MinLevel = PicoLogLevel.Trace,
-                QueueCapacity = QueueCapacity
+                QueueCapacity = QueueCapacity,
             }
         );
         _picoNullLogger = _picoNullFactory.CreateLogger("Benchmark");
@@ -56,7 +56,7 @@ public partial class FormattingBenchmarks
             new LoggerFactoryOptions
             {
                 MinLevel = PicoLogLevel.Trace,
-                QueueCapacity = QueueCapacity
+                QueueCapacity = QueueCapacity,
             }
         );
         _picoConsoleLogger = _picoConsoleFactory.CreateLogger("Benchmark");
@@ -66,14 +66,13 @@ public partial class FormattingBenchmarks
             new LoggerFactoryOptions
             {
                 MinLevel = PicoLogLevel.Trace,
-                QueueCapacity = QueueCapacity
+                QueueCapacity = QueueCapacity,
             }
         );
         _picoPooledLogger = _picoPooledFactory.CreateLogger("Benchmark");
 
         _filePath = Path.Combine(Path.GetTempPath(), $"picolog-bench-{Guid.NewGuid():N}.log");
         _picoFileFactory = new LoggerFactory(
-
             [
                 new FileSink(
                     new ConsoleFormatter(),
@@ -81,14 +80,14 @@ public partial class FormattingBenchmarks
                     {
                         FilePath = _filePath,
                         BatchSize = 32,
-                        AllowFlushInterrupt = false
+                        AllowFlushInterrupt = false,
                     }
-                )
+                ),
             ],
             new LoggerFactoryOptions
             {
                 MinLevel = PicoLogLevel.Trace,
-                QueueCapacity = QueueCapacity
+                QueueCapacity = QueueCapacity,
             }
         );
         _picoFileLogger = _picoFileFactory.CreateLogger("Benchmark");
@@ -98,7 +97,6 @@ public partial class FormattingBenchmarks
             $"picolog-bench-dual-{Guid.NewGuid():N}.log"
         );
         _picoDualFactory = new LoggerFactory(
-
             [
                 new ConsoleSink(new ConsoleFormatter(), TextWriter.Null),
                 new FileSink(
@@ -107,14 +105,14 @@ public partial class FormattingBenchmarks
                     {
                         FilePath = _dualFilePath,
                         BatchSize = 32,
-                        AllowFlushInterrupt = false
+                        AllowFlushInterrupt = false,
                     }
-                )
+                ),
             ],
             new LoggerFactoryOptions
             {
                 MinLevel = PicoLogLevel.Trace,
-                QueueCapacity = QueueCapacity
+                QueueCapacity = QueueCapacity,
             }
         );
         _picoDualLogger = _picoDualFactory.CreateLogger("Benchmark");

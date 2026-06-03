@@ -58,12 +58,10 @@ public sealed partial class SvcScope
                 }
                 catch (Exception ex)
                 {
-                    OwningContainer
-                        ?.OnError
-                        ?.Invoke(
-                            ex,
-                            $"Error disposing service instance of type '{svc.GetType().FullName}'"
-                        );
+                    OwningContainer?.OnError?.Invoke(
+                        ex,
+                        $"Error disposing service instance of type '{svc.GetType().FullName}'"
+                    );
                 }
             }
         }
@@ -93,12 +91,10 @@ public sealed partial class SvcScope
             }
             catch (Exception ex)
             {
-                OwningContainer
-                    ?.OnError
-                    ?.Invoke(
-                        ex,
-                        $"Error disposing service instance of type '{svc?.GetType().FullName ?? "unknown"}'"
-                    );
+                OwningContainer?.OnError?.Invoke(
+                    ex,
+                    $"Error disposing service instance of type '{svc?.GetType().FullName ?? "unknown"}'"
+                );
             }
         }
 
@@ -120,12 +116,10 @@ public sealed partial class SvcScope
             }
             catch (Exception ex)
             {
-                OwningContainer
-                    ?.OnError
-                    ?.Invoke(
-                        ex,
-                        $"Error disposing service instance of type '{instance.GetType().FullName}'"
-                    );
+                OwningContainer?.OnError?.Invoke(
+                    ex,
+                    $"Error disposing service instance of type '{instance.GetType().FullName}'"
+                );
             }
         }
     }

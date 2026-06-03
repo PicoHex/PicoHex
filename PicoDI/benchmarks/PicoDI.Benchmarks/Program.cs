@@ -104,7 +104,7 @@ public enum ServiceComplexity
     NoDependency,
     SingleDependency,
     MultipleDependencies,
-    DeepChain
+    DeepChain,
 }
 
 /// <summary>
@@ -114,7 +114,7 @@ public enum Lifetime
 {
     Transient,
     Scoped,
-    Singleton
+    Singleton,
 }
 
 #endregion
@@ -126,24 +126,30 @@ public enum Lifetime
 /// </summary>
 public static class Factories
 {
-    public static readonly Func<ISvcScope, ISimpleService> SimpleService = static _ =>
-        new SimpleService();
+    public static readonly Func<ISvcScope, ISimpleService> SimpleService =
+        static _ => new SimpleService();
     public static readonly Func<ISvcScope, ILogger> Logger = static _ => new ConsoleLogger();
-    public static readonly Func<ISvcScope, IServiceWithDep> ServiceWithDep = static s =>
-        new ServiceWithDep(s.GetService<ILogger>());
+    public static readonly Func<ISvcScope, IServiceWithDep> ServiceWithDep =
+        static s => new ServiceWithDep(s.GetService<ILogger>());
     public static readonly Func<ISvcScope, IRepository> Repository = static _ => new Repository();
     public static readonly Func<ISvcScope, IServiceWithMultipleDeps> ServiceWithMultipleDeps =
-        static s =>
-            new ServiceWithMultipleDeps(s.GetService<ILogger>(), s.GetService<IRepository>());
+        static s => new ServiceWithMultipleDeps(
+            s.GetService<ILogger>(),
+            s.GetService<IRepository>()
+        );
     public static readonly Func<ISvcScope, ILevel1> Level1 = static _ => new Level1();
-    public static readonly Func<ISvcScope, ILevel2> Level2 = static s =>
-        new Level2(s.GetService<ILevel1>());
-    public static readonly Func<ISvcScope, ILevel3> Level3 = static s =>
-        new Level3(s.GetService<ILevel2>());
-    public static readonly Func<ISvcScope, ILevel4> Level4 = static s =>
-        new Level4(s.GetService<ILevel3>());
-    public static readonly Func<ISvcScope, ILevel5> Level5 = static s =>
-        new Level5(s.GetService<ILevel4>());
+    public static readonly Func<ISvcScope, ILevel2> Level2 = static s => new Level2(
+        s.GetService<ILevel1>()
+    );
+    public static readonly Func<ISvcScope, ILevel3> Level3 = static s => new Level3(
+        s.GetService<ILevel2>()
+    );
+    public static readonly Func<ISvcScope, ILevel4> Level4 = static s => new Level4(
+        s.GetService<ILevel3>()
+    );
+    public static readonly Func<ISvcScope, ILevel5> Level5 = static s => new Level5(
+        s.GetService<ILevel4>()
+    );
 }
 
 #endregion
@@ -237,11 +243,10 @@ public static class ContainerSetup
                 RegisterMs<IServiceWithMultipleDeps>(
                     services,
                     lifetime,
-                    sp =>
-                        new ServiceWithMultipleDeps(
-                            sp.GetRequiredService<ILogger>(),
-                            sp.GetRequiredService<IRepository>()
-                        )
+                    sp => new ServiceWithMultipleDeps(
+                        sp.GetRequiredService<ILogger>(),
+                        sp.GetRequiredService<IRepository>()
+                    )
                 );
                 break;
             case ServiceComplexity.DeepChain:
@@ -299,7 +304,7 @@ public static class ContainerSetup
             Lifetime.Transient => SvcLifetime.Transient,
             Lifetime.Scoped => SvcLifetime.Scoped,
             Lifetime.Singleton => SvcLifetime.Singleton,
-            _ => throw new ArgumentOutOfRangeException(nameof(lifetime))
+            _ => throw new ArgumentOutOfRangeException(nameof(lifetime)),
         };
 }
 
@@ -329,13 +334,12 @@ public static class Program
 {
     private static readonly BenchmarkConfig Config = BenchmarkConfig.Default;
 
-    private static readonly FormatterOptions TableOptions =
-        new()
-        {
-            IncludePercentiles = true,
-            IncludeCpuCycles = true,
-            IncludeGcInfo = true
-        };
+    private static readonly FormatterOptions TableOptions = new()
+    {
+        IncludePercentiles = true,
+        IncludeCpuCycles = true,
+        IncludeGcInfo = true,
+    };
 
     public static void Main(string[] args)
     {
@@ -354,7 +358,7 @@ public static class Program
             ServiceComplexity.NoDependency,
             ServiceComplexity.SingleDependency,
             ServiceComplexity.MultipleDependencies,
-            ServiceComplexity.DeepChain
+            ServiceComplexity.DeepChain,
         };
         var lifetimes = new[] { Lifetime.Transient, Lifetime.Scoped, Lifetime.Singleton };
 
@@ -426,7 +430,7 @@ public static class Program
             CandidateLabel = "PicoDI",
             GroupByCategory = true,
             ShowDetailedTable = true,
-            ShowDuration = true
+            ShowDuration = true,
         };
         SummaryFormatter.Write(comparisons, sw.Elapsed, summaryOptions);
 
@@ -515,7 +519,7 @@ public static class Program
             tags: new Dictionary<string, string>
             {
                 ["Complexity"] = complexity.ToString(),
-                ["Lifetime"] = lifetime.ToString()
+                ["Lifetime"] = lifetime.ToString(),
             }
         );
 
@@ -529,7 +533,7 @@ public static class Program
             WarmupIterations = Config.WarmupIterations,
             SampleCount = Config.SampleCount,
             IterationsPerSample = Config.IterationsPerSample / 10,
-            RetainSamples = Config.RetainSamples
+            RetainSamples = Config.RetainSamples,
         };
 
         var picoResult = Benchmark.Run(
@@ -639,7 +643,7 @@ public static class Program
             tags: new Dictionary<string, string>
             {
                 ["Scenario"] = "SingleResolution",
-                ["Lifetime"] = lifetime.ToString()
+                ["Lifetime"] = lifetime.ToString(),
             }
         );
 
@@ -691,7 +695,7 @@ public static class Program
             tags: new Dictionary<string, string>
             {
                 ["Scenario"] = "MultipleResolutions",
-                ["Lifetime"] = lifetime.ToString()
+                ["Lifetime"] = lifetime.ToString(),
             }
         );
 
@@ -704,27 +708,23 @@ public static class Program
     {
         return complexity switch
         {
-            ServiceComplexity.NoDependency
-                => (
-                    static s => s.GetRequiredService<ISimpleService>(),
-                    static s => s.GetRequiredService<ISimpleService>()
-                ),
-            ServiceComplexity.SingleDependency
-                => (
-                    static s => s.GetRequiredService<IServiceWithDep>(),
-                    static s => s.GetRequiredService<IServiceWithDep>()
-                ),
-            ServiceComplexity.MultipleDependencies
-                => (
-                    static s => s.GetRequiredService<IServiceWithMultipleDeps>(),
-                    static s => s.GetRequiredService<IServiceWithMultipleDeps>()
-                ),
-            ServiceComplexity.DeepChain
-                => (
-                    static s => s.GetRequiredService<ILevel5>(),
-                    static s => s.GetRequiredService<ILevel5>()
-                ),
-            _ => throw new ArgumentOutOfRangeException(nameof(complexity))
+            ServiceComplexity.NoDependency => (
+                static s => s.GetRequiredService<ISimpleService>(),
+                static s => s.GetRequiredService<ISimpleService>()
+            ),
+            ServiceComplexity.SingleDependency => (
+                static s => s.GetRequiredService<IServiceWithDep>(),
+                static s => s.GetRequiredService<IServiceWithDep>()
+            ),
+            ServiceComplexity.MultipleDependencies => (
+                static s => s.GetRequiredService<IServiceWithMultipleDeps>(),
+                static s => s.GetRequiredService<IServiceWithMultipleDeps>()
+            ),
+            ServiceComplexity.DeepChain => (
+                static s => s.GetRequiredService<ILevel5>(),
+                static s => s.GetRequiredService<ILevel5>()
+            ),
+            _ => throw new ArgumentOutOfRangeException(nameof(complexity)),
         };
     }
 

@@ -12,23 +12,22 @@ public sealed class LoggerFactoryTests
             {
                 FilePath = filePath,
                 BatchSize = 8,
-                AllowFlushInterrupt = true
+                AllowFlushInterrupt = true,
             }
         );
 
         var writeTasks = Enumerable
             .Range(0, 64)
-            .Select(
-                index =>
-                    sink.WriteAsync(
-                        new LogEntry
-                        {
-                            Timestamp = DateTimeOffset.UtcNow,
-                            Level = LogLevel.Info,
-                            Category = nameof(LoggerFactoryTests),
-                            Message = $"message-{index}"
-                        }
-                    )
+            .Select(index =>
+                sink.WriteAsync(
+                    new LogEntry
+                    {
+                        Timestamp = DateTimeOffset.UtcNow,
+                        Level = LogLevel.Info,
+                        Category = nameof(LoggerFactoryTests),
+                        Message = $"message-{index}",
+                    }
+                )
             )
             .ToArray();
 
@@ -54,7 +53,7 @@ public sealed class LoggerFactoryTests
                     Timestamp = DateTimeOffset.UtcNow,
                     Level = LogLevel.Info,
                     Category = nameof(LoggerFactoryTests),
-                    Message = "before-dispose"
+                    Message = "before-dispose",
                 }
             );
 
@@ -66,7 +65,7 @@ public sealed class LoggerFactoryTests
                     Timestamp = DateTimeOffset.UtcNow,
                     Level = LogLevel.Warning,
                     Category = nameof(LoggerFactoryTests),
-                    Message = "after-dispose"
+                    Message = "after-dispose",
                 }
             );
 
@@ -97,23 +96,22 @@ public sealed class LoggerFactoryTests
                 {
                     FilePath = filePath,
                     BatchSize = 16,
-                    AllowFlushInterrupt = true
+                    AllowFlushInterrupt = true,
                 }
             );
 
             var writes = Enumerable
                 .Range(0, 40)
-                .Select(
-                    index =>
-                        sink.WriteAsync(
-                            new LogEntry
-                            {
-                                Timestamp = DateTimeOffset.UtcNow,
-                                Level = LogLevel.Info,
-                                Category = nameof(LoggerFactoryTests),
-                                Message = $"batch-{index}"
-                            }
-                        )
+                .Select(index =>
+                    sink.WriteAsync(
+                        new LogEntry
+                        {
+                            Timestamp = DateTimeOffset.UtcNow,
+                            Level = LogLevel.Info,
+                            Category = nameof(LoggerFactoryTests),
+                            Message = $"batch-{index}",
+                        }
+                    )
                 );
 
             await Task.WhenAll(writes);
@@ -165,7 +163,7 @@ public sealed class LoggerFactoryTests
         IReadOnlyList<KeyValuePair<string, object?>> properties =
         [
             new("tenant", "alpha"),
-            new("attempt", 3)
+            new("attempt", 3),
         ];
 
         logger.Log(LogLevel.Warning, "structured-runtime-instance", properties, exception: null);
@@ -194,13 +192,12 @@ public sealed class LoggerFactoryTests
             using var startGate = new ManualResetEventSlim(initialState: false);
             var createTasks = Enumerable
                 .Range(0, callerCount)
-                .Select(
-                    _ =>
-                        Task.Run(() =>
-                        {
-                            startGate.Wait();
-                            return factory.CreateLogger(categoryName);
-                        })
+                .Select(_ =>
+                    Task.Run(() =>
+                    {
+                        startGate.Wait();
+                        return factory.CreateLogger(categoryName);
+                    })
                 )
                 .ToArray();
 
@@ -267,7 +264,7 @@ public sealed class LoggerFactoryTests
         IReadOnlyList<KeyValuePair<string, object?>> properties =
         [
             new("tenant", "alpha"),
-            new("attempt", 3)
+            new("attempt", 3),
         ];
 
         logger.Log(LogLevel.Warning, "typed-sync-structured", properties, exception: null);
@@ -307,7 +304,7 @@ public sealed class LoggerFactoryTests
         [
             new("tenant", "alpha"),
             new("attempt", 3),
-            new("nullable", null)
+            new("nullable", null),
         ];
 
         logger.Log(LogLevel.Warning, "structured-message", properties, exception: null);
@@ -347,9 +344,9 @@ public sealed class LoggerFactoryTests
                 new("slash", "\\"),
                 new("letter", 'z'),
                 new("number", 3),
-                new("nullable", null)
+                new("nullable", null),
             ],
-            Scopes =  ["outer", "inner"]
+            Scopes = ["outer", "inner"],
         };
 
         var rendered = formatter.Format(entry);
@@ -544,8 +541,8 @@ public sealed class LoggerFactoryTests
 
         await factory.DisposeAsync();
 
-        var messages = sink.Entries
-            .Select(entry => entry.Message?.ToString() ?? string.Empty)
+        var messages = sink
+            .Entries.Select(entry => entry.Message?.ToString() ?? string.Empty)
             .ToArray();
 
         await Assert.That(messages).IsEquivalentTo(["tail-debug", "tail-notice", "tail-info"]);
@@ -602,7 +599,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.DropWrite,
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -628,7 +625,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.DropWrite,
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -654,7 +651,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.DropOldest,
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -680,7 +677,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.DropOldest,
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -713,7 +710,7 @@ public sealed class LoggerFactoryTests
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.Wait,
             SyncWriteTimeout = TimeSpan.FromSeconds(5),
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -776,7 +773,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.Wait,
-            SyncWriteTimeout = TimeSpan.FromSeconds(30)
+            SyncWriteTimeout = TimeSpan.FromSeconds(30),
         };
         var factory = new LoggerFactory([sink], options);
 
@@ -816,7 +813,7 @@ public sealed class LoggerFactoryTests
             })
             {
                 IsBackground = true,
-                Name = "PicoLog.Test.ThirdWriter"
+                Name = "PicoLog.Test.ThirdWriter",
             };
             thirdWriteThread.Start();
 
@@ -841,7 +838,7 @@ public sealed class LoggerFactoryTests
             })
             {
                 IsBackground = true,
-                Name = "PicoLog.Test.Disposer"
+                Name = "PicoLog.Test.Disposer",
             };
             disposeThread.Start();
 
@@ -901,7 +898,7 @@ public sealed class LoggerFactoryTests
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.Wait,
             SyncWriteTimeout = TimeSpan.FromSeconds(1),
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -954,9 +951,10 @@ public sealed class LoggerFactoryTests
     public async Task Logging_WithConsoleFallback_WritesSinkFailureDetails()
     {
         using var writer = new StringWriter();
-        await using var factory = new LoggerFactory(
-            [new ThrowingSink(), new ColoredConsoleSink(new TestFormatter(), writer)]
-        );
+        await using var factory = new LoggerFactory([
+            new ThrowingSink(),
+            new ColoredConsoleSink(new TestFormatter(), writer),
+        ]);
         var logger = factory.CreateLogger("Tests.Category");
 
         await logger.WarningAsync("payload");
@@ -973,9 +971,10 @@ public sealed class LoggerFactoryTests
     public async Task Logging_WithPlainConsoleFallback_WritesSinkFailureDetails()
     {
         using var writer = new StringWriter();
-        await using var factory = new LoggerFactory(
-            [new ThrowingSink(), new ConsoleSink(new TestFormatter(), writer)]
-        );
+        await using var factory = new LoggerFactory([
+            new ThrowingSink(),
+            new ConsoleSink(new TestFormatter(), writer),
+        ]);
         var logger = factory.CreateLogger("Tests.Category");
 
         await logger.WarningAsync("payload");
@@ -991,14 +990,11 @@ public sealed class LoggerFactoryTests
     {
         using var firstWriter = new StringWriter();
         using var secondWriter = new StringWriter();
-        await using var factory = new LoggerFactory(
-
-            [
-                new ThrowingSink(),
-                new ConsoleSink(new TestFormatter(), firstWriter),
-                new ColoredConsoleSink(new TestFormatter(), secondWriter)
-            ]
-        );
+        await using var factory = new LoggerFactory([
+            new ThrowingSink(),
+            new ConsoleSink(new TestFormatter(), firstWriter),
+            new ColoredConsoleSink(new TestFormatter(), secondWriter),
+        ]);
         var logger = factory.CreateLogger("Tests.Category");
 
         await logger.WarningAsync("payload");
@@ -1017,9 +1013,11 @@ public sealed class LoggerFactoryTests
     {
         var customSink = new CustomFallbackLookingSink();
         var collectingSink = new CollectingSink();
-        await using var factory = new LoggerFactory(
-            [new ThrowingSink(), customSink, collectingSink]
-        );
+        await using var factory = new LoggerFactory([
+            new ThrowingSink(),
+            customSink,
+            collectingSink,
+        ]);
         var logger = factory.CreateLogger("Tests.Category");
 
         await logger.WarningAsync("payload");
@@ -1045,7 +1043,7 @@ public sealed class LoggerFactoryTests
                     Timestamp = DateTimeOffset.UtcNow,
                     Level = level,
                     Category = nameof(LoggerFactoryTests),
-                    Message = $"level-{level}"
+                    Message = $"level-{level}",
                 }
             );
         }
@@ -1076,7 +1074,7 @@ public sealed class LoggerFactoryTests
                 Timestamp = DateTimeOffset.UtcNow,
                 Level = LogLevel.Warning,
                 Category = nameof(LoggerFactoryTests),
-                Message = "colored-message"
+                Message = "colored-message",
             }
         );
 
@@ -1111,7 +1109,7 @@ public sealed class LoggerFactoryTests
                     Timestamp = DateTimeOffset.UtcNow,
                     Level = LogLevel.Error,
                     Category = nameof(LoggerFactoryTests),
-                    Message = "console-out-message"
+                    Message = "console-out-message",
                 }
             );
 
@@ -1398,7 +1396,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.Wait,
-            OnMessagesDropped = (_, count) => reportedDropCount = count
+            OnMessagesDropped = (_, count) => reportedDropCount = count,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.LoggerDispose");
@@ -1446,7 +1444,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.DropOldest,
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -1473,7 +1471,7 @@ public sealed class LoggerFactoryTests
         {
             QueueCapacity = 1,
             QueueFullMode = LogQueueFullMode.DropWrite,
-            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount
+            OnMessagesDropped = (_, droppedCount) => reportedDropCount = droppedCount,
         };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
@@ -1523,7 +1521,7 @@ public sealed class LoggerFactoryTests
         var options = new LoggerFactoryOptions
         {
             QueueCapacity = 1,
-            QueueFullMode = LogQueueFullMode.DropWrite
+            QueueFullMode = LogQueueFullMode.DropWrite,
         };
         await using var dropFactory = new LoggerFactory([sink], options);
         var dropLogger = dropFactory.CreateLogger("Tests.Drop");
@@ -1618,10 +1616,12 @@ public sealed class LoggerFactoryTests
     private sealed class BlockingSink : ILogSink
     {
         private readonly ConcurrentQueue<LogEntry> _entries = [];
-        private readonly TaskCompletionSource _writeStarted =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _release =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _writeStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        private readonly TaskCompletionSource _release = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         private int _writtenCount;
 
         public IReadOnlyCollection<LogEntry> Entries => _entries.ToArray();
@@ -1681,10 +1681,12 @@ public sealed class LoggerFactoryTests
     private sealed class CoordinatedDisposalSink : ILogSink
     {
         private readonly ConcurrentQueue<LogEntry> _entries = [];
-        private readonly TaskCompletionSource _writeStarted =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _release =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _writeStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        private readonly TaskCompletionSource _release = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         private int _disposeCallCount;
 
         public IReadOnlyCollection<LogEntry> Entries => _entries.ToArray();
@@ -1720,10 +1722,12 @@ public sealed class LoggerFactoryTests
     private sealed class ConcurrentWriteDetectingWriter : TextWriter
     {
         private readonly ConcurrentQueue<string?> _lines = [];
-        private readonly TaskCompletionSource _firstWriteEntered =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _releaseWrites =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _firstWriteEntered = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        private readonly TaskCompletionSource _releaseWrites = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         private int _activeWriteCount;
         private int _enteredWriteCount;
         private int _concurrentWriteCount;
@@ -1819,32 +1823,30 @@ public sealed class LoggerFactoryTests
         using var writer = new ConcurrentWriteDetectingWriter();
         await using var sink = createSink(writer);
 
-        var firstWrite = Task.Run(
-            () =>
-                sink.WriteAsync(
-                    new LogEntry
-                    {
-                        Timestamp = DateTimeOffset.UtcNow,
-                        Level = LogLevel.Warning,
-                        Category = nameof(LoggerFactoryTests),
-                        Message = "first"
-                    }
-                )
+        var firstWrite = Task.Run(() =>
+            sink.WriteAsync(
+                new LogEntry
+                {
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Level = LogLevel.Warning,
+                    Category = nameof(LoggerFactoryTests),
+                    Message = "first",
+                }
+            )
         );
 
         await writer.FirstWriteEntered;
 
-        var secondWrite = Task.Run(
-            () =>
-                sink.WriteAsync(
-                    new LogEntry
-                    {
-                        Timestamp = DateTimeOffset.UtcNow,
-                        Level = LogLevel.Error,
-                        Category = nameof(LoggerFactoryTests),
-                        Message = "second"
-                    }
-                )
+        var secondWrite = Task.Run(() =>
+            sink.WriteAsync(
+                new LogEntry
+                {
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Level = LogLevel.Error,
+                    Category = nameof(LoggerFactoryTests),
+                    Message = "second",
+                }
+            )
         );
 
         await Task.Delay(50);

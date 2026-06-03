@@ -57,12 +57,11 @@ public sealed class PicoDISourceGeneratorTests
 
         var runResult = driver.GetRunResult();
         var generatedSources = runResult
-            .Results
-            .SelectMany(static r => r.GeneratedSources)
+            .Results.SelectMany(static r => r.GeneratedSources)
             .ToImmutableArray();
 
-        var registrationSource = generatedSources.Single(
-            s => s.HintName.Contains("ServiceRegistrations", StringComparison.Ordinal)
+        var registrationSource = generatedSources.Single(s =>
+            s.HintName.Contains("ServiceRegistrations", StringComparison.Ordinal)
         );
 
         var generatedTree = CSharpSyntaxTree.ParseText(registrationSource.SourceText, parseOptions);
@@ -77,10 +76,8 @@ public sealed class PicoDISourceGeneratorTests
         await Assert
             .That(
                 configureMethod
-                    .ParameterList
-                    .Parameters[0]
-                    .Modifiers
-                    .Any(m => m.IsKind(SyntaxKind.ThisKeyword))
+                    .ParameterList.Parameters[0]
+                    .Modifiers.Any(m => m.IsKind(SyntaxKind.ThisKeyword))
             )
             .IsTrue();
 
@@ -147,8 +144,7 @@ public sealed class PicoDISourceGeneratorTests
 
         var runResult = driver.GetRunResult();
         var generatedSources = runResult
-            .Results
-            .SelectMany(static r => r.GeneratedSources)
+            .Results.SelectMany(static r => r.GeneratedSources)
             .ToImmutableArray();
 
         // Collect hint names for diagnostics

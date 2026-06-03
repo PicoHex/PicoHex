@@ -528,9 +528,14 @@ public class HostingIntegrationTests
         // Assert — stop phases run in order: Stopping → Stop → Stopped
         await Assert
             .That(log)
-            .IsEquivalentTo(
-                ["Starting:A", "Start:A", "Started:A", "Stopping:A", "Stop:A", "Stopped:A"]
-            );
+            .IsEquivalentTo([
+                "Starting:A",
+                "Start:A",
+                "Started:A",
+                "Stopping:A",
+                "Stop:A",
+                "Stopped:A",
+            ]);
     }
 
     [Test]
@@ -563,9 +568,14 @@ public class HostingIntegrationTests
         // Assert — A completes all phases before B starts
         await Assert
             .That(log)
-            .IsEquivalentTo(
-                ["Starting:A", "Start:A", "Started:A", "Starting:B", "Start:B", "Started:B"]
-            );
+            .IsEquivalentTo([
+                "Starting:A",
+                "Start:A",
+                "Started:A",
+                "Starting:B",
+                "Start:B",
+                "Started:B",
+            ]);
     }
 
     [Test]
@@ -600,23 +610,20 @@ public class HostingIntegrationTests
         // Assert — B stops first (LIFO), then A
         await Assert
             .That(log)
-            .IsEquivalentTo(
-
-                [
-                    "Starting:A",
-                    "Start:A",
-                    "Started:A",
-                    "Starting:B",
-                    "Start:B",
-                    "Started:B",
-                    "Stopping:B",
-                    "Stop:B",
-                    "Stopped:B",
-                    "Stopping:A",
-                    "Stop:A",
-                    "Stopped:A"
-                ]
-            );
+            .IsEquivalentTo([
+                "Starting:A",
+                "Start:A",
+                "Started:A",
+                "Starting:B",
+                "Start:B",
+                "Started:B",
+                "Stopping:B",
+                "Stop:B",
+                "Stopped:B",
+                "Stopping:A",
+                "Stop:A",
+                "Stopped:A",
+            ]);
     }
 
     #endregion

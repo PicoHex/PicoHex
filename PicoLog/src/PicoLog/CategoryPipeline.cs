@@ -149,8 +149,7 @@ internal sealed class CategoryPipeline : IAsyncDisposable
     {
         switch (result)
         {
-            case LogWriteResult.AcceptedAfterEviction
-            or LogWriteResult.DroppedNewWrite:
+            case LogWriteResult.AcceptedAfterEviction or LogWriteResult.DroppedNewWrite:
                 ReportDroppedMessage();
                 break;
             case LogWriteResult.RejectedAfterShutdown:

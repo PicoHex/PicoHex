@@ -22,8 +22,7 @@ internal sealed class ClosedGenericAnalyzer
 
         var openType = namedType.ConstructUnboundGenericType();
         var typeArguments = namedType
-            .TypeArguments
-            .Select(t => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            .TypeArguments.Select(t => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
             .ToImmutableArray();
 
         var typeArgumentSymbols = namedType.TypeArguments.ToImmutableArray();

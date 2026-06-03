@@ -27,7 +27,7 @@ internal sealed class FileWatchingCfgSource : ICfgSource
         var inner = await _innerSource.OpenAsync(ct);
         return new FileWatchingCfgProvider(inner, _filePath, _debounceInterval)
         {
-            OnError = _onError
+            OnError = _onError,
         };
     }
 }

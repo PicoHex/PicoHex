@@ -264,9 +264,9 @@ public class HostedSvcTests
 
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterScoped<IDisposableService>(_ => scopedSvc);
-        container.RegisterHostedSvc<ScopedDependentHostedSvc>(
-            sp => new ScopedDependentHostedSvc(sp.GetService<IDisposableService>()!)
-        );
+        container.RegisterHostedSvc<ScopedDependentHostedSvc>(sp => new ScopedDependentHostedSvc(
+            sp.GetService<IDisposableService>()!
+        ));
         container.Build();
 
         await new SvcHost(container).StartAsync();

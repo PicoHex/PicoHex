@@ -44,7 +44,7 @@ public sealed class EventIdTests
             Level = LogLevel.Info,
             Category = "Tests.Formatting",
             Message = "event-message",
-            EventId = new EventId(42)
+            EventId = new EventId(42),
         };
 
         var rendered = formatter.Format(entry);
@@ -61,7 +61,7 @@ public sealed class EventIdTests
             Level = LogLevel.Info,
             Category = "Tests.Formatting",
             Message = "no-event-id",
-            EventId = default
+            EventId = default,
         };
 
         var rendered = formatter.Format(entry);
@@ -179,7 +179,7 @@ public sealed class EventIdTests
         IReadOnlyList<KeyValuePair<string, object?>> properties =
         [
             new("tenant", "alpha"),
-            new("attempt", 3)
+            new("attempt", 3),
         ];
 
         logger.Log(

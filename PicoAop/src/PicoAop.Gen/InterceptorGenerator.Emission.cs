@@ -17,13 +17,13 @@ public sealed partial class InterceptorGenerator
         )
         {
             var retType = method.ReturnType;
-            var resultName = retType
-                is INamedTypeSymbol { MetadataName: "ValueTask`1" or "Task`1" } t
-                ? t.TypeArguments[0].ToDisplayString()
+            var resultName =
+                retType is INamedTypeSymbol { MetadataName: "ValueTask`1" or "Task`1" } t
+                    ? t.TypeArguments[0].ToDisplayString()
                 : retType.SpecialType == SpecialType.System_Void
                 || retType is INamedTypeSymbol { MetadataName: "ValueTask" or "Task" }
                     ? PicoAopNames.VoidResultFull
-                    : retType.ToDisplayString();
+                : retType.ToDisplayString();
 
             var svcName = serviceType.ToDisplayString();
             var paramList = method.Parameters.ToList();
@@ -78,11 +78,10 @@ public sealed partial class InterceptorGenerator
 
             var paramArgs = string.Join(", ", paramList.Select(p => $"_{p.Name}"));
             var isAsyncReturn =
-                retType
-                    is INamedTypeSymbol
-                    {
-                        MetadataName: "ValueTask`1" or "Task`1" or "ValueTask" or "Task"
-                    };
+                retType is INamedTypeSymbol
+                {
+                    MetadataName: "ValueTask`1" or "Task`1" or "ValueTask" or "Task"
+                };
             var isVoidAsync = retType is INamedTypeSymbol { MetadataName: "ValueTask" or "Task" };
             var isSystemTask = retType is INamedTypeSymbol { MetadataName: "Task" or "Task`1" };
             var invokeTargetReturnType = isAsyncReturn ? retType.ToDisplayString() : resultName;
@@ -273,11 +272,9 @@ public sealed partial class InterceptorGenerator
             var retType = method.ReturnType.ToDisplayString();
             var paramDecl = string.Join(
                 ", ",
-                method
-                    .Parameters
-                    .Select(
-                        p => $"{GetRefKindPrefix(p.RefKind)}{p.Type.ToDisplayString()} {p.Name}"
-                    )
+                method.Parameters.Select(p =>
+                    $"{GetRefKindPrefix(p.RefKind)}{p.Type.ToDisplayString()} {p.Name}"
+                )
             );
             var paramArgs = string.Join(
                 ", ",

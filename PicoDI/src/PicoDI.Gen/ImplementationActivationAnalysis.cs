@@ -5,7 +5,7 @@ internal enum ImplementationActivationStatus
     Valid,
     AbstractOrInterface,
     MissingPublicConstructor,
-    MultipleMarkedConstructors
+    MultipleMarkedConstructors,
 }
 
 internal readonly record struct ImplementationActivationAnalysis(
@@ -22,13 +22,13 @@ internal readonly record struct ImplementationActivationAnalysis(
     {
         var descriptor = Status switch
         {
-            ImplementationActivationStatus.AbstractOrInterface
-                => DiagnosticDescriptors.AbstractTypeRegistration,
-            ImplementationActivationStatus.MissingPublicConstructor
-                => DiagnosticDescriptors.MissingPublicConstructor,
-            ImplementationActivationStatus.MultipleMarkedConstructors
-                => DiagnosticDescriptors.MultipleMarkedConstructors,
-            _ => null
+            ImplementationActivationStatus.AbstractOrInterface =>
+                DiagnosticDescriptors.AbstractTypeRegistration,
+            ImplementationActivationStatus.MissingPublicConstructor =>
+                DiagnosticDescriptors.MissingPublicConstructor,
+            ImplementationActivationStatus.MultipleMarkedConstructors =>
+                DiagnosticDescriptors.MultipleMarkedConstructors,
+            _ => null,
         };
 
         return descriptor is null
@@ -50,8 +50,7 @@ internal static class ImplementationActivationAnalyzer
         }
 
         var publicConstructors = implementationType
-            .Constructors
-            .Where(c => !c.IsStatic && c.DeclaredAccessibility == Accessibility.Public)
+            .Constructors.Where(c => !c.IsStatic && c.DeclaredAccessibility == Accessibility.Public)
             .ToImmutableArray();
 
         if (publicConstructors.IsEmpty)
@@ -120,7 +119,7 @@ internal static class ImplementationActivationAnalyzer
             [
                 .. constructor.Parameters.Select(p =>
                     p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                )
+                ),
             ];
     }
 
@@ -137,10 +136,9 @@ internal static class ImplementationActivationAnalyzer
     {
         return constructor
             .GetAttributes()
-            .Any(
-                attr =>
-                    attr.AttributeClass?.ToDisplayString()
-                    == PicoDiNames.SvcConstructorAttributeFullName
+            .Any(attr =>
+                attr.AttributeClass?.ToDisplayString()
+                == PicoDiNames.SvcConstructorAttributeFullName
             );
     }
 }

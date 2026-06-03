@@ -135,7 +135,7 @@ public sealed class SvcContainerExtensionsTests
     ) => await Cfg.CreateBuilder().Add(() => dataFactory(), () => versionFactory()).BuildAsync();
 
     private static Dictionary<string, string> CreateSettingsData(string name, int count) =>
-        new() { ["App:Name"] = name, ["App:Count"] = count.ToString(), };
+        new() { ["App:Name"] = name, ["App:Count"] = count.ToString() };
 
     public sealed class AppSettings
     {

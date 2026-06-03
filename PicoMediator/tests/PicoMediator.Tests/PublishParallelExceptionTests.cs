@@ -44,8 +44,8 @@ public class PublishParallelExceptionTests
         await using var scope = container.CreateScope();
         var mediator = new Mediator(scope);
 
-        var ex = await Assert.ThrowsAsync(
-            async () => await mediator.PublishParallel(new ParaBoom())
+        var ex = await Assert.ThrowsAsync(async () =>
+            await mediator.PublishParallel(new ParaBoom())
         );
 
         await Assert.That(ex).IsTypeOf<AggregateException>();

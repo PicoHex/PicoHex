@@ -76,7 +76,7 @@ internal static class RegistrationSemanticPipeline
         {
             MemberAccessExpressionSyntax { Name: GenericNameSyntax gn } => gn,
             GenericNameSyntax gn => gn,
-            _ => null
+            _ => null,
         };
 
         if (genericNameSyntax?.TypeArgumentList.Arguments.Count > 0)
@@ -174,11 +174,11 @@ internal static class RegistrationSemanticPipeline
     {
         return expression switch
         {
-            MemberAccessExpressionSyntax memberAccess
-                => RegistrationSyntaxPipeline.GetMethodNameFromMemberAccess(memberAccess),
+            MemberAccessExpressionSyntax memberAccess =>
+                RegistrationSyntaxPipeline.GetMethodNameFromMemberAccess(memberAccess),
             GenericNameSyntax genericName => genericName.Identifier.Text,
             IdentifierNameSyntax identifierName => identifierName.Identifier.Text,
-            _ => null
+            _ => null,
         };
     }
 
@@ -189,16 +189,12 @@ internal static class RegistrationSemanticPipeline
     )
     {
         if (
-            invocation
-                .ArgumentList
-                .Arguments
-                .Any(
-                    arg =>
-                        arg.Expression
-                            is LambdaExpressionSyntax
-                                or AnonymousMethodExpressionSyntax
-                                or AnonymousFunctionExpressionSyntax
-                )
+            invocation.ArgumentList.Arguments.Any(arg =>
+                arg.Expression
+                    is LambdaExpressionSyntax
+                        or AnonymousMethodExpressionSyntax
+                        or AnonymousFunctionExpressionSyntax
+            )
         )
         {
             return true;
@@ -212,14 +208,10 @@ internal static class RegistrationSemanticPipeline
             return true;
         }
 
-        return invocation
-            .ArgumentList
-            .Arguments
-            .Any(
-                arg =>
-                    semanticModel.GetTypeInfo(arg.Expression).ConvertedType
-                        is INamedTypeSymbol { Name: PicoDiNames.Func }
-            );
+        return invocation.ArgumentList.Arguments.Any(arg =>
+            semanticModel.GetTypeInfo(arg.Expression).ConvertedType
+                is INamedTypeSymbol { Name: PicoDiNames.Func }
+        );
     }
 
     private static bool IsPureSelfRegistration(InvocationExpressionSyntax invocation)
@@ -228,14 +220,13 @@ internal static class RegistrationSemanticPipeline
         {
             MemberAccessExpressionSyntax { Name: GenericNameSyntax gn } => gn,
             GenericNameSyntax gn => gn,
-            _ => null
+            _ => null,
         };
 
         return genericNameSyntax?.TypeArgumentList.Arguments.Count == 1
-            && !invocation
-                .ArgumentList
-                .Arguments
-                .Any(arg => arg.Expression is TypeOfExpressionSyntax);
+            && !invocation.ArgumentList.Arguments.Any(arg =>
+                arg.Expression is TypeOfExpressionSyntax
+            );
     }
 
     private static Location? GetImplementationLocation(InvocationExpressionSyntax invocation)
@@ -244,24 +235,20 @@ internal static class RegistrationSemanticPipeline
         {
             MemberAccessExpressionSyntax { Name: GenericNameSyntax gn } => gn,
             GenericNameSyntax gn => gn,
-            _ => null
+            _ => null,
         };
 
         if (genericNameSyntax?.TypeArgumentList.Arguments.Count > 1)
             return genericNameSyntax.TypeArgumentList.Arguments[1].GetLocation();
 
         var typeOfArguments = invocation
-            .ArgumentList
-            .Arguments
-            .Select(a => a.Expression)
+            .ArgumentList.Arguments.Select(a => a.Expression)
             .OfType<TypeOfExpressionSyntax>()
             .ToList();
 
-        return typeOfArguments.Count > 1
-            ? typeOfArguments[1].Type.GetLocation()
-            : typeOfArguments.Count == 1
-                ? typeOfArguments[0].Type.GetLocation()
-                : genericNameSyntax?.TypeArgumentList.Arguments.FirstOrDefault()?.GetLocation();
+        return typeOfArguments.Count > 1 ? typeOfArguments[1].Type.GetLocation()
+            : typeOfArguments.Count == 1 ? typeOfArguments[0].Type.GetLocation()
+            : genericNameSyntax?.TypeArgumentList.Arguments.FirstOrDefault()?.GetLocation();
     }
 
     private sealed class DiagnosticIdentityComparer : IEqualityComparer<Diagnostic>

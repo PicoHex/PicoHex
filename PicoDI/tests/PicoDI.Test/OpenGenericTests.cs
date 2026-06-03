@@ -32,7 +32,8 @@ public class OpenGenericTests
             ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))
                 ?.Split(Path.PathSeparator)
                 .Select(path => MetadataReference.CreateFromFile(path))
-                .ToArray() ?? [];
+                .ToArray()
+            ?? [];
 
         var references = new List<PortableExecutableReference>(trustedPlatformAssemblies);
         references.Add(CreateAotSafeReference("PicoDI"));
@@ -62,15 +63,13 @@ public class OpenGenericTests
 
         var runResultDiagnostics = driver
             .GetRunResult()
-            .Results
-            .SelectMany(result => result.Diagnostics);
+            .Results.SelectMany(result => result.Diagnostics);
 
         return Task.FromResult(
             diagnostics
                 .Concat(runResultDiagnostics)
-                .DistinctBy(
-                    d =>
-                        $"{d.Id}|{d.Location.SourceSpan.Start}|{d.Location.SourceSpan.Length}|{d.GetMessage()}"
+                .DistinctBy(d =>
+                    $"{d.Id}|{d.Location.SourceSpan.Start}|{d.Location.SourceSpan.Length}|{d.GetMessage()}"
                 )
                 .ToImmutableArray()
         );
@@ -91,8 +90,7 @@ public class OpenGenericTests
     )
     {
         return runResult
-            .Results
-            .SelectMany(result => result.GeneratedSources)
+            .Results.SelectMany(result => result.GeneratedSources)
             .Where(source => source.HintName == hintName)
             .Select(source => source.SourceText.ToString())
             .Single();
@@ -301,9 +299,9 @@ public class OpenGenericTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterSingleton<ILogger<User>>(static _ => new Logger<User>());
-        container.RegisterTransient<IRepository<User>>(
-            static s => new RepositoryWithLogger<User>(s.GetService<ILogger<User>>())
-        );
+        container.RegisterTransient<IRepository<User>>(static s => new RepositoryWithLogger<User>(
+            s.GetService<ILogger<User>>()
+        ));
         await using var scope = container.CreateScope();
 
         // Act

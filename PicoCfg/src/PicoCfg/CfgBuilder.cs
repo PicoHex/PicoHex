@@ -12,7 +12,6 @@ public sealed class CfgBuilder
     /// Adds a source to the builder.
     /// Sources are evaluated in insertion order, and later sources override earlier ones.
     /// </summary>
-
     /// <summary>
     /// Adds a custom <see cref="ICfgSource"/> implementation to the builder.
     /// This is the extension point for third-party configuration sources
@@ -83,14 +82,13 @@ public sealed class CfgBuilder
     {
         ArgumentNullException.ThrowIfNull(streamFactory);
         var onFormatError = OnFormatError;
-        return new StreamCfgSource(
-            () =>
-                new StreamCfgProvider(
-                    streamFactory,
-                    versionStampFactory,
-                    (stream, ct) => ParseStreamAsync(stream, ct, encoding, onFormatError),
-                    CreateProviderState()
-                )
+        return new StreamCfgSource(() =>
+            new StreamCfgProvider(
+                streamFactory,
+                versionStampFactory,
+                (stream, ct) => ParseStreamAsync(stream, ct, encoding, onFormatError),
+                CreateProviderState()
+            )
         );
     }
 
@@ -122,8 +120,8 @@ public sealed class CfgBuilder
     )
     {
         ArgumentNullException.ThrowIfNull(dataFactory);
-        return new DictionaryCfgSource(
-            () => new DictionaryCfgProvider(dataFactory, versionStampFactory, CreateProviderState())
+        return new DictionaryCfgSource(() =>
+            new DictionaryCfgProvider(dataFactory, versionStampFactory, CreateProviderState())
         );
     }
 

@@ -1,41 +1,44 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <PackageId>PicoLog.DI</PackageId>
+    <Description>PicoDI integration for PicoLog registration (AddPicoLog, WriteTo, ReadFrom).</Description>
+    <PackageTags>PicoHex;Logging;AOT</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <IsPackable>true</IsPackable>
-        <PackageId>PicoLog.DI</PackageId>
-        <Description>PicoDI integration for PicoLog registration (AddPicoLog, WriteTo, ReadFrom).</Description>
-        <PackageTags>PicoHex;Logging;AOT</PackageTags>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-    </PropertyGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+    <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
+    <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
-        <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoLog.Abs" />
+    <PackageReference Include="PicoLog" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoLog.Abs" />
-        <PackageReference Include="PicoLog" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoDI.Abs" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoDI.Abs" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference
+      Condition="'$(UseProjectReferences)' == 'true'"
+      Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
+  </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Condition="'$(UseProjectReferences)' == 'true'" Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
-    </ItemGroup>
-
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 </Project>

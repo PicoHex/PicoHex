@@ -22,7 +22,7 @@ await sink.WriteAsync(
         Timestamp = DateTimeOffset.UtcNow,
         Level = LogLevel.Info,
         Category = "Demo",
-        Message = "Application started"
+        Message = "Application started",
     }
 );
 
@@ -32,7 +32,7 @@ await sink.WriteAsync(
         Timestamp = DateTimeOffset.UtcNow,
         Level = LogLevel.Warning,
         Category = "Demo",
-        Message = "Configuration file not found, using defaults"
+        Message = "Configuration file not found, using defaults",
     }
 );
 
@@ -49,8 +49,8 @@ await sink.WriteAsync(
         {
             new("Server", "db.example.com"),
             new("Port", 5432),
-            new("PoolSize", 20)
-        }
+            new("PoolSize", 20),
+        },
     }
 );
 
@@ -69,7 +69,7 @@ catch (Exception ex)
             Level = LogLevel.Error,
             Category = "Demo",
             Message = "Failed to parse configuration value",
-            Exception = ex
+            Exception = ex,
         }
     );
 }
@@ -86,8 +86,8 @@ await sink.WriteAsync(
         ScopeProperties = new List<KeyValuePair<string, object?>>
         {
             new("RequestId", Guid.NewGuid()),
-            new("DurationMs", 42)
-        }
+            new("DurationMs", 42),
+        },
     }
 );
 

@@ -85,9 +85,15 @@ public class CmdLineCfgTests
     public async Task AddCommandLine_MixedFormats_AllParsedCorrectly()
     {
         await using var root = await Cfg.CreateBuilder()
-            .AddCommandLine(
-                ["--Mode=full", "--Name", "PicoCfg", "-v", "/Port", "8080", "--Verbose",]
-            )
+            .AddCommandLine([
+                "--Mode=full",
+                "--Name",
+                "PicoCfg",
+                "-v",
+                "/Port",
+                "8080",
+                "--Verbose",
+            ])
             .BuildAsync();
 
         await Assert.That(root.GetValue("Mode")).IsEqualTo("full");

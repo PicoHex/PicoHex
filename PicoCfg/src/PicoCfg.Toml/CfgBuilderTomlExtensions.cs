@@ -30,7 +30,10 @@ internal sealed class TomlCfgSource(byte[] tomlBytes) : ICfgSource
 internal sealed class TomlCfgProvider(byte[] tomlBytes) : ICfgProvider
 {
     public ICfgSnapshot Snapshot { get; } = new TomlCfgSnapshot(TomlFlattener.Flatten(tomlBytes));
-    public ValueTask<bool> ReloadAsync(CancellationToken ct = default) => ValueTask.FromResult(false);
+
+    public ValueTask<bool> ReloadAsync(CancellationToken ct = default) =>
+        ValueTask.FromResult(false);
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 

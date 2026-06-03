@@ -11,5 +11,5 @@ public enum LogLevel : byte
     Info = 6,
     Debug = 7,
     Trace = 8,
-    None = byte.MaxValue
+    None = byte.MaxValue,
 }

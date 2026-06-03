@@ -9,10 +9,9 @@ container
 
         // Per-category filter: tune minimum level for a specific logger category prefix.
         // The last-matching rule wins. Here, Service category gets Debug (matches global).
-        options
-            .Factory
-            .FilterRules
-            .Add(new LogFilterRule("PicoLog.Sample.Service", LogLevel.Debug));
+        options.Factory.FilterRules.Add(
+            new LogFilterRule("PicoLog.Sample.Service", LogLevel.Debug)
+        );
 
         options.WriteTo.ColoredConsole();
         options.WriteTo.File("logs/app.log");

@@ -111,7 +111,7 @@ public sealed class CfgValidatorTests
     {
         var builder = Cfg.CreateBuilder();
         // Missing the Count key so it stays at 0 (invalid range)
-        builder.Add(new Dictionary<string, string> { ["Validation:Name"] = "Bound", });
+        builder.Add(new Dictionary<string, string> { ["Validation:Name"] = "Bound" });
 
         await using var root = await builder.BuildAsync();
 

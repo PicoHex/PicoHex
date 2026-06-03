@@ -36,7 +36,10 @@ public static class SvcContainerGeneralRegistrationExtensions
         /// <summary>
         /// Registers a service with a factory function and specified lifetime.
         /// </summary>
-        public ISvcContainer Register<TService>(Func<ISvcScope, TService> factory, SvcLifetime lifetime)
+        public ISvcContainer Register<TService>(
+            Func<ISvcScope, TService> factory,
+            SvcLifetime lifetime
+        )
             where TService : class =>
             container.RegisterFactory(typeof(TService), factory, lifetime);
 

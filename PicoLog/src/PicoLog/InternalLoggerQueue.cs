@@ -5,7 +5,7 @@ internal enum LogWriteResult
     Accepted,
     AcceptedAfterEviction,
     DroppedNewWrite,
-    RejectedAfterShutdown
+    RejectedAfterShutdown,
 }
 
 internal sealed class InternalLoggerQueue
@@ -32,9 +32,9 @@ internal sealed class InternalLoggerQueue
                     LogQueueFullMode.DropOldest => BoundedChannelFullMode.DropOldest,
                     LogQueueFullMode.DropWrite => BoundedChannelFullMode.DropWrite,
                     LogQueueFullMode.Wait => BoundedChannelFullMode.Wait,
-                    _ => BoundedChannelFullMode.DropOldest
+                    _ => BoundedChannelFullMode.DropOldest,
                 },
-                SingleReader = true
+                SingleReader = true,
             }
         );
         _writer = channel.Writer;
@@ -51,7 +51,7 @@ internal sealed class InternalLoggerQueue
         {
             LogQueueFullMode.Wait => TryEnqueueSyncWithWait(entry),
             LogQueueFullMode.DropWrite => TryEnqueueSyncDropWrite(entry),
-            _ => TryEnqueueSyncDropOldest(entry)
+            _ => TryEnqueueSyncDropOldest(entry),
         };
 
     public ValueTask<LogWriteResult> TryEnqueueAsync(
@@ -62,7 +62,7 @@ internal sealed class InternalLoggerQueue
         {
             LogQueueFullMode.Wait => TryEnqueueAsyncWithWaitAsync(entry, cancellationToken),
             LogQueueFullMode.DropWrite => ValueTask.FromResult(TryEnqueueSyncDropWrite(entry)),
-            _ => ValueTask.FromResult(TryEnqueueSyncDropOldest(entry))
+            _ => ValueTask.FromResult(TryEnqueueSyncDropOldest(entry)),
         };
 
     public void Complete()

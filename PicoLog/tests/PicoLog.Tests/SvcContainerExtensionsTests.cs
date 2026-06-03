@@ -520,14 +520,12 @@ public sealed class SvcContainerExtensionsTests
 
         container.AddPicoLog(options =>
         {
-            options
-                .WriteTo
-                .Sink(() =>
-                {
-                    Interlocked.Increment(ref createCount);
-                    createdSink = new RecordingSink();
-                    return createdSink;
-                });
+            options.WriteTo.Sink(() =>
+            {
+                Interlocked.Increment(ref createCount);
+                createdSink = new RecordingSink();
+                return createdSink;
+            });
         });
 
         await Assert.That(createCount).IsEqualTo(0);
@@ -651,14 +649,12 @@ public sealed class SvcContainerExtensionsTests
             {
                 options.Formatter = new PrefixFormatter("write-to-configure");
                 options.File.BatchSize = 8;
-                options
-                    .WriteTo
-                    .File(file =>
-                    {
-                        file.FilePath = filePath;
-                        file.BatchSize = 2;
-                        file.AllowFlushInterrupt = true;
-                    });
+                options.WriteTo.File(file =>
+                {
+                    file.FilePath = filePath;
+                    file.BatchSize = 2;
+                    file.AllowFlushInterrupt = true;
+                });
             });
 
             await using var scope = container.CreateScope();
@@ -700,13 +696,11 @@ public sealed class SvcContainerExtensionsTests
             container.AddPicoLog(options =>
             {
                 options.Formatter = new PrefixFormatter("stable-snapshot");
-                options
-                    .WriteTo
-                    .File(file =>
-                    {
-                        Interlocked.Increment(ref configureCount);
-                        file.FilePath = configuredPath;
-                    });
+                options.WriteTo.File(file =>
+                {
+                    Interlocked.Increment(ref configureCount);
+                    file.FilePath = configuredPath;
+                });
             });
 
             configuredPath = secondPath;

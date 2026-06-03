@@ -27,23 +27,20 @@ public static class SvcContainerExtensions
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
         public ISvcContainer RegisterCfgTransient<T>(string? section = null)
-            where T : class
-            => container.RegisterTransient<T>(scope => Bind<T>(scope, section));
+            where T : class => container.RegisterTransient<T>(scope => Bind<T>(scope, section));
 
         /// <summary>
         /// Registers a scoped bound POCO of type <typeparamref name="T"/> resolved from the configuration root.
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
         public ISvcContainer RegisterCfgScoped<T>(string? section = null)
-            where T : class
-            => container.RegisterScoped<T>(scope => Bind<T>(scope, section));
+            where T : class => container.RegisterScoped<T>(scope => Bind<T>(scope, section));
 
         /// <summary>
         /// Registers a singleton bound POCO of type <typeparamref name="T"/> resolved from the configuration root.
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
         public ISvcContainer RegisterCfgSingleton<T>(string? section = null)
-            where T : class
-            => container.RegisterSingleton<T>(scope => Bind<T>(scope, section));
+            where T : class => container.RegisterSingleton<T>(scope => Bind<T>(scope, section));
     }
 }

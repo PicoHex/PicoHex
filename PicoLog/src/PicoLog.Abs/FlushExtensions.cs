@@ -27,8 +27,6 @@ public static class FlushExtensions
         /// forwarded to the implementation. Otherwise this call completes immediately.
         /// </remarks>
         public ValueTask FlushAsync(CancellationToken cancellationToken = default) =>
-            sink is IFlushableLogSink flushable
-                ? flushable.FlushAsync(cancellationToken)
-                : default;
+            sink is IFlushableLogSink flushable ? flushable.FlushAsync(cancellationToken) : default;
     }
 }

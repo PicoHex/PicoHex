@@ -11,8 +11,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var registerInvocations = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsRegisterMethodInvocation(node),
                 transform: static (ctx, _) => RegistrationSemanticPipeline.GetInvocationInfo(ctx)
@@ -20,8 +19,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             .Where(static x => x is not null);
 
         var openGenericRegistrations = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsOpenGenericRegisterInvocation(node),
                 transform: static (ctx, _) =>
@@ -30,8 +28,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             .Where(static x => x is not null);
 
         var closedGenericUsages = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsGetServiceInvocation(node),
                 transform: static (ctx, _) =>
@@ -40,8 +37,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             .Where(static x => x is not null);
 
         var closedGenericDeclarations = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsClosedGenericTypeDeclaration(node),
                 transform: static (ctx, _) =>
@@ -50,8 +46,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             .Where(static x => x is not null);
 
         var closedGenericCtorParams = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     RegistrationSyntaxPipeline.IsConstructorWithGenericParameter(node),
                 transform: static (ctx, _) =>
@@ -165,7 +160,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         {
             serviceTypes.Add(reg.ServiceTypeFullName);
             if (!dependencyGraph.ContainsKey(reg.ServiceTypeFullName))
-                dependencyGraph[reg.ServiceTypeFullName] =  [];
+                dependencyGraph[reg.ServiceTypeFullName] = [];
 
             foreach (var paramTypeFullName in reg.ConstructorParameters)
             {

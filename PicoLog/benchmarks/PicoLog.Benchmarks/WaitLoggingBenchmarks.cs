@@ -27,7 +27,7 @@ public sealed partial class WaitLoggingBenchmarks
                 MinLevel = PicoLogLevel.Trace,
                 QueueCapacity = WaitBenchmarkQueueCapacity,
                 QueueFullMode = LogQueueFullMode.Wait,
-                SyncWriteTimeout = TimeSpan.FromSeconds(30)
+                SyncWriteTimeout = TimeSpan.FromSeconds(30),
             }
         );
         _picoWaitControlLogger = _picoWaitControlFactory.CreateLogger("Benchmark.Wait.Control");
@@ -39,7 +39,7 @@ public sealed partial class WaitLoggingBenchmarks
                 MinLevel = PicoLogLevel.Trace,
                 QueueCapacity = WaitBenchmarkQueueCapacity,
                 QueueFullMode = LogQueueFullMode.Wait,
-                SyncWriteTimeout = TimeSpan.FromSeconds(30)
+                SyncWriteTimeout = TimeSpan.FromSeconds(30),
             }
         );
         _picoWaitLogger = _picoWaitFactory.CreateLogger("Benchmark.Wait");

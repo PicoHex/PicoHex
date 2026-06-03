@@ -65,9 +65,8 @@ public sealed class AssemblySurfaceTests
         type.GetMethods(
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public
             )
-            .Any(
-                method =>
-                    method.Name == nameof(IDisposable.Dispose) && method.GetParameters().Length == 0
+            .Any(method =>
+                method.Name == nameof(IDisposable.Dispose) && method.GetParameters().Length == 0
             );
 
     private static bool HasThreadField(Type type) =>

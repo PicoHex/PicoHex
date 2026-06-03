@@ -74,7 +74,7 @@ public static class SvcProviderExtensions
         /// </summary>
         /// <typeparam name="T">The type of services to resolve.</typeparam>
         /// <returns>A read-only list of all registered service instances of the specified type.</returns>
-        public IReadOnlyList<T> GetServices<T>() => provider.GetServices(typeof(T)).Cast<T>().ToArray();
+        public IReadOnlyList<T> GetServices<T>() =>
+            provider.GetServices(typeof(T)).Cast<T>().ToArray();
     }
-
 }

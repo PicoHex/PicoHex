@@ -104,10 +104,12 @@ partial class CfgBindRuntime
         Version.TryParse(raw?.Trim(), out value);
 
     public static bool TryParseBigInteger(string? raw, out System.Numerics.BigInteger value) =>
-        System
-            .Numerics
-            .BigInteger
-            .TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        System.Numerics.BigInteger.TryParse(
+            raw,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out value
+        );
 
     /// <summary>
     /// Creates a scoped configuration view that prepends <paramref name="section"/>

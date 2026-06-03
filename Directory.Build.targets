@@ -4,19 +4,26 @@
     to publish as AOT first, then execute the native binary.
     Gates: only for Exe projects (libraries cannot self-publish).
   -->
-  <Target Name="PublishAotIfRequested" BeforeTargets="Run"
-          Condition="'$(PublishAotOnRun)' == 'true' and '$(OutputType)' == 'Exe'">
+  <Target
+    Name="PublishAotIfRequested"
+    BeforeTargets="Run"
+    Condition="'$(PublishAotOnRun)' == 'true' and '$(OutputType)' == 'Exe'"
+  >
     <Message Text="Publishing AOT build to $(PublishDir)..." Importance="high" />
     <PropertyGroup>
       <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
       <_AotPublishDir>$(BaseIntermediateOutputPath)aot-publish\</_AotPublishDir>
     </PropertyGroup>
-    <Exec Command="dotnet publish &quot;$(MSBuildProjectFullPath)&quot;
+    <Exec
+      Command="dotnet publish &quot;$(MSBuildProjectFullPath)&quot;
         -c $(Configuration)
         -r $(RuntimeIdentifier)
         -p:PublishAot=true
-        -o &quot;$(_AotPublishDir)&quot;" />
-    <Exec Command="&quot;$(_AotPublishDir)$(AssemblyName)$(TargetExt)&quot;"
-          WorkingDirectory="$(_AotPublishDir)" />
+        -o &quot;$(_AotPublishDir)&quot;"
+    />
+    <Exec
+      Command="&quot;$(_AotPublishDir)$(AssemblyName)$(TargetExt)&quot;"
+      WorkingDirectory="$(_AotPublishDir)"
+    />
   </Target>
 </Project>

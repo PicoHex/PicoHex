@@ -45,7 +45,7 @@ public sealed class SoakTest
         {
             new("userId", "u1"),
             new("duration", 1.5),
-            new("success", true)
+            new("success", true),
         };
         await RunSoak("Props-1T", (log, n) => log.Log(LogLevel.Info, $"msg-{n}", props, null), 1);
     }
@@ -58,7 +58,7 @@ public sealed class SoakTest
             {
                 MinLevel = LogLevel.Trace,
                 QueueCapacity = 65535,
-                QueueFullMode = LogQueueFullMode.DropOldest
+                QueueFullMode = LogQueueFullMode.DropOldest,
             }
         );
 

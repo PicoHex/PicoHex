@@ -9,73 +9,71 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var methodInfos = context
-            .SyntaxProvider
-            .ForAttributeWithMetadataName(
-                AttributeMetadataName,
-                predicate: static (node, _) =>
-                    node is MethodDeclarationSyntax m && m.Modifiers.Any(SyntaxKind.PartialKeyword),
-                transform: static (ctx, ct) =>
+        var methodInfos = context.SyntaxProvider.ForAttributeWithMetadataName(
+            AttributeMetadataName,
+            predicate: static (node, _) =>
+                node is MethodDeclarationSyntax m && m.Modifiers.Any(SyntaxKind.PartialKeyword),
+            transform: static (ctx, ct) =>
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var methodDecl = (MethodDeclarationSyntax)ctx.TargetNode;
+                var methodSymbol = (IMethodSymbol)ctx.TargetSymbol;
+                var attr = ctx.Attributes[0];
+
+                var level = (byte)attr.ConstructorArguments[0].Value!;
+
+                int eventId = 0;
+                string? eventName = null;
+                string? message = null;
+
+                foreach (var namedArg in attr.NamedArguments)
                 {
-                    ct.ThrowIfCancellationRequested();
-
-                    var methodDecl = (MethodDeclarationSyntax)ctx.TargetNode;
-                    var methodSymbol = (IMethodSymbol)ctx.TargetSymbol;
-                    var attr = ctx.Attributes[0];
-
-                    var level = (byte)attr.ConstructorArguments[0].Value!;
-
-                    int eventId = 0;
-                    string? eventName = null;
-                    string? message = null;
-
-                    foreach (var namedArg in attr.NamedArguments)
+                    switch (namedArg.Key)
                     {
-                        switch (namedArg.Key)
-                        {
-                            case "EventId":
-                                eventId = (int)namedArg.Value.Value!;
-                                break;
-                            case "EventName":
-                                eventName = (string?)namedArg.Value.Value;
-                                break;
-                            case "Message":
-                                message = (string?)namedArg.Value.Value;
-                                break;
-                        }
+                        case "EventId":
+                            eventId = (int)namedArg.Value.Value!;
+                            break;
+                        case "EventName":
+                            eventName = (string?)namedArg.Value.Value;
+                            break;
+                        case "Message":
+                            message = (string?)namedArg.Value.Value;
+                            break;
                     }
-
-                    var allParams = methodDecl.ParameterList.Parameters;
-                    var skipFirst = HasLoggerFirstParam(allParams.FirstOrDefault());
-                    var start = skipFirst ? 1 : 0;
-
-                    var paramDecls = ImmutableArray.CreateBuilder<string>(allParams.Count);
-                    var paramNames = ImmutableArray.CreateBuilder<string>(allParams.Count);
-                    for (int i = start; i < allParams.Count; i++)
-                    {
-                        var p = allParams[i];
-                        paramDecls.Add($"{p.Type} {p.Identifier.Text}");
-                        paramNames.Add(p.Identifier.Text);
-                    }
-
-                    var namespaceName = methodSymbol.ContainingNamespace.IsGlobalNamespace
-                        ? null
-                        : methodSymbol.ContainingNamespace.ToDisplayString();
-                    var className = methodSymbol.ContainingType.Name;
-
-                    return new MethodInfo(
-                        methodDecl.Identifier.Text,
-                        namespaceName,
-                        className,
-                        paramDecls.ToImmutable(),
-                        paramNames.ToImmutable(),
-                        level,
-                        eventId,
-                        eventName,
-                        message ?? string.Empty
-                    );
                 }
-            );
+
+                var allParams = methodDecl.ParameterList.Parameters;
+                var skipFirst = HasLoggerFirstParam(allParams.FirstOrDefault());
+                var start = skipFirst ? 1 : 0;
+
+                var paramDecls = ImmutableArray.CreateBuilder<string>(allParams.Count);
+                var paramNames = ImmutableArray.CreateBuilder<string>(allParams.Count);
+                for (int i = start; i < allParams.Count; i++)
+                {
+                    var p = allParams[i];
+                    paramDecls.Add($"{p.Type} {p.Identifier.Text}");
+                    paramNames.Add(p.Identifier.Text);
+                }
+
+                var namespaceName = methodSymbol.ContainingNamespace.IsGlobalNamespace
+                    ? null
+                    : methodSymbol.ContainingNamespace.ToDisplayString();
+                var className = methodSymbol.ContainingType.Name;
+
+                return new MethodInfo(
+                    methodDecl.Identifier.Text,
+                    namespaceName,
+                    className,
+                    paramDecls.ToImmutable(),
+                    paramNames.ToImmutable(),
+                    level,
+                    eventId,
+                    eventName,
+                    message ?? string.Empty
+                );
+            }
+        );
 
         context.RegisterSourceOutput(
             methodInfos.Collect(),
@@ -325,7 +323,7 @@ public sealed class PicoLogMessageGenerator : IIncrementalGenerator
             6 => "LogLevel.Info",
             7 => "LogLevel.Debug",
             8 => "LogLevel.Trace",
-            _ => $"((LogLevel){level})"
+            _ => $"((LogLevel){level})",
         };
 
     private static string StrLiteral(string? value) => value is null ? "null" : $"\"{value}\"";

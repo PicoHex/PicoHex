@@ -66,7 +66,7 @@ public class PicoCfgBindRuntimeTests
     public async Task Bind_InvalidConversion_ThrowsFormatException()
     {
         await using var root = await Cfg.CreateBuilder()
-            .Add(new Dictionary<string, string> { ["Name"] = "Bad", ["Enabled"] = "not-bool", })
+            .Add(new Dictionary<string, string> { ["Name"] = "Bad", ["Enabled"] = "not-bool" })
             .BuildAsync();
 
         var thrown = await Assert
@@ -80,7 +80,7 @@ public class PicoCfgBindRuntimeTests
     public async Task TryBind_InvalidConversion_ReturnsFalseAndDefaultValue()
     {
         await using var root = await Cfg.CreateBuilder()
-            .Add(new Dictionary<string, string> { ["Name"] = "Bad", ["Count"] = "nope", })
+            .Add(new Dictionary<string, string> { ["Name"] = "Bad", ["Count"] = "nope" })
             .BuildAsync();
 
         var result = CfgBind.TryBind<FlatSettings>(root, out var value);
@@ -157,11 +157,10 @@ public class PicoCfgBindRuntimeTests
 
         var method = typeof(CfgBind)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(
-                static method =>
-                    method.Name == nameof(CfgBind.Bind)
-                    && method.IsGenericMethodDefinition
-                    && method.GetParameters() is [{ ParameterType: { Name: nameof(ICfg) } }, ..]
+            .Single(static method =>
+                method.Name == nameof(CfgBind.Bind)
+                && method.IsGenericMethodDefinition
+                && method.GetParameters() is [{ ParameterType: { Name: nameof(ICfg) } }, ..]
             );
 
         var closedMethod = method.MakeGenericMethod(typeof(UnregisteredSettings));

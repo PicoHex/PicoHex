@@ -152,8 +152,8 @@ public class SendDispatchTests
         await using var scope = container.CreateScope();
         var mediator = new Mediator(scope);
 
-        await Assert.ThrowsAsync(
-            async () => await mediator.Send<CreateOrder, OrderResult>(new CreateOrder("x", 1))
+        await Assert.ThrowsAsync(async () =>
+            await mediator.Send<CreateOrder, OrderResult>(new CreateOrder("x", 1))
         );
     }
 }

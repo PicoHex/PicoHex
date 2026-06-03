@@ -1,33 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <PackageId>PicoLog</PackageId>
+    <Description>High-performance structured logging with compile-time message templates and built-in sinks.</Description>
+    <PackageTags>PicoHex;Logging;AOT</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <IsPackable>true</IsPackable>
-        <PackageId>PicoLog</PackageId>
-        <Description>High-performance structured logging with compile-time message templates and built-in sinks.</Description>
-        <PackageTags>PicoHex;Logging;AOT</PackageTags>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-    </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PicoLog.Tests" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <InternalsVisibleTo Include="PicoLog.Tests" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+    <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-        <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj">
-            <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-            <Private>false</Private>
-        </ProjectReference>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-        <PackageReference Include="PicoLog.Abs" />
-    </ItemGroup>
-    <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
-    </ItemGroup>
-
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoLog.Abs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 </Project>

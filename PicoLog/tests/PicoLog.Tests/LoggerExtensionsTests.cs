@@ -21,36 +21,30 @@ public sealed class LoggerExtensionsTests
         await Assert.That(logger.SyncEntries.Count).IsEqualTo(9);
         await Assert
             .That(logger.SyncEntries.Select(entry => entry.Level).ToArray())
-            .IsEquivalentTo(
-
-                [
-                    LogLevel.Trace,
-                    LogLevel.Debug,
-                    LogLevel.Info,
-                    LogLevel.Notice,
-                    LogLevel.Warning,
-                    LogLevel.Error,
-                    LogLevel.Critical,
-                    LogLevel.Alert,
-                    LogLevel.Emergency
-                ]
-            );
+            .IsEquivalentTo([
+                LogLevel.Trace,
+                LogLevel.Debug,
+                LogLevel.Info,
+                LogLevel.Notice,
+                LogLevel.Warning,
+                LogLevel.Error,
+                LogLevel.Critical,
+                LogLevel.Alert,
+                LogLevel.Emergency,
+            ]);
         await Assert
             .That(logger.SyncEntries.Select(entry => entry.Message).ToArray())
-            .IsEquivalentTo(
-
-                [
-                    "trace",
-                    "debug",
-                    "info",
-                    "notice",
-                    "warning",
-                    "error",
-                    "critical",
-                    "alert",
-                    "emergency"
-                ]
-            );
+            .IsEquivalentTo([
+                "trace",
+                "debug",
+                "info",
+                "notice",
+                "warning",
+                "error",
+                "critical",
+                "alert",
+                "emergency",
+            ]);
         await Assert.That(logger.SyncEntries[0].Exception is null).IsTrue();
         await Assert.That(logger.SyncEntries[1].Exception is null).IsTrue();
         await Assert.That(logger.SyncEntries[2].Exception is null).IsTrue();
@@ -80,36 +74,30 @@ public sealed class LoggerExtensionsTests
         await Assert.That(logger.AsyncEntries.Count).IsEqualTo(9);
         await Assert
             .That(logger.AsyncEntries.Select(entry => entry.Level).ToArray())
-            .IsEquivalentTo(
-
-                [
-                    LogLevel.Trace,
-                    LogLevel.Debug,
-                    LogLevel.Info,
-                    LogLevel.Notice,
-                    LogLevel.Warning,
-                    LogLevel.Error,
-                    LogLevel.Critical,
-                    LogLevel.Alert,
-                    LogLevel.Emergency
-                ]
-            );
+            .IsEquivalentTo([
+                LogLevel.Trace,
+                LogLevel.Debug,
+                LogLevel.Info,
+                LogLevel.Notice,
+                LogLevel.Warning,
+                LogLevel.Error,
+                LogLevel.Critical,
+                LogLevel.Alert,
+                LogLevel.Emergency,
+            ]);
         await Assert
             .That(logger.AsyncEntries.Select(entry => entry.Message).ToArray())
-            .IsEquivalentTo(
-
-                [
-                    "trace",
-                    "debug",
-                    "info",
-                    "notice",
-                    "warning",
-                    "error",
-                    "critical",
-                    "alert",
-                    "emergency"
-                ]
-            );
+            .IsEquivalentTo([
+                "trace",
+                "debug",
+                "info",
+                "notice",
+                "warning",
+                "error",
+                "critical",
+                "alert",
+                "emergency",
+            ]);
         await Assert
             .That(logger.AsyncEntries.All(entry => entry.CancellationToken == cancellationToken))
             .IsTrue();
@@ -131,7 +119,7 @@ public sealed class LoggerExtensionsTests
         IReadOnlyList<KeyValuePair<string, object?>> properties =
         [
             new("tenant", "alpha"),
-            new("attempt", 3)
+            new("attempt", 3),
         ];
 
         logger.LogStructured(LogLevel.Warning, "sync-structured", properties, exception);

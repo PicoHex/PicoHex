@@ -18,5 +18,5 @@ public enum SvcLifetime : byte
     /// <summary>
     /// A single instance is created and shared within a scope.
     /// </summary>
-    Scoped
+    Scoped,
 }

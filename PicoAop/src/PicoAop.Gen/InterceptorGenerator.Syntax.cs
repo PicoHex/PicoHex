@@ -152,8 +152,8 @@ public sealed partial class InterceptorGenerator
             && addGen.TypeArgumentList.Arguments.Count > 0
         )
         {
-            interceptorType = ctx.SemanticModel
-                .GetTypeInfo(addGen.TypeArgumentList.Arguments[0])
+            interceptorType = ctx
+                .SemanticModel.GetTypeInfo(addGen.TypeArgumentList.Arguments[0])
                 .Type;
         }
 
@@ -173,8 +173,8 @@ public sealed partial class InterceptorGenerator
                 && genName.TypeArgumentList.Arguments.Count > 0
             )
             {
-                interceptorType = ctx.SemanticModel
-                    .GetTypeInfo(genName.TypeArgumentList.Arguments[0])
+                interceptorType = ctx
+                    .SemanticModel.GetTypeInfo(genName.TypeArgumentList.Arguments[0])
                     .Type;
                 break;
             }
@@ -191,8 +191,8 @@ public sealed partial class InterceptorGenerator
                 && whereGen.TypeArgumentList.Arguments.Count > 0
             )
             {
-                interfaceFilter = ctx.SemanticModel
-                    .GetTypeInfo(whereGen.TypeArgumentList.Arguments[0])
+                interfaceFilter = ctx
+                    .SemanticModel.GetTypeInfo(whereGen.TypeArgumentList.Arguments[0])
                     .Type;
             }
             else if (
@@ -201,8 +201,8 @@ public sealed partial class InterceptorGenerator
                 && exceptGen.TypeArgumentList.Arguments.Count > 0
             )
             {
-                var excluded = ctx.SemanticModel
-                    .GetTypeInfo(exceptGen.TypeArgumentList.Arguments[0])
+                var excluded = ctx
+                    .SemanticModel.GetTypeInfo(exceptGen.TypeArgumentList.Arguments[0])
                     .Type;
                 if (excluded is not null)
                     excludedTypes.Add(excluded);
@@ -222,8 +222,8 @@ public sealed partial class InterceptorGenerator
                 && innerGen.TypeArgumentList.Arguments.Count > 0
             )
             {
-                interceptorType = ctx.SemanticModel
-                    .GetTypeInfo(innerGen.TypeArgumentList.Arguments[0])
+                interceptorType = ctx
+                    .SemanticModel.GetTypeInfo(innerGen.TypeArgumentList.Arguments[0])
                     .Type;
             }
         }
@@ -264,9 +264,9 @@ public sealed partial class InterceptorGenerator
         if (filter.InterfaceFilter is not null)
         {
             if (
-                !serviceType
-                    .AllInterfaces
-                    .Any(i => SymbolEqualityComparer.Default.Equals(i, filter.InterfaceFilter))
+                !serviceType.AllInterfaces.Any(i =>
+                    SymbolEqualityComparer.Default.Equals(i, filter.InterfaceFilter)
+                )
             )
                 return false;
         }

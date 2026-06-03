@@ -52,7 +52,7 @@ internal sealed class PooledConsoleFormatter : ILogFormatter
             LogLevel.Critical => "CRITICAL ",
             LogLevel.Alert => "ALERT    ",
             LogLevel.Emergency => "EMERGENCY",
-            _ => "NONE     "
+            _ => "NONE     ",
         };
 
     private static void AppendScopes(StringBuilder builder, IReadOnlyList<object> scopes)

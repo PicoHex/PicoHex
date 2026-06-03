@@ -14,7 +14,9 @@
       -p:UseProjectReferences=false to validate and emit real NuGet dependencies.
     -->
     <UseProjectReferences Condition="'$(UseProjectReferences)' == ''">true</UseProjectReferences>
-    <PicoDiPackageVersion Condition="'$(PicoDiPackageVersion)' == ''">$(Version)</PicoDiPackageVersion>
+    <PicoDiPackageVersion Condition="'$(PicoDiPackageVersion)' == ''"
+      >$(Version)</PicoDiPackageVersion
+    >
   </PropertyGroup>
 
   <!-- ===== AOT Strategy ===== -->
@@ -57,13 +59,18 @@
   <!-- Libraries: declare AOT-compatible but do not self-publish.
        Only for TFMs that support AOT (net8.0+). -->
   <PropertyGroup>
-    <IsAotCompatible Condition="'$(IsAotCompatible)' == '' and '$(OutputType)' != 'Exe' and $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+    <IsAotCompatible
+      Condition="'$(IsAotCompatible)' == '' and '$(OutputType)' != 'Exe' and $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))"
+      >true</IsAotCompatible
+    >
   </PropertyGroup>
 
   <!-- PublishAotOnRun: when true, dotnet run auto-publishes as AOT before executing.
        Defaults to false locally, true in CI. -->
   <PropertyGroup>
-    <PublishAotOnRun Condition="'$(PublishAotOnRun)' == '' and '$(CI)' == 'true'">true</PublishAotOnRun>
+    <PublishAotOnRun Condition="'$(PublishAotOnRun)' == '' and '$(CI)' == 'true'"
+      >true</PublishAotOnRun
+    >
     <PublishAotOnRun Condition="'$(PublishAotOnRun)' == ''">false</PublishAotOnRun>
   </PropertyGroup>
 
@@ -101,8 +108,6 @@
   <!-- SourceLink for source-level debugging -->
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
-    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\"/>
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-
-
 </Project>

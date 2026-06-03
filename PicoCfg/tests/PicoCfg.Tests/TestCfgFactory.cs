@@ -56,14 +56,13 @@ internal static class TestCfgFactory
         Func<CfgProviderState>? providerStateFactory = null
     )
     {
-        return new StreamCfgSource(
-            () =>
-                CreateStreamProvider(
-                    streamFactory,
-                    versionStampFactory,
-                    streamParser,
-                    providerStateFactory?.Invoke() ?? CreateProviderState()
-                )
+        return new StreamCfgSource(() =>
+            CreateStreamProvider(
+                streamFactory,
+                versionStampFactory,
+                streamParser,
+                providerStateFactory?.Invoke() ?? CreateProviderState()
+            )
         );
     }
 
@@ -95,13 +94,12 @@ internal static class TestCfgFactory
         Func<CfgProviderState>? providerStateFactory = null
     )
     {
-        return new DictionaryCfgSource(
-            () =>
-                CreateDictionaryProvider(
-                    dataFactory,
-                    versionStampFactory,
-                    providerStateFactory?.Invoke() ?? CreateProviderState()
-                )
+        return new DictionaryCfgSource(() =>
+            CreateDictionaryProvider(
+                dataFactory,
+                versionStampFactory,
+                providerStateFactory?.Invoke() ?? CreateProviderState()
+            )
         );
     }
 

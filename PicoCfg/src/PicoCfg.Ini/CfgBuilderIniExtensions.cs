@@ -30,7 +30,10 @@ internal sealed class IniCfgSource(byte[] iniBytes) : ICfgSource
 internal sealed class IniCfgProvider(byte[] iniBytes) : ICfgProvider
 {
     public ICfgSnapshot Snapshot { get; } = new IniCfgSnapshot(IniFlattener.Flatten(iniBytes));
-    public ValueTask<bool> ReloadAsync(CancellationToken ct = default) => ValueTask.FromResult(false);
+
+    public ValueTask<bool> ReloadAsync(CancellationToken ct = default) =>
+        ValueTask.FromResult(false);
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 

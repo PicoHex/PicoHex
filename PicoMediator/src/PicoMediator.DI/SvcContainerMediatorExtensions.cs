@@ -14,8 +14,7 @@ public static class SvcContainerMediatorExtensions
         /// </summary>
         public ISvcContainer AddPicoMediator()
         {
-            container.RegisterScoped<IMediator>(
-                scope => new Mediator(scope));
+            container.RegisterScoped<IMediator>(scope => new Mediator(scope));
             return container;
         }
     }

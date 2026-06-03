@@ -88,9 +88,8 @@ internal static class JsonFlattener
             or TokenType.Int64
             or TokenType.Float32
             or TokenType.Float64
-            or TokenType.Bool
-                => Encoding.UTF8.GetString(reader.ValueSpan),
-            _ => ""
+            or TokenType.Bool => Encoding.UTF8.GetString(reader.ValueSpan),
+            _ => "",
         };
     }
 }

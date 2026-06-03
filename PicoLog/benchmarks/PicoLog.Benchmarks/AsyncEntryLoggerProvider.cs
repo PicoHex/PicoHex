@@ -15,7 +15,7 @@ internal sealed class AsyncEntryLoggerProvider
             {
                 FullMode = BoundedChannelFullMode.DropOldest,
                 SingleReader = true,
-                AllowSynchronousContinuations = false
+                AllowSynchronousContinuations = false,
             }
         );
         _consumerTask = Task.Run(ConsumeAsync);
@@ -55,20 +55,18 @@ internal sealed class AsyncEntryLoggerProvider
         )
         {
             var message = state as string ?? formatter(state, exception);
-            channel
-                .Writer
-                .TryWrite(
-                    new LogEntry
-                    {
-                        Timestamp = TimeProvider.System.GetLocalNow(),
-                        Level = MapLogLevel(logLevel),
-                        Category = categoryName,
-                        Message = message,
-                        Exception = exception,
-                        Scopes = null,
-                        Properties = null
-                    }
-                );
+            channel.Writer.TryWrite(
+                new LogEntry
+                {
+                    Timestamp = TimeProvider.System.GetLocalNow(),
+                    Level = MapLogLevel(logLevel),
+                    Category = categoryName,
+                    Message = message,
+                    Exception = exception,
+                    Scopes = null,
+                    Properties = null,
+                }
+            );
         }
 
         private static PicoLog.Abs.LogLevel MapLogLevel(
@@ -82,7 +80,7 @@ internal sealed class AsyncEntryLoggerProvider
                 Microsoft.Extensions.Logging.LogLevel.Warning => PicoLog.Abs.LogLevel.Warning,
                 Microsoft.Extensions.Logging.LogLevel.Error => PicoLog.Abs.LogLevel.Error,
                 Microsoft.Extensions.Logging.LogLevel.Critical => PicoLog.Abs.LogLevel.Critical,
-                _ => PicoLog.Abs.LogLevel.Info
+                _ => PicoLog.Abs.LogLevel.Info,
             };
     }
 }

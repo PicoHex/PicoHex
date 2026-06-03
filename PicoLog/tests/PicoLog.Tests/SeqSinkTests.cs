@@ -29,8 +29,8 @@ public sealed class SeqSinkTests
             {
                 Timestamp = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 Level = LogLevel.Info,
-                Message = "Hello Seq"
-            }
+                Message = "Hello Seq",
+            },
         };
 
         await sink.WriteBatchAsync(batch);
@@ -84,9 +84,9 @@ public sealed class SeqSinkTests
     [Test]
     public async Task HttpFailure_IncrementsFailureCount_AndFallsBack()
     {
-        var handler = new FakeHttpHandler(
-            _ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
-        );
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(
+            HttpStatusCode.ServiceUnavailable
+        ));
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5341") };
         var sink = new SeqSink(httpClient, enableConsoleFallback: true);
 

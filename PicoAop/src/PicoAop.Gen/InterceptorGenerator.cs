@@ -6,8 +6,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var interceptionCalls = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     node
                         is InvocationExpressionSyntax
@@ -35,8 +34,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
             .Where(static info => info is not null);
 
         var globalCalls = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) =>
                     node
                         is InvocationExpressionSyntax
@@ -91,14 +89,12 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                     existing.ServiceType,
                     existing.ImplType ?? info.ImplType,
                     existing
-                        .InterceptorTypes
-                        .Concat(info.InterceptorTypes)
+                        .InterceptorTypes.Concat(info.InterceptorTypes)
                         .Distinct(SymbolEqualityComparer.Default)
                         .OfType<ITypeSymbol>()
                         .ToList(),
                     existing
-                        .WithoutInterceptorTypes
-                        .Concat(info.WithoutInterceptorTypes)
+                        .WithoutInterceptorTypes.Concat(info.WithoutInterceptorTypes)
                         .Distinct(SymbolEqualityComparer.Default)
                         .OfType<ITypeSymbol>()
                         .ToList(),
@@ -184,8 +180,8 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
             }
 
             var interceptorList = new List<ITypeSymbol>(
-                info.InterceptorTypes.Where(
-                    t => !info.WithoutInterceptorTypes.Contains(t, SymbolEqualityComparer.Default)
+                info.InterceptorTypes.Where(t =>
+                    !info.WithoutInterceptorTypes.Contains(t, SymbolEqualityComparer.Default)
                 )
             );
 

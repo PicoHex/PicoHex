@@ -43,8 +43,8 @@ public class ConcurrencyStressTests
         for (var i = 0; i < 100; i++)
         {
             var id = i;
-            tasks[i] = Task.Run(
-                () => mediator.Send<StressPing, string>(new StressPing(id)).AsTask()
+            tasks[i] = Task.Run(() =>
+                mediator.Send<StressPing, string>(new StressPing(id)).AsTask()
             );
         }
 

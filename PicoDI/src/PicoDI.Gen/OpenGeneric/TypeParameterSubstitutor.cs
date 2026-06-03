@@ -58,13 +58,8 @@ internal sealed class TypeParameterSubstitutor
     )
     {
         return parameterTypeSymbols
-            .Select(
-                paramType =>
-                    ResolveTypeParametersRecursive(
-                        paramType,
-                        typeArgumentSymbols,
-                        typeParameterNames
-                    )
+            .Select(paramType =>
+                ResolveTypeParametersRecursive(paramType, typeArgumentSymbols, typeParameterNames)
             )
             .Select(resolved => resolved.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
             .ToImmutableArray();
@@ -96,10 +91,8 @@ internal sealed class TypeParameterSubstitutor
         if (type is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
         {
             var resolvedArgs = namedType
-                .TypeArguments
-                .Select(
-                    ta =>
-                        ResolveTypeParametersRecursive(ta, typeArgumentSymbols, typeParameterNames)
+                .TypeArguments.Select(ta =>
+                    ResolveTypeParametersRecursive(ta, typeArgumentSymbols, typeParameterNames)
                 )
                 .ToArray();
 
@@ -140,7 +133,7 @@ internal sealed class TypeParameterSubstitutor
             ($"<{parameterName}>", $"<{actualType}>"),
             ($"<{parameterName},", $"<{actualType},"),
             ($", {parameterName}>", $", {actualType}>"),
-            ($", {parameterName},", $", {actualType},")
+            ($", {parameterName},", $", {actualType},"),
         };
 
         var result = typeFullName;

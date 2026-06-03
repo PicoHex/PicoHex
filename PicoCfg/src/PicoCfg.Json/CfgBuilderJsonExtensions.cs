@@ -50,8 +50,7 @@ internal sealed class JsonCfgSource(byte[] jsonBytes) : ICfgSource
 
 internal sealed class JsonCfgProvider(byte[] jsonBytes) : ICfgProvider
 {
-    public ICfgSnapshot Snapshot { get; } =
-        new JsonCfgSnapshot(JsonFlattener.Flatten(jsonBytes));
+    public ICfgSnapshot Snapshot { get; } = new JsonCfgSnapshot(JsonFlattener.Flatten(jsonBytes));
 
     public ValueTask<bool> ReloadAsync(CancellationToken ct = default) =>
         ValueTask.FromResult(false);
@@ -61,6 +60,5 @@ internal sealed class JsonCfgProvider(byte[] jsonBytes) : ICfgProvider
 
 internal sealed class JsonCfgSnapshot(Dictionary<string, string> values) : ICfgSnapshot
 {
-    public bool TryGetValue(string path, out string? value) =>
-        values.TryGetValue(path, out value);
+    public bool TryGetValue(string path, out string? value) => values.TryGetValue(path, out value);
 }

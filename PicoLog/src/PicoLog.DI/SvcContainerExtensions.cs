@@ -37,7 +37,10 @@ public static class SvcContainerExtensions
     }
 #pragma warning restore IDE0051
 
-    private static ILoggerFactory CreateLoggerFactory(ISvcContainer container, LoggingOptions options)
+    private static ILoggerFactory CreateLoggerFactory(
+        ISvcContainer container,
+        LoggingOptions options
+    )
     {
         ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(options);
@@ -70,7 +73,8 @@ public static class SvcContainerExtensions
         }
     }
 
-    private static IEnumerable<T> TryGetServices<T>(ISvcScope scope) where T : notnull
+    private static IEnumerable<T> TryGetServices<T>(ISvcScope scope)
+        where T : notnull
     {
         ArgumentNullException.ThrowIfNull(scope);
 

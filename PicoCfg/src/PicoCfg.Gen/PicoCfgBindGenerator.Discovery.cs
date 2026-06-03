@@ -10,8 +10,9 @@ public sealed partial class PicoCfgBindGenerator
 
         return invocation.Expression switch
         {
-            MemberAccessExpressionSyntax { Name: { } simpleName }
-                => IsTargetMethodName(simpleName.Identifier.ValueText),
+            MemberAccessExpressionSyntax { Name: { } simpleName } => IsTargetMethodName(
+                simpleName.Identifier.ValueText
+            ),
             SimpleNameSyntax simpleName => IsTargetMethodName(simpleName.Identifier.ValueText),
             _ => false,
         };
@@ -194,16 +195,14 @@ public sealed partial class PicoCfgBindGenerator
 
         var isDiRegistrationName =
             operationMethod.Name
-                is "RegisterCfgTransient"
-                    or "RegisterCfgScoped"
-                    or "RegisterCfgSingleton";
+            is "RegisterCfgTransient"
+                or "RegisterCfgScoped"
+                or "RegisterCfgSingleton";
         if (!isDiRegistrationName)
             return false;
 
-        var containingNamespace = operationMethod
-            .ContainingType
-            .ContainingNamespace
-            .ToDisplayString();
+        var containingNamespace =
+            operationMethod.ContainingType.ContainingNamespace.ToDisplayString();
         var isSupportedDiContainerSurface =
             (
                 operationMethod.ContainingType.Name == "SvcContainerExtensions"

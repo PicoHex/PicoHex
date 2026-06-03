@@ -160,8 +160,8 @@ public class HostBuilderTests
         builder.ConfigureServices(c =>
         {
             c.RegisterHostedSvc<TestHostedSvc>(_ => startedSvc);
-            c.RegisterHostedSvc<FailsInFactorySvc>(
-                _ => throw new InvalidOperationException("factory boom")
+            c.RegisterHostedSvc<FailsInFactorySvc>(_ =>
+                throw new InvalidOperationException("factory boom")
             );
         });
 

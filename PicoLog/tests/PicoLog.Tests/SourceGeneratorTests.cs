@@ -75,11 +75,10 @@ public sealed class PicoLogSourceGeneratorTests
 
         var runResult = driver.GetRunResult();
         var generatedSources = runResult
-            .Results
-            .SelectMany(static result => result.GeneratedSources)
+            .Results.SelectMany(static result => result.GeneratedSources)
             .ToArray();
-        var generated = generatedSources.Single(
-            sourceResult => sourceResult.HintName == "PicoLogMessage.g.cs"
+        var generated = generatedSources.Single(sourceResult =>
+            sourceResult.HintName == "PicoLogMessage.g.cs"
         );
 
         return generated.SourceText.ToString();
@@ -96,7 +95,7 @@ public sealed class PicoLogSourceGeneratorTests
             (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
         )!.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-        var explicitAssemblies = new[] { typeof(PicoLog.Abs.ILogger).Assembly.Location, };
+        var explicitAssemblies = new[] { typeof(PicoLog.Abs.ILogger).Assembly.Location };
 
         return trustedPlatformAssemblies
             .Concat(explicitAssemblies)

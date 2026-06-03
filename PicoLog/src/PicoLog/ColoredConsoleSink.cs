@@ -39,7 +39,7 @@ public sealed class ColoredConsoleSink(ILogFormatter formatter, TextWriter? writ
                         LogLevel.Critical => ConsoleColor.DarkRed,
                         LogLevel.Alert => ConsoleColor.Magenta,
                         LogLevel.Emergency => ConsoleColor.DarkMagenta,
-                        _ => originalColor
+                        _ => originalColor,
                     };
 
                     writer.WriteLine(text);

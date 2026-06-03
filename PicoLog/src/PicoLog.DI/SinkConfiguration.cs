@@ -76,7 +76,7 @@ public sealed class SinkConfiguration
         Console,
         ColoredConsole,
         File,
-        Custom
+        Custom,
     }
 
     internal readonly record struct SinkRegistration(

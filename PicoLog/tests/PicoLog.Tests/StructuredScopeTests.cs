@@ -30,7 +30,7 @@ public sealed class StructuredScopeTests
         var kvList = new List<KeyValuePair<string, object?>>
         {
             new("key1", "val1"),
-            new("key2", 42)
+            new("key2", 42),
         };
         using var scope = logger.BeginScope(kvList);
         logger.Info("test");
@@ -93,8 +93,8 @@ public sealed class StructuredScopeTests
             ScopeProperties = new List<KeyValuePair<string, object?>>
             {
                 new("key", "val"),
-                new("count", 3)
-            }
+                new("count", 3),
+            },
         };
 
         var output = formatter.Format(entry);

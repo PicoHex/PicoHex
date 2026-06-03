@@ -16,8 +16,9 @@ public static class SvcContainerAutoConfiguration
 
     private sealed class ConfiguratorRegistry
     {
-        private readonly Dictionary<string, Action<ISvcContainer>> _configurators =
-            new(StringComparer.Ordinal);
+        private readonly Dictionary<string, Action<ISvcContainer>> _configurators = new(
+            StringComparer.Ordinal
+        );
         private Action<ISvcContainer>[]? _sortedSnapshot;
 
         public void Register(string configuratorId, Action<ISvcContainer> configurator)

@@ -240,20 +240,17 @@ public sealed class LoggerFactoryFlushTests
 
         try
         {
-            factory = new LoggerFactory(
-
-                [
-                    new FileSink(
-                        new ConsoleFormatter(),
-                        new FileSinkOptions
-                        {
-                            FilePath = filePath,
-                            BatchSize = 32,
-                            AllowFlushInterrupt = true
-                        }
-                    )
-                ]
-            );
+            factory = new LoggerFactory([
+                new FileSink(
+                    new ConsoleFormatter(),
+                    new FileSinkOptions
+                    {
+                        FilePath = filePath,
+                        BatchSize = 32,
+                        AllowFlushInterrupt = true,
+                    }
+                ),
+            ]);
             var logger = factory.CreateLogger("Tests.Category");
 
             await logger.InfoAsync("tail-before-dispose");
@@ -290,7 +287,7 @@ public sealed class LoggerFactoryFlushTests
                 {
                     FilePath = filePath,
                     BatchSize = 32,
-                    AllowFlushInterrupt = true
+                    AllowFlushInterrupt = true,
                 }
             );
 
@@ -300,7 +297,7 @@ public sealed class LoggerFactoryFlushTests
                     Timestamp = DateTimeOffset.UtcNow,
                     Level = LogLevel.Info,
                     Category = nameof(LoggerFactoryFlushTests),
-                    Message = "sink-tail-before-dispose"
+                    Message = "sink-tail-before-dispose",
                 }
             );
 
@@ -336,7 +333,7 @@ public sealed class LoggerFactoryFlushTests
                     FilePath = basePath,
                     BatchSize = 1,
                     MaxFileSizeBytes = 100,
-                    MaxRetainedFiles = 2
+                    MaxRetainedFiles = 2,
                 }
             );
 
@@ -350,7 +347,7 @@ public sealed class LoggerFactoryFlushTests
                         Timestamp = DateTimeOffset.UtcNow,
                         Level = LogLevel.Info,
                         Category = "t",
-                        Message = $"rotation-test-msg-{i:D3}"
+                        Message = $"rotation-test-msg-{i:D3}",
                     }
                 );
             }
@@ -424,10 +421,12 @@ public sealed class LoggerFactoryFlushTests
     private sealed class CoordinatedFlushableSink : IFlushableLogSink
     {
         private readonly ConcurrentQueue<LogEntry> _entries = [];
-        private readonly TaskCompletionSource _writeStarted =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _releaseWrite =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _writeStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        private readonly TaskCompletionSource _releaseWrite = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         private int _flushCallCount;
         private int _disposeCallCount;
 

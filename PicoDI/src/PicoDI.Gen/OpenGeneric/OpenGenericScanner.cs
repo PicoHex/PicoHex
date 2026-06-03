@@ -57,7 +57,7 @@ internal sealed class OpenGenericScanner
         var methodName = invocation.Expression switch
         {
             MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.Text,
-            _ => null
+            _ => null,
         };
 
         if (methodName is null || !PicoDiNames.RegisterMethodNames.Contains(methodName))

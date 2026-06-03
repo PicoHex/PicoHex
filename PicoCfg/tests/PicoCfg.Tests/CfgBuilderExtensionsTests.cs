@@ -16,11 +16,10 @@ public class CfgBuilderExtensionsTests
     public async Task Add_WithStreamFactory_BuildAsyncPublishesParsedValues()
     {
         var builder = Cfg.CreateBuilder();
-        builder.Add(
-            ct =>
-                ValueTask.FromResult<Stream>(
-                    new MemoryStream(Encoding.UTF8.GetBytes("alpha=1\nbeta=2"))
-                )
+        builder.Add(ct =>
+            ValueTask.FromResult<Stream>(
+                new MemoryStream(Encoding.UTF8.GetBytes("alpha=1\nbeta=2"))
+            )
         );
 
         await using var root = await builder.BuildAsync();
@@ -63,7 +62,7 @@ public class CfgBuilderExtensionsTests
     [Test]
     public async Task Add_WithDictionaryDataWithoutVersionStamp_ReloadPublishesMutatedDictionaryValues()
     {
-        var data = new Dictionary<string, string> { ["key"] = "before", };
+        var data = new Dictionary<string, string> { ["key"] = "before" };
         var builder = Cfg.CreateBuilder();
         builder.Add(data);
 
@@ -79,7 +78,7 @@ public class CfgBuilderExtensionsTests
     [Test]
     public async Task Add_WithDictionaryDataAndUnchangedVersionStamp_ReloadSkipsMutatedDictionaryValues()
     {
-        var data = new Dictionary<string, string> { ["key"] = "before", };
+        var data = new Dictionary<string, string> { ["key"] = "before" };
         var builder = Cfg.CreateBuilder();
         builder.Add(data, () => 1);
 

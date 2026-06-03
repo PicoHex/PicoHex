@@ -52,29 +52,20 @@ internal static class RegistrationSyntaxPipeline
     {
         return node switch
         {
-            ConstructorDeclarationSyntax ctorDecl
-                => ctorDecl
-                    .ParameterList
-                    .Parameters
-                    .Any(
-                        p =>
-                            p.Type
-                                is GenericNameSyntax
-                                    or QualifiedNameSyntax { Right: GenericNameSyntax }
-                                    or NullableTypeSyntax { ElementType: GenericNameSyntax }
-                    ),
-            TypeDeclarationSyntax { ParameterList: not null } typeDecl
-                => typeDecl
-                    .ParameterList
-                    .Parameters
-                    .Any(
-                        p =>
-                            p.Type
-                                is GenericNameSyntax
-                                    or QualifiedNameSyntax { Right: GenericNameSyntax }
-                                    or NullableTypeSyntax { ElementType: GenericNameSyntax }
-                    ),
-            _ => false
+            ConstructorDeclarationSyntax ctorDecl => ctorDecl.ParameterList.Parameters.Any(p =>
+                p.Type
+                    is GenericNameSyntax
+                        or QualifiedNameSyntax { Right: GenericNameSyntax }
+                        or NullableTypeSyntax { ElementType: GenericNameSyntax }
+            ),
+            TypeDeclarationSyntax { ParameterList: not null } typeDecl =>
+                typeDecl.ParameterList.Parameters.Any(p =>
+                    p.Type
+                        is GenericNameSyntax
+                            or QualifiedNameSyntax { Right: GenericNameSyntax }
+                            or NullableTypeSyntax { ElementType: GenericNameSyntax }
+                ),
+            _ => false,
         };
     }
 
@@ -88,9 +79,10 @@ internal static class RegistrationSyntaxPipeline
 
         var methodName = invocation.Expression switch
         {
-            MemberAccessExpressionSyntax memberAccess
-                => GetMethodNameFromMemberAccess(memberAccess),
-            _ => null
+            MemberAccessExpressionSyntax memberAccess => GetMethodNameFromMemberAccess(
+                memberAccess
+            ),
+            _ => null,
         };
 
         return methodName is PicoDiNames.GetService or PicoDiNames.GetServices;
@@ -107,9 +99,10 @@ internal static class RegistrationSyntaxPipeline
 
         var methodName = invocation.Expression switch
         {
-            MemberAccessExpressionSyntax memberAccess
-                => GetMethodNameFromMemberAccess(memberAccess),
-            _ => null
+            MemberAccessExpressionSyntax memberAccess => GetMethodNameFromMemberAccess(
+                memberAccess
+            ),
+            _ => null,
         };
 
         if (methodName is null || !PicoDiNames.RegisterMethodNames.Any(methodName.StartsWith))
@@ -139,9 +132,10 @@ internal static class RegistrationSyntaxPipeline
 
         var methodName = invocation.Expression switch
         {
-            MemberAccessExpressionSyntax memberAccess
-                => GetMethodNameFromMemberAccess(memberAccess),
-            _ => null
+            MemberAccessExpressionSyntax memberAccess => GetMethodNameFromMemberAccess(
+                memberAccess
+            ),
+            _ => null,
         };
 
         if (methodName is null || !PicoDiNames.RegisterMethodNames.Any(methodName.StartsWith))
@@ -177,7 +171,7 @@ internal static class RegistrationSyntaxPipeline
         {
             GenericNameSyntax genericName => genericName.Identifier.Text,
             IdentifierNameSyntax identifierName => identifierName.Identifier.Text,
-            _ => null
+            _ => null,
         };
     }
 }

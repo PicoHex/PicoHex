@@ -17,77 +17,125 @@ public static partial class LoggerExtensions
         public void Log(LogLevel logLevel, string message, Exception? exception = null) =>
             logger.Log(logLevel, message, null, exception);
 
-        public void Log(LogLevel logLevel, string message,
+        public void Log(
+            LogLevel logLevel,
+            string message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null) =>
-            logger.Log(logLevel, message, properties, exception);
+            Exception? exception = null
+        ) => logger.Log(logLevel, message, properties, exception);
 
-        public Task LogAsync(LogLevel logLevel, string message,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, message, null, exception, cancellationToken);
+        public Task LogAsync(
+            LogLevel logLevel,
+            string message,
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, message, null, exception, cancellationToken);
 
-        public Task LogAsync(LogLevel logLevel, string message,
+        public Task LogAsync(
+            LogLevel logLevel,
+            string message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, message, properties, exception, cancellationToken);
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, message, properties, exception, cancellationToken);
 
         // EventId + string
 
-        public void Log(LogLevel logLevel, EventId eventId, string message, Exception? exception = null) =>
-            logger.Log(logLevel, eventId, message, null, exception);
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
+            Exception? exception = null
+        ) => logger.Log(logLevel, eventId, message, null, exception);
 
-        public void Log(LogLevel logLevel, EventId eventId, string message,
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null) =>
-            logger.Log(logLevel, eventId, message, properties, exception);
+            Exception? exception = null
+        ) => logger.Log(logLevel, eventId, message, properties, exception);
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, string message,
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            string message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, eventId, message, properties, exception, cancellationToken);
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, eventId, message, properties, exception, cancellationToken);
 
         // FormattableString
 
-        public void Log(LogLevel logLevel, FormattableString message, Exception? exception = null) =>
-            logger.Log(logLevel, message, null, exception);
+        public void Log(
+            LogLevel logLevel,
+            FormattableString message,
+            Exception? exception = null
+        ) => logger.Log(logLevel, message, null, exception);
 
-        public void Log(LogLevel logLevel, FormattableString message,
+        public void Log(
+            LogLevel logLevel,
+            FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null) =>
-            logger.Log(logLevel, message, properties, exception);
+            Exception? exception = null
+        ) => logger.Log(logLevel, message, properties, exception);
 
-        public Task LogAsync(LogLevel logLevel, FormattableString message,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, message, null, exception, cancellationToken);
+        public Task LogAsync(
+            LogLevel logLevel,
+            FormattableString message,
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, message, null, exception, cancellationToken);
 
-        public Task LogAsync(LogLevel logLevel, FormattableString message,
+        public Task LogAsync(
+            LogLevel logLevel,
+            FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, message, properties, exception, cancellationToken);
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, message, properties, exception, cancellationToken);
 
         // EventId + FormattableString
 
-        public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
-            Exception? exception = null) =>
-            logger.Log(logLevel, eventId, message, null, exception);
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
+            Exception? exception = null
+        ) => logger.Log(logLevel, eventId, message, null, exception);
 
-        public void Log(LogLevel logLevel, EventId eventId, FormattableString message,
+        public void Log(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null) =>
-            logger.Log(logLevel, eventId, message, properties, exception);
+            Exception? exception = null
+        ) => logger.Log(logLevel, eventId, message, properties, exception);
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, eventId, message, null, exception, cancellationToken);
 
-        public Task LogAsync(LogLevel logLevel, EventId eventId, FormattableString message,
+        public Task LogAsync(
+            LogLevel logLevel,
+            EventId eventId,
+            FormattableString message,
             IReadOnlyList<KeyValuePair<string, object?>>? properties,
-            Exception? exception = null, CancellationToken cancellationToken = default) =>
-            logger.LogAsync(logLevel, eventId, message, properties, exception, cancellationToken);
+            Exception? exception = null,
+            CancellationToken cancellationToken = default
+        ) => logger.LogAsync(logLevel, eventId, message, properties, exception, cancellationToken);
     }
 
     extension(ILogger logger)
@@ -298,7 +346,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Prefer this async version for I/O-bound operations in async contexts.
         /// </remarks>
-        public Task TraceAsync(string message,
+        public Task TraceAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Trace, message, exception, cancellationToken);
@@ -309,7 +358,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for debugging information that's useful in production troubleshooting.
         /// </remarks>
-        public Task DebugAsync(string message,
+        public Task DebugAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Debug, message, exception, cancellationToken);
@@ -320,7 +370,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for general application flow tracking and significant events.
         /// </remarks>
-        public Task InfoAsync(string message,
+        public Task InfoAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Info, message, exception, cancellationToken);
@@ -331,7 +382,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for important runtime events that require attention but aren't errors.
         /// </remarks>
-        public Task NoticeAsync(string message,
+        public Task NoticeAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Notice, message, exception, cancellationToken);
@@ -342,7 +394,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for unexpected or problematic situations that aren't immediately harmful.
         /// </remarks>
-        public Task WarningAsync(string message,
+        public Task WarningAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Warning, message, exception, cancellationToken);
@@ -353,7 +406,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for errors that impact specific operations but allow the application to continue.
         /// </remarks>
-        public Task ErrorAsync(string message,
+        public Task ErrorAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Error, message, exception, cancellationToken);
@@ -364,7 +418,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for severe failures that require immediate attention and may crash the application.
         /// </remarks>
-        public Task CriticalAsync(string message,
+        public Task CriticalAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Critical, message, exception, cancellationToken);
@@ -375,7 +430,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use when immediate action is required (e.g., loss of primary database connection).
         /// </remarks>
-        public Task AlertAsync(string message,
+        public Task AlertAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Alert, message, exception, cancellationToken);
@@ -386,7 +442,8 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Reserve for catastrophic system-wide failures where the system is unusable.
         /// </remarks>
-        public Task EmergencyAsync(string message,
+        public Task EmergencyAsync(
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Emergency, message, exception, cancellationToken);
@@ -398,7 +455,8 @@ public static partial class LoggerExtensions
         /// Prefer this async version for I/O-bound operations in async contexts.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task TraceAsync(FormattableString message,
+        public Task TraceAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Trace, message, exception, cancellationToken);
@@ -410,7 +468,8 @@ public static partial class LoggerExtensions
         /// Use for debugging information that's useful in production troubleshooting.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task DebugAsync(FormattableString message,
+        public Task DebugAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Debug, message, exception, cancellationToken);
@@ -422,7 +481,8 @@ public static partial class LoggerExtensions
         /// Use for general application flow tracking and significant events.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task InfoAsync(FormattableString message,
+        public Task InfoAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Info, message, exception, cancellationToken);
@@ -434,7 +494,8 @@ public static partial class LoggerExtensions
         /// Use for important runtime events that require attention but aren't errors.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task NoticeAsync(FormattableString message,
+        public Task NoticeAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Notice, message, exception, cancellationToken);
@@ -446,7 +507,8 @@ public static partial class LoggerExtensions
         /// Use for unexpected or problematic situations that aren't immediately harmful.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task WarningAsync(FormattableString message,
+        public Task WarningAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Warning, message, exception, cancellationToken);
@@ -458,7 +520,8 @@ public static partial class LoggerExtensions
         /// Use for errors that impact specific operations but allow the application to continue.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task ErrorAsync(FormattableString message,
+        public Task ErrorAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Error, message, exception, cancellationToken);
@@ -470,7 +533,8 @@ public static partial class LoggerExtensions
         /// Use for severe failures that require immediate attention and may crash the application.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task CriticalAsync(FormattableString message,
+        public Task CriticalAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Critical, message, exception, cancellationToken);
@@ -482,7 +546,8 @@ public static partial class LoggerExtensions
         /// Use when immediate action is required (e.g., loss of primary database connection).
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task AlertAsync(FormattableString message,
+        public Task AlertAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Alert, message, exception, cancellationToken);
@@ -494,7 +559,8 @@ public static partial class LoggerExtensions
         /// Reserve for catastrophic system-wide failures where the system is unusable.
         /// When called with an interpolated string, the template and arguments are preserved for deferred formatting.
         /// </remarks>
-        public Task EmergencyAsync(FormattableString message,
+        public Task EmergencyAsync(
+            FormattableString message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Emergency, message, exception, cancellationToken);
@@ -586,7 +652,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Prefer this async version for I/O-bound operations in async contexts.
         /// </remarks>
-        public Task TraceAsync(EventId eventId, string message,
+        public Task TraceAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Trace, eventId, message, exception, cancellationToken);
@@ -597,7 +665,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for debugging information that's useful in production troubleshooting.
         /// </remarks>
-        public Task DebugAsync(EventId eventId, string message,
+        public Task DebugAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Debug, eventId, message, exception, cancellationToken);
@@ -608,7 +678,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for general application flow tracking and significant events.
         /// </remarks>
-        public Task InfoAsync(EventId eventId, string message,
+        public Task InfoAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Info, eventId, message, exception, cancellationToken);
@@ -619,7 +691,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for important runtime events that require attention but aren't errors.
         /// </remarks>
-        public Task NoticeAsync(EventId eventId, string message,
+        public Task NoticeAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Notice, eventId, message, exception, cancellationToken);
@@ -630,7 +704,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for unexpected or problematic situations that aren't immediately harmful.
         /// </remarks>
-        public Task WarningAsync(EventId eventId, string message,
+        public Task WarningAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Warning, eventId, message, exception, cancellationToken);
@@ -641,7 +717,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for errors that impact specific operations but allow the application to continue.
         /// </remarks>
-        public Task ErrorAsync(EventId eventId, string message,
+        public Task ErrorAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Error, eventId, message, exception, cancellationToken);
@@ -652,7 +730,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use for severe failures that require immediate attention and may crash the application.
         /// </remarks>
-        public Task CriticalAsync(EventId eventId, string message,
+        public Task CriticalAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Critical, eventId, message, exception, cancellationToken);
@@ -663,7 +743,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Use when immediate action is required (e.g., loss of primary database connection).
         /// </remarks>
-        public Task AlertAsync(EventId eventId, string message,
+        public Task AlertAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Alert, eventId, message, exception, cancellationToken);
@@ -674,7 +756,9 @@ public static partial class LoggerExtensions
         /// <remarks>
         /// Reserve for catastrophic system-wide failures where the system is unusable.
         /// </remarks>
-        public Task EmergencyAsync(EventId eventId, string message,
+        public Task EmergencyAsync(
+            EventId eventId,
+            string message,
             Exception? exception = null,
             CancellationToken cancellationToken = default
         ) => logger.LogAsync(LogLevel.Emergency, eventId, message, exception, cancellationToken);

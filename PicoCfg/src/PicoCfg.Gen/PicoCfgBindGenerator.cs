@@ -7,8 +7,7 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var calls = context
-            .SyntaxProvider
-            .CreateSyntaxProvider(
+            .SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => PicoCfgBindGenerator.IsCandidateInvocation(node),
                 static (ctx, _) => PicoCfgBindGenerator.TransformInvocation(ctx)
             )

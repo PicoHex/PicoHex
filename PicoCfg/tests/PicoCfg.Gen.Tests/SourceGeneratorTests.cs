@@ -52,8 +52,7 @@ public sealed class PicoCfgSourceGeneratorTests
         var result = outputCompilation.Emit(ms);
 
         var errors = result
-            .Diagnostics
-            .Where(d => d.Severity == DiagnosticSeverity.Error)
+            .Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)
             .ToArray();
 
         await Assert.That(errors.Length).IsEqualTo(0);
@@ -70,7 +69,7 @@ public sealed class PicoCfgSourceGeneratorTests
             (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
         )!.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-        var explicitAssemblies = new[] { typeof(CfgBind).Assembly.Location, };
+        var explicitAssemblies = new[] { typeof(CfgBind).Assembly.Location };
 
         return trustedPlatformAssemblies
             .Concat(explicitAssemblies)

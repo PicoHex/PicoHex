@@ -30,7 +30,10 @@ internal sealed class YamlCfgSource(byte[] yamlBytes) : ICfgSource
 internal sealed class YamlCfgProvider(byte[] yamlBytes) : ICfgProvider
 {
     public ICfgSnapshot Snapshot { get; } = new YamlCfgSnapshot(YamlFlattener.Flatten(yamlBytes));
-    public ValueTask<bool> ReloadAsync(CancellationToken ct = default) => ValueTask.FromResult(false);
+
+    public ValueTask<bool> ReloadAsync(CancellationToken ct = default) =>
+        ValueTask.FromResult(false);
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 

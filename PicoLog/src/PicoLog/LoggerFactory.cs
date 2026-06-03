@@ -4,8 +4,9 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
 {
     private readonly Lock _registrationsLock = new();
     private readonly SemaphoreSlim _flushDisposeLock = new(1, 1);
-    private readonly Dictionary<string, LoggerRegistration> _registrations =
-        new(StringComparer.Ordinal);
+    private readonly Dictionary<string, LoggerRegistration> _registrations = new(
+        StringComparer.Ordinal
+    );
     private readonly LoggerFactoryRuntime _runtime;
     private int _disposeState;
 
@@ -55,14 +56,13 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
 
             lock (_registrationsLock)
             {
-                registrations =  [.. _registrations.Values];
+                registrations = [.. _registrations.Values];
             }
 
             var pipelineFlushTasks = new Task[registrations.Length];
             for (int i = 0; i < registrations.Length; i++)
                 pipelineFlushTasks[i] = registrations[i]
-                    .Pipeline
-                    .FlushAsync(cancellationToken)
+                    .Pipeline.FlushAsync(cancellationToken)
                     .AsTask();
 
             if (pipelineFlushTasks.Length != 0)
@@ -80,7 +80,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch when (whenAll.Exception is not null)
                 {
-                    (exceptions ??=  []).AddRange(whenAll.Exception.Flatten().InnerExceptions);
+                    (exceptions ??= []).AddRange(whenAll.Exception.Flatten().InnerExceptions);
                 }
             }
 
@@ -95,7 +95,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??=  []).Add(ex);
+                    (exceptions ??= []).Add(ex);
                 }
             }
 
@@ -127,7 +127,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 if (!_runtime.TryBeginShutdown())
                     return;
 
-                registrations =  [.. _registrations.Values];
+                registrations = [.. _registrations.Values];
                 _registrations.Clear();
             }
 
@@ -139,7 +139,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??=  []).Add(ex);
+                    (exceptions ??= []).Add(ex);
                 }
             }
 
@@ -153,7 +153,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
                 }
                 catch (Exception ex)
                 {
-                    (exceptions ??=  []).Add(ex);
+                    (exceptions ??= []).Add(ex);
                 }
             }
         }
@@ -185,7 +185,7 @@ public sealed class LoggerFactory : IFlushableLoggerFactory
         foreach (var task in tasks)
         {
             if (task is { IsCompletedSuccessfully: false, IsFaulted: true })
-                (exceptions ??=  []).AddRange(task.Exception!.Flatten().InnerExceptions);
+                (exceptions ??= []).AddRange(task.Exception!.Flatten().InnerExceptions);
         }
     }
 

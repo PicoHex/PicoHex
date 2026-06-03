@@ -178,9 +178,9 @@ public class ScopedLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterScoped<ISimpleService>(static _ => new SimpleService());
-        container.RegisterScoped<IServiceWithDependency>(
-            static s => new ServiceWithDependency(s.GetService<ISimpleService>())
-        );
+        container.RegisterScoped<IServiceWithDependency>(static s => new ServiceWithDependency(
+            s.GetService<ISimpleService>()
+        ));
         await using var scope = container.CreateScope();
 
         // Act
@@ -199,9 +199,9 @@ public class ScopedLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterScoped<ISimpleService>(static _ => new SimpleService());
-        container.RegisterScoped<IServiceWithDependency>(
-            static s => new ServiceWithDependency(s.GetService<ISimpleService>())
-        );
+        container.RegisterScoped<IServiceWithDependency>(static s => new ServiceWithDependency(
+            s.GetService<ISimpleService>()
+        ));
         await using var scope1 = container.CreateScope();
         await using var scope2 = container.CreateScope();
 
@@ -222,12 +222,12 @@ public class ScopedLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterScoped<ILevelOneService>(static _ => new LevelOneService());
-        container.RegisterScoped<ILevelTwoService>(
-            static s => new LevelTwoService(s.GetService<ILevelOneService>())
-        );
-        container.RegisterScoped<ILevelThreeService>(
-            static s => new LevelThreeService(s.GetService<ILevelTwoService>())
-        );
+        container.RegisterScoped<ILevelTwoService>(static s => new LevelTwoService(
+            s.GetService<ILevelOneService>()
+        ));
+        container.RegisterScoped<ILevelThreeService>(static s => new LevelThreeService(
+            s.GetService<ILevelTwoService>()
+        ));
         await using var scope = container.CreateScope();
 
         // Act

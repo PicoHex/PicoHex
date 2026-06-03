@@ -246,9 +246,9 @@ public class SingletonLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterSingleton<ISimpleService>(static _ => new SimpleService());
-        container.RegisterSingleton<IServiceWithDependency>(
-            static s => new ServiceWithDependency(s.GetService<ISimpleService>())
-        );
+        container.RegisterSingleton<IServiceWithDependency>(static s => new ServiceWithDependency(
+            s.GetService<ISimpleService>()
+        ));
         await using var scope1 = container.CreateScope();
         await using var scope2 = container.CreateScope();
 
@@ -268,12 +268,12 @@ public class SingletonLifetimeTests
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterSingleton<ILevelOneService>(static _ => new LevelOneService());
-        container.RegisterSingleton<ILevelTwoService>(
-            static s => new LevelTwoService(s.GetService<ILevelOneService>())
-        );
-        container.RegisterSingleton<ILevelThreeService>(
-            static s => new LevelThreeService(s.GetService<ILevelTwoService>())
-        );
+        container.RegisterSingleton<ILevelTwoService>(static s => new LevelTwoService(
+            s.GetService<ILevelOneService>()
+        ));
+        container.RegisterSingleton<ILevelThreeService>(static s => new LevelThreeService(
+            s.GetService<ILevelTwoService>()
+        ));
         await using var scope1 = container.CreateScope();
         await using var scope2 = container.CreateScope();
 
@@ -515,13 +515,12 @@ public class SingletonLifetimeTests
         // Act - Concurrent resolution
         var tasks = Enumerable
             .Range(0, 100)
-            .Select(
-                _ =>
-                    Task.Run(async () =>
-                    {
-                        await using var scope = container.CreateScope();
-                        return scope.GetService<ISimpleService>().InstanceId;
-                    })
+            .Select(_ =>
+                Task.Run(async () =>
+                {
+                    await using var scope = container.CreateScope();
+                    return scope.GetService<ISimpleService>().InstanceId;
+                })
             )
             .ToArray();
 

@@ -277,15 +277,17 @@ public class AdditionalBugFixRegressionTests
         await using (var container = new SvcContainer(autoConfigureFromGenerator: false))
         {
             container.RegisterSingle(recorder);
-            container.RegisterSingleton<ISingletonA>(
-                s => new SingletonA(s.GetService<OrderRecorder>())
-            );
-            container.RegisterSingleton<ISingletonB>(
-                s => new SingletonB(s.GetService<OrderRecorder>(), s.GetService<ISingletonA>())
-            );
-            container.RegisterSingleton<ISingletonC>(
-                s => new SingletonC(s.GetService<OrderRecorder>(), s.GetService<ISingletonB>())
-            );
+            container.RegisterSingleton<ISingletonA>(s => new SingletonA(
+                s.GetService<OrderRecorder>()
+            ));
+            container.RegisterSingleton<ISingletonB>(s => new SingletonB(
+                s.GetService<OrderRecorder>(),
+                s.GetService<ISingletonA>()
+            ));
+            container.RegisterSingleton<ISingletonC>(s => new SingletonC(
+                s.GetService<OrderRecorder>(),
+                s.GetService<ISingletonB>()
+            ));
             container.Build();
 
             await using var scope = container.CreateScope();
@@ -351,12 +353,14 @@ public class AdditionalBugFixRegressionTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterSingle(recorder);
         container.RegisterScoped<IScopedA>(s => new ScopedA(s.GetService<OrderRecorder>()));
-        container.RegisterScoped<IScopedB>(
-            s => new ScopedB(s.GetService<OrderRecorder>(), s.GetService<IScopedA>())
-        );
-        container.RegisterScoped<IScopedC>(
-            s => new ScopedC(s.GetService<OrderRecorder>(), s.GetService<IScopedB>())
-        );
+        container.RegisterScoped<IScopedB>(s => new ScopedB(
+            s.GetService<OrderRecorder>(),
+            s.GetService<IScopedA>()
+        ));
+        container.RegisterScoped<IScopedC>(s => new ScopedC(
+            s.GetService<OrderRecorder>(),
+            s.GetService<IScopedB>()
+        ));
 
         await using var scope = container.CreateScope();
         scope.GetService<IScopedC>(); // cascading: A → B → C
@@ -404,13 +408,10 @@ public class AdditionalBugFixRegressionTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterSingle(recorder);
         container.RegisterScoped<IDisposableService>(_ => new DisposableService());
-        container.RegisterHostedSvc<HostedWithScopedDep>(
-            sp =>
-                new HostedWithScopedDep(
-                    sp.GetService<OrderRecorder>(),
-                    sp.GetService<IDisposableService>()!
-                )
-        );
+        container.RegisterHostedSvc<HostedWithScopedDep>(sp => new HostedWithScopedDep(
+            sp.GetService<OrderRecorder>(),
+            sp.GetService<IDisposableService>()!
+        ));
         container.Build();
 
         await new SvcHost(container).StartAsync();

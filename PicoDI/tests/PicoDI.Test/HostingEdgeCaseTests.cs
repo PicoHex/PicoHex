@@ -251,9 +251,9 @@ public class HostingEdgeCaseTests
         var inner = new TestHostedSvc();
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         container.RegisterHostedSvc<TestHostedSvc>(_ => inner);
-        container.RegisterHostedSvc<WrapperHostedSvc>(
-            scope => new WrapperHostedSvc(scope.GetService<TestHostedSvc>()!)
-        );
+        container.RegisterHostedSvc<WrapperHostedSvc>(scope => new WrapperHostedSvc(
+            scope.GetService<TestHostedSvc>()!
+        ));
         container.Build();
 
         await new SvcHost(container).StartAsync();

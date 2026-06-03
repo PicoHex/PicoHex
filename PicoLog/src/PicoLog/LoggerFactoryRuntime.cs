@@ -20,9 +20,9 @@ internal sealed class LoggerFactoryRuntime
 
             Sinks[index] = sink switch
             {
-                IFlushableLogSink flushable when flushable is not IConsoleFallbackSink
-                    => new SinkFlushWrapper(flushable),
-                var other => other
+                IFlushableLogSink flushable when flushable is not IConsoleFallbackSink =>
+                    new SinkFlushWrapper(flushable),
+                var other => other,
             };
         }
 

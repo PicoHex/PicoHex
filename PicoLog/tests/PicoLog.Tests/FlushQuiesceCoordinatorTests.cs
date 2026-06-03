@@ -27,9 +27,8 @@ public sealed class FlushQuiesceCoordinatorTests
         await c.BlockWritesAsync(CancellationToken.None);
         try
         {
-            await Assert.ThrowsAsync<TimeoutException>(
-                async () =>
-                    await Task.Run(() => c.EnterWriteOperationSync(TimeSpan.FromMilliseconds(10)))
+            await Assert.ThrowsAsync<TimeoutException>(async () =>
+                await Task.Run(() => c.EnterWriteOperationSync(TimeSpan.FromMilliseconds(10)))
             );
         }
         finally
