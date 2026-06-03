@@ -720,7 +720,8 @@ public sealed class LoggerFactoryTests
         try
         {
             logger.Info("first");
-            logger.Info("second");
+            await sink.WriteStarted; // ensure "first" is dequeued and blocking inside the sink
+            logger.Info("second"); // now fills the capacity-1 queue
 
             thirdWrite = Task.Run(() => logger.Info("third"));
 
