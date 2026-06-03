@@ -256,11 +256,17 @@ jobs:
           name: coverage-picocfg
           path: PicoCfg/tests/PicoCfg.Tests/TestResults/**/coverage.cobertura.xml
       - name: Run PicoCfg.Gen tests
-        if: matrix.rid != 'linux-x64'
         run: dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
       - name: Run PicoCfg.DI tests
-        if: matrix.rid != 'linux-x64'
         run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Run PicoCfg.Json tests
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Json.Tests/PicoCfg.Json.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Run PicoCfg.Yaml tests
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Yaml.Tests/PicoCfg.Yaml.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Run PicoCfg.Ini tests
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Ini.Tests/PicoCfg.Ini.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+      - name: Run PicoCfg.Toml tests
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Toml.Tests/PicoCfg.Toml.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
 
       - name: AOT publish validation
         run: dotnet publish PicoCfg/src/PicoCfg/ -p:PublishAot=true -r ${{ matrix.rid }} --configuration Release
@@ -376,6 +382,8 @@ jobs:
       - name: Run PicoLog tests (linux-arm64 — increased parallelism, I/O-bound on slow VM)
         if: matrix.rid == 'linux-arm64'
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal -p:UseProjectReferences=true -- --maximum-parallel-tests 4 --hangdump --hangdump-timeout 10m --hangdump-type Full --crashdump --crashdump-type Full --results-directory=${{ github.workspace }}/artifacts/test-results
+      - name: Run PicoLog.Json tests
+        run: dotnet test --project PicoLog/tests/PicoLog.Json.Tests/PicoLog.Json.Tests.csproj --configuration Release --no-build --verbosity normal -p:UseProjectReferences=true
       - name: Upload hang/crash dumps
         if: always()
         uses: actions/upload-artifact@v7
