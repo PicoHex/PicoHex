@@ -727,6 +727,7 @@ public sealed class LoggerFactoryTests
 
             await Task.Delay(300);
             await Assert.That(thirdWrite.IsCompleted).IsFalse();
+            await Assert.That(sink.WrittenCount).IsEqualTo(1);
         }
         finally
         {
@@ -916,6 +917,7 @@ public sealed class LoggerFactoryTests
 
             await Task.Delay(100);
             await Assert.That(thirdWrite.IsCompleted).IsFalse();
+            await Assert.That(sink.WrittenCount).IsEqualTo(1);
         }
         finally
         {
