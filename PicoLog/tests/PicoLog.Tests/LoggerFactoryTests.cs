@@ -720,6 +720,7 @@ public sealed class LoggerFactoryTests
         try
         {
             logger.Info("first");
+            await sink.WriteStarted;
             logger.Info("second");
 
             thirdWrite = Task.Run(() => logger.Info("third"));
