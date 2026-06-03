@@ -5,6 +5,24 @@
 Console.WriteLine("=== PicoCfg.SerDe — Structured Configuration Sources ===");
 Console.WriteLine();
 
+// ── Create temp config files for file-based demos ──
+
+var tempDir = Path.Combine(Path.GetTempPath(), "PicoCfg_SerDe_Demo");
+Directory.CreateDirectory(tempDir);
+
+var jsonFile = Path.Combine(tempDir, "appsettings.json");
+var yamlFile = Path.Combine(tempDir, "config.yaml");
+var iniFile = Path.Combine(tempDir, "config.ini");
+var tomlFile = Path.Combine(tempDir, "config.toml");
+
+File.WriteAllText(jsonFile, """{"App":{"Name":"PicoCfg","Port":8080},"Debug":true}""");
+File.WriteAllText(yamlFile, "Server:\n  Host: localhost\n  Port: \"5432\"\n");
+File.WriteAllText(iniFile, "[Database]\nServer=db.example.com\nPort=5432\n\n[App]\nName=PicoCfg\n");
+File.WriteAllText(tomlFile, "[Server]\nHost = \"example.com\"\nPort = 8080\n");
+
+Console.WriteLine($"Temp config directory: {tempDir}");
+Console.WriteLine();
+
 var testResults = new List<bool>();
 
 // ── JSON ──
@@ -131,7 +149,53 @@ await Test(
     }
 );
 
+// ── File-based sources ──
+
+await Test(
+    "File — AddJsonFile from disk",
+    async () =>
+    {
+        var root = await Cfg.CreateBuilder().AddJsonFile(jsonFile).BuildAsync();
+        return root.GetValue("App:Name") == "PicoCfg"
+            && root.GetValue("App:Port") == "8080"
+            && root.GetValue("Debug") == "true";
+    }
+);
+
+await Test(
+    "File — AddYamlFile from disk",
+    async () =>
+    {
+        var root = await Cfg.CreateBuilder().AddYamlFile(yamlFile).BuildAsync();
+        return root.GetValue("Server:Host") == "localhost"
+            && root.GetValue("Server:Port") == "5432";
+    }
+);
+
+await Test(
+    "File — AddIniFile from disk",
+    async () =>
+    {
+        var root = await Cfg.CreateBuilder().AddIniFile(iniFile).BuildAsync();
+        return root.GetValue("Database:Server") == "db.example.com"
+            && root.GetValue("Database:Port") == "5432"
+            && root.GetValue("App:Name") == "PicoCfg";
+    }
+);
+
+await Test(
+    "File — AddTomlFile from disk",
+    async () =>
+    {
+        var root = await Cfg.CreateBuilder().AddTomlFile(tomlFile).BuildAsync();
+        return root.GetValue("Server:Host") == "example.com"
+            && root.GetValue("Server:Port") == "8080";
+    }
+);
+
 // ── Summary ──
+
+Directory.Delete(tempDir, true);
 
 Console.WriteLine();
 Console.WriteLine("=== Results ===");
