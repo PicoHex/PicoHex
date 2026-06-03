@@ -39,6 +39,10 @@
     <Project Path="PicoCfg/src/PicoCfg/PicoCfg.csproj" />
     <Project Path="PicoCfg/src/PicoCfg.DI/PicoCfg.DI.csproj" />
     <Project Path="PicoCfg/src/PicoCfg.Gen/PicoCfg.Gen.csproj" />
+    <Project Path="PicoCfg/src/PicoCfg.Json/PicoCfg.Json.csproj" />
+    <Project Path="PicoCfg/src/PicoCfg.Yaml/PicoCfg.Yaml.csproj" />
+    <Project Path="PicoCfg/src/PicoCfg.Ini/PicoCfg.Ini.csproj" />
+    <Project Path="PicoCfg/src/PicoCfg.Toml/PicoCfg.Toml.csproj" />
   </Folder>
   <Folder Name="/PicoCfg/benchmarks/">
     <Project Path="PicoCfg/benchmarks/PicoCfg.Benchmarks/PicoCfg.Benchmarks.csproj" />
@@ -47,11 +51,16 @@
     <Project Path="PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj" />
     <Project Path="PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj" />
     <Project Path="PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj" />
+    <Project Path="PicoCfg/tests/PicoCfg.Json.Tests/PicoCfg.Json.Tests.csproj" />
+    <Project Path="PicoCfg/tests/PicoCfg.Yaml.Tests/PicoCfg.Yaml.Tests.csproj" />
+    <Project Path="PicoCfg/tests/PicoCfg.Ini.Tests/PicoCfg.Ini.Tests.csproj" />
+    <Project Path="PicoCfg/tests/PicoCfg.Toml.Tests/PicoCfg.Toml.Tests.csproj" />
   </Folder>
   <Folder Name="/PicoCfg/samples/">
     <Project Path="PicoCfg/samples/PicoCfg.Sample/PicoCfg.Sample.csproj" />
     <Project Path="PicoCfg/samples/PicoCfg.DI.Sample/PicoCfg.DI.Sample.csproj" />
     <Project Path="PicoCfg/samples/PicoCfg.Gen.Sample/PicoCfg.Gen.Sample.csproj" />
+    <Project Path="PicoCfg/samples/PicoCfg.Sample.SerDe/PicoCfg.Sample.SerDe.csproj" />
   </Folder>
 
   <!-- PicoLog -->
@@ -63,12 +72,15 @@
     <Project Path="PicoLog/src/PicoLog/PicoLog.csproj" />
     <Project Path="PicoLog/src/PicoLog.DI/PicoLog.DI.csproj" />
     <Project Path="PicoLog/src/PicoLog.Gen/PicoLog.Gen.csproj" />
+    <Project Path="PicoLog/src/PicoLog.Json/PicoLog.Json.csproj" />
   </Folder>
   <Folder Name="/PicoLog/tests/">
     <Project Path="PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj" />
+    <Project Path="PicoLog/tests/PicoLog.Json.Tests/PicoLog.Json.Tests.csproj" />
   </Folder>
   <Folder Name="/PicoLog/samples/">
     <Project Path="PicoLog/samples/PicoLog.Sample/PicoLog.Sample.csproj" />
+    <Project Path="PicoLog/samples/PicoLog.Sample.SerDe/PicoLog.Sample.SerDe.csproj" />
   </Folder>
 
   <!-- PicoMediator -->

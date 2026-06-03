@@ -45,6 +45,12 @@ internal static class JsonFlattener
                         path.RemoveAt(path.Count - 1);
                     break;
 
+                case TokenType.ObjectEnd:
+                    // Pop the property name that opened this object
+                    if (path.Count > 0)
+                        path.RemoveAt(path.Count - 1);
+                    break;
+
                 case TokenType.ArrayStart:
                     if (path.Count > 0)
                         path.RemoveAt(path.Count - 1);
