@@ -239,9 +239,22 @@ jobs:
         run: |
           mkdir -p ./artifacts/nupkg
           dotnet restore PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj -p:UseProjectReferences=true
+          dotnet restore PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj -p:UseProjectReferences=true
+          dotnet restore PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj -p:UseProjectReferences=true
+          dotnet restore PicoCfg/tests/PicoCfg.Json.Tests/PicoCfg.Json.Tests.csproj -p:UseProjectReferences=true
+          dotnet restore PicoCfg/tests/PicoCfg.Yaml.Tests/PicoCfg.Yaml.Tests.csproj -p:UseProjectReferences=true
+          dotnet restore PicoCfg/tests/PicoCfg.Ini.Tests/PicoCfg.Ini.Tests.csproj -p:UseProjectReferences=true
+          dotnet restore PicoCfg/tests/PicoCfg.Toml.Tests/PicoCfg.Toml.Tests.csproj -p:UseProjectReferences=true
 
       - name: Build
-        run: dotnet build PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+        run: |
+          dotnet build PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet build PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet build PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet build PicoCfg/tests/PicoCfg.Json.Tests/PicoCfg.Json.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet build PicoCfg/tests/PicoCfg.Yaml.Tests/PicoCfg.Yaml.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet build PicoCfg/tests/PicoCfg.Ini.Tests/PicoCfg.Ini.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet build PicoCfg/tests/PicoCfg.Toml.Tests/PicoCfg.Toml.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
       - name: Run PicoCfg tests (coverage)
         if: matrix.rid == 'linux-x64'
@@ -256,17 +269,17 @@ jobs:
           name: coverage-picocfg
           path: PicoCfg/tests/PicoCfg.Tests/TestResults/**/coverage.cobertura.xml
       - name: Run PicoCfg.Gen tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
       - name: Run PicoCfg.DI tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+        run: dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
       - name: Run PicoCfg.Json tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.Json.Tests/PicoCfg.Json.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Json.Tests/PicoCfg.Json.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
       - name: Run PicoCfg.Yaml tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.Yaml.Tests/PicoCfg.Yaml.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Yaml.Tests/PicoCfg.Yaml.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
       - name: Run PicoCfg.Ini tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.Ini.Tests/PicoCfg.Ini.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Ini.Tests/PicoCfg.Ini.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
       - name: Run PicoCfg.Toml tests
-        run: dotnet test --project PicoCfg/tests/PicoCfg.Toml.Tests/PicoCfg.Toml.Tests.csproj --configuration Release --verbosity normal --no-progress -p:UseProjectReferences=true
+        run: dotnet test --project PicoCfg/tests/PicoCfg.Toml.Tests/PicoCfg.Toml.Tests.csproj --configuration Release --no-build --verbosity normal --no-progress -p:UseProjectReferences=true
 
       - name: AOT publish validation
         run: dotnet publish PicoCfg/src/PicoCfg/ -p:PublishAot=true -r ${{ matrix.rid }} --configuration Release
@@ -369,9 +382,12 @@ jobs:
         run: |
           mkdir -p ./artifacts/nupkg
           dotnet restore PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj -p:UseProjectReferences=true
+          dotnet restore PicoLog/tests/PicoLog.Json.Tests/PicoLog.Json.Tests.csproj -p:UseProjectReferences=true
 
       - name: Build
-        run: dotnet build PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+        run: |
+          dotnet build PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+          dotnet build PicoLog/tests/PicoLog.Json.Tests/PicoLog.Json.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
 
       - name: Run PicoLog tests (coverage)
         if: matrix.rid == 'linux-x64'
@@ -383,7 +399,7 @@ jobs:
         if: matrix.rid == 'linux-arm64'
         run: dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release --no-build --verbosity normal -p:UseProjectReferences=true -- --maximum-parallel-tests 4 --hangdump --hangdump-timeout 10m --hangdump-type Full --crashdump --crashdump-type Full --results-directory=${{ github.workspace }}/artifacts/test-results
       - name: Run PicoLog.Json tests
-        run: dotnet test --project PicoLog/tests/PicoLog.Json.Tests/PicoLog.Json.Tests.csproj --configuration Release --verbosity normal -p:UseProjectReferences=true
+        run: dotnet test --project PicoLog/tests/PicoLog.Json.Tests/PicoLog.Json.Tests.csproj --configuration Release --no-build --verbosity normal -p:UseProjectReferences=true
       - name: Upload hang/crash dumps
         if: always()
         uses: actions/upload-artifact@v7
