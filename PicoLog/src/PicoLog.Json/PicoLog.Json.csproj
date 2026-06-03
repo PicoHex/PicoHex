@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>true</IsPackable>
+        <PackageId>PicoLog.Json</PackageId>
+        <Description>Structured JSON log sink for PicoLog via PicoJetson</Description>
+        <PackageTags>PicoHex;Logging;JSON;AOT</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
+        <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="PicoJetson" />
+    </ItemGroup>
+
+</Project>

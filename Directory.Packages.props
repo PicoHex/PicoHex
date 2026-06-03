@@ -26,6 +26,12 @@
     <PackageVersion Include="PicoAop.Abs" Version="$(Version)" />
     <PackageVersion Include="PicoAop.Gen" Version="$(Version)" />
     <PackageVersion Include="PicoAop.DI" Version="$(Version)" />
+
+    <PackageVersion Include="PicoJetson" Version="2026.1.5" />
+    <PackageVersion Include="PicoYaml" Version="2026.1.5" />
+    <PackageVersion Include="PicoIni" Version="2026.1.5" />
+    <PackageVersion Include="PicoToml" Version="2026.1.5" />
+
     <PackageVersion Include="TUnit" Version="1.44.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.3" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.3" />

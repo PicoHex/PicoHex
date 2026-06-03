@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>true</IsPackable>
+        <PackageId>PicoCfg.Json</PackageId>
+        <Description>JSON configuration source for PicoCfg via PicoJetson</Description>
+        <PackageTags>PicoHex;Configuration;JSON;AOT</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PicoCfg\PicoCfg.csproj" />
+        <ProjectReference Include="..\PicoCfg.Abs\PicoCfg.Abs.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="PicoJetson" />
+    </ItemGroup>
+
+</Project>
