@@ -53,8 +53,19 @@ internal static class GeneratedDispatch
             foreach (var s in switches)
             {
                 var result = s(typeof(TRequest), scope, request!, ct);
+                if (result is ValueTask<TResponse> typedResult)
+                    return typedResult;
+
                 if (result is not null)
-                    return (ValueTask<TResponse>)result;
+                {
+                    throw new InvalidOperationException(
+                        $"Generated dispatch type mismatch for request '{typeof(TRequest).FullName}': "
+                            + $"expected ValueTask<{typeof(TResponse).FullName}>, "
+                            + $"got '{result.GetType().FullName}'. "
+                            + "This typically indicates a version mismatch between "
+                            + "the PicoMediator.Gen generated code and the PicoMediator runtime."
+                    );
+                }
             }
         }
 

@@ -7,4 +7,4 @@ namespace PicoCfg.Abs;
 /// a single dictionary-backed root snapshot, while custom <see cref="ICfgSnapshot"/> implementations may
 /// be composed via read-time fallback lookups to preserve custom lookup behavior.
 /// </summary>
-internal interface ICfgSnapshot : ICfg;
+public interface ICfgSnapshot : ICfg;

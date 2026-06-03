@@ -12,6 +12,27 @@ public sealed class CfgBuilder
     /// Adds a source to the builder.
     /// Sources are evaluated in insertion order, and later sources override earlier ones.
     /// </summary>
+
+    /// <summary>
+    /// Adds a custom <see cref="ICfgSource"/> implementation to the builder.
+    /// This is the extension point for third-party configuration sources
+    /// (e.g. database, Redis, REST API).
+    /// Sources are evaluated in insertion order; later sources override earlier ones.
+    /// </summary>
+    public CfgBuilder AddCustomSource(ICfgSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        _sources.Add(source);
+        return this;
+    }
+
+    internal CfgBuilder AddSource(ICfgSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        _sources.Add(source);
+        return this;
+    }
+
     /// <summary>
     /// Optional callback for observing file watching errors (reload failures,
     /// watcher cleanup errors, dispose errors). Receives context string and exception.
@@ -24,13 +45,6 @@ public sealed class CfgBuilder
     /// Lines without a '=' separator are silently skipped if this is null.
     /// </summary>
     public Action<string, int>? OnFormatError { get; set; }
-
-    internal CfgBuilder AddSource(ICfgSource source)
-    {
-        ArgumentNullException.ThrowIfNull(source);
-        _sources.Add(source);
-        return this;
-    }
 
     /// <summary>
     /// Opens all registered sources and returns a composed configuration root.

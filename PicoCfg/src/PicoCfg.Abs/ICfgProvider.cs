@@ -16,7 +16,7 @@ namespace PicoCfg.Abs;
 /// Returning <see langword="true"/> indicates that the provider may have published a new snapshot
 /// version, so callers should re-sample <see cref="Snapshot"/>.
 /// </summary>
-internal interface ICfgProvider : IAsyncDisposable
+public interface ICfgProvider : IAsyncDisposable
 {
     ICfgSnapshot Snapshot { get; }
     ValueTask<bool> ReloadAsync(CancellationToken ct = default);

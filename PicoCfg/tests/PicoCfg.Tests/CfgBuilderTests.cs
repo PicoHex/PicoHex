@@ -3,6 +3,54 @@ namespace PicoCfg.Tests;
 public class CfgBuilderTests
 {
     [Test]
+    public async Task CustomSource_RegisteredViaAddCustomSource_IsUsedInConfiguration()
+    {
+        // Bug: ICfgSource is internal, preventing third-party custom
+        // configuration source implementations. External consumers cannot
+        // write their own config sources (e.g. database, Redis, REST API).
+        var builder = Cfg.CreateBuilder();
+        var customSource = new CustomTestSource("customKey", "customValue");
+
+        builder.AddCustomSource(customSource);
+
+        var root = await builder.BuildAsync();
+
+        await Assert.That(root.GetValue("customKey")).IsEqualTo("customValue");
+    }
+
+    private sealed class CustomTestSource(string key, string value) : ICfgSource
+    {
+        public ValueTask<ICfgProvider> OpenAsync(CancellationToken ct = default)
+        {
+            return ValueTask.FromResult<ICfgProvider>(new CustomTestProvider(key, value));
+        }
+    }
+
+    private sealed class CustomTestProvider(string key, string value) : ICfgProvider
+    {
+        public ICfgSnapshot Snapshot { get; } = new CustomTestSnapshot(key, value);
+
+        public ValueTask<bool> ReloadAsync(CancellationToken ct = default) =>
+            ValueTask.FromResult(false);
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class CustomTestSnapshot(string key, string value) : ICfgSnapshot
+    {
+        public bool TryGetValue(string path, out string? result)
+        {
+            if (path == key)
+            {
+                result = value;
+                return true;
+            }
+            result = null;
+            return false;
+        }
+    }
+
+    [Test]
     public async Task AddSource_AddsSourceToBuilder()
     {
         var builder = Cfg.CreateBuilder();

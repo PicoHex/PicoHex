@@ -676,6 +676,31 @@ public class CfgRootTests
         }
     }
 
+    private sealed class NonCooperativeReloadProvider : ICfgProvider
+    {
+        private readonly TaskCompletionSource _gateAcquired =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public ICfgSnapshot Snapshot { get; } = new MockSnapshot(new Dictionary<string, string>());
+
+        public async ValueTask<bool> ReloadAsync(CancellationToken ct = default)
+        {
+            // Signal that we've acquired the reload gate, then block forever
+            // without checking the cancellation token (simulating a truly
+            // stuck/non-cooperative provider).
+            _gateAcquired.TrySetResult();
+
+            // Use a long delay without passing the cancellation token —
+            // this simulates a provider that ignores cancellation.
+            await Task.Delay(TimeSpan.FromMinutes(5), CancellationToken.None);
+            return false;
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+        public Task WaitForGateAcquiredAsync() => _gateAcquired.Task;
+    }
+
     private sealed class MockSnapshot(IReadOnlyDictionary<string, string> values) : ICfgSnapshot
     {
         public IReadOnlyDictionary<string, string> Values { get; } = values;
@@ -751,6 +776,32 @@ public class CfgRootTests
             var expected = i % 2 == 0 ? "value42" : "hello";
             await Assert.That(results[i]).IsEqualTo(expected);
         }
+    }
+
+    [Test]
+    public async Task DisposeAsync_WhenReloadBlocksGate_CompletesWithinTimeout()
+    {
+        // Bug: CfgRoot.DisposeCoreAsync uses CancellationToken.None for the fallback
+        // wait on _reloadGate, which blocks indefinitely when a non-cooperative
+        // ReloadAsync holds the gate past the initial 10-second timeout.
+        var provider = new NonCooperativeReloadProvider();
+        var root = TestCfgFactory.CreateRoot([provider]);
+
+        // Start a reload that acquires the gate but never completes and ignores
+        // cancellation (simulating a truly stuck provider).
+        var reloadTask = root.ReloadAsync().AsTask();
+        await provider.WaitForGateAcquiredAsync();
+
+        // Dispose must complete within a bounded time even when the reload
+        // is non-cooperative. The current code would block indefinitely on
+        // CancellationToken.None in the fallback branch of DisposeCoreAsync.
+        using var disposeCts = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+        var disposeTask = root.DisposeAsync().AsTask();
+
+        // The dispose should eventually complete (forced by a secondary timeout).
+        await disposeTask.WaitAsync(disposeCts.Token);
+
+        await Assert.That(disposeTask.IsCompletedSuccessfully).IsTrue();
     }
 
     [Test]

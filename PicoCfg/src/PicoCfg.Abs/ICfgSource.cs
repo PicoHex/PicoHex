@@ -5,7 +5,7 @@ namespace PicoCfg.Abs;
 /// Implementations must return a provider whose <see cref="ICfgProvider.Snapshot"/> is already
 /// initialized and safe to read immediately after <see cref="OpenAsync"/> completes.
 /// </summary>
-internal interface ICfgSource
+public interface ICfgSource
 {
     ValueTask<ICfgProvider> OpenAsync(CancellationToken ct = default);
 }

@@ -141,14 +141,28 @@ internal sealed class CfgRoot : ICfgRoot, IInternalCfgRootSnapshotAccessor
                 // Timeout: a non-cooperative reload is still holding the gate.
                 // Wait for it to release before disposing to avoid
                 // ObjectDisposedException in the reload's finally block.
+                //
+                // Use a secondary timeout so that even a truly stuck provider
+                // (one that ignores the primary 10s timeout AND cancellation)
+                // cannot block disposal indefinitely.
                 try
                 {
-                    await _reloadGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
-                    _reloadGate.Release();
+                    bool secondaryEntered = await _reloadGate
+                        .WaitAsync(TimeSpan.FromSeconds(5), CancellationToken.None)
+                        .ConfigureAwait(false);
+                    if (secondaryEntered)
+                    {
+                        _reloadGate.Release();
+                    }
                 }
                 catch (ObjectDisposedException)
                 {
                     // Already disposed by someone else.
+                }
+                catch (OperationCanceledException)
+                {
+                    // Should not happen with CancellationToken.None, but
+                    // defensive — proceed with disposal.
                 }
             }
             _disposeCts.Dispose();
