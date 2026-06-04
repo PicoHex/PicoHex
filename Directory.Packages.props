@@ -26,6 +26,12 @@
     <PackageVersion Include="PicoAop.Abs" Version="$(Version)" />
     <PackageVersion Include="PicoAop.Gen" Version="$(Version)" />
     <PackageVersion Include="PicoAop.DI" Version="$(Version)" />
+    <PackageVersion Include="PicoMediator.Abs" Version="$(Version)" />
+    <PackageVersion Include="PicoMediator" Version="$(Version)" />
+    <PackageVersion Include="PicoMediator.Gen" Version="$(Version)" />
+    <PackageVersion Include="PicoMediator.DI" Version="$(Version)" />
+    <PackageVersion Include="PicoCfg.DI" Version="$(Version)" />
+    <PackageVersion Include="PicoLog.DI" Version="$(Version)" />
 
     <PackageVersion Include="PicoJetson" Version="2026.1.5" />
     <PackageVersion Include="PicoYaml" Version="2026.1.5" />
