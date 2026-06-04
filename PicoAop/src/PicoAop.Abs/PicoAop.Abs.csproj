@@ -27,7 +27,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoAop.Gen" PrivateAssets="all" />
     <PackageReference Include="PicoDI.Abs" />
   </ItemGroup>
 
