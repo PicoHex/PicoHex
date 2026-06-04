@@ -73,11 +73,19 @@ public sealed class SeqSink : IBatchingLogSink, IFlushableLogSink
 
     private async Task RunPeriodicFlushAsync(CancellationToken ct)
     {
+        // PeriodicTimer provides more reliable timing than Task.Delay under
+        // ThreadPool saturation because it uses a single reusable native timer
+        // rather than a new timer-per-iteration. On CI runners with many
+        // parallel tests, ThreadPool starvation can delay Task.Delay callbacks
+        // by seconds, causing periodic flushes to stall and tests to time out.
+        using var timer = new PeriodicTimer(_flushInterval);
+
         while (!ct.IsCancellationRequested)
         {
             try
             {
-                await Task.Delay(_flushInterval, ct).ConfigureAwait(false);
+                if (!await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
+                    break;
             }
             catch (OperationCanceledException)
             {

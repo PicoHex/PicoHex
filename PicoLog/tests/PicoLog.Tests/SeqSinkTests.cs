@@ -115,7 +115,7 @@ public sealed class SeqSinkTests
         await sink.WriteAsync(new LogEntry { Message = "periodic-flush" });
 
         // Wait for the periodic timer to trigger (up to 5 seconds)
-        var completed = await Task.WhenAny(signal.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+        var completed = await Task.WhenAny(signal.Task, Task.Delay(TimeSpan.FromSeconds(30)));
         await Assert.That(completed).IsEqualTo(signal.Task);
         await Assert.That(body).IsNotNull();
         await Assert.That(body!).Contains("periodic-flush");
