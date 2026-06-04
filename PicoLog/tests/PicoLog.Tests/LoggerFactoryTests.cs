@@ -1312,7 +1312,13 @@ public sealed class LoggerFactoryTests
     public async Task DisposeAsync_CancelsInFlightSinkWrites_WhenShutdownTimeoutExpires()
     {
         var sink = new BlockingSink();
-        var options = new LoggerFactoryOptions { ShutdownTimeout = TimeSpan.FromMilliseconds(50) };
+        // Use a generous ShutdownTimeout (500ms) to tolerate timer-callback
+        // delays on ThreadPool-saturated CI runners (especially ARM64 where
+        // parallel test contention is higher). CancellationTokenSource(TimeSpan)
+        // uses a ThreadPool timer callback; when all pool threads are busy the
+        // cancellation can be delayed, causing DisposeAsync to hang past the
+        // test's own WaitAsync deadline.
+        var options = new LoggerFactoryOptions { ShutdownTimeout = TimeSpan.FromMilliseconds(500) };
         await using var factory = new LoggerFactory([sink], options);
         var logger = factory.CreateLogger("Tests.Category");
 
@@ -1323,7 +1329,7 @@ public sealed class LoggerFactoryTests
 
             var disposeTask = factory.DisposeAsync().AsTask();
 
-            await disposeTask.WaitAsync(TimeSpan.FromSeconds(3));
+            await disposeTask.WaitAsync(TimeSpan.FromSeconds(10));
         }
         finally
         {
