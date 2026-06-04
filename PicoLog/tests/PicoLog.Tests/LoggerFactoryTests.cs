@@ -725,7 +725,13 @@ public sealed class LoggerFactoryTests
 
             thirdWrite = Task.Run(() => logger.Info("third"));
 
-            await Task.Delay(300);
+            // Use Thread.Sleep instead of Task.Delay to avoid the ThreadPool
+            // callback delay that can occur on saturated CI runners. Task.Delay
+            // completion depends on a timer callback being picked up by the
+            // ThreadPool; when the third write holds a ThreadPool thread for
+            // its backoff loop, the callback can be starved, causing the
+            // assertion to run after the SyncWriteTimeout has expired.
+            Thread.Sleep(300);
             await Assert.That(thirdWrite.IsCompleted).IsFalse();
         }
         finally
