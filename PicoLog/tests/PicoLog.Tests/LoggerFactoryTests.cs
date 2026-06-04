@@ -733,6 +733,7 @@ public sealed class LoggerFactoryTests
             // assertion to run after the SyncWriteTimeout has expired.
             Thread.Sleep(300);
             await Assert.That(thirdWrite.IsCompleted).IsFalse();
+            await Assert.That(sink.WrittenCount).IsEqualTo(1);
         }
         finally
         {
@@ -922,6 +923,7 @@ public sealed class LoggerFactoryTests
 
             await Task.Delay(100);
             await Assert.That(thirdWrite.IsCompleted).IsFalse();
+            await Assert.That(sink.WrittenCount).IsEqualTo(1);
         }
         finally
         {

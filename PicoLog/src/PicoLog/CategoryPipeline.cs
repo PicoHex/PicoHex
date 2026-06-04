@@ -170,6 +170,12 @@ internal sealed class CategoryPipeline : IAsyncDisposable
     {
         try
         {
+            if (_runtime.QueueFullMode == LogQueueFullMode.Wait)
+            {
+                await ProcessEntriesSequentiallyAsync().ConfigureAwait(false);
+                return;
+            }
+
             var batch = new List<LogEntry>(MaxBatchSize);
 
             while (await _queue.WaitToReadAsync().ConfigureAwait(false))
@@ -200,6 +206,28 @@ internal sealed class CategoryPipeline : IAsyncDisposable
         catch (Exception ex)
         {
             _processingException = ex;
+        }
+    }
+
+    private async Task ProcessEntriesSequentiallyAsync()
+    {
+        while (await _queue.WaitToReadAsync().ConfigureAwait(false))
+        {
+            while (_queue.TryRead(out var entry))
+            {
+                BeginDequeuedEntry();
+                EndDequeuedEntry();
+                BeginDispatch();
+
+                try
+                {
+                    await _sinkDispatcher.DispatchEntryAsync(entry).ConfigureAwait(false);
+                }
+                finally
+                {
+                    EndDispatch();
+                }
+            }
         }
     }
 
