@@ -102,6 +102,14 @@ jobs:
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
           # ---- Phase 2: Abstractions (depend on generators from Phase 1) ----
+          # PicoDI.Abs must be packed first because PicoAop.Abs depends on it
+          dotnet pack PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj \
+            --configuration Release \
+            --output "$NUPKG_DIR" \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
           dotnet pack PicoAop/src/PicoAop.Abs/PicoAop.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
@@ -110,13 +118,6 @@ jobs:
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
           dotnet pack PicoMediator/src/PicoMediator.Abs/PicoMediator.Abs.csproj \
-            --configuration Release \
-            --output "$NUPKG_DIR" \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
-
-          dotnet pack PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
