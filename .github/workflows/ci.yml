@@ -447,7 +447,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.pico-aop == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -480,12 +480,50 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang zlib1g-dev
-      - name: Build and test
+      - name: Restore dependencies
         run: |
           mkdir -p ./artifacts/nupkg
           dotnet restore PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj -p:UseProjectReferences=true
+
+      - name: Build
+        run: |
           dotnet build PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+
+      - name: Run PicoAop tests
+        run: |
           dotnet test --project PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release --no-build -p:UseProjectReferences=true
+
+      - name: AOT publish validation
+        run: dotnet publish PicoAop/samples/PicoAop.Sample/ -r ${{ matrix.rid }} --configuration Release
+
+      - name: Pack CI packages (package-consumer validation)
+        shell: bash
+        run: |
+          rm -rf ./artifacts/ci-nupkg
+          rm -rf ./artifacts/ci-packages
+          mkdir -p ./artifacts/ci-nupkg
+          mkdir -p ./artifacts/ci-packages/abs ./artifacts/ci-packages/di
+
+          VERSION="0.0.0-ci"
+          NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/ci-nupkg"
+          NUGET_SOURCE="https://api.nuget.org/v3/index.json"
+
+          dotnet pack PicoAop/src/PicoAop.Abs/PicoAop.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=true \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
+
+          dotnet pack PicoAop/src/PicoAop.DI/PicoAop.DI.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=true \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/di"
 
   # ---------------------------------------------------------------------------
   # PicoMediator
@@ -495,7 +533,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.pico-mediator == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -528,9 +566,56 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang zlib1g-dev
-      - name: Build and test
+      - name: Restore dependencies
         run: |
           mkdir -p ./artifacts/nupkg
           dotnet restore PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj -p:UseProjectReferences=true
+
+      - name: Build
+        run: |
           dotnet build PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj --configuration Release --no-restore -p:UseProjectReferences=true
+
+      - name: Run PicoMediator tests
+        run: |
           dotnet test --project PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj --configuration Release --no-build -p:UseProjectReferences=true
+
+      - name: AOT publish validation
+        run: dotnet publish PicoMediator/samples/PicoMediator.Sample/ -r ${{ matrix.rid }} --configuration Release
+
+      - name: Pack CI packages (package-consumer validation)
+        shell: bash
+        run: |
+          rm -rf ./artifacts/ci-nupkg
+          rm -rf ./artifacts/ci-packages
+          mkdir -p ./artifacts/ci-nupkg
+          mkdir -p ./artifacts/ci-packages/abs ./artifacts/ci-packages/mediator ./artifacts/ci-packages/di
+
+          VERSION="0.0.0-ci"
+          NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/ci-nupkg"
+          NUGET_SOURCE="https://api.nuget.org/v3/index.json"
+
+          dotnet pack PicoMediator/src/PicoMediator.Abs/PicoMediator.Abs.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=true \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
+
+          dotnet pack PicoMediator/src/PicoMediator/PicoMediator.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=true \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/mediator"
+
+          dotnet pack PicoMediator/src/PicoMediator.DI/PicoMediator.DI.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=true \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/di"
