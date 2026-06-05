@@ -31,6 +31,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None
+      Include="$(OutputPath)/PicoAop.Gen.dll"
+      Pack="true"
+      PackagePath="analyzers/dotnet/cs"
+      Visible="false"
+    />
+    <None
+      Include="buildTransitive\PicoAop.Abs.props"
+      Pack="true"
+      PackagePath="buildTransitive\PicoAop.Abs.props"
+      Visible="false"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
   </ItemGroup>
 </Project>

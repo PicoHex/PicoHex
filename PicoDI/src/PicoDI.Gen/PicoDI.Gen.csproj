@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);RS2008;RS1041;NU5128</NoWarn>
-    <IsPackable>true</IsPackable>
+    <IsPackable>false</IsPackable>
     <DevelopmentDependency>false</DevelopmentDependency>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageId>PicoDI.Gen</PackageId>

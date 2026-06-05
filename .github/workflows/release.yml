@@ -64,81 +64,40 @@ jobs:
           rm -rf ./artifacts/nupkg
           mkdir -p ./artifacts/nupkg
 
-          # ---- Phase 1: Generators (no inter-package dependencies) ----
-          dotnet pack PicoAop/src/PicoAop.Gen/PicoAop.Gen.csproj \
-            --configuration Release \
-            --output "$NUPKG_DIR" \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
-
-          dotnet pack PicoMediator/src/PicoMediator.Gen/PicoMediator.Gen.csproj \
-            --configuration Release \
-            --output "$NUPKG_DIR" \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
-
-          dotnet pack PicoDI/src/PicoDI.Gen/PicoDI.Gen.csproj \
-            --configuration Release \
-            --output "$NUPKG_DIR" \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:PicoDiPackageVersion="$VERSION" \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
-
-          dotnet pack PicoCfg/src/PicoCfg.Gen/PicoCfg.Gen.csproj \
-            --configuration Release \
-            --output "$NUPKG_DIR" \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
-
-          dotnet pack PicoLog/src/PicoLog.Gen/PicoLog.Gen.csproj \
-            --configuration Release \
-            --output "$NUPKG_DIR" \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
-
-          # ---- Phase 2: Abstractions (depend on generators from Phase 1) ----
+          # ---- Phase 1: Abstractions (bundled generators via UseProjectReferences=true) ----
           # PicoDI.Abs must be packed first because PicoAop.Abs depends on it
           dotnet pack PicoDI/src/PicoDI.Abs/PicoDI.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+            -p:UseProjectReferences=true
 
           dotnet pack PicoAop/src/PicoAop.Abs/PicoAop.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
+            -p:UseProjectReferences=true \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
           dotnet pack PicoMediator/src/PicoMediator.Abs/PicoMediator.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+            -p:UseProjectReferences=true
 
           dotnet pack PicoCfg/src/PicoCfg.Abs/PicoCfg.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+            -p:UseProjectReferences=true
 
           dotnet pack PicoLog/src/PicoLog.Abs/PicoLog.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
-            -p:UseProjectReferences=false \
-            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+            -p:UseProjectReferences=true
 
-          # ---- Phase 3: Consumer libraries (depend on abstractions + generators) ----
+          # ---- Phase 2: Consumer libraries (depend on abstractions from Phase 1) ----
           dotnet pack PicoAop/src/PicoAop.DI/PicoAop.DI.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \

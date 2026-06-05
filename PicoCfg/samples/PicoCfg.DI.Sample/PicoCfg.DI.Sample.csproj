@@ -22,6 +22,5 @@
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
     <PackageReference Include="PicoDI" />
     <PackageReference Include="PicoCfg.DI" Version="$(Version)" />
-    <PackageReference Include="PicoCfg.Gen" Version="$(Version)" />
   </ItemGroup>
 </Project>

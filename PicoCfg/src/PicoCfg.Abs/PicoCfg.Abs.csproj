@@ -25,6 +25,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None
+      Include="$(OutputPath)/PicoCfg.Gen.dll"
+      Pack="true"
+      PackagePath="analyzers/dotnet/cs"
+      Visible="false"
+    />
+    <None
+      Include="buildTransitive\PicoCfg.Abs.props"
+      Pack="true"
+      PackagePath="buildTransitive\PicoCfg.Abs.props"
+      Visible="false"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
   </ItemGroup>
 </Project>

@@ -14,28 +14,13 @@
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
     <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
+    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
     <PackageReference Include="PicoLog.Abs" />
     <PackageReference Include="PicoLog" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
     <PackageReference Include="PicoDI.Abs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference
-      Condition="'$(UseProjectReferences)' == 'true'"
-      Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
-      OutputItemType="Analyzer"
-      ReferenceOutputAssembly="false"
-    />
   </ItemGroup>
 
   <ItemGroup>

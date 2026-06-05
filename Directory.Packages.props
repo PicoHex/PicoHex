@@ -16,20 +16,15 @@
     <PackageVersion Include="PicoBench" Version="2026.2.0" />
     <PackageVersion Include="PicoDI" Version="$(Version)" />
     <PackageVersion Include="PicoDI.Abs" Version="$(Version)" />
-    <PackageVersion Include="PicoDI.Gen" Version="$(Version)" />
-    <PackageVersion Include="PicoCfg" Version="$(Version)" />
+<PackageVersion Include="PicoCfg" Version="$(Version)" />
     <PackageVersion Include="PicoCfg.Abs" Version="$(Version)" />
-    <PackageVersion Include="PicoCfg.Gen" Version="$(Version)" />
-    <PackageVersion Include="PicoLog" Version="$(Version)" />
+<PackageVersion Include="PicoLog" Version="$(Version)" />
     <PackageVersion Include="PicoLog.Abs" Version="$(Version)" />
-    <PackageVersion Include="PicoLog.Gen" Version="$(Version)" />
-    <PackageVersion Include="PicoAop.Abs" Version="$(Version)" />
-    <PackageVersion Include="PicoAop.Gen" Version="$(Version)" />
-    <PackageVersion Include="PicoAop.DI" Version="$(Version)" />
+<PackageVersion Include="PicoAop.Abs" Version="$(Version)" />
+<PackageVersion Include="PicoAop.DI" Version="$(Version)" />
     <PackageVersion Include="PicoMediator.Abs" Version="$(Version)" />
     <PackageVersion Include="PicoMediator" Version="$(Version)" />
-    <PackageVersion Include="PicoMediator.Gen" Version="$(Version)" />
-    <PackageVersion Include="PicoMediator.DI" Version="$(Version)" />
+<PackageVersion Include="PicoMediator.DI" Version="$(Version)" />
     <PackageVersion Include="PicoCfg.DI" Version="$(Version)" />
     <PackageVersion Include="PicoLog.DI" Version="$(Version)" />
 

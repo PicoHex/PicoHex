@@ -20,7 +20,4 @@
     />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoCfg.Gen" Version="$(Version)" />
-  </ItemGroup>
 </Project>
