@@ -15,6 +15,10 @@
     <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
     <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
+    <ProjectReference
+      Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
+      OutputItemType="Analyzer"
+    />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
