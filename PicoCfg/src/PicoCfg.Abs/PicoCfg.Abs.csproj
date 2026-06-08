@@ -17,10 +17,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference
-      Include="..\PicoCfg.Gen\PicoCfg.Gen.csproj"
-      OutputItemType="Analyzer"
-    />
+    <ProjectReference Include="..\PicoCfg.Gen\PicoCfg.Gen.csproj" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup>
