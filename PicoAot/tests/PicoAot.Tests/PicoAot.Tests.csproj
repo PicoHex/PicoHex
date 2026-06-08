@@ -9,8 +9,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="TUnit" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PicoAot.Abs\PicoAot.Abs.csproj" />
+    <ProjectReference Include="..\..\src\PicoAot.Gen\PicoAot.Gen.csproj" 
+                  OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 </Project>
