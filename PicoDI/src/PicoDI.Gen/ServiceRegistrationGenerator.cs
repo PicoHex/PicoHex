@@ -132,7 +132,11 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         ServiceRegistrationSourceEmitter.EmitSources(generationPlan, compilation, context);
 
         // Interception: emit overrides for services with InterceptBy<T>()
-        EmitInterceptorOverrides(interceptionInfos, normalizedRegistrations, context);
+        // Only emit when PicoAot.Abs is referenced in the compilation.
+        var hasPicoAot = compilation.References.Any(r =>
+            (r.Display ?? "").Contains("PicoAot.Abs"));
+        if (hasPicoAot)
+            EmitInterceptorOverrides(interceptionInfos, normalizedRegistrations, context);
     }
 
     private static void EmitInterceptorOverrides(
