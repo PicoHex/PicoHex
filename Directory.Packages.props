@@ -26,11 +26,11 @@
     <PackageVersion Include="PicoMediator.DI" Version="$(Version)" />
     <PackageVersion Include="PicoCfg.DI" Version="$(Version)" />
     <PackageVersion Include="PicoLog.DI" Version="$(Version)" />
-    <PackageVersion Include="PicoJetson" Version="2026.1.7" />
-    <PackageVersion Include="PicoYaml" Version="2026.1.7" />
-    <PackageVersion Include="PicoIni" Version="2026.1.7" />
-    <PackageVersion Include="PicoToml" Version="2026.1.7" />
-    <PackageVersion Include="TUnit" Version="1.49.0" />
+    <PackageVersion Include="PicoJetson" Version="2026.1.8" />
+    <PackageVersion Include="PicoYaml" Version="2026.1.8" />
+    <PackageVersion Include="PicoIni" Version="2026.1.8" />
+    <PackageVersion Include="PicoToml" Version="2026.1.8" />
+    <PackageVersion Include="TUnit" Version="1.51.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.3" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.3" />
   </ItemGroup>
