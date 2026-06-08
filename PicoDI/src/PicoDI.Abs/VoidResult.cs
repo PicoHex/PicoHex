@@ -2,7 +2,7 @@ namespace PicoDI.Abs;
 
 /// <summary>
 /// Represents a void (no-return-value) result for generic
-/// <see cref="IRequest{TResponse}"/> commands and other
+/// <c>IRequest{TResponse}</c> commands and other
 /// patterns that require a result type but have no meaningful value.
 /// </summary>
 /// <remarks>

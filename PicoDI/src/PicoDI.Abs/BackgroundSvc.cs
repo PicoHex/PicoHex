@@ -174,7 +174,7 @@ public abstract class BackgroundSvc : IHostedSvc, IAsyncDisposable
 
     /// <summary>
     /// Wraps <see cref="ExecuteAsync"/> with exception tracing.
-    /// Exceptions are logged via <see cref="Trace.WriteLine"/> and re-thrown.
+    /// Exceptions are logged via <see cref="Trace.WriteLine(object)"/> and re-thrown.
     /// </summary>
     private async Task ExecuteWithErrorHandlingAsync(CancellationToken stoppingToken)
     {

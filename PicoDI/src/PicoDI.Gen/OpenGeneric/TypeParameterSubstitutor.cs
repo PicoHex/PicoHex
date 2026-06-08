@@ -43,7 +43,7 @@ internal sealed class TypeParameterSubstitutor
 
     /// <summary>
     /// Substitutes type parameters in constructor parameter types using Roslyn semantic model.
-    /// Resolves type parameters via <see cref="INamedTypeSymbol.Construct"/> for accurate
+    /// Resolves type parameters via <see cref="INamedTypeSymbol.Construct(ITypeSymbol[])"/> for accurate
     /// handling of nested generics (e.g., <c>Dictionary&lt;string, List&lt;T&gt;&gt;</c>)
     /// which string-based substitution cannot handle correctly.
     /// </summary>
