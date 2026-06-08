@@ -21,7 +21,6 @@
     <ProjectReference
       Include="..\PicoAop.Gen\PicoAop.Gen.csproj"
       OutputItemType="Analyzer"
-      ReferenceOutputAssembly="false"
     />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
   </ItemGroup>
