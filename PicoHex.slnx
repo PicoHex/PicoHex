@@ -99,4 +99,12 @@
   <Folder Name="/PicoMediator/samples/">
     <Project Path="PicoMediator/samples/PicoMediator.Sample/PicoMediator.Sample.csproj" />
   </Folder>
+
+  <!-- PicoAot -->
+  <Folder Name="/PicoAot/src/">
+    <Project Path="PicoAot/src/PicoAot.Abs/PicoAot.Abs.csproj" />
+  </Folder>
+  <Folder Name="/PicoAot/tests/">
+    <Project Path="PicoAot/tests/PicoAot.Tests/PicoAot.Tests.csproj" />
+  </Folder>
 </Solution>
