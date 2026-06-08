@@ -60,33 +60,42 @@ internal static class ProxyEmitter
 
         if (hasRefOut)
         {
-            // Direct delegation for ref/out methods (PICO110)
             sb.AppendLine($"        return _inner.{method.Name}({paramArgs});");
         }
         else
         {
-            var hasReturn = method.ReturnType.SpecialType != SpecialType.System_Void;
-            var isVoidTask = method.ReturnType is INamedTypeSymbol
-            {
-                MetadataName: "ValueTask" or "Task"
-            };
+            var retNamed = method.ReturnType as INamedTypeSymbol;
+            var metaName = retNamed?.MetadataName;
+            var isTaskOf = metaName is "Task`1";
+            var isValueTaskOf = metaName is "ValueTask`1";
+            var isTask = metaName is "Task";
+            var isValueTask = metaName is "ValueTask";
+            var isAsync = isTaskOf || isValueTaskOf || isTask || isValueTask;
 
-            if (isVoidTask || method.ReturnType is INamedTypeSymbol { MetadataName: "ValueTask`1" or "Task`1" })
+            if (isAsync)
             {
-                // Async — use by-value InvokeAsync
-                var invokeMethod = hasReturn ? "InvokeAsync" : "InvokeAsyncVoid";
                 sb.AppendLine($"        var inv = new {structName}(_inner, _i0{(method.Parameters.Length > 0 ? ", " + paramArgs : "")});");
-                sb.AppendLine($"        return _i0.{invokeMethod}(inv, static i => (({structName})i).InvokeTargetAsync());");
+
+                if (isTaskOf || isTask)
+                {
+                    // Task<T> or Task: convert ValueTask → Task via .AsTask()
+                    var invokeMethod = isTaskOf ? "InvokeAsync" : "InvokeAsyncVoid";
+                    sb.AppendLine($"        return _i0.{invokeMethod}(inv, static i => (({structName})i).InvokeTargetAsync()).AsTask();");
+                }
+                else
+                {
+                    // ValueTask<T> or ValueTask: return directly
+                    var invokeMethod = isValueTaskOf ? "InvokeAsync" : "InvokeAsyncVoid";
+                    sb.AppendLine($"        return _i0.{invokeMethod}(inv, static i => (({structName})i).InvokeTargetAsync());");
+                }
             }
             else if (method.ReturnType.SpecialType == SpecialType.System_Void)
             {
-                // Sync void — cached Func<>
                 sb.AppendLine($"        var inv = new {structName}(_inner, _i0{(method.Parameters.Length > 0 ? ", " + paramArgs : "")});");
                 sb.AppendLine($"        _i0.InvokeVoid(inv, s_{method.Name}Next);");
             }
             else
             {
-                // Sync result — cached Func<>
                 sb.AppendLine($"        var inv = new {structName}(_inner, _i0{(method.Parameters.Length > 0 ? ", " + paramArgs : "")});");
                 sb.AppendLine($"        return _i0.Invoke(inv, s_{method.Name}Next);");
             }

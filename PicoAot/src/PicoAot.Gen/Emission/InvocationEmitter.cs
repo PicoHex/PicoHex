@@ -9,9 +9,17 @@ internal static class InvocationEmitter
         var sb = new StringBuilder();
         var svcFullName = method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var retType = method.ReturnType;
-        var hasReturn = retType.SpecialType != SpecialType.System_Void;
+        var isAsync = retType is INamedTypeSymbol { MetadataName: "Task`1" or "ValueTask`1" or "Task" or "ValueTask" };
+
+        // Unwrap result type for async methods: Task<int> → int, ValueTask → void
+        var unwrappedType = retType is INamedTypeSymbol { TypeArguments.Length: > 0 } namedRet
+            ? namedRet.TypeArguments[0]
+            : retType;
+        var hasReturn = isAsync
+            ? unwrappedType.SpecialType != SpecialType.System_Void
+            : retType.SpecialType != SpecialType.System_Void;
         var resultTypeName = hasReturn
-            ? retType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+            ? unwrappedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
             : "object";
 
         var structName = BuildStructName(safeSvcName, method);
@@ -31,14 +39,34 @@ internal static class InvocationEmitter
             sb.AppendLine($"    public {resultTypeName} Result {{ get; set; }}");
 
         sb.AppendLine();
-        var paramArgs = string.Join(", ", method.Parameters.Select(p => $"_{p.Name}"));
-        if (hasReturn)
-            sb.AppendLine($"    internal {resultTypeName} InvokeTarget() => _target.{method.Name}({paramArgs});");
+
+        if (isAsync)
+        {
+            // Async: emit both sync InvokeTarget (throws) and async InvokeTargetAsync
+            var asyncRet = hasReturn ? $"ValueTask<{resultTypeName}>" : "ValueTask";
+            if (hasReturn)
+                sb.AppendLine($"    internal {asyncRet} InvokeTargetAsync() => new({InvocationEmitter.UnwrapTaskCall(method, svcFullName)});");
+            else
+                sb.AppendLine($"    internal async {asyncRet} InvokeTargetAsync() => await _target.{method.Name}({string.Join(", ", method.Parameters.Select(p => $"_{p.Name}"))});");
+        }
         else
-            sb.AppendLine($"    internal void InvokeTarget() => _target.{method.Name}({paramArgs});");
+        {
+            // Sync: direct InvokeTarget
+            var paramArgs = string.Join(", ", method.Parameters.Select(p => $"_{p.Name}"));
+            if (hasReturn)
+                sb.AppendLine($"    internal {resultTypeName} InvokeTarget() => _target.{method.Name}({paramArgs});");
+            else
+                sb.AppendLine($"    internal void InvokeTarget() => _target.{method.Name}({paramArgs});");
+        }
 
         sb.AppendLine("}");
         return sb.ToString();
+    }
+
+    private static string UnwrapTaskCall(IMethodSymbol method, string svcFullName)
+    {
+        var paramArgs = string.Join(", ", method.Parameters.Select(p => $"_{p.Name}"));
+        return $"_target.{method.Name}({paramArgs})";
     }
 
     public static string BuildStructName(string safeSvcName, IMethodSymbol method)
