@@ -709,19 +709,19 @@ public static class Program
         return complexity switch
         {
             ServiceComplexity.NoDependency => (
-                static s => s.GetRequiredService<ISimpleService>(),
+                static s => s.GetService<ISimpleService>(),
                 static s => s.GetRequiredService<ISimpleService>()
             ),
             ServiceComplexity.SingleDependency => (
-                static s => s.GetRequiredService<IServiceWithDep>(),
+                static s => s.GetService<IServiceWithDep>(),
                 static s => s.GetRequiredService<IServiceWithDep>()
             ),
             ServiceComplexity.MultipleDependencies => (
-                static s => s.GetRequiredService<IServiceWithMultipleDeps>(),
+                static s => s.GetService<IServiceWithMultipleDeps>(),
                 static s => s.GetRequiredService<IServiceWithMultipleDeps>()
             ),
             ServiceComplexity.DeepChain => (
-                static s => s.GetRequiredService<ILevel5>(),
+                static s => s.GetService<ILevel5>(),
                 static s => s.GetRequiredService<ILevel5>()
             ),
             _ => throw new ArgumentOutOfRangeException(nameof(complexity)),

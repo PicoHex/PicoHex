@@ -117,7 +117,13 @@ public sealed class SvcDescriptor(
         return new SvcDescriptor(typeof(T), s => factory(s)!, lifetime);
     }
 
-    internal SvcDescriptor(Type serviceType, Func<ISvcScope, object> factory, SvcLifetime lifetime)
+    /// <summary>
+    /// Creates a service descriptor with a factory function.
+    /// </summary>
+    /// <param name="serviceType">The service type being registered.</param>
+    /// <param name="factory">The factory function to create instances.</param>
+    /// <param name="lifetime">The service lifetime (default: Singleton).</param>
+    public SvcDescriptor(Type serviceType, Func<ISvcScope, object> factory, SvcLifetime lifetime)
         : this(serviceType, serviceType, lifetime) =>
         Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 }
