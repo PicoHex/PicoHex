@@ -40,21 +40,36 @@ internal static class InterceptorSyntax
 
         var interceptorType = methodSymbol.TypeArguments[0];
 
-        // Walk up: Register*().InterceptBy<T>() 
-        // The InterceptBy's receiver is the Register*() call
-        if (invocation.Expression is not MemberAccessExpressionSyntax outerMember)
-            return null;
-        if (outerMember.Expression is not InvocationExpressionSyntax registerInvocation)
-            return null;
+        // Walk up through InterceptBy chain: Register*().InterceptBy<A>().InterceptBy<B>()
+        // For InterceptBy<B>, we need to skip past InterceptBy<A> to find Register*().
+        var current = invocation;
+        while (true)
+        {
+            if (current.Expression is not MemberAccessExpressionSyntax outerMember)
+                return null;
+            if (outerMember.Expression is not InvocationExpressionSyntax innerInvocation)
+                return null;
 
-        var registerSymbol = semanticModel.GetSymbolInfo(registerInvocation, ct).Symbol as IMethodSymbol;
-        if (registerSymbol?.TypeArguments.Length < 1)
-            return null;
+            var innerSymbol = semanticModel.GetSymbolInfo(innerInvocation, ct).Symbol as IMethodSymbol;
+            if (innerSymbol == null)
+                return null;
 
-        var serviceType = registerSymbol.TypeArguments[0];
-        var implType = registerSymbol.TypeArguments.Length > 1 ? registerSymbol.TypeArguments[1] : null;
+            // If the inner call is another InterceptBy, walk past it
+            if (innerSymbol.Name == PicoAopNames.InterceptBy)
+            {
+                current = innerInvocation;
+                continue;
+            }
 
-        return new InterceptionInfo(serviceType, interceptorType, implType, HasMultipleRegisters: false);
+            // Found Register*() call — extract types
+            if (innerSymbol.TypeArguments.Length < 1)
+                return null;
+
+            var serviceType = innerSymbol.TypeArguments[0];
+            var implType = innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : null;
+
+            return new InterceptionInfo(serviceType, interceptorType, implType, HasMultipleRegisters: false);
+        }
     }
 
     public static GlobalInterceptorInfo? ExtractGlobalInterceptorInfo(GeneratorSyntaxContext ctx, CancellationToken ct)

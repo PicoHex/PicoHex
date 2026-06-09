@@ -72,10 +72,6 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                     safeSvc, method.Name, method, info.InterceptorType));
             }
 
-            // Static delegate cache
-            foreach (var method in methods.Where(m => m.Parameters.All(p => p.RefKind == RefKind.None)))
-                sb.AppendLine(ProxyEmitter.EmitStaticDelegateCache(safeSvc, method));
-
             // Property getter/setter structs
             foreach (var prop in svcType.GetMembers().OfType<IPropertySymbol>()
                 .Where(p => !p.IsIndexer && !p.IsStatic && p.DeclaredAccessibility == Accessibility.Public))
@@ -103,10 +99,11 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var propType = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var intSuffix = $"_{InvocationEmitter.Sanitize(interceptorType.Name)}";
 
         if (prop.GetMethod?.DeclaredAccessibility == Accessibility.Public)
         {
-            sb.AppendLine($"struct Invocation_{safeSvcName}_{prop.Name}_Getter : IInvocation<{propType}>");
+            sb.AppendLine($"struct Invocation_{safeSvcName}_{prop.Name}_Getter{intSuffix} : IInvocation<{propType}>");
             sb.AppendLine("{");
             sb.AppendLine($"    internal readonly {svcFullName} _target;");
             sb.AppendLine($"    internal readonly {intFullName} _i0;");
@@ -119,7 +116,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
 
         if (prop.SetMethod?.DeclaredAccessibility == Accessibility.Public && !prop.SetMethod.IsInitOnly)
         {
-            sb.AppendLine($"struct Invocation_{safeSvcName}_{prop.Name}_Setter : IInvocation");
+            sb.AppendLine($"struct Invocation_{safeSvcName}_{prop.Name}_Setter{intSuffix} : IInvocation");
             sb.AppendLine("{");
             sb.AppendLine($"    internal readonly {svcFullName} _target;");
             sb.AppendLine($"    internal readonly {intFullName} _i0;");

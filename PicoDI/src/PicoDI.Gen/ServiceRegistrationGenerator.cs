@@ -166,11 +166,12 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             var implFullName = info.ImplType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var intFullName = info.InterceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var safeSvc = SanitizeForWrap(svcFullName);
+            var safeInt = SanitizeForWrap(intFullName);
 
             sb.AppendLine("        container.Register(");
             sb.AppendLine("            SvcDescriptor.Create(");
             sb.AppendLine($"                typeof({svcFullName}),");
-            sb.AppendLine($"                static scope => global::PicoAop.Generated.PicoAopWrappers.Wrap_{safeSvc}(");
+            sb.AppendLine($"                static scope => global::PicoAop.Generated.PicoAopWrappers.Wrap_{safeSvc}_{safeInt}(");
             sb.AppendLine($"                    scope.GetService<{implFullName}>(),");
             sb.AppendLine($"                    scope.GetService<{intFullName}>()),");
             sb.AppendLine("                SvcLifetime.Scoped));");
@@ -195,7 +196,9 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
     }
 
     private static string SanitizeForWrap(string name) =>
-        name.Replace("global::", "").Replace(".", "_").Replace("<", "_").Replace(">", "").Replace(", ", "_");
+        name.Replace("global::", "")
+            .Replace(".", "_").Replace("<", "_").Replace(">", "")
+            .Replace(", ", "_").Replace(",", "_");
 
     private static void ReportRegistrationDiagnostics(
         IEnumerable<Diagnostic> diagnostics,

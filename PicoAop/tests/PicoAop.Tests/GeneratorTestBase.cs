@@ -38,4 +38,21 @@ public abstract class GeneratorTestBase
     {
         return string.Join("\n", result.GeneratedTrees.Select(t => t.ToString()));
     }
+
+    protected static List<Diagnostic> RunAndGetDiagnostics(string source)
+    {
+        var syntaxTree = CSharpSyntaxTree.ParseText(source);
+        var compilation = CSharpCompilation.Create("test",
+            new[] { syntaxTree },
+            new[]
+            {
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IInterceptor).Assembly.Location),
+            },
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
+        return [.. diagnostics];
+    }
 }
