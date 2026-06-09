@@ -166,7 +166,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             var implFullName = info.ImplType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var intFullName = info.InterceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var safeSvc = SanitizeForWrap(svcFullName);
-            var safeInt = SanitizeForWrap(intFullName);
+            var safeInt = SanitizeForWrap(info.InterceptorType.Name);
 
             sb.AppendLine("        container.Register(");
             sb.AppendLine("            SvcDescriptor.Create(");

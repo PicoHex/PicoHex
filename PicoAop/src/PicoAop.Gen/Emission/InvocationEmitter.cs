@@ -23,8 +23,10 @@ internal static class InvocationEmitter
             ? retType.SpecialType != SpecialType.System_Void
             : metaName is TaskOf or ValueTaskOf;
 
-        var resultTypeName = hasReturn && retNamed?.TypeArguments.Length > 0
-            ? retNamed.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+        var resultTypeName = hasReturn
+            ? (retNamed?.TypeArguments.Length > 0
+                ? retNamed.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                : retType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
             : "object";
 
         var structName = BuildStructName(safeSvcName, method, interceptorType);
