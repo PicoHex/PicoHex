@@ -100,7 +100,4 @@
     <Project Path="PicoMediator/samples/PicoMediator.Sample/PicoMediator.Sample.csproj" />
   </Folder>
 
-  <Folder Name="/PicoAot/tests/">
-    <Project Path="PicoAot/tests/PicoAot.Tests/PicoAot.Tests.csproj" />
-  </Folder>
 </Solution>

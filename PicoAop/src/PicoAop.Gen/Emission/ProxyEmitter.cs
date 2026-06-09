@@ -139,14 +139,30 @@ internal static class ProxyEmitter
 
             sb.AppendLine($"        var inv = new {multiStructName}({ctorArgs});");
 
-            if (isTaskOf)
-                sb.AppendLine($"        return _i0.InvokeAsync(inv, s_{method.Name}Next).AsTask();");
-            else if (isValueTaskOf || isValueTask)
-                sb.AppendLine($"        return _i0.InvokeAsync(inv, s_{method.Name}Next);");
+            var structType = multiStructName;
+            if (isTaskOf || isValueTaskOf)
+            {
+                var unwrappedType = method.ReturnType is INamedTypeSymbol { TypeArguments.Length: > 0 } namedRet
+                    ? namedRet.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                    : "object";
+                var invokeMethod = isTaskOf ? "InvokeAsync" : "InvokeAsync";
+                sb.AppendLine($"        return _i0.{invokeMethod}<{structType}, {unwrappedType}>(inv, s_{method.Name}Next){(isTaskOf ? ".AsTask()" : "")};");
+            }
+            else if (isTask)
+            {
+                sb.AppendLine($"        return _i0.InvokeAsyncVoid<{structType}>(inv, s_{method.Name}Next).AsTask();");
+            }
+            else if (isValueTask)
+            {
+                sb.AppendLine($"        return _i0.InvokeAsyncVoid<{structType}>(inv, s_{method.Name}Next);");
+            }
             else if (method.ReturnType.SpecialType == SpecialType.System_Void)
                 sb.AppendLine($"        _i0.InvokeVoid(inv, s_{method.Name}Next);");
             else
-                sb.AppendLine($"        return _i0.Invoke(inv, s_{method.Name}Next);");
+            {
+                var retTypeName = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                sb.AppendLine($"        return _i0.Invoke<{structType}, {retTypeName}>(inv, s_{method.Name}Next);");
+            }
         }
 
         sb.AppendLine("    }");
