@@ -12,7 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference Include="..\PicoLog.Abs\PicoLog.Abs.csproj" />
     <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
     <ProjectReference
@@ -22,10 +21,13 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoLog.Abs" />
     <PackageReference Include="PicoLog" />
     <PackageReference Include="PicoDI.Abs" />
   </ItemGroup>
+
+  <!-- PicoDI.Gen analyzer is required for cross-assembly open generic materialization
+       of ILogger<T> → Logger<T>. Only PicoLog.DI needs this because it's the only DI
+       package that registers open generics (PicoCfg.DI and PicoMediator.DI do not). -->
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
