@@ -1,5 +1,12 @@
 namespace PicoLog;
 
+/// <summary>
+/// Processes log entries for a single category through a dedicated background task.
+/// Each <see cref="CategoryPipeline"/> owns one <see cref="InternalLoggerQueue"/> (bounded channel)
+/// and one processing task. When many unique categories are created (e.g. 100+), each category
+/// consumes its own channel buffer and background task. For dynamic / high-cardinality category
+/// scenarios, consider reusing categories or limiting category count to avoid resource pressure.
+/// </summary>
 internal sealed class CategoryPipeline : IAsyncDisposable
 {
     private readonly string _categoryName;

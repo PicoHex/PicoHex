@@ -67,7 +67,17 @@ public sealed class SvcDescriptor(
     /// Negative values indicate runtime-registered services that use the Factory delegate.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public int GeneratedFactoryId { get; set; } = -1;
+    /// <summary>
+    /// Sentinel value indicating this service was registered at runtime
+    /// (not via PicoDI.Gen source generator).
+    /// </summary>
+    public const int RuntimeRegistrationId = -1;
+
+    /// <summary>
+    /// Gets the generated factory identifier for SG-registered services.
+    /// <see cref="RuntimeRegistrationId"/> indicates runtime registration.
+    /// </summary>
+    public int GeneratedFactoryId { get; set; } = RuntimeRegistrationId;
 
     /// <summary>
     /// Gets the service lifetime.

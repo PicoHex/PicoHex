@@ -205,10 +205,11 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
             )
             : "object";
 
-        // Unique struct name — include all interceptor short names
+        // Unique struct name — include all interceptor fully qualified names
         var intSuffix = string.Join(
             "_",
-            interceptorTypes.Select(t => InvocationEmitter.Sanitize(t.Name))
+            interceptorTypes.Select(t => InvocationEmitter.Sanitize(
+                t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))
         );
         var structName = InvocationEmitter.BuildStructName(safeSvcName, method);
         structName = $"{structName}_{intSuffix}";
@@ -315,7 +316,11 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
         var propType = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix = string.Join(
             "_",
-            interceptorTypes.Select(t => InvocationEmitter.Sanitize(t.Name))
+            interceptorTypes.Select(t =>
+                InvocationEmitter.Sanitize(
+                    t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                )
+            )
         );
 
         if (prop.GetMethod?.DeclaredAccessibility == Accessibility.Public)
@@ -367,7 +372,11 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix = string.Join(
             "_",
-            interceptorTypes.Select(t => InvocationEmitter.Sanitize(t.Name))
+            interceptorTypes.Select(t =>
+                InvocationEmitter.Sanitize(
+                    t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                )
+            )
         );
         var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
 

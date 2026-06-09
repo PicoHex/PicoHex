@@ -6,6 +6,18 @@ internal static class GeneratedDispatch
     private static List<Func<Type, ISvcScope, object, CancellationToken, object?>>? _switches;
 
     /// <summary>
+    /// Cached snapshot of the switches array, updated after each write to _switches.
+    /// Allows lock-free reads on the hot Send path.
+    /// </summary>
+    private static volatile Func<
+        Type,
+        ISvcScope,
+        object,
+        CancellationToken,
+        object?
+    >[]? _switchesSnapshot;
+
+    /// <summary>
     /// Registers a compile-time dispatch switch. Called by
     /// PicoMediator.Gen's [ModuleInitializer] from each assembly
     /// that contains handler implementations. Multiple assemblies
@@ -21,6 +33,7 @@ internal static class GeneratedDispatch
         {
             _switches ??= new List<Func<Type, ISvcScope, object, CancellationToken, object?>>();
             _switches.Add(dispatch);
+            _switchesSnapshot = [.. _switches];
         }
     }
 
@@ -32,6 +45,7 @@ internal static class GeneratedDispatch
         lock (_switchesLock)
         {
             _switches?.Clear();
+            _switchesSnapshot = null;
         }
     }
 
@@ -42,11 +56,8 @@ internal static class GeneratedDispatch
     )
         where TRequest : IRequest<TResponse>
     {
-        Func<Type, ISvcScope, object, CancellationToken, object?>[]? switches;
-        lock (_switchesLock)
-        {
-            switches = _switches?.ToArray();
-        }
+        // Lock-free fast path: use the cached snapshot
+        var switches = Volatile.Read(ref _switchesSnapshot);
 
         if (switches is not null)
         {

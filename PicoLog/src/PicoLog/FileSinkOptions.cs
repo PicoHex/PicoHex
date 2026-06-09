@@ -38,6 +38,14 @@ public sealed class FileSinkOptions
     public long MaxFileSizeBytes { get; set; }
 
     /// <summary>
+    /// Time interval for log file rotation. When set to a positive <see cref="TimeSpan"/>,
+    /// the log file will be rotated at most once per interval (e.g. <c>TimeSpan.FromHours(1)</c>
+    /// for hourly rotation). The rotation happens on the first write after the interval has elapsed.
+    /// Set to <see cref="TimeSpan.Zero"/> to disable (default).
+    /// </summary>
+    public TimeSpan RotationInterval { get; set; }
+
+    /// <summary>
     /// Maximum number of rotated files to retain. When exceeded, the oldest rotated
     /// file is deleted. Set to 0 or negative to keep all. Default: 0 (keep all).
     /// </summary>
@@ -63,6 +71,7 @@ public sealed class FileSinkOptions
             AllowFlushInterrupt = AllowFlushInterrupt,
             MaxFileSizeBytes = MaxFileSizeBytes,
             MaxRetainedFiles = MaxRetainedFiles,
+            RotationInterval = RotationInterval,
         };
     }
 }

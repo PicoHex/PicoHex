@@ -65,7 +65,10 @@ internal static partial class InterceptionHelper
             var implType =
                 innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : serviceType;
 
-            return new InterceptionInfo(serviceType, implType, interceptorType);
+            // Infer lifetime from the Register*() method name
+            var lifetime = PicoDiNames.InferLifetimeFromMethodName(innerSymbol.Name);
+
+            return new InterceptionInfo(serviceType, implType, interceptorType, lifetime);
         }
     }
 }
@@ -73,7 +76,8 @@ internal static partial class InterceptionHelper
 internal record InterceptionInfo(
     ITypeSymbol ServiceType,
     ITypeSymbol ImplType,
-    ITypeSymbol InterceptorType
+    ITypeSymbol InterceptorType,
+    string Lifetime
 );
 
 internal record GlobalInterceptorInfo(ITypeSymbol InterceptorType, ITypeSymbol? InterfaceFilter);

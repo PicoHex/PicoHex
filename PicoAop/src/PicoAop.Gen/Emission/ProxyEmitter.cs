@@ -17,7 +17,8 @@ internal static class ProxyEmitter
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix = string.Join(
             "_",
-            interceptorTypes.Select(t => InvocationEmitter.Sanitize(t.Name))
+            interceptorTypes.Select(t => InvocationEmitter.Sanitize(
+                t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))
         );
         var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
 
@@ -133,6 +134,7 @@ internal static class ProxyEmitter
         }
         sb.AppendLine();
 
+        var isClassType = serviceType.TypeKind == TypeKind.Class;
         // Method overrides
         foreach (var method in methods)
             EmitMultiMethodOverride(
@@ -141,7 +143,8 @@ internal static class ProxyEmitter
                 method,
                 svcFullName,
                 interceptorTypes,
-                intSuffix
+                intSuffix,
+                isClassType
             );
 
         // Properties
@@ -165,7 +168,8 @@ internal static class ProxyEmitter
         IMethodSymbol method,
         string svcFullName,
         List<ITypeSymbol> interceptorTypes,
-        string intSuffix
+        string intSuffix,
+        bool isClassType
     )
     {
         var retType = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -180,7 +184,13 @@ internal static class ProxyEmitter
         var multiStructName = $"{structName}_{intSuffix}";
         var hasRefOut = method.Parameters.Any(p => p.RefKind != RefKind.None);
 
-        sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
+        // For class types with virtual/override/abstract methods, use 'public override'
+        // so virtual dispatch routes through the proxy. Interface types don't need 'override'.
+        var modifier =
+            (isClassType && (method.IsVirtual || method.IsOverride || method.IsAbstract))
+                ? "public override"
+                : "public";
+        sb.AppendLine($"    {modifier} {retType} {method.Name}({paramDecl})");
         sb.AppendLine("    {");
 
         if (hasRefOut)
@@ -296,7 +306,8 @@ internal static class ProxyEmitter
         var sb = new StringBuilder();
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var intSuffix = InvocationEmitter.Sanitize(interceptorType.Name);
+        var intSuffix = InvocationEmitter.Sanitize(
+            interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
         var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
 
         sb.AppendLine($"sealed class {className} : {svcFullName}");
@@ -331,6 +342,7 @@ internal static class ProxyEmitter
         sb.AppendLine();
 
         // Methods
+        var isClassType = serviceType.TypeKind == TypeKind.Class;
         var methods = serviceType
             .GetMembers()
             .OfType<IMethodSymbol>()
@@ -341,7 +353,15 @@ internal static class ProxyEmitter
             );
 
         foreach (var method in methods)
-            EmitMethodOverride(sb, safeSvcName, method, svcFullName, intFullName, interceptorType);
+            EmitMethodOverride(
+                sb,
+                safeSvcName,
+                method,
+                svcFullName,
+                intFullName,
+                interceptorType,
+                isClassType
+            );
 
         // Properties
         foreach (
@@ -364,7 +384,8 @@ internal static class ProxyEmitter
         IMethodSymbol method,
         string svcFullName,
         string intFullName,
-        ITypeSymbol? interceptorType
+        ITypeSymbol? interceptorType,
+        bool isClassType
     )
     {
         var retType = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -378,7 +399,12 @@ internal static class ProxyEmitter
         var structName = InvocationEmitter.BuildStructName(safeSvcName, method, interceptorType);
         var hasRefOut = method.Parameters.Any(p => p.RefKind != RefKind.None);
 
-        sb.AppendLine($"    public {retType} {method.Name}({paramDecl})");
+        // For class types with virtual/override/abstract methods, use 'public override'
+        var modifier =
+            (isClassType && (method.IsVirtual || method.IsOverride || method.IsAbstract))
+                ? "public override"
+                : "public";
+        sb.AppendLine($"    {modifier} {retType} {method.Name}({paramDecl})");
         sb.AppendLine("    {");
 
         if (hasRefOut)
@@ -449,7 +475,8 @@ internal static class ProxyEmitter
     {
         var propType = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix =
-            interceptorType != null ? $"_{InvocationEmitter.Sanitize(interceptorType.Name)}" : "";
+            interceptorType != null ? $"_{InvocationEmitter.Sanitize(
+                interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))}" : "";
         sb.AppendLine($"    public {propType} {prop.Name}");
         sb.AppendLine("    {");
 
@@ -534,7 +561,8 @@ internal static class ProxyEmitter
     {
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var intSuffix = InvocationEmitter.Sanitize(interceptorType.Name);
+        var intSuffix = InvocationEmitter.Sanitize(
+            interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
         var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
 
         return $"public static partial class {PicoAopNames.WrappersClass}\n"

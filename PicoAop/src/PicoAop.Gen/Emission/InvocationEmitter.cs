@@ -133,7 +133,8 @@ internal static class InvocationEmitter
         foreach (var p in method.Parameters)
             name += $"_{Sanitize(p.Type.Name)}";
         if (interceptorType != null)
-            name += $"_{Sanitize(interceptorType.Name)}";
+            name +=
+                $"_{Sanitize(interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))}";
         return name;
     }
 

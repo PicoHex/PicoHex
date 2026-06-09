@@ -187,7 +187,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         // Merge by service type
         var serviceMap = new Dictionary<
             ITypeSymbol,
-            (ITypeSymbol ImplType, List<ITypeSymbol> Interceptors)
+            (ITypeSymbol ImplType, List<ITypeSymbol> Interceptors, string Lifetime)
         >(comparer);
         foreach (var info in allInfos)
         {
@@ -195,7 +195,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 continue;
             if (!serviceMap.TryGetValue(info.ServiceType, out var entry))
             {
-                entry = (info.ImplType ?? info.ServiceType, new List<ITypeSymbol>());
+                entry = (info.ImplType ?? info.ServiceType, new List<ITypeSymbol>(), info.Lifetime);
                 serviceMap[info.ServiceType] = entry;
             }
             if (!entry.Interceptors.Any(i => comparer.Equals(i, info.InterceptorType)))
@@ -236,7 +236,8 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             var implFullName = implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var safeSvc = SanitizeForWrap(svcFullName);
 
-            var intSuffix = string.Join("_", interceptors.Select(t => SanitizeForWrap(t.Name)));
+            var intSuffix = string.Join("_", interceptors.Select(t =>
+                SanitizeForWrap(t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))));
             var wrapperName = $"Wrap_{safeSvc}_{intSuffix}";
             var getServiceArgs = string.Join(
                 ", ",
@@ -253,7 +254,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             );
             sb.AppendLine($"                    scope.GetService<{implFullName}>(),");
             sb.AppendLine($"                    {getServiceArgs}),");
-            sb.AppendLine("                SvcLifetime.Scoped));");
+            sb.AppendLine($"                SvcLifetime.{kvp.Value.Lifetime}));");
         }
 
         sb.AppendLine("    }");

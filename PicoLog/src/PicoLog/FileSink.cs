@@ -15,6 +15,7 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
     private int _activeDequeuedMessages;
     private int _activeBatchOperations;
     private int _rotationIndex;
+    private long _lastRotationTimestamp;
     private Exception? _processingException;
 
     public FileSink(ILogFormatter formatter, string filePath = FileSinkOptions.DefaultFilePath)
@@ -56,6 +57,7 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         );
 
         _writer = new StreamWriter(fileStream, Encoding.UTF8);
+        _lastRotationTimestamp = DateTime.UtcNow.Ticks;
         _processingTask = ProcessWritesAsync();
     }
 
@@ -189,15 +191,31 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
     private async ValueTask RotateIfNeededAsync()
     {
-        if (_options.MaxFileSizeBytes <= 0)
-            return;
+        // Check size-based rotation
+        bool needsSizeRotation =
+            _options.MaxFileSizeBytes > 0 && _writer.BaseStream.Length >= _options.MaxFileSizeBytes;
 
-        if (_writer.BaseStream.Length < _options.MaxFileSizeBytes)
+        // Check time-based rotation
+        bool needsTimeRotation =
+            _options.RotationInterval > TimeSpan.Zero
+            && (DateTime.UtcNow.Ticks - Volatile.Read(ref _lastRotationTimestamp))
+                >= _options.RotationInterval.Ticks;
+
+        if (!needsSizeRotation && !needsTimeRotation)
             return;
 
         lock (_fileLock)
         {
-            if (_writer.BaseStream.Length < _options.MaxFileSizeBytes)
+            // Re-check under lock
+            bool sizeReady =
+                _options.MaxFileSizeBytes > 0
+                && _writer.BaseStream.Length >= _options.MaxFileSizeBytes;
+            bool timeReady =
+                _options.RotationInterval > TimeSpan.Zero
+                && (DateTime.UtcNow.Ticks - Volatile.Read(ref _lastRotationTimestamp))
+                    >= _options.RotationInterval.Ticks;
+
+            if (!sizeReady && !timeReady)
                 return;
 
             _writer.Dispose();

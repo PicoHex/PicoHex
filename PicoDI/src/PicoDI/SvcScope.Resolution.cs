@@ -2,8 +2,8 @@ namespace PicoDI;
 
 public sealed partial class SvcScope
 {
-    private const string SourceGenReminder =
-        "Use PicoDI.Gen source generator or register with a factory delegate.";
+    private static string FormatSourceGenReminder(string typeName) =>
+        $"Use PicoDI.Gen source generator or register with a factory delegate for '{typeName}'.";
 
     /// <summary>
     /// Core resolution logic shared by GetService and TryGetService.
@@ -119,7 +119,7 @@ public sealed partial class SvcScope
         if (registration.Factory is null)
             throw new PicoDiException(
                 $"No factory registered for transient service '{serviceType.FullName}'. "
-                    + SourceGenReminder
+                    + FormatSourceGenReminder(serviceType.FullName ?? serviceType.Name)
             );
 
         var instance = registration.Factory(this);
@@ -200,7 +200,7 @@ public sealed partial class SvcScope
             registration.SingletonState
             ?? throw new PicoDiException(
                 $"No factory or instance registered for singleton service '{serviceType.FullName}'. "
-                    + SourceGenReminder
+                    + FormatSourceGenReminder(serviceType.FullName ?? serviceType.Name)
             );
 
         // Fast path: instance already created while we were entering
@@ -215,7 +215,7 @@ public sealed partial class SvcScope
                 ? registration.Factory(this)
                 : throw new PicoDiException(
                     $"No factory or instance registered for singleton service '{serviceType.FullName}'. "
-                        + SourceGenReminder
+                        + FormatSourceGenReminder(serviceType.FullName ?? serviceType.Name)
                 );
 
         lock (singletonState.SyncLock)
@@ -307,7 +307,10 @@ public sealed partial class SvcScope
                             ? registration.Factory(scope)
                             : throw new PicoDiException(
                                 $"No factory registered for scoped service '{registration.ServiceType.FullName}'. "
-                                    + SourceGenReminder
+                                    + FormatSourceGenReminder(
+                                        registration.ServiceType.FullName
+                                            ?? registration.ServiceType.Name
+                                    )
                             );
 
                     var order = LazyInitializer.EnsureInitialized(ref scope._scopedCreationOrder);

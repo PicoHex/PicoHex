@@ -168,16 +168,76 @@ public sealed class CfgBuilder
         while (await reader.ReadLineAsync(ct) is { } line)
         {
             lineNumber++;
-            if (string.IsNullOrWhiteSpace(line))
+            var trimmed = line.TrimStart();
+            if (trimmed.Length == 0)
                 continue;
-            var separatorIndex = line.IndexOf('=');
+
+            // Skip full-line comments (# or //)
+            if (trimmed[0] == '#' || trimmed.StartsWith("//", StringComparison.Ordinal))
+                continue;
+
+            // Find the '=' separator that is NOT inside quotes
+            var separatorIndex = -1;
+            var inQuote = false;
+            for (var i = 0; i < line.Length; i++)
+            {
+                if (line[i] == '"' && (i == 0 || line[i - 1] != '\\'))
+                    inQuote = !inQuote;
+                else if (line[i] == '=' && !inQuote)
+                {
+                    separatorIndex = i;
+                    break;
+                }
+            }
+
             if (separatorIndex < 0)
             {
                 onFormatError?.Invoke(line, lineNumber);
                 continue;
             }
+
             var key = line[..separatorIndex].Trim();
-            var value = line[(separatorIndex + 1)..].Trim();
+            var rawValue = line[(separatorIndex + 1)..];
+
+            // Strip inline comments from value (# or // preceded by whitespace),
+            // but only outside quoted regions
+            var valueEnd = rawValue.Length;
+            var inValueQuote = false;
+            for (var i = 0; i < rawValue.Length; i++)
+            {
+                // Track quote state to avoid treating # inside quotes as comments
+                if (rawValue[i] == '"' && (i == 0 || rawValue[i - 1] != '\\'))
+                {
+                    inValueQuote = !inValueQuote;
+                    continue;
+                }
+
+                if (inValueQuote)
+                    continue;
+
+                if (rawValue[i] == '#' && (i == 0 || char.IsWhiteSpace(rawValue[i - 1])))
+                {
+                    valueEnd = i;
+                    break;
+                }
+                if (
+                    i + 1 < rawValue.Length
+                    && rawValue[i] == '/'
+                    && rawValue[i + 1] == '/'
+                    && (i == 0 || char.IsWhiteSpace(rawValue[i - 1]))
+                )
+                {
+                    valueEnd = i;
+                    break;
+                }
+            }
+
+            var value = rawValue[..valueEnd].Trim();
+
+            // Strip surrounding quotes if present
+            if (value.Length >= 2 && value[0] == '"' && value[^1] == '"')
+                value = value[1..^1];
+
             newData[key] = value;
         }
         return newData;
