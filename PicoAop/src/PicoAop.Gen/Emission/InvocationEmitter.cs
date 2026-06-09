@@ -9,11 +9,16 @@ internal static class InvocationEmitter
     private const string PlainValueTask = "ValueTask";
 
     public static string EmitInvocationStruct(
-        string safeSvcName, string methodName,
-        IMethodSymbol method, ITypeSymbol interceptorType)
+        string safeSvcName,
+        string methodName,
+        IMethodSymbol method,
+        ITypeSymbol interceptorType
+    )
     {
         var sb = new StringBuilder();
-        var svcFullName = method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var svcFullName = method.ContainingType.ToDisplayString(
+            SymbolDisplayFormat.FullyQualifiedFormat
+        );
         var retType = method.ReturnType;
         var retNamed = retType as INamedTypeSymbol;
         var metaName = retNamed?.MetadataName;
@@ -24,9 +29,13 @@ internal static class InvocationEmitter
             : metaName is TaskOf or ValueTaskOf;
 
         var resultTypeName = hasReturn
-            ? (retNamed?.TypeArguments.Length > 0
-                ? retNamed.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                : retType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            ? (
+                retNamed?.TypeArguments.Length > 0
+                    ? retNamed
+                        .TypeArguments[0]
+                        .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                    : retType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+            )
             : "object";
 
         var structName = BuildStructName(safeSvcName, method, interceptorType);
@@ -38,14 +47,22 @@ internal static class InvocationEmitter
         sb.AppendLine($"    internal readonly {svcFullName} _target;");
         sb.AppendLine($"    internal readonly {intFullName} _i0;");
         foreach (var p in method.Parameters)
-            sb.AppendLine($"    internal readonly {p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} _{p.Name};");
+            sb.AppendLine(
+                $"    internal readonly {p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} _{p.Name};"
+            );
         sb.AppendLine();
 
         // Constructor
         var ctorParams = $"({svcFullName} target, {intFullName} i0";
         if (method.Parameters.Length > 0)
-            ctorParams += ", " + string.Join(", ", method.Parameters.Select(p =>
-                $"{p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {p.Name}"));
+            ctorParams +=
+                ", "
+                + string.Join(
+                    ", ",
+                    method.Parameters.Select(p =>
+                        $"{p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {p.Name}"
+                    )
+                );
         ctorParams += ")";
 
         sb.AppendLine($"    internal {structName}{ctorParams}");
@@ -74,27 +91,43 @@ internal static class InvocationEmitter
             var isOrigValueTask = metaName is PlainValueTask or ValueTaskOf;
 
             if (hasReturn && !isOrigValueTask)
-                sb.AppendLine($"    internal {asyncRet} InvokeTargetAsync() => new(_target.{method.Name}({paramArgs}));");
+                sb.AppendLine(
+                    $"    internal {asyncRet} InvokeTargetAsync() => new(_target.{method.Name}({paramArgs}));"
+                );
             else if (hasReturn)
-                sb.AppendLine($"    internal {asyncRet} InvokeTargetAsync() => _target.{method.Name}({paramArgs});");
+                sb.AppendLine(
+                    $"    internal {asyncRet} InvokeTargetAsync() => _target.{method.Name}({paramArgs});"
+                );
             else if (isOrigValueTask)
-                sb.AppendLine($"    internal {asyncRet} InvokeTargetAsync() => _target.{method.Name}({paramArgs});");
+                sb.AppendLine(
+                    $"    internal {asyncRet} InvokeTargetAsync() => _target.{method.Name}({paramArgs});"
+                );
             else
-                sb.AppendLine($"    internal async {asyncRet} InvokeTargetAsync() => await _target.{method.Name}({paramArgs});");
+                sb.AppendLine(
+                    $"    internal async {asyncRet} InvokeTargetAsync() => await _target.{method.Name}({paramArgs});"
+                );
         }
         else
         {
             if (hasReturn)
-                sb.AppendLine($"    internal {resultTypeName} InvokeTarget() => _target.{method.Name}({paramArgs});");
+                sb.AppendLine(
+                    $"    internal {resultTypeName} InvokeTarget() => _target.{method.Name}({paramArgs});"
+                );
             else
-                sb.AppendLine($"    internal void InvokeTarget() => _target.{method.Name}({paramArgs});");
+                sb.AppendLine(
+                    $"    internal void InvokeTarget() => _target.{method.Name}({paramArgs});"
+                );
         }
 
         sb.AppendLine("}");
         return sb.ToString();
     }
 
-    public static string BuildStructName(string safeSvcName, IMethodSymbol method, ITypeSymbol? interceptorType = null)
+    public static string BuildStructName(
+        string safeSvcName,
+        IMethodSymbol method,
+        ITypeSymbol? interceptorType = null
+    )
     {
         var name = $"Invocation_{safeSvcName}_{method.Name}";
         foreach (var p in method.Parameters)
@@ -107,8 +140,12 @@ internal static class InvocationEmitter
     public static string Sanitize(string name) =>
         name.Replace("global::", "")
             .Replace("::", "_")
-            .Replace('.', '_').Replace('<', '_').Replace('>', '_')
-            .Replace(',', '_').Replace(' ', '_').Replace('+', '_');
+            .Replace('.', '_')
+            .Replace('<', '_')
+            .Replace('>', '_')
+            .Replace(',', '_')
+            .Replace(' ', '_')
+            .Replace('+', '_');
 
     public static string BuildSafeServiceName(ITypeSymbol serviceType) =>
         Sanitize(serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));

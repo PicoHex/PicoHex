@@ -5,7 +5,8 @@ public class AsyncProxyTests : GeneratorTestBase
     [Test]
     public async Task ValueTask_Struct_UsesIInvocationInt()
     {
-        var source = @"
+        var source =
+            @"
 using PicoAop.Abs;
 using System.Threading.Tasks;
 
@@ -39,18 +40,24 @@ static class Reg
     }
 }
 ";
-        await RunGenerator(source, async result =>
-        {
-            var output = GetGeneratedOutput(result);
-            await Assert.That(output.Contains("IInvocation<int>")).IsTrue();
-            await Assert.That(output.Contains("InvokeTargetAsync() => _target.GetAsync()")).IsTrue();
-        });
+        await RunGenerator(
+            source,
+            async result =>
+            {
+                var output = GetGeneratedOutput(result);
+                await Assert.That(output.Contains("IInvocation<int>")).IsTrue();
+                await Assert
+                    .That(output.Contains("InvokeTargetAsync() => _target.GetAsync()"))
+                    .IsTrue();
+            }
+        );
     }
 
     [Test]
     public async Task TaskReturn_Proxy_UsesAsTask()
     {
-        var source = @"
+        var source =
+            @"
 using PicoAop.Abs;
 using System.Threading.Tasks;
 
@@ -84,10 +91,13 @@ static class Reg
     }
 }
 ";
-        await RunGenerator(source, async result =>
-        {
-            var output = GetGeneratedOutput(result);
-            await Assert.That(output.Contains(".AsTask()")).IsTrue();
-        });
+        await RunGenerator(
+            source,
+            async result =>
+            {
+                var output = GetGeneratedOutput(result);
+                await Assert.That(output.Contains(".AsTask()")).IsTrue();
+            }
+        );
     }
 }

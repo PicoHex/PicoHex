@@ -11,14 +11,23 @@ public abstract class InterceptorBase : IInterceptor
         where TInvocation : struct, IInvocation => next(inv);
 
     /// <inheritdoc />
-    public virtual TResult Invoke<TInvocation, TResult>(TInvocation inv, Func<TInvocation, TResult> next)
+    public virtual TResult Invoke<TInvocation, TResult>(
+        TInvocation inv,
+        Func<TInvocation, TResult> next
+    )
         where TInvocation : struct, IInvocation<TResult> => next(inv);
 
     /// <inheritdoc />
-    public virtual ValueTask InvokeAsyncVoid<TInvocation>(TInvocation inv, Func<TInvocation, ValueTask> next)
+    public virtual ValueTask InvokeAsyncVoid<TInvocation>(
+        TInvocation inv,
+        Func<TInvocation, ValueTask> next
+    )
         where TInvocation : struct, IInvocation => next(inv);
 
     /// <inheritdoc />
-    public virtual ValueTask<TResult> InvokeAsync<TInvocation, TResult>(TInvocation inv, Func<TInvocation, ValueTask<TResult>> next)
+    public virtual ValueTask<TResult> InvokeAsync<TInvocation, TResult>(
+        TInvocation inv,
+        Func<TInvocation, ValueTask<TResult>> next
+    )
         where TInvocation : struct, IInvocation<TResult> => next(inv);
 }

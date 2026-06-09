@@ -11,6 +11,7 @@ public interface ICalc
 sealed class Calc : ICalc
 {
     public int Multiply(int x, int y) => x * y;
+
     public string? Name { get; set; } = "calc";
 }
 
@@ -23,10 +24,17 @@ struct Invocation_ICalc_Multiply : IInvocation<int>
     public int Result { get; set; }
 
     public Invocation_ICalc_Multiply(ICalc target, IInterceptor i0, int x, int y)
-    { _target = target; _i0 = i0; _x = x; _y = y; Result = default; }
+    {
+        _target = target;
+        _i0 = i0;
+        _x = x;
+        _y = y;
+        Result = default;
+    }
 
     public string MethodName => "Multiply";
     public Type ServiceType => typeof(ICalc);
+
     internal int InvokeTarget() => _target.Multiply(_x, _y);
 }
 
@@ -37,10 +45,15 @@ struct Invocation_ICalc_Name_Getter : IInvocation<string?>
     public string? Result { get; set; }
 
     public Invocation_ICalc_Name_Getter(ICalc target, IInterceptor i0)
-    { _target = target; _i0 = i0; Result = default; }
+    {
+        _target = target;
+        _i0 = i0;
+        Result = default;
+    }
 
     public string MethodName => "get_Name";
     public Type ServiceType => typeof(ICalc);
+
     internal string? InvokeTarget() => _target.Name;
 }
 
@@ -49,11 +62,16 @@ sealed class Intercepted_ICalc : ICalc
     private readonly ICalc _inner;
     private readonly IInterceptor _i0;
 
-    private static readonly Func<Invocation_ICalc_Multiply, int> s_multiplyNext = static inv => inv.InvokeTarget();
-    private static readonly Func<Invocation_ICalc_Name_Getter, string?> s_get_NameNext = static inv => inv.InvokeTarget();
+    private static readonly Func<Invocation_ICalc_Multiply, int> s_multiplyNext = static inv =>
+        inv.InvokeTarget();
+    private static readonly Func<Invocation_ICalc_Name_Getter, string?> s_get_NameNext =
+        static inv => inv.InvokeTarget();
 
     public Intercepted_ICalc(ICalc inner, IInterceptor i0)
-    { _inner = inner; _i0 = i0; }
+    {
+        _inner = inner;
+        _i0 = i0;
+    }
 
     public int Multiply(int x, int y)
     {
@@ -77,7 +95,10 @@ sealed class CallbackInterceptor : InterceptorBase
     public string? LastMethod;
     public int CallCount;
 
-    public override TResult Invoke<TInvocation, TResult>(TInvocation inv, Func<TInvocation, TResult> next)
+    public override TResult Invoke<TInvocation, TResult>(
+        TInvocation inv,
+        Func<TInvocation, TResult> next
+    )
     {
         CallCount++;
         LastMethod = inv.MethodName;

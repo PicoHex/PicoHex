@@ -5,19 +5,23 @@ internal static partial class InterceptionHelper
     public const string InterceptBy = "InterceptBy";
     public const string AddInterceptor = "AddInterceptor";
 
-    public static bool IsInterceptByInvocation(SyntaxNode node) => node switch
-    {
-        InvocationExpressionSyntax
+    public static bool IsInterceptByInvocation(SyntaxNode node) =>
+        node switch
         {
-            Expression: MemberAccessExpressionSyntax
+            InvocationExpressionSyntax
             {
-                Name: GenericNameSyntax { Identifier.ValueText: InterceptBy }
-            }
-        } => true,
-        _ => false,
-    };
+                Expression: MemberAccessExpressionSyntax
+                {
+                    Name: GenericNameSyntax { Identifier.ValueText: InterceptBy }
+                }
+            } => true,
+            _ => false,
+        };
 
-    public static InterceptionInfo? ExtractInterceptionInfo(GeneratorSyntaxContext ctx, CancellationToken ct)
+    public static InterceptionInfo? ExtractInterceptionInfo(
+        GeneratorSyntaxContext ctx,
+        CancellationToken ct
+    )
     {
         var invocation = (InvocationExpressionSyntax)ctx.Node;
         var semanticModel = ctx.SemanticModel;
@@ -41,7 +45,8 @@ internal static partial class InterceptionHelper
             if (outerMember.Expression is not InvocationExpressionSyntax innerInvocation)
                 return null;
 
-            var innerSymbol = semanticModel.GetSymbolInfo(innerInvocation, ct).Symbol as IMethodSymbol;
+            var innerSymbol =
+                semanticModel.GetSymbolInfo(innerInvocation, ct).Symbol as IMethodSymbol;
             if (innerSymbol == null)
                 return null;
 
@@ -57,7 +62,8 @@ internal static partial class InterceptionHelper
                 return null;
 
             var serviceType = innerSymbol.TypeArguments[0];
-            var implType = innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : serviceType;
+            var implType =
+                innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : serviceType;
 
             return new InterceptionInfo(serviceType, implType, interceptorType);
         }
@@ -67,29 +73,32 @@ internal static partial class InterceptionHelper
 internal record InterceptionInfo(
     ITypeSymbol ServiceType,
     ITypeSymbol ImplType,
-    ITypeSymbol InterceptorType);
+    ITypeSymbol InterceptorType
+);
 
-internal record GlobalInterceptorInfo(
-    ITypeSymbol InterceptorType,
-    ITypeSymbol? InterfaceFilter);
+internal record GlobalInterceptorInfo(ITypeSymbol InterceptorType, ITypeSymbol? InterfaceFilter);
 
 internal static class InterceptionHelperGlobals
 {
     private const string AddInt = "AddInterceptor";
 
-    public static bool IsAddInterceptorInvocation(SyntaxNode node) => node switch
-    {
-        InvocationExpressionSyntax
+    public static bool IsAddInterceptorInvocation(SyntaxNode node) =>
+        node switch
         {
-            Expression: MemberAccessExpressionSyntax
+            InvocationExpressionSyntax
             {
-                Name: GenericNameSyntax { Identifier.ValueText: AddInt }
-            }
-        } => true,
-        _ => false,
-    };
+                Expression: MemberAccessExpressionSyntax
+                {
+                    Name: GenericNameSyntax { Identifier.ValueText: AddInt }
+                }
+            } => true,
+            _ => false,
+        };
 
-    public static GlobalInterceptorInfo? ExtractGlobalInterceptorInfo(GeneratorSyntaxContext ctx, CancellationToken ct)
+    public static GlobalInterceptorInfo? ExtractGlobalInterceptorInfo(
+        GeneratorSyntaxContext ctx,
+        CancellationToken ct
+    )
     {
         var invocation = (InvocationExpressionSyntax)ctx.Node;
         var semanticModel = ctx.SemanticModel;

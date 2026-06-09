@@ -2,31 +2,36 @@ namespace PicoAop.Gen;
 
 internal static class InterceptorSyntax
 {
-    public static bool IsInterceptByInvocation(SyntaxNode node) => node switch
-    {
-        InvocationExpressionSyntax
+    public static bool IsInterceptByInvocation(SyntaxNode node) =>
+        node switch
         {
-            Expression: MemberAccessExpressionSyntax
+            InvocationExpressionSyntax
             {
-                Name: GenericNameSyntax { Identifier.ValueText: PicoAopNames.InterceptBy }
-            }
-        } => true,
-        _ => false,
-    };
+                Expression: MemberAccessExpressionSyntax
+                {
+                    Name: GenericNameSyntax { Identifier.ValueText: PicoAopNames.InterceptBy }
+                }
+            } => true,
+            _ => false,
+        };
 
-    public static bool IsAddInterceptorInvocation(SyntaxNode node) => node switch
-    {
-        InvocationExpressionSyntax
+    public static bool IsAddInterceptorInvocation(SyntaxNode node) =>
+        node switch
         {
-            Expression: MemberAccessExpressionSyntax
+            InvocationExpressionSyntax
             {
-                Name: GenericNameSyntax { Identifier.ValueText: PicoAopNames.AddInterceptor }
-            }
-        } => true,
-        _ => false,
-    };
+                Expression: MemberAccessExpressionSyntax
+                {
+                    Name: GenericNameSyntax { Identifier.ValueText: PicoAopNames.AddInterceptor }
+                }
+            } => true,
+            _ => false,
+        };
 
-    public static InterceptionInfo? ExtractInterceptionInfo(GeneratorSyntaxContext ctx, CancellationToken ct)
+    public static InterceptionInfo? ExtractInterceptionInfo(
+        GeneratorSyntaxContext ctx,
+        CancellationToken ct
+    )
     {
         var invocation = (InvocationExpressionSyntax)ctx.Node;
         var semanticModel = ctx.SemanticModel;
@@ -50,7 +55,8 @@ internal static class InterceptorSyntax
             if (outerMember.Expression is not InvocationExpressionSyntax innerInvocation)
                 return null;
 
-            var innerSymbol = semanticModel.GetSymbolInfo(innerInvocation, ct).Symbol as IMethodSymbol;
+            var innerSymbol =
+                semanticModel.GetSymbolInfo(innerInvocation, ct).Symbol as IMethodSymbol;
             if (innerSymbol == null)
                 return null;
 
@@ -66,13 +72,22 @@ internal static class InterceptorSyntax
                 return null;
 
             var serviceType = innerSymbol.TypeArguments[0];
-            var implType = innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : null;
+            var implType =
+                innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : null;
 
-            return new InterceptionInfo(serviceType, interceptorType, implType, HasMultipleRegisters: false);
+            return new InterceptionInfo(
+                serviceType,
+                interceptorType,
+                implType,
+                HasMultipleRegisters: false
+            );
         }
     }
 
-    public static GlobalInterceptorInfo? ExtractGlobalInterceptorInfo(GeneratorSyntaxContext ctx, CancellationToken ct)
+    public static GlobalInterceptorInfo? ExtractGlobalInterceptorInfo(
+        GeneratorSyntaxContext ctx,
+        CancellationToken ct
+    )
     {
         var invocation = (InvocationExpressionSyntax)ctx.Node;
         var semanticModel = ctx.SemanticModel;

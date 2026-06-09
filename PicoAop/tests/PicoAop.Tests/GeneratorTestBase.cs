@@ -6,21 +6,30 @@ namespace PicoAop.Tests;
 
 public abstract class GeneratorTestBase
 {
-    protected static async Task RunGenerator(string source, Func<GeneratorDriverRunResult, Task>? assert = null)
+    protected static async Task RunGenerator(
+        string source,
+        Func<GeneratorDriverRunResult, Task>? assert = null
+    )
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(source);
-        var compilation = CSharpCompilation.Create("test",
+        var compilation = CSharpCompilation.Create(
+            "test",
             [syntaxTree],
             references:
             [
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IInterceptor).Assembly.Location),
             ],
-            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
         var generator = new InterceptorGenerator();
         var csharpDriver = CSharpGeneratorDriver.Create(generator);
-        var driver = csharpDriver.RunGeneratorsAndUpdateCompilation(compilation, out var updatedComp, out var compileDiags);
+        var driver = csharpDriver.RunGeneratorsAndUpdateCompilation(
+            compilation,
+            out var updatedComp,
+            out var compileDiags
+        );
 
         foreach (var d in compileDiags.Where(d => d.Severity == DiagnosticSeverity.Error))
             Console.Error.WriteLine($"COMPILE: {d.Id} {d.GetMessage()}");
@@ -36,7 +45,6 @@ public abstract class GeneratorTestBase
             foreach (var e in errors)
                 Console.WriteLine($"DIAG: {e.Id} {e.GetMessage()}");
         }
-
     }
 
     protected static string GetGeneratedOutput(GeneratorDriverRunResult result)
@@ -47,14 +55,16 @@ public abstract class GeneratorTestBase
     protected static string RunGeneratorAndGetOutput(string source)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(source);
-        var compilation = CSharpCompilation.Create("test",
+        var compilation = CSharpCompilation.Create(
+            "test",
             new[] { syntaxTree },
             new[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IInterceptor).Assembly.Location),
             },
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
         var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
         driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out _);
@@ -65,14 +75,16 @@ public abstract class GeneratorTestBase
     protected static List<Diagnostic> RunAndGetDiagnostics(string source)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(source);
-        var compilation = CSharpCompilation.Create("test",
+        var compilation = CSharpCompilation.Create(
+            "test",
             new[] { syntaxTree },
             new[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IInterceptor).Assembly.Location),
             },
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
         var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
         driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);

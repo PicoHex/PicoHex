@@ -99,5 +99,4 @@
   <Folder Name="/PicoMediator/samples/">
     <Project Path="PicoMediator/samples/PicoMediator.Sample/PicoMediator.Sample.csproj" />
   </Folder>
-
 </Solution>

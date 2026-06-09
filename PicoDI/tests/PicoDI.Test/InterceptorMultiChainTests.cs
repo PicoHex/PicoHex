@@ -10,7 +10,8 @@ public class InterceptorMultiChainTests
     [Test]
     public async Task PicoDiGen_WithMultiChain_DoesNotCrash()
     {
-        var source = @"
+        var source =
+            @"
 using PicoDI.Abs;
 
 interface ISvc { void Do(); }
@@ -29,14 +30,16 @@ static class Reg
 class MyInterceptor { }
 ";
         var tree = CSharpSyntaxTree.ParseText(source);
-        var compilation = CSharpCompilation.Create("test",
+        var compilation = CSharpCompilation.Create(
+            "test",
             new[] { tree },
             new[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ISvcContainer).Assembly.Location),
             },
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
         var generator = new ServiceRegistrationGenerator();
         var driver = CSharpGeneratorDriver.Create(generator);

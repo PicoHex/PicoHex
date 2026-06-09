@@ -31,6 +31,9 @@ public interface IInterceptor
     /// <summary>
     /// Intercepts an asynchronous method call returning <typeparamref name="TResult"/>.
     /// </summary>
-    ValueTask<TResult> InvokeAsync<TInvocation, TResult>(TInvocation inv, Func<TInvocation, ValueTask<TResult>> next)
+    ValueTask<TResult> InvokeAsync<TInvocation, TResult>(
+        TInvocation inv,
+        Func<TInvocation, ValueTask<TResult>> next
+    )
         where TInvocation : struct, IInvocation<TResult>;
 }

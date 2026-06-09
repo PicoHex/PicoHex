@@ -6,11 +6,13 @@ internal record InterceptionInfo(
     ITypeSymbol ServiceType,
     ITypeSymbol InterceptorType,
     ITypeSymbol? ImplType,
-    bool HasMultipleRegisters) : IEquatable<InterceptionInfo>
+    bool HasMultipleRegisters
+) : IEquatable<InterceptionInfo>
 {
     public virtual bool Equals(InterceptionInfo? other)
     {
-        if (other is null) return false;
+        if (other is null)
+            return false;
         return SymbolEqualityComparer.Default.Equals(ServiceType, other.ServiceType)
             && SymbolEqualityComparer.Default.Equals(InterceptorType, other.InterceptorType);
     }
@@ -22,12 +24,11 @@ internal record InterceptionInfo(
         {
             var hash = 17;
             hash = (hash * 23) + (ServiceType != null ? comparer.GetHashCode(ServiceType) : 0);
-            hash = (hash * 23) + (InterceptorType != null ? comparer.GetHashCode(InterceptorType) : 0);
+            hash =
+                (hash * 23) + (InterceptorType != null ? comparer.GetHashCode(InterceptorType) : 0);
             return hash;
         }
     }
 }
 
-internal record GlobalInterceptorInfo(
-    ITypeSymbol InterceptorType,
-    ITypeSymbol? InterfaceFilter);
+internal record GlobalInterceptorInfo(ITypeSymbol InterceptorType, ITypeSymbol? InterfaceFilter);

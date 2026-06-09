@@ -7,7 +7,8 @@ namespace PicoAop.Tests;
 
 public class GeneratorDiagnosticTests
 {
-    private const string Preamble = @"
+    private const string Preamble =
+        @"
 using PicoAop.Abs;
 
 class MyInterceptor : InterceptorBase {}
@@ -26,7 +27,9 @@ static class Ext
     [Test]
     public async Task SealedType_ReportsPico101()
     {
-        var source = Preamble + @"
+        var source =
+            Preamble
+            + @"
 sealed class SealedSvc
 {
     public void Do() {}
@@ -53,7 +56,9 @@ static class Reg
     [Test]
     public async Task RefOutMethod_ReportsPico110()
     {
-        var source = Preamble + @"
+        var source =
+            Preamble
+            + @"
 interface IHasRef
 {
     void Do(ref int x);
@@ -82,17 +87,21 @@ static class Reg
         await Assert.That(hasPico110).IsTrue();
     }
 
-    private static (List<Diagnostic> Diagnostics, ImmutableArray<SyntaxTree> Trees) Run(string source)
+    private static (List<Diagnostic> Diagnostics, ImmutableArray<SyntaxTree> Trees) Run(
+        string source
+    )
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(source);
-        var compilation = CSharpCompilation.Create("test",
+        var compilation = CSharpCompilation.Create(
+            "test",
             new[] { syntaxTree },
             new[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IInterceptor).Assembly.Location),
             },
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
         var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
         driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diags);

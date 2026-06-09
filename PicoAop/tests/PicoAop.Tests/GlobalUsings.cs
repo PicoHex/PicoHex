@@ -1,4 +1,5 @@
 global using System.Collections.Immutable;
+global using System.Linq;
 global using System.Runtime.CompilerServices;
 global using System.Threading.Tasks;
 global using Microsoft.CodeAnalysis;
@@ -10,4 +11,3 @@ global using PicoDI.Abs;
 global using TUnit.Assertions;
 global using TUnit.Assertions.Extensions;
 global using TUnit.Core;
-global using System.Linq;

@@ -3,7 +3,6 @@ namespace PicoAop.Tests;
 /// <summary>
 /// Simulates what PicoAop.Gen will generate: per-method Invocation struct + proxy class.
 /// </summary>
-
 #region Simulated SG-generated types
 
 public interface ICalc
@@ -24,7 +23,13 @@ struct Invocation_ICalc_Add : IInvocation<int>
     internal readonly int _b;
 
     public Invocation_ICalc_Add(ICalc target, IInterceptor i0, int a, int b)
-    { _target = target; _i0 = i0; _a = a; _b = b; Result = default; }
+    {
+        _target = target;
+        _i0 = i0;
+        _a = a;
+        _b = b;
+        Result = default;
+    }
 
     public string MethodName => "Add";
     public Type ServiceType => typeof(ICalc);
@@ -37,10 +42,14 @@ sealed class Intercepted_ICalc : ICalc
 {
     private readonly ICalc _inner;
     private readonly IInterceptor _i0;
-    private static readonly Func<Invocation_ICalc_Add, int> s_addNext = static inv => inv.InvokeTarget();
+    private static readonly Func<Invocation_ICalc_Add, int> s_addNext = static inv =>
+        inv.InvokeTarget();
 
     public Intercepted_ICalc(ICalc inner, IInterceptor i0)
-    { _inner = inner; _i0 = i0; }
+    {
+        _inner = inner;
+        _i0 = i0;
+    }
 
     public int Add(int a, int b)
     {
@@ -84,7 +93,10 @@ sealed class CountingInterceptor : InterceptorBase
 {
     public int CallCount;
 
-    public override TResult Invoke<TInvocation, TResult>(TInvocation inv, Func<TInvocation, TResult> next)
+    public override TResult Invoke<TInvocation, TResult>(
+        TInvocation inv,
+        Func<TInvocation, TResult> next
+    )
     {
         CallCount++;
         return next(inv);

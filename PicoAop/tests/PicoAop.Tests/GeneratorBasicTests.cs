@@ -5,7 +5,8 @@ public class GeneratorBasicTests : GeneratorTestBase
     [Test]
     public async Task Generator_ProducesInvocationStruct()
     {
-        var source = @"
+        var source =
+            @"
 using PicoAop.Abs;
 
 interface IMyService
@@ -38,17 +39,23 @@ static class Registration
     }
 }
 ";
-        await RunGenerator(source, async result =>
-        {
-            var output = GetGeneratedOutput(result);
-            await Assert.That(output.Contains("Invocation_IMyService_GetValue_MyInterceptor")).IsTrue();
-        });
+        await RunGenerator(
+            source,
+            async result =>
+            {
+                var output = GetGeneratedOutput(result);
+                await Assert
+                    .That(output.Contains("Invocation_IMyService_GetValue_MyInterceptor"))
+                    .IsTrue();
+            }
+        );
     }
 
     [Test]
     public async Task MultiChain_InterceptBy_DoesNotReportPico101()
     {
-        var source = @"
+        var source =
+            @"
 using PicoAop.Abs;
 
 interface IMyService

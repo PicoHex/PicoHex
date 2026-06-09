@@ -5,7 +5,8 @@ public class GlobalInterceptorTests : GeneratorTestBase
     [Test]
     public async Task GlobalInterceptor_MergesWithPerServiceInt()
     {
-        var source = @"
+        var source =
+            @"
 using PicoAop.Abs;
 
 interface ISvc { int Get(); }
@@ -30,13 +31,16 @@ static class R
     }
 }
 ";
-        await RunGenerator(source, async result =>
-        {
-            var output = GetGeneratedOutput(result);
-            await Assert.That(output.Contains("_i0")).IsTrue();
-            await Assert.That(output.Contains("_i1")).IsTrue();
-            await Assert.That(output.Contains("PerSvcInt")).IsTrue();
-            await Assert.That(output.Contains("GlobalInt")).IsTrue();
-        });
+        await RunGenerator(
+            source,
+            async result =>
+            {
+                var output = GetGeneratedOutput(result);
+                await Assert.That(output.Contains("_i0")).IsTrue();
+                await Assert.That(output.Contains("_i1")).IsTrue();
+                await Assert.That(output.Contains("PerSvcInt")).IsTrue();
+                await Assert.That(output.Contains("GlobalInt")).IsTrue();
+            }
+        );
     }
 }

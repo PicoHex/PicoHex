@@ -9,8 +9,14 @@ public interface IAsyncSvc
 sealed class AsyncSvc : IAsyncSvc
 {
     public int Count;
+
     public Task<int> GetCountAsync() => Task.FromResult(Count);
-    public ValueTask ResetAsync() { Count = 0; return default; }
+
+    public ValueTask ResetAsync()
+    {
+        Count = 0;
+        return default;
+    }
 }
 
 // Simulated SG-generated types — TResult is the UNWRAPPED type
@@ -21,7 +27,11 @@ struct Invocation_IAsyncSvc_GetCountAsync : IInvocation<int>
     internal IInterceptor _i0;
 
     public Invocation_IAsyncSvc_GetCountAsync(IAsyncSvc target, IInterceptor i0)
-    { _target = target; _i0 = i0; Result = default; }
+    {
+        _target = target;
+        _i0 = i0;
+        Result = default;
+    }
 
     public string MethodName => "GetCountAsync";
     public Type ServiceType => typeof(IAsyncSvc);
@@ -36,7 +46,10 @@ struct Invocation_IAsyncSvc_ResetAsync : IInvocation
     internal IInterceptor _i0;
 
     public Invocation_IAsyncSvc_ResetAsync(IAsyncSvc target, IInterceptor i0)
-    { _target = target; _i0 = i0; }
+    {
+        _target = target;
+        _i0 = i0;
+    }
 
     public string MethodName => "ResetAsync";
     public Type ServiceType => typeof(IAsyncSvc);
@@ -49,11 +62,16 @@ sealed class Intercepted_IAsyncSvc : IAsyncSvc
     private readonly IAsyncSvc _inner;
     private readonly IInterceptor _i0;
 
-    private static readonly Func<Invocation_IAsyncSvc_GetCountAsync, ValueTask<int>> s_getNext = static inv => inv.InvokeTargetAsync();
-    private static readonly Func<Invocation_IAsyncSvc_ResetAsync, ValueTask> s_resetNext = static inv => inv.InvokeTargetAsync();
+    private static readonly Func<Invocation_IAsyncSvc_GetCountAsync, ValueTask<int>> s_getNext =
+        static inv => inv.InvokeTargetAsync();
+    private static readonly Func<Invocation_IAsyncSvc_ResetAsync, ValueTask> s_resetNext =
+        static inv => inv.InvokeTargetAsync();
 
     public Intercepted_IAsyncSvc(IAsyncSvc inner, IInterceptor i0)
-    { _inner = inner; _i0 = i0; }
+    {
+        _inner = inner;
+        _i0 = i0;
+    }
 
     public Task<int> GetCountAsync()
     {
@@ -72,11 +90,23 @@ sealed class LoggingAsyncInterceptor : InterceptorBase
 {
     public int CallCount;
 
-    public override ValueTask<TResult> InvokeAsync<TInvocation, TResult>(TInvocation inv, Func<TInvocation, ValueTask<TResult>> next)
-    { CallCount++; return next(inv); }
+    public override ValueTask<TResult> InvokeAsync<TInvocation, TResult>(
+        TInvocation inv,
+        Func<TInvocation, ValueTask<TResult>> next
+    )
+    {
+        CallCount++;
+        return next(inv);
+    }
 
-    public override ValueTask InvokeAsyncVoid<TInvocation>(TInvocation inv, Func<TInvocation, ValueTask> next)
-    { CallCount++; return next(inv); }
+    public override ValueTask InvokeAsyncVoid<TInvocation>(
+        TInvocation inv,
+        Func<TInvocation, ValueTask> next
+    )
+    {
+        CallCount++;
+        return next(inv);
+    }
 }
 
 public class AsyncInterceptorTests

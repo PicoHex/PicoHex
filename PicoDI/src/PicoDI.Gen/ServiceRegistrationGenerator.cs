@@ -58,13 +58,17 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         var interceptionInvocations = context
             .SyntaxProvider.CreateSyntaxProvider(
                 predicate: static (node, _) => InterceptionHelper.IsInterceptByInvocation(node),
-                transform: static (ctx, ct) => InterceptionHelper.ExtractInterceptionInfo(ctx, ct))
+                transform: static (ctx, ct) => InterceptionHelper.ExtractInterceptionInfo(ctx, ct)
+            )
             .Where(static x => x is not null);
 
         var globalInterceptorInvocations = context
             .SyntaxProvider.CreateSyntaxProvider(
-                predicate: static (node, _) => InterceptionHelperGlobals.IsAddInterceptorInvocation(node),
-                transform: static (ctx, ct) => InterceptionHelperGlobals.ExtractGlobalInterceptorInfo(ctx, ct))
+                predicate: static (node, _) =>
+                    InterceptionHelperGlobals.IsAddInterceptorInvocation(node),
+                transform: static (ctx, ct) =>
+                    InterceptionHelperGlobals.ExtractGlobalInterceptorInfo(ctx, ct)
+            )
             .Where(static x => x is not null);
 
         var combinedSources = registerInvocations
@@ -81,7 +85,19 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             combinedSources,
             static (spc, source) =>
             {
-                var (((((((invocations, openGenerics), closedUsages), closedDeclarations), ctorClosedGenerics), interceptionInfos), globalInterceptorInfos), compilation) = source;
+                var (
+                    (
+                        (
+                            (
+                                (((invocations, openGenerics), closedUsages), closedDeclarations),
+                                ctorClosedGenerics
+                            ),
+                            interceptionInfos
+                        ),
+                        globalInterceptorInfos
+                    ),
+                    compilation
+                ) = source;
 
                 Execute(
                     invocations,
@@ -133,17 +149,22 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
 
         // Interception: emit overrides for services with InterceptBy<T>() / AddInterceptor<T>()
         // Only emit when PicoAop.Abs is referenced in the compilation.
-        var hasPicoAop = compilation.References.Any(r =>
-            (r.Display ?? "").Contains("PicoAop.Abs"));
+        var hasPicoAop = compilation.References.Any(r => (r.Display ?? "").Contains("PicoAop.Abs"));
         if (hasPicoAop)
-            EmitInterceptorOverrides(interceptionInfos, globalInterceptorInfos, normalizedRegistrations, context);
+            EmitInterceptorOverrides(
+                interceptionInfos,
+                globalInterceptorInfos,
+                normalizedRegistrations,
+                context
+            );
     }
 
     private static void EmitInterceptorOverrides(
         ImmutableArray<InterceptionInfo?> interceptionInfos,
         ImmutableArray<GlobalInterceptorInfo?> globalInterceptorInfos,
         RegistrationSemanticBatch normalizedRegistrations,
-        SourceProductionContext context)
+        SourceProductionContext context
+    )
     {
         var allInfos = interceptionInfos.OfType<InterceptionInfo>().ToList();
         var allGlobals = globalInterceptorInfos.OfType<GlobalInterceptorInfo>().ToList();
@@ -156,15 +177,22 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         var globalInts = new List<ITypeSymbol>();
         foreach (var g in allGlobals)
         {
-            if (g.InterceptorType != null && !globalInts.Any(i => comparer.Equals(i, g.InterceptorType)))
+            if (
+                g.InterceptorType != null
+                && !globalInts.Any(i => comparer.Equals(i, g.InterceptorType))
+            )
                 globalInts.Add(g.InterceptorType);
         }
 
         // Merge by service type
-        var serviceMap = new Dictionary<ITypeSymbol, (ITypeSymbol ImplType, List<ITypeSymbol> Interceptors)>(comparer);
+        var serviceMap = new Dictionary<
+            ITypeSymbol,
+            (ITypeSymbol ImplType, List<ITypeSymbol> Interceptors)
+        >(comparer);
         foreach (var info in allInfos)
         {
-            if (info.ServiceType == null) continue;
+            if (info.ServiceType == null)
+                continue;
             if (!serviceMap.TryGetValue(info.ServiceType, out var entry))
             {
                 entry = (info.ImplType ?? info.ServiceType, new List<ITypeSymbol>());
@@ -210,13 +238,19 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
 
             var intSuffix = string.Join("_", interceptors.Select(t => SanitizeForWrap(t.Name)));
             var wrapperName = $"Wrap_{safeSvc}_{intSuffix}";
-            var getServiceArgs = string.Join(", ", interceptors.Select(t =>
-                $"scope.GetService<{t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>()"));
+            var getServiceArgs = string.Join(
+                ", ",
+                interceptors.Select(t =>
+                    $"scope.GetService<{t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>()"
+                )
+            );
 
             sb.AppendLine("        container.Register(");
             sb.AppendLine("            SvcDescriptor.Create(");
             sb.AppendLine($"                typeof({svcFullName}),");
-            sb.AppendLine($"                static scope => global::PicoAop.Generated.PicoAopWrappers.{wrapperName}(");
+            sb.AppendLine(
+                $"                static scope => global::PicoAop.Generated.PicoAopWrappers.{wrapperName}("
+            );
             sb.AppendLine($"                    scope.GetService<{implFullName}>(),");
             sb.AppendLine($"                    {getServiceArgs}),");
             sb.AppendLine("                SvcLifetime.Scoped));");
@@ -232,18 +266,25 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("    {");
         sb.AppendLine("        SvcContainerAutoConfiguration.RegisterConfigurator(");
         sb.AppendLine("            \"intercepted::PicoDI\",");
-        sb.AppendLine("            static container => InterceptedServiceRegistrations.Configure((SvcContainer)container));");
+        sb.AppendLine(
+            "            static container => InterceptedServiceRegistrations.Configure((SvcContainer)container));"
+        );
         sb.AppendLine("    }");
         sb.AppendLine("}");
 
-        context.AddSource("PicoDI.InterceptedRegistrations.g.cs",
-            SourceText.From(sb.ToString(), Encoding.UTF8));
+        context.AddSource(
+            "PicoDI.InterceptedRegistrations.g.cs",
+            SourceText.From(sb.ToString(), Encoding.UTF8)
+        );
     }
 
     private static string SanitizeForWrap(string name) =>
         name.Replace("global::", "")
-            .Replace(".", "_").Replace("<", "_").Replace(">", "")
-            .Replace(", ", "_").Replace(",", "_");
+            .Replace(".", "_")
+            .Replace("<", "_")
+            .Replace(">", "")
+            .Replace(", ", "_")
+            .Replace(",", "_");
 
     private static void ReportRegistrationDiagnostics(
         IEnumerable<Diagnostic> diagnostics,

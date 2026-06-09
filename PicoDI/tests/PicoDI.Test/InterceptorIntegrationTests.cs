@@ -11,7 +11,8 @@ public class InterceptorIntegrationTests
     [Test]
     public async Task PicoDiGenerator_WithInterception_DoesNotThrow()
     {
-        var source = @"
+        var source =
+            @"
 using PicoDI.Abs;
 
 interface ISvc { void Do(); }
@@ -33,14 +34,16 @@ static class Reg
 }
 ";
         var syntaxTree = CSharpSyntaxTree.ParseText(source);
-        var compilation = CSharpCompilation.Create("test",
+        var compilation = CSharpCompilation.Create(
+            "test",
             new[] { syntaxTree },
             new[]
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ISvcContainer).Assembly.Location),
             },
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
         var generator = new ServiceRegistrationGenerator();
         var driver = CSharpGeneratorDriver.Create(generator);
