@@ -66,7 +66,7 @@ await using var scope = container.CreateScope();
 var svc = scope.GetService<IService>();
 ```
 
-PicoDI also supports **compile-time AOP/interceptors** — chain `.InterceptBy<TInterceptor>()` after `Register()` and the source generator emits decorator classes at build time. rebuilt with zero-allocation — the next-generation AOT-first interception engine with zero-allocation invocation structs. [Learn more →](PicoAop/README.md)
+PicoDI also supports **compile-time AOP/interceptors** — chain `.InterceptBy<TInterceptor>()` after `Register()` and **PicoAop**'s source generator emits zero-allocation Invocation structs + proxy classes at build time. [Learn more →](PicoAop/README.md)
 
 ### Just AOP
 
@@ -139,11 +139,9 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 | **PicoDI** | Zero-reflection DI container |
 | **PicoDI.Abs** | DI abstractions |
 | **PicoDI.Gen** | Compile-time registration source generator |
-| **PicoAop.Abs** | Interceptor abstractions (legacy) |
-| **PicoAop.Gen** | Decorator + invocation source generator (legacy) |
-| **PicoAop.DI** | DI integration for PicoAop (legacy) |
-| **PicoAop.Abs** | **Next-gen** AOT-first interceptor abstractions — zero boxing, zero allocation |
+| **PicoAop.Abs** | AOT-first interceptor abstractions — zero boxing, zero allocation |
 | **PicoAop.Gen** | Compile-time Invocation struct + proxy class generation |
+| **PicoAop.DI** | DI integration for PicoAop — InterceptBy/AddInterceptor markers |
 | **PicoCfg** | Async-first configuration |
 | **PicoCfg.Abs** | Configuration abstractions |
 | **PicoCfg.Gen** | Typed binding source generator |
@@ -174,8 +172,7 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 ## Learn More
 
 - [PicoDI](PicoDI/README.md) — DI container, registration, source generator
-- [PicoAop](PicoAop/README.md) — Compile-time decorator generation (legacy)
-- [PicoAot](PicoAop/README.md) — Next-gen AOT-first interception (supersedes PicoAop)
+- [PicoAop](PicoAop/README.md) — AOT-first interception (zero-allocation Invocation structs + proxy generation)
 - [PicoCfg](PicoCfg/README.md) — Configuration providers, binding, file watching
 - [PicoLog](PicoLog/README.md) — Structured logging, sinks, message templates
 - [PicoMediator](PicoMediator/README.md) — Request/notification dispatch
