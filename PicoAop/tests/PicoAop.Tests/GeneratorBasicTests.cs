@@ -41,7 +41,7 @@ static class Registration
         await RunGenerator(source, async result =>
         {
             var output = GetGeneratedOutput(result);
-            await Assert.That(output.Contains("Invocation_IMyService_GetValue")).IsTrue();
+            await Assert.That(output.Contains("Invocation_IMyService_GetValue_MyInterceptor")).IsTrue();
         });
     }
 

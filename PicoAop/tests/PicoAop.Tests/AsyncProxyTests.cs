@@ -43,8 +43,7 @@ static class Reg
         {
             var output = GetGeneratedOutput(result);
             await Assert.That(output.Contains("IInvocation<int>")).IsTrue();
-            // Proxy method returns ValueTask<int> directly (not .AsTask())
-            await Assert.That(output.Contains("ValueTask<int> GetAsync()")).IsTrue();
+            await Assert.That(output.Contains("InvokeTargetAsync() => _target.GetAsync()")).IsTrue();
         });
     }
 

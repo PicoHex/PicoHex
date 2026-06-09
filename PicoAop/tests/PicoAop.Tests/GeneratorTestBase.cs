@@ -6,7 +6,7 @@ namespace PicoAop.Tests;
 
 public abstract class GeneratorTestBase
 {
-    protected static Task RunGenerator(string source, Func<GeneratorDriverRunResult, Task>? assert = null)
+    protected static async Task RunGenerator(string source, Func<GeneratorDriverRunResult, Task>? assert = null)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(source);
         var compilation = CSharpCompilation.Create("test",
@@ -19,19 +19,24 @@ public abstract class GeneratorTestBase
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         var generator = new InterceptorGenerator();
-        var driver = CSharpGeneratorDriver.Create(generator);
-        driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
+        var csharpDriver = CSharpGeneratorDriver.Create(generator);
+        var driver = csharpDriver.RunGeneratorsAndUpdateCompilation(compilation, out var updatedComp, out var compileDiags);
+
+        foreach (var d in compileDiags.Where(d => d.Severity == DiagnosticSeverity.Error))
+            Console.Error.WriteLine($"COMPILE: {d.Id} {d.GetMessage()}");
+
+        Console.Error.WriteLine($"Trees: {driver.GetRunResult().GeneratedTrees.Length}");
+        Console.Error.WriteLine($"Results: {driver.GetRunResult().Results.Length}");
 
         if (assert is not null)
-            assert(driver.GetRunResult());
+            await assert(driver.GetRunResult());
         else
         {
-            var errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+            var errors = compileDiags.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
             foreach (var e in errors)
                 Console.WriteLine($"DIAG: {e.Id} {e.GetMessage()}");
         }
 
-        return Task.CompletedTask;
     }
 
     protected static string GetGeneratedOutput(GeneratorDriverRunResult result)
