@@ -16,17 +16,11 @@
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
       <Private>false</Private>
     </ProjectReference>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoCfg" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoCfg" />
     <PackageReference Include="PicoDI.Abs" />
   </ItemGroup>
 
