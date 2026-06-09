@@ -61,6 +61,12 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 transform: static (ctx, ct) => InterceptionHelper.ExtractInterceptionInfo(ctx, ct))
             .Where(static x => x is not null);
 
+        var globalInterceptorInvocations = context
+            .SyntaxProvider.CreateSyntaxProvider(
+                predicate: static (node, _) => InterceptionHelperGlobals.IsAddInterceptorInvocation(node),
+                transform: static (ctx, ct) => InterceptionHelperGlobals.ExtractGlobalInterceptorInfo(ctx, ct))
+            .Where(static x => x is not null);
+
         var combinedSources = registerInvocations
             .Collect()
             .Combine(openGenericRegistrations.Collect())
@@ -68,22 +74,14 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             .Combine(closedGenericDeclarations.Collect())
             .Combine(closedGenericCtorParams.Collect())
             .Combine(interceptionInvocations.Collect())
+            .Combine(globalInterceptorInvocations.Collect())
             .Combine(context.CompilationProvider);
 
         context.RegisterSourceOutput(
             combinedSources,
             static (spc, source) =>
             {
-                var (
-                    (
-                        (
-                            (((invocations, openGenerics), closedUsages), closedDeclarations),
-                            ctorClosedGenerics
-                        ),
-                        interceptionInfos
-                    ),
-                    compilation
-                ) = source;
+                var (((((((invocations, openGenerics), closedUsages), closedDeclarations), ctorClosedGenerics), interceptionInfos), globalInterceptorInfos), compilation) = source;
 
                 Execute(
                     invocations,
@@ -92,6 +90,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                     closedDeclarations,
                     ctorClosedGenerics,
                     interceptionInfos,
+                    globalInterceptorInfos,
                     compilation,
                     spc
                 );
@@ -106,6 +105,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         ImmutableArray<ITypeSymbol?> closedGenericDeclarations,
         ImmutableArray<ITypeSymbol> ctorClosedGenerics,
         ImmutableArray<InterceptionInfo?> interceptionInfos,
+        ImmutableArray<GlobalInterceptorInfo?> globalInterceptorInfos,
         Compilation compilation,
         SourceProductionContext context
     )
@@ -131,25 +131,36 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         ReportCircularDependencyDiagnostics(generationPlan.Registrations, context);
         ServiceRegistrationSourceEmitter.EmitSources(generationPlan, compilation, context);
 
-        // Interception: emit overrides for services with InterceptBy<T>()
+        // Interception: emit overrides for services with InterceptBy<T>() / AddInterceptor<T>()
         // Only emit when PicoAop.Abs is referenced in the compilation.
         var hasPicoAop = compilation.References.Any(r =>
             (r.Display ?? "").Contains("PicoAop.Abs"));
         if (hasPicoAop)
-            EmitInterceptorOverrides(interceptionInfos, normalizedRegistrations, context);
+            EmitInterceptorOverrides(interceptionInfos, globalInterceptorInfos, normalizedRegistrations, context);
     }
 
     private static void EmitInterceptorOverrides(
         ImmutableArray<InterceptionInfo?> interceptionInfos,
+        ImmutableArray<GlobalInterceptorInfo?> globalInterceptorInfos,
         RegistrationSemanticBatch normalizedRegistrations,
         SourceProductionContext context)
     {
         var allInfos = interceptionInfos.OfType<InterceptionInfo>().ToList();
-        if (allInfos.Count == 0)
+        var allGlobals = globalInterceptorInfos.OfType<GlobalInterceptorInfo>().ToList();
+        if (allInfos.Count == 0 && allGlobals.Count == 0)
             return;
 
-        // Merge by service type (same approach as PicoAop.Gen)
         var comparer = SymbolEqualityComparer.Default;
+
+        // Global interceptors list
+        var globalInts = new List<ITypeSymbol>();
+        foreach (var g in allGlobals)
+        {
+            if (g.InterceptorType != null && !globalInts.Any(i => comparer.Equals(i, g.InterceptorType)))
+                globalInts.Add(g.InterceptorType);
+        }
+
+        // Merge by service type
         var serviceMap = new Dictionary<ITypeSymbol, (ITypeSymbol ImplType, List<ITypeSymbol> Interceptors)>(comparer);
         foreach (var info in allInfos)
         {
@@ -162,6 +173,19 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             if (!entry.Interceptors.Any(i => comparer.Equals(i, info.InterceptorType)))
                 entry.Interceptors.Add(info.InterceptorType);
         }
+
+        // Apply globals to all services
+        foreach (var ints in serviceMap.Values.Select(e => e.Interceptors))
+        {
+            foreach (var g in globalInts)
+            {
+                if (!ints.Any(i => comparer.Equals(i, g)))
+                    ints.Add(g);
+            }
+        }
+
+        if (serviceMap.Count == 0)
+            return;
 
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated/>");

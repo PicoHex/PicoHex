@@ -1,8 +1,9 @@
 namespace PicoDI.Gen;
 
-internal static class InterceptionHelper
+internal static partial class InterceptionHelper
 {
     public const string InterceptBy = "InterceptBy";
+    public const string AddInterceptor = "AddInterceptor";
 
     public static bool IsInterceptByInvocation(SyntaxNode node) => node switch
     {
@@ -67,3 +68,39 @@ internal record InterceptionInfo(
     ITypeSymbol ServiceType,
     ITypeSymbol ImplType,
     ITypeSymbol InterceptorType);
+
+internal record GlobalInterceptorInfo(
+    ITypeSymbol InterceptorType,
+    ITypeSymbol? InterfaceFilter);
+
+internal static class InterceptionHelperGlobals
+{
+    private const string AddInt = "AddInterceptor";
+
+    public static bool IsAddInterceptorInvocation(SyntaxNode node) => node switch
+    {
+        InvocationExpressionSyntax
+        {
+            Expression: MemberAccessExpressionSyntax
+            {
+                Name: GenericNameSyntax { Identifier.ValueText: AddInt }
+            }
+        } => true,
+        _ => false,
+    };
+
+    public static GlobalInterceptorInfo? ExtractGlobalInterceptorInfo(GeneratorSyntaxContext ctx, CancellationToken ct)
+    {
+        var invocation = (InvocationExpressionSyntax)ctx.Node;
+        var semanticModel = ctx.SemanticModel;
+
+        if (semanticModel.GetSymbolInfo(invocation, ct).Symbol is not IMethodSymbol methodSymbol)
+            return null;
+        if (methodSymbol.Name != AddInt)
+            return null;
+        if (methodSymbol.TypeArguments.Length != 1)
+            return null;
+
+        return new GlobalInterceptorInfo(methodSymbol.TypeArguments[0], null);
+    }
+}

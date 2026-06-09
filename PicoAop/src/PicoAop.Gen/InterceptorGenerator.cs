@@ -14,24 +14,54 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 transform: static (ctx, ct) => InterceptorSyntax.ExtractInterceptionInfo(ctx, ct))
             .Where(static info => info is not null);
 
+        var globalCalls = context
+            .SyntaxProvider.CreateSyntaxProvider(
+                predicate: static (node, _) => InterceptorSyntax.IsAddInterceptorInvocation(node),
+                transform: static (ctx, ct) => InterceptorSyntax.ExtractGlobalInterceptorInfo(ctx, ct))
+            .Where(static info => info is not null);
+
         context.RegisterSourceOutput(
-            interceptionCalls.Collect(),
-            static (spc, infos) => Generate(spc, infos));
+            interceptionCalls.Collect().Combine(globalCalls.Collect()),
+            static (spc, source) => Generate(spc, source.Left, source.Right));
     }
 
     private static void Generate(
         SourceProductionContext spc,
-        ImmutableArray<InterceptionInfo?> infos)
+        ImmutableArray<InterceptionInfo?> infos,
+        ImmutableArray<GlobalInterceptorInfo?> globals)
     {
+        var comparer = SymbolEqualityComparer.Default;
+
+        // Collect global interceptors
+        var globalInts = new List<ITypeSymbol>();
+        foreach (var g in globals.OfType<GlobalInterceptorInfo>())
+        {
+            if (g.InterceptorType != null && !globalInts.Any(i => comparer.Equals(i, g.InterceptorType)))
+                globalInts.Add(g.InterceptorType);
+        }
+
         // Merge by service type using a dictionary
-        var serviceMap = new Dictionary<ITypeSymbol, List<ITypeSymbol>>(SymbolEqualityComparer.Default);
+        var serviceMap = new Dictionary<ITypeSymbol, List<ITypeSymbol>>(comparer);
         foreach (var info in infos.OfType<InterceptionInfo>())
         {
             if (info.ServiceType == null) continue;
             if (!serviceMap.TryGetValue(info.ServiceType, out var ints))
                 serviceMap[info.ServiceType] = ints = new List<ITypeSymbol>();
-            if (!ints.Any(i => SymbolEqualityComparer.Default.Equals(i, info.InterceptorType)))
+            if (!ints.Any(i => comparer.Equals(i, info.InterceptorType)))
                 ints.Add(info.InterceptorType);
+        }
+
+        // Apply global interceptors to ALL services
+        if (globalInts.Count > 0)
+        {
+            foreach (var ints in serviceMap.Values)
+            {
+                foreach (var g in globalInts)
+                {
+                    if (!ints.Any(i => comparer.Equals(i, g)))
+                        ints.Add(g);
+                }
+            }
         }
 
         if (serviceMap.Count == 0)
