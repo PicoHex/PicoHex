@@ -236,8 +236,12 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             var implFullName = implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             var safeSvc = SanitizeForWrap(svcFullName);
 
-            var intSuffix = string.Join("_", interceptors.Select(t =>
-                SanitizeForWrap(t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))));
+            var intSuffix = string.Join(
+                "_",
+                interceptors.Select(t =>
+                    SanitizeForWrap(t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                )
+            );
             var wrapperName = $"Wrap_{safeSvc}_{intSuffix}";
             var getServiceArgs = string.Join(
                 ", ",

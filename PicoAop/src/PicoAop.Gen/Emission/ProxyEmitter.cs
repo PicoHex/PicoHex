@@ -17,8 +17,11 @@ internal static class ProxyEmitter
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix = string.Join(
             "_",
-            interceptorTypes.Select(t => InvocationEmitter.Sanitize(
-                t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))
+            interceptorTypes.Select(t =>
+                InvocationEmitter.Sanitize(
+                    t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                )
+            )
         );
         var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
 
@@ -307,7 +310,8 @@ internal static class ProxyEmitter
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix = InvocationEmitter.Sanitize(
-            interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+            interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+        );
         var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
 
         sb.AppendLine($"sealed class {className} : {svcFullName}");
@@ -475,8 +479,10 @@ internal static class ProxyEmitter
     {
         var propType = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix =
-            interceptorType != null ? $"_{InvocationEmitter.Sanitize(
-                interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))}" : "";
+            interceptorType != null
+                ? $"_{InvocationEmitter.Sanitize(
+                interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))}"
+                : "";
         sb.AppendLine($"    public {propType} {prop.Name}");
         sb.AppendLine("    {");
 
@@ -562,7 +568,8 @@ internal static class ProxyEmitter
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intSuffix = InvocationEmitter.Sanitize(
-            interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+            interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+        );
         var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
 
         return $"public static partial class {PicoAopNames.WrappersClass}\n"

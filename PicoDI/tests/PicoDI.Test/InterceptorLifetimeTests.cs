@@ -20,26 +20,33 @@ public sealed class InterceptorLifetimeTests
         if (dir is null)
             return;
 
-        foreach (var rel in new[]
-        {
-            "PicoAop/src/PicoAop.Abs/bin/Debug/netstandard2.0/PicoAop.Abs.dll",
-            "PicoAop/src/PicoAop.Abs/bin/Release/netstandard2.0/PicoAop.Abs.dll",
-            "PicoAop/src/PicoAop.DI/bin/Debug/net10.0/PicoAop.Abs.dll",
-            "PicoAop/src/PicoAop.DI/bin/Release/net10.0/PicoAop.Abs.dll",
-        })
+        foreach (
+            var rel in new[]
+            {
+                "PicoAop/src/PicoAop.Abs/bin/Debug/netstandard2.0/PicoAop.Abs.dll",
+                "PicoAop/src/PicoAop.Abs/bin/Release/netstandard2.0/PicoAop.Abs.dll",
+                "PicoAop/src/PicoAop.DI/bin/Debug/net10.0/PicoAop.Abs.dll",
+                "PicoAop/src/PicoAop.DI/bin/Release/net10.0/PicoAop.Abs.dll",
+            }
+        )
         {
             var dll = Path.Combine(dir.FullName, rel);
-            if (File.Exists(dll)) { s_picoAopAbsPath = dll; break; }
+            if (File.Exists(dll))
+            {
+                s_picoAopAbsPath = dll;
+                break;
+            }
         }
     }
 
-    [UnconditionalSuppressMessage("AOT", "IL3000",
-        Justification = "Roslyn-based generator tests")]
+    [UnconditionalSuppressMessage("AOT", "IL3000", Justification = "Roslyn-based generator tests")]
     private static MetadataReference[] GetMetadataReferences()
     {
-        var trusted = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))
+        var trusted =
+            ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))
             ?? throw new InvalidOperationException("TRUSTED_PLATFORM_ASSEMBLIES not set");
-        var refs = trusted.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+        var refs = trusted
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Select(p => MetadataReference.CreateFromFile(p))
             .ToList();
         refs.Add(MetadataReference.CreateFromFile(typeof(SvcContainer).Assembly.Location));
@@ -51,17 +58,23 @@ public sealed class InterceptorLifetimeTests
 
     private static string? RunGeneratorAndGetIntercepted(string sourceCode)
     {
-        if (s_picoAopAbsPath is null) return null;
+        if (s_picoAopAbsPath is null)
+            return null;
 
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
         var syntaxTree = CSharpSyntaxTree.ParseText(sourceCode, parseOptions);
         var compilation = CSharpCompilation.Create(
-            "test", [syntaxTree], GetMetadataReferences(),
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            "test",
+            [syntaxTree],
+            GetMetadataReferences(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
 
         var generator = new ServiceRegistrationGenerator();
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            [generator.AsSourceGenerator()], parseOptions: parseOptions);
+            [generator.AsSourceGenerator()],
+            parseOptions: parseOptions
+        );
 
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var updated, out _);
 
@@ -71,14 +84,16 @@ public sealed class InterceptorLifetimeTests
         string? interceptedText = null;
         foreach (var r in runResult.Results)
         {
-            if (r.GeneratedSources.IsDefault) continue;
+            if (r.GeneratedSources.IsDefault)
+                continue;
             foreach (var s in r.GeneratedSources)
             {
                 if (s.HintName.Contains("InterceptedRegistrations"))
                     interceptedText = s.SourceText.ToString();
             }
         }
-        if (interceptedText is null) return null;
+        if (interceptedText is null)
+            return null;
 
         var m = Regex.Match(interceptedText, @"SvcLifetime\.(\w+)");
         return m.Success ? m.Groups[1].Value : null;
@@ -87,7 +102,11 @@ public sealed class InterceptorLifetimeTests
     [Test]
     public async Task InterceptedSingleton_UsesSingletonLifetime()
     {
-        if (s_picoAopAbsPath is null) { TestContext.Current!.OutputWriter.WriteLine("Skipped"); return; }
+        if (s_picoAopAbsPath is null)
+        {
+            TestContext.Current!.OutputWriter.WriteLine("Skipped");
+            return;
+        }
 
         // Use SvcContainer + using PicoDI — same pattern as existing passing tests
         var source = """
@@ -120,7 +139,11 @@ public sealed class InterceptorLifetimeTests
     [Test]
     public async Task InterceptedTransient_UsesTransientLifetime()
     {
-        if (s_picoAopAbsPath is null) { TestContext.Current!.OutputWriter.WriteLine("Skipped"); return; }
+        if (s_picoAopAbsPath is null)
+        {
+            TestContext.Current!.OutputWriter.WriteLine("Skipped");
+            return;
+        }
 
         var source = """
             using PicoDI;
@@ -152,7 +175,11 @@ public sealed class InterceptorLifetimeTests
     [Test]
     public async Task InterceptedScoped_UsesScopedLifetime()
     {
-        if (s_picoAopAbsPath is null) { TestContext.Current!.OutputWriter.WriteLine("Skipped"); return; }
+        if (s_picoAopAbsPath is null)
+        {
+            TestContext.Current!.OutputWriter.WriteLine("Skipped");
+            return;
+        }
 
         var source = """
             using PicoDI;
@@ -184,7 +211,11 @@ public sealed class InterceptorLifetimeTests
     [Test]
     public async Task InterceptedNotHardcodedScoped_WhenSingleton()
     {
-        if (s_picoAopAbsPath is null) { TestContext.Current!.OutputWriter.WriteLine("Skipped"); return; }
+        if (s_picoAopAbsPath is null)
+        {
+            TestContext.Current!.OutputWriter.WriteLine("Skipped");
+            return;
+        }
 
         var source = """
             using PicoDI;

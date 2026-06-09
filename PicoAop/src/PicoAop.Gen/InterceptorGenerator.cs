@@ -208,8 +208,11 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
         // Unique struct name — include all interceptor fully qualified names
         var intSuffix = string.Join(
             "_",
-            interceptorTypes.Select(t => InvocationEmitter.Sanitize(
-                t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))
+            interceptorTypes.Select(t =>
+                InvocationEmitter.Sanitize(
+                    t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                )
+            )
         );
         var structName = InvocationEmitter.BuildStructName(safeSvcName, method);
         structName = $"{structName}_{intSuffix}";
