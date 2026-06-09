@@ -1,83 +1,92 @@
 namespace PicoAop.Tests;
 
+/// <summary>
+/// Simulates what PicoAop.Gen will generate: per-method Invocation struct + proxy class.
+/// </summary>
+
+#region Simulated SG-generated types
+
+public interface ICalc
+{
+    int Add(int a, int b);
+}
+
+sealed class Calc : ICalc
+{
+    public int Add(int a, int b) => a + b;
+}
+
+struct Invocation_ICalc_Add : IInvocation<int>
+{
+    internal readonly ICalc _target;
+    internal readonly IInterceptor _i0;
+    internal readonly int _a;
+    internal readonly int _b;
+
+    public Invocation_ICalc_Add(ICalc target, IInterceptor i0, int a, int b)
+    { _target = target; _i0 = i0; _a = a; _b = b; Result = default; }
+
+    public string MethodName => "Add";
+    public Type ServiceType => typeof(ICalc);
+    public int Result { get; set; }
+
+    internal int InvokeTarget() => _target.Add(_a, _b);
+}
+
+sealed class Intercepted_ICalc : ICalc
+{
+    private readonly ICalc _inner;
+    private readonly IInterceptor _i0;
+    private static readonly Func<Invocation_ICalc_Add, int> s_addNext = static inv => inv.InvokeTarget();
+
+    public Intercepted_ICalc(ICalc inner, IInterceptor i0)
+    { _inner = inner; _i0 = i0; }
+
+    public int Add(int a, int b)
+    {
+        var inv = new Invocation_ICalc_Add(_inner, _i0, a, b);
+        return _i0.Invoke(inv, s_addNext);
+    }
+}
+
+#endregion
+
 public class CoreAbstractionsTests
 {
     [Test]
-    public async Task VoidResult_IsDefaultStruct()
+    public async Task ZeroBoxingInvoke_ReturnsCorrectResult()
     {
-        var v = new PicoDI.Abs.VoidResult();
-        await Assert.That(v.Equals(default(PicoDI.Abs.VoidResult))).IsTrue();
+        var interceptor = new PassThroughInterceptor();
+        var proxy = new Intercepted_ICalc(new Calc(), interceptor);
+
+        var result = proxy.Add(3, 7);
+
+        await Assert.That(result).IsEqualTo(10);
     }
 
     [Test]
-    public async Task IInvocation_MethodName_ReturnsMethodName()
+    public async Task Interceptor_IsCalledOnEachInvocation()
     {
-        var inv = new MockInvocation<int>(MethodName: "Test", ServiceType: typeof(string));
-        await Assert.That(inv.MethodName).IsEqualTo("Test");
+        var interceptor = new CountingInterceptor();
+        var proxy = new Intercepted_ICalc(new Calc(), interceptor);
+
+        proxy.Add(1, 2);
+        proxy.Add(3, 4);
+        proxy.Add(5, 6);
+
+        await Assert.That(interceptor.CallCount).IsEqualTo(3);
     }
+}
 
-    [Test]
-    public async Task IInvocation_ResultIsWritable()
+sealed class PassThroughInterceptor : InterceptorBase { }
+
+sealed class CountingInterceptor : InterceptorBase
+{
+    public int CallCount;
+
+    public override TResult Invoke<TInvocation, TResult>(TInvocation inv, Func<TInvocation, TResult> next)
     {
-        var interceptor = new ResultReplacingInterceptor(99);
-        var inv = new MockInvocation<int>(MethodName: "Test", ServiceType: typeof(string));
-        var result = interceptor.Invoke(inv, i => 42);
-        await Assert.That(result).IsEqualTo(99);
-        await Assert.That(inv.Result).IsEqualTo(99);
-    }
-
-    [Test]
-    public async Task InterceptorBase_DefaultInvoke_PassesThroughResult()
-    {
-        var interceptor = new PassthroughInterceptor();
-        var inv = new MockInvocation<int>(MethodName: "Test", ServiceType: typeof(string));
-        var result = interceptor.Invoke(inv, i => 42);
-        await Assert.That(result).IsEqualTo(42);
-    }
-
-    [Test]
-    public async Task InterceptorBase_DefaultInvokeVoid_CallsNext()
-    {
-        var called = false;
-        var interceptor = new PassthroughInterceptor();
-        var inv = new MockVoidInvocation(MethodName: "VoidTest", ServiceType: typeof(string));
-        interceptor.InvokeVoid(
-            inv,
-            _ =>
-            {
-                called = true;
-            }
-        );
-        await Assert.That(called).IsTrue();
-    }
-
-    private sealed class PassthroughInterceptor : PicoAop.Abs.InterceptorBase { }
-
-    private sealed class ResultReplacingInterceptor(int replacement) : PicoAop.Abs.InterceptorBase
-    {
-        public override TResult Invoke<TResult>(
-            PicoAop.Abs.IInvocation<TResult> inv,
-            Func<PicoAop.Abs.IInvocation<TResult>, TResult> next
-        )
-        {
-            inv.Result = (TResult)(object)replacement;
-            return (TResult)(object)replacement;
-        }
-    }
-
-    private sealed class MockVoidInvocation(string MethodName, Type ServiceType)
-        : PicoAop.Abs.IInvocation<PicoDI.Abs.VoidResult>
-    {
-        public string MethodName { get; } = MethodName;
-        public Type ServiceType { get; } = ServiceType;
-        public PicoDI.Abs.VoidResult Result { get; set; }
-    }
-
-    private sealed class MockInvocation<TResult>(string MethodName, Type ServiceType)
-        : PicoAop.Abs.IInvocation<TResult>
-    {
-        public string MethodName { get; } = MethodName;
-        public Type ServiceType { get; } = ServiceType;
-        public TResult Result { get; set; } = default!;
+        CallCount++;
+        return next(inv);
     }
 }

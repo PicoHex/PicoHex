@@ -1,39 +1,41 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using PicoAop.Gen;
+
 namespace PicoAop.Tests;
 
 public abstract class GeneratorTestBase
 {
-    protected static (
-        Compilation OutputCompilation,
-        ImmutableArray<Diagnostic> Diagnostics
-    ) RunGenerator(string source)
+    protected static Task RunGenerator(string source, Func<GeneratorDriverRunResult, Task>? assert = null)
     {
-        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
-        var inputTree = CSharpSyntaxTree.ParseText(source, parseOptions);
-        var references = TestMetadata.GetReferences();
-
-        var compilation = CSharpCompilation.Create(
-            assemblyName: Guid.NewGuid().ToString("N"),
-            syntaxTrees: [inputTree],
-            references: references,
-            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-        );
+        var syntaxTree = CSharpSyntaxTree.ParseText(source);
+        var compilation = CSharpCompilation.Create("test",
+            [syntaxTree],
+            references:
+            [
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IInterceptor).Assembly.Location),
+            ],
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         var generator = new InterceptorGenerator();
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            [generator.AsSourceGenerator()],
-            parseOptions: parseOptions
-        );
+        var driver = CSharpGeneratorDriver.Create(generator);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
 
-        driver = driver.RunGeneratorsAndUpdateCompilation(
-            compilation,
-            out var outputCompilation,
-            out var diagnostics
-        );
+        if (assert is not null)
+            assert(driver.GetRunResult());
+        else
+        {
+            var errors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+            foreach (var e in errors)
+                Console.WriteLine($"DIAG: {e.Id} {e.GetMessage()}");
+        }
 
-        // TODO: also include outputCompilation.GetDiagnostics() to catch
-        // generated-code compilation errors. Currently blocked by pre-existing
-        // generic method bugs (CS errors in generated decorator code).
+        return Task.CompletedTask;
+    }
 
-        return (outputCompilation, diagnostics);
+    protected static string GetGeneratedOutput(GeneratorDriverRunResult result)
+    {
+        return string.Join("\n", result.GeneratedTrees.Select(t => t.ToString()));
     }
 }

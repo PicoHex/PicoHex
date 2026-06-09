@@ -2,7 +2,7 @@
 
 **AOT-First Universal Minimal Infrastructure for .NET**
 
-Six modules, zero runtime reflection.
+All built with zero runtime reflection.
 
 [![NuGet](https://img.shields.io/nuget/v/PicoDI)](https://nuget.org/packages/PicoDI)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/PicoHex/PicoHex/blob/main/LICENSE)
@@ -19,7 +19,7 @@ Configuration  ──→  Dependency Injection  ──→  Logging
   (Input)              (Core)                   (Output)
 ```
 
-Every application reads configuration, assembles its internals, and produces output. **PicoHex** provides the minimal, AOT-first implementation of these operations for .NET — configuration (PicoCfg), dependency injection (PicoDI), logging (PicoLog), compile-time AOP (PicoAop → PicoAot), and mediator dispatch (PicoMediator). All built on source generators instead of runtime reflection.
+Every application reads configuration, assembles its internals, and produces output. **PicoHex** provides the minimal, AOT-first implementation of these operations for .NET — configuration (PicoCfg), dependency injection (PicoDI), logging (PicoLog), compile-time AOP (PicoAop), and mediator dispatch (PicoMediator). All built on source generators instead of runtime reflection.
 
 ---
 
@@ -66,19 +66,19 @@ await using var scope = container.CreateScope();
 var svc = scope.GetService<IService>();
 ```
 
-PicoDI also supports **compile-time AOP/interceptors** — chain `.InterceptBy<TInterceptor>()` after `Register()` and the source generator emits decorator classes at build time. Powered by **PicoAot** — the next-generation AOT-first interception engine with zero-allocation invocation structs. [Learn more →](PicoAot/README.md)
+PicoDI also supports **compile-time AOP/interceptors** — chain `.InterceptBy<TInterceptor>()` after `Register()` and the source generator emits decorator classes at build time. rebuilt with zero-allocation — the next-generation AOT-first interception engine with zero-allocation invocation structs. [Learn more →](PicoAop/README.md)
 
 ### Just AOP
 
 ```shell
-dotnet add package PicoAot.Abs
+dotnet add package PicoAop.Abs
 dotnet add package PicoDI  # PicoDI.Gen bundled, detects InterceptBy
 ```
 
 ```csharp
 container.RegisterScoped<IService, MyService>()
     .InterceptBy<LoggingInterceptor>();
-// PicoAot.Gen generates zero-allocation Invocation structs + proxy
+// PicoAop.Gen generates zero-allocation Invocation structs + proxy
 // PicoDI.Gen rewrites registration to use the wrapped factory
 ```
 
@@ -142,8 +142,8 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 | **PicoAop.Abs** | Interceptor abstractions (legacy) |
 | **PicoAop.Gen** | Decorator + invocation source generator (legacy) |
 | **PicoAop.DI** | DI integration for PicoAop (legacy) |
-| **PicoAot.Abs** | **Next-gen** AOT-first interceptor abstractions — zero boxing, zero allocation |
-| **PicoAot.Gen** | Compile-time Invocation struct + proxy class generation |
+| **PicoAop.Abs** | **Next-gen** AOT-first interceptor abstractions — zero boxing, zero allocation |
+| **PicoAop.Gen** | Compile-time Invocation struct + proxy class generation |
 | **PicoCfg** | Async-first configuration |
 | **PicoCfg.Abs** | Configuration abstractions |
 | **PicoCfg.Gen** | Typed binding source generator |
@@ -175,7 +175,7 @@ var logger = container.CreateScope().GetService<ILogger<Program>>();
 
 - [PicoDI](PicoDI/README.md) — DI container, registration, source generator
 - [PicoAop](PicoAop/README.md) — Compile-time decorator generation (legacy)
-- [PicoAot](PicoAot/README.md) — Next-gen AOT-first interception (supersedes PicoAop)
+- [PicoAot](PicoAop/README.md) — Next-gen AOT-first interception (supersedes PicoAop)
 - [PicoCfg](PicoCfg/README.md) — Configuration providers, binding, file watching
 - [PicoLog](PicoLog/README.md) — Structured logging, sinks, message templates
 - [PicoMediator](PicoMediator/README.md) — Request/notification dispatch

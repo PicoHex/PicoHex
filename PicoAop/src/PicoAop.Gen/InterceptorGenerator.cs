@@ -1,3 +1,6 @@
+using Microsoft.CodeAnalysis.Text;
+using PicoAop.Gen.Emission;
+
 namespace PicoAop.Gen;
 
 [Generator(LanguageNames.CSharp)]
@@ -7,338 +10,124 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
     {
         var interceptionCalls = context
             .SyntaxProvider.CreateSyntaxProvider(
-                predicate: static (node, _) =>
-                    node
-                        is InvocationExpressionSyntax
-                            {
-                                Expression: MemberAccessExpressionSyntax
-                                {
-                                    Name: GenericNameSyntax
-                                    {
-                                        Identifier.ValueText: "InterceptBy" or "WithoutInterceptor"
-                                    }
-                                }
-                            }
-                            or InvocationExpressionSyntax
-                            {
-                                Expression: MemberAccessExpressionSyntax
-                                {
-                                    Name: IdentifierNameSyntax
-                                    {
-                                        Identifier.ValueText: "WithoutInterceptors"
-                                    }
-                                }
-                            },
-                transform: static (ctx, ct) => ExtractInterceptionInfo(ctx, ct)
-            )
-            .Where(static info => info is not null);
-
-        var globalCalls = context
-            .SyntaxProvider.CreateSyntaxProvider(
-                predicate: static (node, _) =>
-                    node
-                        is InvocationExpressionSyntax
-                            {
-                                Expression: MemberAccessExpressionSyntax
-                                {
-                                    Name: GenericNameSyntax
-                                    {
-                                        Identifier.ValueText: "AddInterceptor"
-                                    }
-                                }
-                            }
-                            or InvocationExpressionSyntax
-                            {
-                                Expression: MemberAccessExpressionSyntax
-                                {
-                                    Expression: InvocationExpressionSyntax
-                                    {
-                                        Expression: MemberAccessExpressionSyntax
-                                        {
-                                            Name: GenericNameSyntax
-                                            {
-                                                Identifier.ValueText: "AddInterceptor"
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                transform: static (ctx, ct) => ExtractGlobalInterceptorInfo(ctx, ct)
-            )
+                predicate: static (node, _) => InterceptorSyntax.IsInterceptByInvocation(node),
+                transform: static (ctx, ct) => InterceptorSyntax.ExtractInterceptionInfo(ctx, ct))
             .Where(static info => info is not null);
 
         context.RegisterSourceOutput(
-            interceptionCalls.Collect().Combine(globalCalls.Collect()),
-            static (spc, source) => GenerateInterceptorRegistrations(spc, source.Left, source.Right)
-        );
+            interceptionCalls.Collect(),
+            static (spc, infos) => Generate(spc, infos));
     }
 
-    private static void GenerateInterceptorRegistrations(
+    private static void Generate(
         SourceProductionContext spc,
-        ImmutableArray<InterceptionInfo?> perService,
-        ImmutableArray<GlobalInterceptorInfo?> globals
-    )
+        ImmutableArray<InterceptionInfo?> infos)
     {
-        var perServiceMap = new Dictionary<string, InterceptionInfo>(StringComparer.Ordinal);
-        foreach (var info in perService.OfType<InterceptionInfo>())
-        {
-            var key = info.ServiceType.ToDisplayString();
-            if (perServiceMap.TryGetValue(key, out var existing))
-            {
-                perServiceMap[key] = new InterceptionInfo(
-                    existing.ServiceType,
-                    existing.ImplType ?? info.ImplType,
-                    existing
-                        .InterceptorTypes.Concat(info.InterceptorTypes)
-                        .Distinct(SymbolEqualityComparer.Default)
-                        .OfType<ITypeSymbol>()
-                        .ToList(),
-                    existing
-                        .WithoutInterceptorTypes.Concat(info.WithoutInterceptorTypes)
-                        .Distinct(SymbolEqualityComparer.Default)
-                        .OfType<ITypeSymbol>()
-                        .ToList(),
-                    existing.WithoutInterceptors || info.WithoutInterceptors,
-                    HasMultipleRegisters: existing.HasMultipleRegisters
-                        || info.HasMultipleRegisters,
-                    Location: existing.Location ?? info.Location
-                );
-            }
-            else
-            {
-                perServiceMap[key] = info;
-            }
-        }
+        var deduped = infos.OfType<InterceptionInfo>()
+            .Distinct()
+            .ToList();
 
-        var deduped = perServiceMap.Values.ToList();
         if (deduped.Count == 0)
             return;
 
-        var sb = new StringBuilder(8192);
-        var regSb = new StringBuilder(4096);
-
-        sb.AppendLine("// <auto-generated />");
+        var sb = new StringBuilder();
+        sb.AppendLine("// <auto-generated/>");
         sb.AppendLine("#nullable enable");
         sb.AppendLine($"namespace {PicoAopNames.GeneratedNamespace};");
-        sb.AppendLine();
-        sb.AppendLine("using PicoDI;");
-        sb.AppendLine("using PicoDI.Abs;");
-        sb.AppendLine("using PicoAop.Abs;");
+        sb.AppendLine("using global::PicoAop.Abs;");
         sb.AppendLine();
 
-        // First pass: detect sanitized-name collisions across all services
-        var nameRegistry = new Dictionary<string, (ITypeSymbol Svc, ITypeSymbol Interceptor)>(
-            StringComparer.Ordinal
-        );
-        foreach (var info in deduped)
-        {
-            if (info.ServiceType is not INamedTypeSymbol svc)
-                continue;
-
-            var safeSvc = Sanitize(svc.ToDisplayString());
-            foreach (var intc in info.InterceptorTypes)
-            {
-                if (intc is not INamedTypeSymbol intcNamed)
-                    continue;
-
-                var safeInt = Sanitize(intcNamed.Name);
-                var className = $"{safeSvc}_{safeInt}Decorator";
-
-                if (nameRegistry.TryGetValue(className, out var existing))
-                {
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            InterceptorDiagParams.NameCollision,
-                            Location.None,
-                            existing.Svc.ToDisplayString(),
-                            svc.ToDisplayString(),
-                            className
-                        )
-                    );
-                }
-                else
-                {
-                    nameRegistry[className] = (svc, intcNamed);
-                }
-            }
-        }
+        var wrappersSb = new StringBuilder();
+        wrappersSb.AppendLine("// <auto-generated/>");
+        wrappersSb.AppendLine("#nullable enable");
+        wrappersSb.AppendLine($"namespace {PicoAopNames.GeneratedNamespace};");
 
         foreach (var info in deduped)
         {
-            if (info.ServiceType is not INamedTypeSymbol serviceType)
+            if (info.ServiceType is not INamedTypeSymbol svcType)
                 continue;
 
-            if (info.HasMultipleRegisters)
-            {
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        InterceptorDiagParams.AmbiguousInterceptBy,
-                        info.Location ?? Location.None,
-                        serviceType.ToDisplayString()
-                    )
-                );
-            }
+            // Validate
+            if (svcType.IsSealed)
+            { spc.ReportDiagnostic(Diagnostic.Create(PicoAopDiag.SealedType, Location.None, svcType.Name)); continue; }
+            if (svcType.IsValueType)
+            { spc.ReportDiagnostic(Diagnostic.Create(PicoAopDiag.ValueType, Location.None, svcType.Name)); continue; }
 
-            var interceptorList = new List<ITypeSymbol>(
-                info.InterceptorTypes.Where(t =>
-                    !info.WithoutInterceptorTypes.Contains(t, SymbolEqualityComparer.Default)
-                )
-            );
+            var safeSvc = InvocationEmitter.BuildSafeServiceName(svcType);
+            var methods = svcType.GetMembers().OfType<IMethodSymbol>()
+                .Where(m => m.MethodKind == MethodKind.Ordinary
+                    && m.DeclaredAccessibility == Accessibility.Public
+                    && !m.IsStatic);
 
-            var globalMatches = new List<ITypeSymbol>();
-            foreach (var g in globals.OfType<GlobalInterceptorInfo>())
+            // Emit Invocation structs
+            foreach (var method in methods)
             {
-                if (
-                    g.InterfaceFilter is INamedTypeSymbol ifaceSym
-                    && ifaceSym.TypeKind != TypeKind.Interface
-                )
+                if (method.Parameters.Any(p => p.RefKind != RefKind.None))
                 {
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            InterceptorDiagParams.FilterRequiresInterface,
-                            g.Location ?? Location.None,
-                            g.InterfaceFilter.ToDisplayString()
-                        )
-                    );
+                    spc.ReportDiagnostic(Diagnostic.Create(PicoAopDiag.RefOutMethod,
+                        Location.None, method.Name, svcType.Name));
                     continue;
                 }
-
-                if (
-                    MatchesGlobalFilter(serviceType, g)
-                    && !info.WithoutInterceptorTypes.Contains(
-                        g.InterceptorType,
-                        SymbolEqualityComparer.Default
-                    )
-                )
-                {
-                    globalMatches.Add(g.InterceptorType);
-                }
+                sb.AppendLine(InvocationEmitter.EmitInvocationStruct(
+                    safeSvc, method.Name, method, info.InterceptorType));
             }
 
-            if (info.WithoutInterceptors)
+            // Static delegate cache
+            foreach (var method in methods.Where(m => m.Parameters.All(p => p.RefKind == RefKind.None)))
+                sb.AppendLine(ProxyEmitter.EmitStaticDelegateCache(safeSvc, method));
+
+            // Property getter/setter structs
+            foreach (var prop in svcType.GetMembers().OfType<IPropertySymbol>()
+                .Where(p => !p.IsIndexer && !p.IsStatic && p.DeclaredAccessibility == Accessibility.Public))
             {
-                globalMatches.Clear();
-                interceptorList.Clear();
+                EmitPropertyStructs(sb, safeSvc, prop, svcType, info.InterceptorType);
             }
 
-            interceptorList.InsertRange(0, globalMatches);
+            // Proxy class
+            sb.AppendLine(ProxyEmitter.EmitInterceptedClass(
+                safeSvc, svcType, info.InterceptorType));
 
-            foreach (var g in globalMatches)
-            {
-                if (info.WithoutInterceptorTypes.Contains(g, SymbolEqualityComparer.Default))
-                {
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            InterceptorDiagParams.ConflictingInterceptorDeclaration,
-                            info.Location ?? Location.None,
-                            g.ToDisplayString(),
-                            serviceType.ToDisplayString()
-                        )
-                    );
-                }
-            }
-
-            if (interceptorList.Count == 0)
-            {
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        InterceptorDiagParams.ZeroInterceptorsMatched,
-                        info.Location ?? Location.None,
-                        serviceType.ToDisplayString()
-                    )
-                );
-                continue;
-            }
-
-            // Emit PICO016 for ref/out/in methods that will be delegated without interception
-            foreach (
-                var method in GetAllMethods(serviceType)
-                    .Where(m => m.MethodKind == MethodKind.Ordinary && HasRefLikeParameters(m))
-            )
-            {
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        InterceptorDiagParams.RefLikeMethodDelegated,
-                        info.Location ?? Location.None,
-                        method.Name,
-                        serviceType.ToDisplayString()
-                    )
-                );
-            }
-
-            // PICO017: the decorator inherits from serviceType. If serviceType
-            // is a sealed class (not an interface), the decorator cannot subclass it.
-            // Interface registrations (e.g. Register<IMySvc, MySealedImpl>) are fine.
-            if (serviceType.IsSealed)
-            {
-                spc.ReportDiagnostic(
-                    Diagnostic.Create(
-                        InterceptorDiagParams.SealedTypeIntercepted,
-                        info.Location ?? Location.None,
-                        serviceType.ToDisplayString()
-                    )
-                );
-                continue;
-            }
-
-            for (var i = 0; i < interceptorList.Count; i++)
-            {
-                if (interceptorList[i] is not INamedTypeSymbol interceptorNamed)
-                    continue;
-
-                if (!ImplementsIInterceptor(interceptorNamed))
-                {
-                    spc.ReportDiagnostic(
-                        Diagnostic.Create(
-                            InterceptorDiagParams.InterceptorTypeMismatch,
-                            info.Location ?? Location.None,
-                            interceptorNamed.Name,
-                            "IInterceptor"
-                        )
-                    );
-                    continue;
-                }
-
-                var isLast = i == interceptorList.Count - 1;
-                EmitInvocationStruct(sb, serviceType, interceptorNamed);
-                EmitDecoratorClass(
-                    sb,
-                    serviceType,
-                    info.ImplType,
-                    interceptorNamed,
-                    interceptorList,
-                    i,
-                    isLast
-                );
-                EmitRegistration(regSb, serviceType, info.ImplType, interceptorNamed, isLast);
-            }
+            // Wrapper factory
+            wrappersSb.Append(ProxyEmitter.EmitWrappersClass(
+                safeSvc, svcType, info.InterceptorType));
         }
 
-        EmitBootstrapper(sb, regSb);
-        spc.AddSource("InterceptorRegistrations.g.cs", sb.ToString());
+        spc.AddSource("PicoAop.Invocations.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+        spc.AddSource("PicoAop.Wrappers.g.cs", SourceText.From(wrappersSb.ToString(), Encoding.UTF8));
     }
 
-    private static void EmitBootstrapper(StringBuilder sb, StringBuilder regSb)
+    private static void EmitPropertyStructs(
+        StringBuilder sb, string safeSvcName,
+        IPropertySymbol prop, INamedTypeSymbol serviceType, ITypeSymbol interceptorType)
     {
-        sb.AppendLine("internal static class GeneratedInterceptorRegistrations");
-        sb.AppendLine("{");
-        sb.AppendLine("    internal static void Configure(SvcContainer container)");
-        sb.AppendLine("    {");
-        sb.Append(regSb);
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
-        sb.AppendLine();
-        sb.AppendLine("internal static class AutoRegisterInterceptorConfigurator");
-        sb.AppendLine("{");
-        sb.AppendLine("    [global::System.Runtime.CompilerServices.ModuleInitializer]");
-        sb.AppendLine("    internal static void Init()");
-        sb.AppendLine("    {");
-        sb.AppendLine("        SvcContainerAutoConfiguration.RegisterConfigurator(");
-        sb.AppendLine("            \"intercepted::PicoAop\",");
-        sb.AppendLine(
-            "            static container => GeneratedInterceptorRegistrations.Configure((SvcContainer)container));"
-        );
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
+        var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var propType = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        if (prop.GetMethod?.DeclaredAccessibility == Accessibility.Public)
+        {
+            sb.AppendLine($"struct Invocation_{safeSvcName}_{prop.Name}_Getter : IInvocation<{propType}>");
+            sb.AppendLine("{");
+            sb.AppendLine($"    internal readonly {svcFullName} _target;");
+            sb.AppendLine($"    internal readonly {intFullName} _i0;");
+            sb.AppendLine($"    public string MethodName => \"get_{prop.Name}\";");
+            sb.AppendLine($"    public Type ServiceType => typeof({svcFullName});");
+            sb.AppendLine($"    public {propType} Result {{ get; set; }}");
+            sb.AppendLine($"    internal {propType} InvokeTarget() => _target.{prop.Name};");
+            sb.AppendLine("}");
+        }
+
+        if (prop.SetMethod?.DeclaredAccessibility == Accessibility.Public && !prop.SetMethod.IsInitOnly)
+        {
+            sb.AppendLine($"struct Invocation_{safeSvcName}_{prop.Name}_Setter : IInvocation");
+            sb.AppendLine("{");
+            sb.AppendLine($"    internal readonly {svcFullName} _target;");
+            sb.AppendLine($"    internal readonly {intFullName} _i0;");
+            sb.AppendLine($"    internal readonly {propType} _value;");
+            sb.AppendLine($"    public string MethodName => \"set_{prop.Name}\";");
+            sb.AppendLine($"    public Type ServiceType => typeof({svcFullName});");
+            sb.AppendLine($"    internal void InvokeTarget() => _target.{prop.Name} = _value;");
+            sb.AppendLine("}");
+        }
     }
 }

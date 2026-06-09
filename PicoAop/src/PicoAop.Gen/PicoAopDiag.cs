@@ -1,8 +1,8 @@
-namespace PicoAot.Gen;
+namespace PicoAop.Gen;
 
-internal static class PicoAotDiag
+internal static class PicoAopDiag
 {
-    private const string Category = "PicoAot";
+    private const string Category = "PicoAop";
 
     public static readonly DiagnosticDescriptor SealedType = new(
         "PICO101", "Sealed type cannot be intercepted",

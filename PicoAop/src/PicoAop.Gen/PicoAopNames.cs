@@ -26,5 +26,7 @@ internal static class PicoAopNames
 
     // Generated names
     public const string GeneratedNamespace = "PicoAop.Generated";
+    public const string WrappersClass = "PicoAopWrappers";
+    public const string InterceptedPrefix = "Intercepted_";
     public const string ConfiguratorId = "intercepted::PicoAop";
 }

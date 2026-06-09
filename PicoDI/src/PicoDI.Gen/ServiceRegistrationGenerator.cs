@@ -132,10 +132,10 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         ServiceRegistrationSourceEmitter.EmitSources(generationPlan, compilation, context);
 
         // Interception: emit overrides for services with InterceptBy<T>()
-        // Only emit when PicoAot.Abs is referenced in the compilation.
-        var hasPicoAot = compilation.References.Any(r =>
-            (r.Display ?? "").Contains("PicoAot.Abs"));
-        if (hasPicoAot)
+        // Only emit when PicoAop.Abs is referenced in the compilation.
+        var hasPicoAop = compilation.References.Any(r =>
+            (r.Display ?? "").Contains("PicoAop.Abs"));
+        if (hasPicoAop)
             EmitInterceptorOverrides(interceptionInfos, normalizedRegistrations, context);
     }
 
@@ -170,7 +170,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
             sb.AppendLine("        container.Register(");
             sb.AppendLine("            SvcDescriptor.Create(");
             sb.AppendLine($"                typeof({svcFullName}),");
-            sb.AppendLine($"                static scope => global::PicoAot.Generated.PicoAotWrappers.Wrap_{safeSvc}(");
+            sb.AppendLine($"                static scope => global::PicoAop.Generated.PicoAopWrappers.Wrap_{safeSvc}(");
             sb.AppendLine($"                    scope.GetService<{implFullName}>(),");
             sb.AppendLine($"                    scope.GetService<{intFullName}>()),");
             sb.AppendLine("                SvcLifetime.Scoped));");

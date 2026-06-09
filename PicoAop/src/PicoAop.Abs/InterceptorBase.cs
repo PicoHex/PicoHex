@@ -1,24 +1,24 @@
 namespace PicoAop.Abs;
 
+/// <summary>
+/// Base class for interceptors with pass-through default implementations.
+/// Override only the methods you need.
+/// </summary>
 public abstract class InterceptorBase : IInterceptor
 {
-    public virtual TResult Invoke<TResult>(
-        IInvocation<TResult> invocation,
-        Func<IInvocation<TResult>, TResult> next
-    ) => next(invocation);
+    /// <inheritdoc />
+    public virtual void InvokeVoid<TInvocation>(TInvocation inv, Func<TInvocation, object?> next)
+        where TInvocation : struct, IInvocation => next(inv);
 
-    public virtual void InvokeVoid(
-        IInvocation<PicoDI.Abs.VoidResult> invocation,
-        Action<IInvocation<PicoDI.Abs.VoidResult>> next
-    ) => next(invocation);
+    /// <inheritdoc />
+    public virtual TResult Invoke<TInvocation, TResult>(TInvocation inv, Func<TInvocation, TResult> next)
+        where TInvocation : struct, IInvocation<TResult> => next(inv);
 
-    public virtual ValueTask<TResult> InvokeAsync<TResult>(
-        IInvocation<TResult> invocation,
-        Func<IInvocation<TResult>, ValueTask<TResult>> next
-    ) => next(invocation);
+    /// <inheritdoc />
+    public virtual ValueTask InvokeAsyncVoid<TInvocation>(TInvocation inv, Func<TInvocation, ValueTask> next)
+        where TInvocation : struct, IInvocation => next(inv);
 
-    public virtual ValueTask InvokeAsyncVoid(
-        IInvocation<PicoDI.Abs.VoidResult> invocation,
-        Func<IInvocation<PicoDI.Abs.VoidResult>, ValueTask> next
-    ) => next(invocation);
+    /// <inheritdoc />
+    public virtual ValueTask<TResult> InvokeAsync<TInvocation, TResult>(TInvocation inv, Func<TInvocation, ValueTask<TResult>> next)
+        where TInvocation : struct, IInvocation<TResult> => next(inv);
 }

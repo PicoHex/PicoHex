@@ -1,4 +1,4 @@
-namespace PicoAot.Tests;
+namespace PicoAop.Tests;
 
 public class AotPublishTests
 {
@@ -7,7 +7,7 @@ public class AotPublishTests
     public async Task NativeAotPublish_ZeroTrimWarnings()
     {
         // Validated in CI via:
-        // dotnet publish PicoAot/tests/PicoAot.Tests/PicoAot.Tests.csproj
+        // dotnet publish PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj
         //   -c Release -r win-x64 -p:PublishAot=true
         // grep -c "warning IL" → must be 0
         await Assert.That(true).IsTrue();

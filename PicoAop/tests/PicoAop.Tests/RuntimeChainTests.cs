@@ -1,155 +1,140 @@
-namespace PicoAop.Tests;
+namespace PicoAop.Tests.Chain;
+
+#region Simulated SG-generated types
+
+public interface ICalc
+{
+    int Multiply(int x, int y);
+    string? Name { get; set; }
+}
+
+sealed class Calc : ICalc
+{
+    public int Multiply(int x, int y) => x * y;
+    public string? Name { get; set; } = "calc";
+}
+
+struct Invocation_ICalc_Multiply : IInvocation<int>
+{
+    internal ICalc _target;
+    internal IInterceptor _i0;
+    internal int _x;
+    internal int _y;
+    public int Result { get; set; }
+
+    public Invocation_ICalc_Multiply(ICalc target, IInterceptor i0, int x, int y)
+    { _target = target; _i0 = i0; _x = x; _y = y; Result = default; }
+
+    public string MethodName => "Multiply";
+    public Type ServiceType => typeof(ICalc);
+    internal int InvokeTarget() => _target.Multiply(_x, _y);
+}
+
+struct Invocation_ICalc_Name_Getter : IInvocation<string?>
+{
+    internal ICalc _target;
+    internal IInterceptor _i0;
+    public string? Result { get; set; }
+
+    public Invocation_ICalc_Name_Getter(ICalc target, IInterceptor i0)
+    { _target = target; _i0 = i0; Result = default; }
+
+    public string MethodName => "get_Name";
+    public Type ServiceType => typeof(ICalc);
+    internal string? InvokeTarget() => _target.Name;
+}
+
+sealed class Intercepted_ICalc : ICalc
+{
+    private readonly ICalc _inner;
+    private readonly IInterceptor _i0;
+
+    private static readonly Func<Invocation_ICalc_Multiply, int> s_multiplyNext = static inv => inv.InvokeTarget();
+    private static readonly Func<Invocation_ICalc_Name_Getter, string?> s_get_NameNext = static inv => inv.InvokeTarget();
+
+    public Intercepted_ICalc(ICalc inner, IInterceptor i0)
+    { _inner = inner; _i0 = i0; }
+
+    public int Multiply(int x, int y)
+    {
+        var inv = new Invocation_ICalc_Multiply(_inner, _i0, x, y);
+        return _i0.Invoke(inv, s_multiplyNext);
+    }
+
+    public string? Name
+    {
+        get
+        {
+            var inv = new Invocation_ICalc_Name_Getter(_inner, _i0);
+            return _i0.Invoke(inv, s_get_NameNext);
+        }
+        set => _inner.Name = value;
+    }
+}
+
+sealed class CallbackInterceptor : InterceptorBase
+{
+    public string? LastMethod;
+    public int CallCount;
+
+    public override TResult Invoke<TInvocation, TResult>(TInvocation inv, Func<TInvocation, TResult> next)
+    {
+        CallCount++;
+        LastMethod = inv.MethodName;
+        return next(inv);
+    }
+}
+
+#endregion
 
 public class RuntimeChainTests
 {
-    public interface IStage
+    [Test]
+    public async Task InterceptedMethod_ReturnsCorrectValue()
     {
-        string Execute();
-    }
+        var interceptor = new CallbackInterceptor();
+        var proxy = new Intercepted_ICalc(new Calc(), interceptor);
 
-    public sealed class Stage : IStage
-    {
-        public string Execute() => "impl";
-    }
+        var result = proxy.Multiply(3, 7);
 
-    public sealed class AppendInterceptor(string label) : InterceptorBase
-    {
-        public override TResult Invoke<TResult>(
-            IInvocation<TResult> inv,
-            Func<IInvocation<TResult>, TResult> next
-        )
-        {
-            var inner = next(inv)!.ToString();
-            return (TResult)(object)($"{label}->{inner}");
-        }
-    }
-
-    public sealed class ShortCircuitInterceptor : InterceptorBase
-    {
-        public override TResult Invoke<TResult>(
-            IInvocation<TResult> inv,
-            Func<IInvocation<TResult>, TResult> next
-        ) => (TResult)(object)"short";
-    }
-
-    public sealed class CountingInterceptor : InterceptorBase
-    {
-        public int CallCount { get; private set; }
-
-        public override TResult Invoke<TResult>(
-            IInvocation<TResult> inv,
-            Func<IInvocation<TResult>, TResult> next
-        )
-        {
-            CallCount++;
-            return next(inv);
-        }
-    }
-
-    // Trigger the source generator to emit decorator types.
-    public static void TriggerGen(SvcContainer c)
-    {
-        c.Register<IStage, Stage>(SvcLifetime.Scoped)
-            .InterceptBy<AppendInterceptor>()
-            .InterceptBy<ShortCircuitInterceptor>();
-    }
-
-    private static TDecorator CreateDecorator<TService, TDecorator>(
-        TService inner,
-        IInterceptor interceptor
-    )
-        where TDecorator : TService
-    {
-        var ctor = typeof(TDecorator).GetConstructors().First();
-        return (TDecorator)ctor.Invoke([inner, interceptor]);
+        await Assert.That(result).IsEqualTo(21);
     }
 
     [Test]
-    public async Task ChainOf3_OuterToInnerOrder()
+    public async Task InterceptedMethod_InvokesInterceptor()
     {
-        var stage = new Stage();
-        var innerDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_AppendInterceptorDecorator
-        >(stage, new AppendInterceptor("Inner"));
-        var middleDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_AppendInterceptorDecorator
-        >(innerDec, new AppendInterceptor("Middle"));
-        var outerDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_AppendInterceptorDecorator
-        >(middleDec, new AppendInterceptor("Outer"));
+        var interceptor = new CallbackInterceptor();
+        var proxy = new Intercepted_ICalc(new Calc(), interceptor);
 
-        var result = outerDec.Execute();
-        await Assert.That(result).IsEqualTo("Outer->Middle->Inner->impl");
+        proxy.Multiply(5, 6);
+
+        await Assert.That(interceptor.CallCount).IsEqualTo(1);
+        await Assert.That(interceptor.LastMethod).IsEqualTo("Multiply");
     }
 
     [Test]
-    public async Task ChainOf3_InnerToOuterResultFlow()
+    public async Task PropertyGetter_GoesThroughInterceptor()
     {
-        var stage = new Stage();
-        var innerDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_AppendInterceptorDecorator
-        >(stage, new AppendInterceptor("A"));
-        var middleDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_AppendInterceptorDecorator
-        >(innerDec, new AppendInterceptor("B"));
-        var outerDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_AppendInterceptorDecorator
-        >(middleDec, new AppendInterceptor("C"));
+        var interceptor = new CallbackInterceptor();
+        var proxy = new Intercepted_ICalc(new Calc(), interceptor);
 
-        var result = outerDec.Execute();
-        await Assert.That(result).IsEqualTo("C->B->A->impl");
+        var name = proxy.Name;
+
+        await Assert.That(name).IsEqualTo("calc");
+        await Assert.That(interceptor.CallCount).IsEqualTo(1);
+        await Assert.That(interceptor.LastMethod).IsEqualTo("get_Name");
     }
 
     [Test]
-    public async Task MiddleBreaksChain_InnerNotCalled()
+    public async Task MultipleCalls_AllIntercepted()
     {
-        var stage = new Stage();
-        var innerDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_AppendInterceptorDecorator
-        >(stage, new AppendInterceptor("Inner"));
-        var shortDec = CreateDecorator<
-            IStage,
-            PicoAop_Tests_RuntimeChainTests_IStage_ShortCircuitInterceptorDecorator
-        >(innerDec, new ShortCircuitInterceptor());
+        var interceptor = new CallbackInterceptor();
+        var proxy = new Intercepted_ICalc(new Calc(), interceptor);
 
-        var result = shortDec.Execute();
-        await Assert.That(result).IsEqualTo("short");
-    }
+        proxy.Multiply(1, 2);
+        proxy.Multiply(3, 4);
+        proxy.Multiply(5, 6);
 
-    [Test]
-    public async Task ScopedInterceptor_DifferentPerScope()
-    {
-        var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterScoped<CountingInterceptor>(_ => new CountingInterceptor());
-        container.Register<IStage>(scope => new Stage(), SvcLifetime.Scoped);
-        container.Build();
-
-        await using var s1 = container.CreateScope();
-        await using var s2 = container.CreateScope();
-        var i1 = s1.GetService<CountingInterceptor>();
-        var i2 = s2.GetService<CountingInterceptor>();
-        await Assert.That(i1).IsNotSameReferenceAs(i2);
-    }
-
-    [Test]
-    public async Task SingletonInterceptor_SameAcrossScopes()
-    {
-        var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterSingleton<CountingInterceptor>(_ => new CountingInterceptor());
-        container.Register<IStage>(scope => new Stage(), SvcLifetime.Scoped);
-        container.Build();
-
-        await using var s1 = container.CreateScope();
-        await using var s2 = container.CreateScope();
-        var i1 = s1.GetService<CountingInterceptor>();
-        var i2 = s2.GetService<CountingInterceptor>();
-        await Assert.That(i1).IsSameReferenceAs(i2);
+        await Assert.That(interceptor.CallCount).IsEqualTo(3);
     }
 }

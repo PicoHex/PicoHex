@@ -1,6 +1,6 @@
 using Microsoft.CodeAnalysis;
 
-namespace PicoAot.Gen.Models;
+namespace PicoAop.Gen.Models;
 
 internal record InterceptionInfo(
     ITypeSymbol ServiceType,

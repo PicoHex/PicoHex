@@ -1,4 +1,4 @@
-namespace PicoAot.Gen.Emission;
+namespace PicoAop.Gen.Emission;
 
 internal static class ProxyEmitter
 {
@@ -10,7 +10,7 @@ internal static class ProxyEmitter
         var sb = new StringBuilder();
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var className = $"{PicoAotNames.InterceptedPrefix}{safeSvcName}";
+        var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}";
 
         sb.AppendLine($"sealed class {className} : {svcFullName}");
         sb.AppendLine("{");
@@ -151,10 +151,10 @@ internal static class ProxyEmitter
     {
         var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var className = $"{PicoAotNames.InterceptedPrefix}{safeSvcName}";
+        var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}";
 
         return
-            $"public static partial class {PicoAotNames.WrappersClass}\n" +
+            $"public static partial class {PicoAopNames.WrappersClass}\n" +
             "{\n" +
             $"    public static {svcFullName} Wrap_{safeSvcName}({svcFullName} inner, {intFullName} i0) =>\n" +
             $"        new {className}(inner, i0);\n" +

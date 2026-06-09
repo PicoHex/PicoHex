@@ -1,4 +1,4 @@
-namespace PicoAot.Tests.Async;
+namespace PicoAop.Tests.Async;
 
 public interface IAsyncSvc
 {

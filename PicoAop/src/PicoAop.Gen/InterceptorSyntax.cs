@@ -1,4 +1,4 @@
-namespace PicoAot.Gen;
+namespace PicoAop.Gen;
 
 internal static class InterceptorSyntax
 {
@@ -8,7 +8,7 @@ internal static class InterceptorSyntax
         {
             Expression: MemberAccessExpressionSyntax
             {
-                Name: GenericNameSyntax { Identifier.ValueText: PicoAotNames.InterceptBy }
+                Name: GenericNameSyntax { Identifier.ValueText: PicoAopNames.InterceptBy }
             }
         } => true,
         _ => false,
@@ -20,7 +20,7 @@ internal static class InterceptorSyntax
         {
             Expression: MemberAccessExpressionSyntax
             {
-                Name: GenericNameSyntax { Identifier.ValueText: PicoAotNames.AddInterceptor }
+                Name: GenericNameSyntax { Identifier.ValueText: PicoAopNames.AddInterceptor }
             }
         } => true,
         _ => false,
@@ -33,7 +33,7 @@ internal static class InterceptorSyntax
 
         if (semanticModel.GetSymbolInfo(invocation, ct).Symbol is not IMethodSymbol methodSymbol)
             return null;
-        if (methodSymbol.Name != PicoAotNames.InterceptBy)
+        if (methodSymbol.Name != PicoAopNames.InterceptBy)
             return null;
         if (methodSymbol.TypeArguments.Length != 1)
             return null;
@@ -64,7 +64,7 @@ internal static class InterceptorSyntax
 
         if (semanticModel.GetSymbolInfo(invocation, ct).Symbol is not IMethodSymbol methodSymbol)
             return null;
-        if (methodSymbol.Name != PicoAotNames.AddInterceptor)
+        if (methodSymbol.Name != PicoAopNames.AddInterceptor)
             return null;
         if (methodSymbol.TypeArguments.Length != 1)
             return null;

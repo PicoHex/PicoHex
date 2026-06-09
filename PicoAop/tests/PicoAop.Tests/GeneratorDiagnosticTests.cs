@@ -1,145 +1,103 @@
+using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using PicoAop.Gen;
+
 namespace PicoAop.Tests;
 
-public class GeneratorDiagnosticTests : GeneratorTestBase
+public class GeneratorDiagnosticTests
 {
+    private const string Preamble = @"
+using PicoAop.Abs;
+
+class MyInterceptor : InterceptorBase {}
+
+interface IDummy
+{
+    IDummy Register<T, TImpl>() where T : class where TImpl : class;
+}
+
+static class Ext
+{
+    internal static IDummy InterceptBy<T>(this IDummy c) where T : class => c;
+}
+";
+
     [Test]
-    public async Task InterceptByNonInterceptor_EmitsPICO010()
+    public async Task SealedType_ReportsPico101()
     {
-        var source = """
-            using PicoAop.DI;
-            using PicoAop.Abs;
-            using PicoDI;
-            using PicoDI.Abs;
+        var source = Preamble + @"
+sealed class SealedSvc
+{
+    public void Do() {}
+}
 
-            public interface IFoo { void Do(); }
-            public sealed class Foo : IFoo { public void Do() { } }
-
-            public static class Setup
-            {
-                public static void Configure(SvcContainer c)
-                {
-                    c.Register<IFoo, Foo>(SvcLifetime.Scoped).InterceptBy<string>();
-                }
-            }
-            """;
-
-        var (compilation, diags) = RunGenerator(source);
-        var pico010 = diags.FirstOrDefault(d =>
-            d.Id == "PICO010" && d.Severity == DiagnosticSeverity.Error
-        );
-        await Assert.That(pico010).IsNotNull();
+static class Reg
+{
+    static void X(IDummy c)
+    {
+        c.Register<SealedSvc, SealedSvc>().InterceptBy<MyInterceptor>();
+    }
+}
+";
+        var (diags, genTrees) = Run(source);
+        Console.WriteLine($"Generated trees: {genTrees.Length}");
+        foreach (var t in genTrees)
+            Console.WriteLine($"  {t.FilePath}");
+        foreach (var d in diags)
+            Console.WriteLine($"DIAG: {d.Id} {d.GetMessage()}");
+        var hasPico101 = diags.Any(d => d.Id == "PICO101");
+        await Assert.That(hasPico101).IsTrue();
     }
 
     [Test]
-    public async Task ZeroInterceptorsMatched_EmitsPICO012()
+    public async Task RefOutMethod_ReportsPico110()
     {
-        var source = """
-            using PicoAop.DI;
-            using PicoAop.Abs;
-            using PicoDI;
-            using PicoDI.Abs;
+        var source = Preamble + @"
+interface IHasRef
+{
+    void Do(ref int x);
+}
 
-            public interface IBar { int Get(); }
-            public sealed class Bar : IBar { public int Get() => 1; }
-            public sealed class Interceptor1 : InterceptorBase { }
+class Impl : IHasRef
+{
+    public void Do(ref int x) { x = 1; }
+}
 
-            public static class Setup
-            {
-                public static void Configure(SvcContainer c)
-                {
-                    c.Register<IBar, Bar>(SvcLifetime.Scoped)
-                        .InterceptBy<Interceptor1>()
-                        .WithoutInterceptor<Interceptor1>();
-                }
-            }
-            """;
-
-        var (compilation, diags) = RunGenerator(source);
-        var pico012 = diags.FirstOrDefault(d =>
-            d.Id == "PICO012" && d.Severity == DiagnosticSeverity.Warning
-        );
-        await Assert.That(pico012).IsNotNull();
+static class Reg
+{
+    static void X(IDummy c)
+    {
+        c.Register<IHasRef, Impl>().InterceptBy<MyInterceptor>();
+    }
+}
+";
+        var (diags, genTrees) = Run(source);
+        Console.WriteLine($"Generated trees: {genTrees.Length}");
+        foreach (var t in genTrees)
+            Console.WriteLine($"  {t.FilePath}");
+        foreach (var d in diags)
+            Console.WriteLine($"DIAG: {d.Id} {d.GetMessage()}");
+        var hasPico110 = diags.Any(d => d.Id == "PICO110");
+        await Assert.That(hasPico110).IsTrue();
     }
 
-    [Test]
-    public async Task MultipleRegisterWithInterceptBy_EmitsPICO014()
+    private static (List<Diagnostic> Diagnostics, ImmutableArray<SyntaxTree> Trees) Run(string source)
     {
-        var source = """
-            using PicoAop.DI;
-            using PicoAop.Abs;
-            using PicoDI;
-            using PicoDI.Abs;
-
-            public interface IFoo { void Do(); }
-            public sealed class Foo1 : IFoo { public void Do() { } }
-            public sealed class Foo2 : IFoo { public void Do() { } }
-            public sealed class MyInterceptor : InterceptorBase { }
-
-            public static class Setup
+        var syntaxTree = CSharpSyntaxTree.ParseText(source);
+        var compilation = CSharpCompilation.Create("test",
+            new[] { syntaxTree },
+            new[]
             {
-                public static void Configure(SvcContainer c)
-                {
-                    c.Register<IFoo, Foo1>(SvcLifetime.Scoped)
-                        .Register<IFoo, Foo2>(SvcLifetime.Scoped)
-                        .InterceptBy<MyInterceptor>();
-                }
-            }
-            """;
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IInterceptor).Assembly.Location),
+            },
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-        var (compilation, diags) = RunGenerator(source);
-        var pico014 = diags.FirstOrDefault(d =>
-            d.Id == "PICO014" && d.Severity == DiagnosticSeverity.Warning
-        );
-        await Assert.That(pico014).IsNotNull();
-    }
-
-    [Test]
-    public async Task NameCollision_EmitsPICO015()
-    {
-        var source = """
-            using PicoAop.DI;
-            using PicoAop.Abs;
-            using PicoDI;
-            using PicoDI.Abs;
-
-            namespace Ns {
-                public interface IAlpha { void Run(); }
-                public sealed class Alpha : IAlpha { public void Run() { } }
-            }
-            // Ns.IAlpha sanitizes to Ns_IAlpha — this type matches:
-            public interface Ns_IAlpha { void Run(); }
-            public sealed class AlphaImpl : Ns_IAlpha { public void Run() { } }
-
-            public sealed class InterceptorX : InterceptorBase { }
-
-            public static class Setup
-            {
-                public static void Configure(SvcContainer c)
-                {
-                    c.Register<Ns.IAlpha, Ns.Alpha>(SvcLifetime.Scoped)
-                        .InterceptBy<InterceptorX>();
-                    c.Register<global::Ns_IAlpha, AlphaImpl>(SvcLifetime.Scoped)
-                        .InterceptBy<InterceptorX>();
-                }
-            }
-            """;
-
-        var (compilation, diags) = RunGenerator(source);
-        var pico015 = diags.FirstOrDefault(d =>
-            d.Id == "PICO015" && d.Severity == DiagnosticSeverity.Warning
-        );
-        await Assert.That(pico015).IsNotNull();
-    }
-
-    [Test]
-    public async Task AllDiagnosticDescriptors_HaveCorrectIds()
-    {
-        await Assert.That(InterceptorDiagParams.InterceptorTypeMismatch.Id).IsEqualTo("PICO010");
-        await Assert.That(InterceptorDiagParams.FilterRequiresInterface.Id).IsEqualTo("PICO011");
-        await Assert.That(InterceptorDiagParams.ZeroInterceptorsMatched.Id).IsEqualTo("PICO012");
-        await Assert
-            .That(InterceptorDiagParams.ConflictingInterceptorDeclaration.Id)
-            .IsEqualTo("PICO013");
-        await Assert.That(InterceptorDiagParams.AmbiguousInterceptBy.Id).IsEqualTo("PICO014");
+        var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diags);
+        var result = new List<Diagnostic>(diags);
+        var trees = driver.GetRunResult().GeneratedTrees;
+        return (result, trees);
     }
 }

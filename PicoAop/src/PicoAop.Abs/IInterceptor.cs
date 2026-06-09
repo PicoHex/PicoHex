@@ -1,24 +1,36 @@
 namespace PicoAop.Abs;
 
+/// <summary>
+/// AOT-first interceptor interface with zero-allocation invocation paths.
+/// All methods use struct generics with cached static delegates — no boxing, no reflection.
+/// </summary>
 public interface IInterceptor
 {
-    TResult Invoke<TResult>(
-        IInvocation<TResult> invocation,
-        Func<IInvocation<TResult>, TResult> next
-    );
+    // ── Synchronous ──
 
-    void InvokeVoid(
-        IInvocation<PicoDI.Abs.VoidResult> invocation,
-        Action<IInvocation<PicoDI.Abs.VoidResult>> next
-    );
+    /// <summary>
+    /// Intercepts a synchronous void-returning method call.
+    /// </summary>
+    void InvokeVoid<TInvocation>(TInvocation inv, Func<TInvocation, object?> next)
+        where TInvocation : struct, IInvocation;
 
-    ValueTask<TResult> InvokeAsync<TResult>(
-        IInvocation<TResult> invocation,
-        Func<IInvocation<TResult>, ValueTask<TResult>> next
-    );
+    /// <summary>
+    /// Intercepts a synchronous method call returning <typeparamref name="TResult"/>.
+    /// </summary>
+    TResult Invoke<TInvocation, TResult>(TInvocation inv, Func<TInvocation, TResult> next)
+        where TInvocation : struct, IInvocation<TResult>;
 
-    ValueTask InvokeAsyncVoid(
-        IInvocation<PicoDI.Abs.VoidResult> invocation,
-        Func<IInvocation<PicoDI.Abs.VoidResult>, ValueTask> next
-    );
+    // ── Asynchronous ──
+
+    /// <summary>
+    /// Intercepts an asynchronous void-returning method call.
+    /// </summary>
+    ValueTask InvokeAsyncVoid<TInvocation>(TInvocation inv, Func<TInvocation, ValueTask> next)
+        where TInvocation : struct, IInvocation;
+
+    /// <summary>
+    /// Intercepts an asynchronous method call returning <typeparamref name="TResult"/>.
+    /// </summary>
+    ValueTask<TResult> InvokeAsync<TInvocation, TResult>(TInvocation inv, Func<TInvocation, ValueTask<TResult>> next)
+        where TInvocation : struct, IInvocation<TResult>;
 }

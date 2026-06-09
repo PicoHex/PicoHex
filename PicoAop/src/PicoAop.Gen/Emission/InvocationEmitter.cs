@@ -1,4 +1,4 @@
-namespace PicoAot.Gen.Emission;
+namespace PicoAop.Gen.Emission;
 
 internal static class InvocationEmitter
 {
