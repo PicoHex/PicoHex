@@ -17,11 +17,12 @@ internal record InterceptionInfo(
 
     public override int GetHashCode()
     {
+        var comparer = SymbolEqualityComparer.Default;
         unchecked
         {
             var hash = 17;
-            hash = (hash * 23) + (ServiceType?.GetHashCode() ?? 0);
-            hash = (hash * 23) + (InterceptorType?.GetHashCode() ?? 0);
+            hash = (hash * 23) + (ServiceType != null ? comparer.GetHashCode(ServiceType) : 0);
+            hash = (hash * 23) + (InterceptorType != null ? comparer.GetHashCode(InterceptorType) : 0);
             return hash;
         }
     }
