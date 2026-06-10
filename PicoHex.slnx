@@ -19,6 +19,7 @@
 
   <!-- PicoAop -->
   <Folder Name="/PicoAop/src/">
+    <Project Path="PicoAop/src/PicoAop/PicoAop.csproj" />
     <Project Path="PicoAop/src/PicoAop.Abs/PicoAop.Abs.csproj" />
     <Project Path="PicoAop/src/PicoAop.Gen/PicoAop.Gen.csproj" />
     <Project Path="PicoAop/src/PicoAop.DI/PicoAop.DI.csproj" />

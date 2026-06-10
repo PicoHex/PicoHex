@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <PackageId>PicoAop</PackageId>
+    <Description>PicoHex AOP — compile-time interception for PicoDI. Metapackage that includes PicoAop.Abs (abstractions) and PicoAop.DI (DI integration).</Description>
+    <PackageTags>PicoHex;AOP;DI;Interceptor</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoDefaultReferences>true</NoDefaultReferences>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+    <ProjectReference Include="..\PicoAop.Abs\PicoAop.Abs.csproj" />
+    <ProjectReference Include="..\PicoAop.DI\PicoAop.DI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoAop.Abs" />
+    <PackageReference Include="PicoAop.DI" />
+  </ItemGroup>
+</Project>
