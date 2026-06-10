@@ -525,6 +525,15 @@ jobs:
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
             -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/di"
 
+          dotnet pack PicoAop/src/PicoAop/PicoAop.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=true \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/pico"
+
   # ---------------------------------------------------------------------------
   # PicoMediator
   # ---------------------------------------------------------------------------

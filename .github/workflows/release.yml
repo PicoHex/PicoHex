@@ -157,6 +157,13 @@ jobs:
             -p:UseProjectReferences=false \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
+          dotnet pack PicoAop/src/PicoAop/PicoAop.csproj \
+            --configuration Release \
+            --output "$NUPKG_DIR" \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
       - name: Upload package artifacts
         uses: actions/upload-artifact@v7
         with:
