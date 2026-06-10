@@ -508,6 +508,14 @@ jobs:
           NUPKG_DIR="$GITHUB_WORKSPACE/artifacts/ci-nupkg"
           NUGET_SOURCE="https://api.nuget.org/v3/index.json"
 
+          dotnet pack PicoAop/src/PicoAop.Gen/PicoAop.Gen.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=true \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/abs"
+
           dotnet pack PicoAop/src/PicoAop.Abs/PicoAop.Abs.csproj \
             --configuration Release \
             --output ./artifacts/ci-nupkg \
