@@ -21,6 +21,7 @@
     <ProjectReference
       Include="..\PicoMediator.Gen\PicoMediator.Gen.csproj"
       OutputItemType="Analyzer"
+      PrivateAssets="all"
     />
   </ItemGroup>
 

@@ -72,12 +72,6 @@ jobs:
             -p:Version="$VERSION" \
             -p:UseProjectReferences=true
 
-          dotnet pack PicoAop/src/PicoAop.Gen/PicoAop.Gen.csproj \
-            --configuration Release \
-            --output "$NUPKG_DIR" \
-            -p:Version="$VERSION" \
-            -p:UseProjectReferences=true
-
           dotnet pack PicoAop/src/PicoAop.Abs/PicoAop.Abs.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
