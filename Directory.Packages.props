@@ -25,12 +25,7 @@
     <PackageVersion Include="PicoMediator" Version="$(Version)" />
     <PackageVersion Include="PicoMediator.DI" Version="$(Version)" />
     <PackageVersion Include="PicoCfg.DI" Version="$(Version)" />
-    <PackageVersion Include="PicoCfg.Ini" Version="$(Version)" />
-    <PackageVersion Include="PicoCfg.Json" Version="$(Version)" />
-    <PackageVersion Include="PicoCfg.Toml" Version="$(Version)" />
-    <PackageVersion Include="PicoCfg.Yaml" Version="$(Version)" />
     <PackageVersion Include="PicoLog.DI" Version="$(Version)" />
-    <PackageVersion Include="PicoLog.Json" Version="$(Version)" />
     <PackageVersion Include="PicoJetson" Version="2026.1.8" />
     <PackageVersion Include="PicoYaml" Version="2026.1.8" />
     <PackageVersion Include="PicoIni" Version="2026.1.8" />
