@@ -16,8 +16,4 @@
       ReferenceOutputAssembly="false"
     />
   </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoCfg" Version="$(Version)" />
-  </ItemGroup>
 </Project>

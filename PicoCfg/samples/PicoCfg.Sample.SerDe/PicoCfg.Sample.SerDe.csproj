@@ -8,19 +8,11 @@
     <AotOptimizationLevel>aggressive</AotOptimizationLevel>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PicoCfg.Json\PicoCfg.Json.csproj" />
     <ProjectReference Include="..\..\src\PicoCfg.Yaml\PicoCfg.Yaml.csproj" />
     <ProjectReference Include="..\..\src\PicoCfg.Ini\PicoCfg.Ini.csproj" />
     <ProjectReference Include="..\..\src\PicoCfg.Toml\PicoCfg.Toml.csproj" />
     <ProjectReference Include="..\..\src\PicoCfg\PicoCfg.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoCfg" Version="$(Version)" />
-    <PackageReference Include="PicoCfg.Json" Version="$(Version)" />
-    <PackageReference Include="PicoCfg.Yaml" Version="$(Version)" />
-    <PackageReference Include="PicoCfg.Ini" Version="$(Version)" />
-    <PackageReference Include="PicoCfg.Toml" Version="$(Version)" />
   </ItemGroup>
 </Project>

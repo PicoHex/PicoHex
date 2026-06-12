@@ -12,17 +12,10 @@
     <TrimMode>full</TrimMode>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PicoAop.Abs\PicoAop.Abs.csproj" />
     <ProjectReference Include="..\..\src\PicoAop.DI\PicoAop.DI.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoDI" />
-    <PackageReference Include="PicoDI.Abs" />
-    <PackageReference Include="PicoAop.Abs" Version="$(Version)" />
-    <PackageReference Include="PicoAop.DI" Version="$(Version)" />
   </ItemGroup>
 </Project>

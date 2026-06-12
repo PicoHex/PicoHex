@@ -7,11 +7,7 @@
     <AotOptimizationLevel>aggressive</AotOptimizationLevel>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PicoDI.Abs\PicoDI.Abs.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoDI.Abs" />
   </ItemGroup>
 </Project>

@@ -9,16 +9,8 @@
     <AotOptimizationLevel>aggressive</AotOptimizationLevel>
   </PropertyGroup>
 
-  <!-- PicoDI.Sample.Services is an internal library with no NuGet package, always use project ref -->
   <ItemGroup>
-    <ProjectReference Include="..\PicoDI.Sample.Services\PicoDI.Sample.Services.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\..\src\PicoDI\PicoDI.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoDI" />
+    <ProjectReference Include="..\PicoDI.Sample.Services\PicoDI.Sample.Services.csproj" />
   </ItemGroup>
 </Project>

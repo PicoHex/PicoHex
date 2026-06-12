@@ -8,13 +8,8 @@
     <AotOptimizationLevel>aggressive</AotOptimizationLevel>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PicoLog.Json\PicoLog.Json.csproj" />
     <ProjectReference Include="..\..\src\PicoLog\PicoLog.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoLog" Version="$(Version)" />
-    <PackageReference Include="PicoLog.Json" Version="$(Version)" />
   </ItemGroup>
 </Project>
