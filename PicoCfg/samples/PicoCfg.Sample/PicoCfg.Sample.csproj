@@ -8,8 +8,12 @@
     <AotOptimizationLevel>aggressive</AotOptimizationLevel>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\..\src\PicoCfg\PicoCfg.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoCfg" Version="$(Version)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">

@@ -8,17 +8,20 @@
     <AotOptimizationLevel>aggressive</AotOptimizationLevel>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\..\src\PicoMediator\PicoMediator.csproj" />
     <ProjectReference Include="..\..\src\PicoMediator.DI\PicoMediator.DI.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference
       Include="..\..\src\PicoMediator.Gen\PicoMediator.Gen.csproj"
       OutputItemType="Analyzer"
       ReferenceOutputAssembly="false"
     />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
+    <PackageReference Include="PicoDI" />
+    <PackageReference Include="PicoMediator" Version="$(Version)" />
+    <PackageReference Include="PicoMediator.DI" Version="$(Version)" />
   </ItemGroup>
 </Project>
