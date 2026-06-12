@@ -1,3 +1,4 @@
+global using System.Diagnostics;
 global using PicoDI;
 global using PicoDI.Abs;
 global using PicoMediator;
