@@ -52,7 +52,12 @@ jobs:
           dotnet test --project PicoCfg/tests/PicoCfg.Tests/PicoCfg.Tests.csproj --configuration Release
           dotnet test --project PicoCfg/tests/PicoCfg.Gen.Tests/PicoCfg.Gen.Tests.csproj --configuration Release
           dotnet test --project PicoCfg/tests/PicoCfg.DI.Tests/PicoCfg.DI.Tests.csproj --configuration Release
+          dotnet test --project PicoCfg/tests/PicoCfg.Json.Tests/PicoCfg.Json.Tests.csproj --configuration Release
+          dotnet test --project PicoCfg/tests/PicoCfg.Yaml.Tests/PicoCfg.Yaml.Tests.csproj --configuration Release
+          dotnet test --project PicoCfg/tests/PicoCfg.Ini.Tests/PicoCfg.Ini.Tests.csproj --configuration Release
+          dotnet test --project PicoCfg/tests/PicoCfg.Toml.Tests/PicoCfg.Toml.Tests.csproj --configuration Release
           dotnet test --project PicoLog/tests/PicoLog.Tests/PicoLog.Tests.csproj --configuration Release
+          dotnet test --project PicoLog/tests/PicoLog.Json.Tests/PicoLog.Json.Tests.csproj --configuration Release
           dotnet test --project PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release
           dotnet test --project PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj --configuration Release
 
@@ -142,6 +147,35 @@ jobs:
             -p:UseProjectReferences=false \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 
+          # ---- Phase 3: SerDe (depend on Phase 1 abstractions + Phase 2 consumer libs) ----
+          dotnet pack PicoCfg/src/PicoCfg.Json/PicoCfg.Json.csproj \
+            --configuration Release \
+            --output "$NUPKG_DIR" \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoCfg/src/PicoCfg.Yaml/PicoCfg.Yaml.csproj \
+            --configuration Release \
+            --output "$NUPKG_DIR" \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoCfg/src/PicoCfg.Ini/PicoCfg.Ini.csproj \
+            --configuration Release \
+            --output "$NUPKG_DIR" \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoCfg/src/PicoCfg.Toml/PicoCfg.Toml.csproj \
+            --configuration Release \
+            --output "$NUPKG_DIR" \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
           dotnet pack PicoLog/src/PicoLog/PicoLog.csproj \
             --configuration Release \
             --output "$NUPKG_DIR" \
@@ -154,6 +188,13 @@ jobs:
             --output "$NUPKG_DIR" \
             -p:Version="$VERSION" \
             -p:PicoDiPackageVersion="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
+
+          dotnet pack PicoLog/src/PicoLog.Json/PicoLog.Json.csproj \
+            --configuration Release \
+            --output "$NUPKG_DIR" \
+            -p:Version="$VERSION" \
             -p:UseProjectReferences=false \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR"
 

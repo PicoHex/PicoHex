@@ -313,6 +313,42 @@ jobs:
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
             -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/di"
 
+          dotnet pack PicoCfg/src/PicoCfg.Json/PicoCfg.Json.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/json"
+
+          dotnet pack PicoCfg/src/PicoCfg.Yaml/PicoCfg.Yaml.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/yaml"
+
+          dotnet pack PicoCfg/src/PicoCfg.Ini/PicoCfg.Ini.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/ini"
+
+          dotnet pack PicoCfg/src/PicoCfg.Toml/PicoCfg.Toml.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/toml"
+
   # ---------------------------------------------------------------------------
   # PicoLog
   # ---------------------------------------------------------------------------
@@ -438,6 +474,15 @@ jobs:
             -p:RestoreSources="$NUGET_SOURCE" \
             -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
             -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/di"
+
+          dotnet pack PicoLog/src/PicoLog.Json/PicoLog.Json.csproj \
+            --configuration Release \
+            --output ./artifacts/ci-nupkg \
+            -p:Version="$VERSION" \
+            -p:UseProjectReferences=false \
+            -p:RestoreSources="$NUGET_SOURCE" \
+            -p:RestoreAdditionalProjectSources="$NUPKG_DIR" \
+            -p:RestorePackagesPath="$GITHUB_WORKSPACE/artifacts/ci-packages/json"
 
   # ---------------------------------------------------------------------------
   # PicoAop
