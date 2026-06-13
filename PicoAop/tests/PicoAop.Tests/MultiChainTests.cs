@@ -31,6 +31,38 @@ static class R { static void X(IRet r) { r.Register<IMySvc,MySvc>().InterceptBy<
     }
 
     [Test]
+    public async Task MultiChain_GeneratesChainDelegates()
+    {
+        var source =
+            @"
+using PicoAop.Abs;
+interface IMySvc { int GetValue(); }
+class MySvc : IMySvc { public int GetValue() => 42; }
+class N1 : InterceptorBase { }
+class N2 : InterceptorBase { }
+interface IRet { IRet Register<T,TImpl>() where T:class where TImpl:class; IRet InterceptBy<T>() where T:class; }
+static class R { static void X(IRet r) { r.Register<IMySvc,MySvc>().InterceptBy<N1>().InterceptBy<N2>(); } }
+";
+        await RunGenerator(
+            source,
+            async result =>
+            {
+                var output = GetGeneratedOutput(result);
+                // The chain must invoke _i1 (second interceptor) — not just store it
+                await Assert.That(output.Contains("_i1.Invoke(")).IsTrue();
+                // The proxy must pass the chain delegate to _i0
+                await Assert.That(output.Contains("s_GetValue_Step1")).IsTrue();
+                // The step0 delegate must call the target
+                await Assert
+                    .That(output.Contains("s_GetValue_Step0 = static inv => inv.InvokeTarget()"))
+                    .IsTrue();
+                // The proxy calls _i0.Invoke with the chain delegate (generic args, then step1)
+                await Assert.That(output.Contains(">(inv, s_GetValue_Step1)")).IsTrue();
+            }
+        );
+    }
+
+    [Test]
     public async Task SingleInterceptor_GeneratesI0()
     {
         var source =

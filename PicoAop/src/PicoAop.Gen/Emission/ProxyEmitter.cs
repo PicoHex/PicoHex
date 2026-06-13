@@ -69,27 +69,30 @@ internal static class ProxyEmitter
                     MetadataName: "Task`1" or "ValueTask`1" or "Task" or "ValueTask"
                 };
 
+            // Step0: calls InvokeTarget (the actual target method)
             if (isAsync)
             {
                 var namedRet = method.ReturnType as INamedTypeSymbol;
                 var isOrigValueTask = namedRet?.MetadataName is "ValueTask" or "ValueTask`1";
-                if (isOrigValueTask)
-                {
-                    var retType = namedRet!.ToDisplayString(
-                        SymbolDisplayFormat.FullyQualifiedFormat
-                    );
-                    sb.AppendLine(
-                        $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}Next = static inv => inv.InvokeTargetAsync();"
-                    );
-                }
-                else
-                {
-                    var unwrapped =
+                var retType = isOrigValueTask
+                    ? namedRet!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                    : (
                         namedRet?.TypeArguments.Length > 0
-                            ? $"<{namedRet!.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>"
-                            : "";
+                            ? $"ValueTask<{namedRet.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>"
+                            : "ValueTask"
+                    );
+                sb.AppendLine(
+                    $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}_Step0 = static inv => inv.InvokeTargetAsync();"
+                );
+                for (int step = 1; step < interceptorTypes.Count; step++)
+                {
+                    int interceptorIdx = interceptorTypes.Count - step;
+                    var invokeMethod =
+                        (isOrigValueTask || retType == "ValueTask")
+                            ? "InvokeAsyncVoid"
+                            : "InvokeAsync";
                     sb.AppendLine(
-                        $"    private static readonly Func<{multiStructName}, ValueTask{unwrapped}> s_{method.Name}Next = static inv => inv.InvokeTargetAsync();"
+                        $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}_Step{step} = static inv => inv._i{interceptorIdx}.{invokeMethod}(inv, s_{method.Name}_Step{step - 1});"
                     );
                 }
             }
@@ -99,14 +102,28 @@ internal static class ProxyEmitter
                     SymbolDisplayFormat.FullyQualifiedFormat
                 );
                 sb.AppendLine(
-                    $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}Next = static inv => inv.InvokeTarget();"
+                    $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}_Step0 = static inv => inv.InvokeTarget();"
                 );
+                for (int step = 1; step < interceptorTypes.Count; step++)
+                {
+                    int interceptorIdx = interceptorTypes.Count - step;
+                    sb.AppendLine(
+                        $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}_Step{step} = static inv => inv._i{interceptorIdx}.Invoke(inv, s_{method.Name}_Step{step - 1});"
+                    );
+                }
             }
             else
             {
                 sb.AppendLine(
-                    $"    private static readonly Func<{multiStructName}, object?> s_{method.Name}Next = static inv => {{ inv.InvokeTarget(); return null; }};"
+                    $"    private static readonly Func<{multiStructName}, object?> s_{method.Name}_Step0 = static inv => {{ inv.InvokeTarget(); return null; }};"
                 );
+                for (int step = 1; step < interceptorTypes.Count; step++)
+                {
+                    int interceptorIdx = interceptorTypes.Count - step;
+                    sb.AppendLine(
+                        $"    private static readonly Func<{multiStructName}, object?> s_{method.Name}_Step{step} = static inv => {{ inv._i{interceptorIdx}.InvokeVoid(inv, s_{method.Name}_Step{step - 1}); return null; }};"
+                    );
+                }
             }
         }
         sb.AppendLine();
@@ -123,17 +140,43 @@ internal static class ProxyEmitter
         )
         {
             var propType = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var getterStructName = $"Invocation_{safeSvcName}_{prop.Name}_Getter_{intSuffix}";
+            var setterStructName = $"Invocation_{safeSvcName}_{prop.Name}_Setter_{intSuffix}";
+
             if (prop.GetMethod?.DeclaredAccessibility == Accessibility.Public)
+            {
+                // Getter Step0
                 sb.AppendLine(
-                    $"    private static readonly Func<Invocation_{safeSvcName}_{prop.Name}_Getter_{intSuffix}, {propType}> s_get_{prop.Name}Next = static inv => inv.InvokeTarget();"
+                    $"    private static readonly Func<{getterStructName}, {propType}> s_get_{prop.Name}_Step0 = static inv => inv.InvokeTarget();"
                 );
+                // Getter Step1..StepN-1
+                for (int step = 1; step < interceptorTypes.Count; step++)
+                {
+                    int interceptorIdx = interceptorTypes.Count - step;
+                    sb.AppendLine(
+                        $"    private static readonly Func<{getterStructName}, {propType}> s_get_{prop.Name}_Step{step} = static inv => inv._i{interceptorIdx}.Invoke(inv, s_get_{prop.Name}_Step{step - 1});"
+                    );
+                }
+            }
+
             if (
                 prop.SetMethod?.DeclaredAccessibility == Accessibility.Public
                 && !prop.SetMethod.IsInitOnly
             )
+            {
+                // Setter Step0
                 sb.AppendLine(
-                    $"    private static readonly Func<Invocation_{safeSvcName}_{prop.Name}_Setter_{intSuffix}, object?> s_set_{prop.Name}Next = static inv => {{ inv.InvokeTarget(); return null; }};"
+                    $"    private static readonly Func<{setterStructName}, object?> s_set_{prop.Name}_Step0 = static inv => {{ inv.InvokeTarget(); return null; }};"
                 );
+                // Setter Step1..StepN-1
+                for (int step = 1; step < interceptorTypes.Count; step++)
+                {
+                    int interceptorIdx = interceptorTypes.Count - step;
+                    sb.AppendLine(
+                        $"    private static readonly Func<{setterStructName}, object?> s_set_{prop.Name}_Step{step} = static inv => {{ inv._i{interceptorIdx}.InvokeVoid(inv, s_set_{prop.Name}_Step{step - 1}); return null; }};"
+                    );
+                }
+            }
         }
         sb.AppendLine();
 
@@ -216,6 +259,9 @@ internal static class ProxyEmitter
             sb.AppendLine($"        var inv = new {multiStructName}({ctorArgs});");
 
             var structType = multiStructName;
+            var lastStep = interceptorTypes.Count - 1;
+            var nextDelegate = $"s_{method.Name}_Step{lastStep}";
+
             if (isTaskOf || isValueTaskOf)
             {
                 var unwrappedType = method.ReturnType
@@ -224,32 +270,31 @@ internal static class ProxyEmitter
                         .TypeArguments[0]
                         .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                     : "object";
-                var invokeMethod = isTaskOf ? "InvokeAsync" : "InvokeAsync";
                 sb.AppendLine(
-                    $"        return _i0.{invokeMethod}<{structType}, {unwrappedType}>(inv, s_{method.Name}Next){(isTaskOf ? ".AsTask()" : "")};"
+                    $"        return _i0.InvokeAsync<{structType}, {unwrappedType}>(inv, {nextDelegate}){(isTaskOf ? ".AsTask()" : "")};"
                 );
             }
             else if (isTask)
             {
                 sb.AppendLine(
-                    $"        return _i0.InvokeAsyncVoid<{structType}>(inv, s_{method.Name}Next).AsTask();"
+                    $"        return _i0.InvokeAsyncVoid<{structType}>(inv, {nextDelegate}).AsTask();"
                 );
             }
             else if (isValueTask)
             {
                 sb.AppendLine(
-                    $"        return _i0.InvokeAsyncVoid<{structType}>(inv, s_{method.Name}Next);"
+                    $"        return _i0.InvokeAsyncVoid<{structType}>(inv, {nextDelegate});"
                 );
             }
             else if (method.ReturnType.SpecialType == SpecialType.System_Void)
-                sb.AppendLine($"        _i0.InvokeVoid(inv, s_{method.Name}Next);");
+                sb.AppendLine($"        _i0.InvokeVoid(inv, {nextDelegate});");
             else
             {
                 var retTypeName = method.ReturnType.ToDisplayString(
                     SymbolDisplayFormat.FullyQualifiedFormat
                 );
                 sb.AppendLine(
-                    $"        return _i0.Invoke<{structType}, {retTypeName}>(inv, s_{method.Name}Next);"
+                    $"        return _i0.Invoke<{structType}, {retTypeName}>(inv, {nextDelegate});"
                 );
             }
         }
@@ -278,7 +323,10 @@ internal static class ProxyEmitter
             sb.AppendLine(
                 $"            var inv = new Invocation_{safeSvcName}_{prop.Name}_Getter_{intSuffix}(_inner, {string.Join(", ", interceptorTypes.Select((_, i) => $"_i{i}"))});"
             );
-            sb.AppendLine($"            return _i0.Invoke(inv, s_get_{prop.Name}Next);");
+            var getterLastStep = interceptorTypes.Count - 1;
+            sb.AppendLine(
+                $"            return _i0.Invoke(inv, s_get_{prop.Name}_Step{getterLastStep});"
+            );
             sb.AppendLine("        }");
         }
 
@@ -292,7 +340,10 @@ internal static class ProxyEmitter
             sb.AppendLine(
                 $"            var inv = new Invocation_{safeSvcName}_{prop.Name}_Setter_{intSuffix}(_inner, {string.Join(", ", interceptorTypes.Select((_, i) => $"_i{i}"))}, value);"
             );
-            sb.AppendLine($"            _i0.InvokeVoid(inv, s_set_{prop.Name}Next);");
+            var setterLastStep = interceptorTypes.Count - 1;
+            sb.AppendLine(
+                $"            _i0.InvokeVoid(inv, s_set_{prop.Name}_Step{setterLastStep});"
+            );
             sb.AppendLine("        }");
         }
 
