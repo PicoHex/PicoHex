@@ -1,23 +1,14 @@
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoAop.Gen;
-
 namespace PicoAop.Tests;
 
 public class GeneratorDiagnosticTests
 {
     private const string Preamble =
         @"
-using PicoAop.Abs;
-
 class MyInterceptor : InterceptorBase {}
-
 interface IDummy
 {
     IDummy Register<T, TImpl>() where T : class where TImpl : class;
 }
-
 static class Ext
 {
     internal static IDummy InterceptBy<T>(this IDummy c) where T : class => c;
@@ -34,7 +25,6 @@ sealed class SealedSvc
 {
     public void Do() {}
 }
-
 static class Reg
 {
     static void X(IDummy c)
@@ -63,12 +53,10 @@ interface IHasRef
 {
     void Do(ref int x);
 }
-
 class Impl : IHasRef
 {
     public void Do(ref int x) { x = 1; }
 }
-
 static class Reg
 {
     static void X(IDummy c)
@@ -102,7 +90,6 @@ static class Reg
             },
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
-
         var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
         driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diags);
         var result = new List<Diagnostic>(diags);

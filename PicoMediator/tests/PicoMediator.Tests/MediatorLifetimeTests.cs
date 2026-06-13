@@ -1,7 +1,3 @@
-using PicoDI;
-using PicoDI.Abs;
-using PicoMediator.Abs;
-
 namespace PicoMediator.Tests;
 
 public class MediatorLifetimeTests

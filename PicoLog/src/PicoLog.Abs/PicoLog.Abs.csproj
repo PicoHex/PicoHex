@@ -17,7 +17,11 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference Include="..\PicoLog.Gen\PicoLog.Gen.csproj" OutputItemType="Analyzer" PrivateAssets="all" />
+    <ProjectReference
+      Include="..\PicoLog.Gen\PicoLog.Gen.csproj"
+      OutputItemType="Analyzer"
+      PrivateAssets="all"
+    />
   </ItemGroup>
 
   <ItemGroup>

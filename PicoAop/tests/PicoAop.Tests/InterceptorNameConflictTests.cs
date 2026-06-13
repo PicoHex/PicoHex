@@ -1,6 +1,3 @@
-using Microsoft.CodeAnalysis;
-using PicoAop.Gen;
-
 namespace PicoAop.Tests;
 
 public class InterceptorNameConflictTests : GeneratorTestBase
@@ -13,29 +10,23 @@ public class InterceptorNameConflictTests : GeneratorTestBase
         // namespaces would generate duplicate struct/wrapper identifiers.
         var source = """
             using PicoAop.Abs;
-
             namespace A
             {
                 class MyInterceptor : InterceptorBase { }
             }
-
             namespace B
             {
                 class MyInterceptor : InterceptorBase { }
             }
-
             interface ISvc1 { int GetValue(); }
             interface ISvc2 { string GetName(); }
-
             class Svc1 : ISvc1 { public int GetValue() => 42; }
             class Svc2 : ISvc2 { public string GetName() => "test"; }
-
             interface IDummyContainer
             {
                 IDummyContainer Register<T, TImpl>() where T : class where TImpl : class;
                 IDummyContainer InterceptBy<T>() where T : class;
             }
-
             static class Registration
             {
                 static void Do(IDummyContainer c)
@@ -45,7 +36,6 @@ public class InterceptorNameConflictTests : GeneratorTestBase
                 }
             }
             """;
-
         await RunGenerator(
             source,
             async result =>
@@ -53,22 +43,17 @@ public class InterceptorNameConflictTests : GeneratorTestBase
                 var output = GetGeneratedOutput(result);
                 Console.WriteLine("=== GENERATED OUTPUT ===");
                 Console.WriteLine(output);
-
                 // The generated code should include namespace disambiguation.
                 // Look for wrapper methods — they should have different names
                 // (containing the namespace), not identical names.
-
                 // Count wrapper method definitions for the conflicting type names
                 var wrapCount = CountOccurrences(output, "Wrap_");
-
                 // Each service + interceptor combo should have exactly one wrapper
                 // If there's a collision, there would be duplicates or errors
                 var lines = output.Split('\n');
                 var wrapLines = lines.Where(l => l.Contains("Wrap_")).ToList();
-
                 // We should have 2 wrapper methods (one per service+interceptor combo)
                 await Assert.That(wrapLines.Count).IsEqualTo(2);
-
                 // Each wrapper should have a unique name
                 await Assert.That(wrapLines[0]).IsNotEqualTo(wrapLines[1]);
             }
@@ -82,19 +67,15 @@ public class InterceptorNameConflictTests : GeneratorTestBase
         // things should still work as before (regression test)
         var source = """
             using PicoAop.Abs;
-
             class Int1 : InterceptorBase { }
             class Int2 : InterceptorBase { }
-
             interface ISvc { int GetValue(); }
             class Svc : ISvc { public int GetValue() => 42; }
-
             interface IDummyContainer
             {
                 IDummyContainer Register<T, TImpl>() where T : class where TImpl : class;
                 IDummyContainer InterceptBy<T>() where T : class;
             }
-
             static class Registration
             {
                 static void Do(IDummyContainer c)
@@ -103,7 +84,6 @@ public class InterceptorNameConflictTests : GeneratorTestBase
                 }
             }
             """;
-
         await RunGenerator(
             source,
             async result =>
@@ -111,11 +91,9 @@ public class InterceptorNameConflictTests : GeneratorTestBase
                 var output = GetGeneratedOutput(result);
                 Console.WriteLine("=== GENERATED OUTPUT ===");
                 Console.WriteLine(output);
-
                 // Should have both interceptors in the output
                 await Assert.That(output.Contains("Int1")).IsTrue();
                 await Assert.That(output.Contains("Int2")).IsTrue();
-
                 // No duplicate identifiers
                 var lines = output.Split('\n');
                 var structLines = lines.Where(l => l.TrimStart().StartsWith("struct ")).ToList();

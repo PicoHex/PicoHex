@@ -1,8 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoDI.Abs;
-using PicoDI.Gen;
-
 namespace PicoDI.Test;
 
 public class InterceptorMultiChainTests
@@ -12,7 +7,6 @@ public class InterceptorMultiChainTests
     {
         var source =
             @"
-using PicoDI.Abs;
 
 interface ISvc { void Do(); }
 class Impl : ISvc { public void Do() {} }

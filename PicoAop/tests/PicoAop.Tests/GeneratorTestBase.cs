@@ -1,7 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoAop.Gen;
-
 namespace PicoAop.Tests;
 
 public abstract class GeneratorTestBase
@@ -22,7 +18,6 @@ public abstract class GeneratorTestBase
             ],
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
-
         var generator = new InterceptorGenerator();
         var csharpDriver = CSharpGeneratorDriver.Create(generator);
         var driver = csharpDriver.RunGeneratorsAndUpdateCompilation(
@@ -30,13 +25,10 @@ public abstract class GeneratorTestBase
             out var updatedComp,
             out var compileDiags
         );
-
         foreach (var d in compileDiags.Where(d => d.Severity == DiagnosticSeverity.Error))
             Console.Error.WriteLine($"COMPILE: {d.Id} {d.GetMessage()}");
-
         Console.Error.WriteLine($"Trees: {driver.GetRunResult().GeneratedTrees.Length}");
         Console.Error.WriteLine($"Results: {driver.GetRunResult().Results.Length}");
-
         if (assert is not null)
             await assert(driver.GetRunResult());
         else
@@ -65,7 +57,6 @@ public abstract class GeneratorTestBase
             },
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
-
         var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
         driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out _);
         var result = driver.GetRunResult();
@@ -85,7 +76,6 @@ public abstract class GeneratorTestBase
             },
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
-
         var driver = CSharpGeneratorDriver.Create(new InterceptorGenerator());
         driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out var diagnostics);
         return [.. diagnostics];

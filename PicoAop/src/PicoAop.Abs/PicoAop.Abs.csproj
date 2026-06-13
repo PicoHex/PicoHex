@@ -18,7 +18,11 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference Include="..\PicoAop.Gen\PicoAop.Gen.csproj" OutputItemType="Analyzer" PrivateAssets="all" />
+    <ProjectReference
+      Include="..\PicoAop.Gen\PicoAop.Gen.csproj"
+      OutputItemType="Analyzer"
+      PrivateAssets="all"
+    />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
   </ItemGroup>
 

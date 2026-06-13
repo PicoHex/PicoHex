@@ -1,9 +1,3 @@
-using System.Linq;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoDI.Abs;
-using PicoDI.Gen;
-
 namespace PicoDI.Test;
 
 public class InterceptorIntegrationTests
@@ -13,7 +7,6 @@ public class InterceptorIntegrationTests
     {
         var source =
             @"
-using PicoDI.Abs;
 
 interface ISvc { void Do(); }
 class Impl : ISvc { public void Do() {} }

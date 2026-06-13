@@ -1,6 +1,3 @@
-using Microsoft.CodeAnalysis;
-using PicoAop.Gen;
-
 namespace PicoAop.Tests;
 
 public class ClassInterceptionTests : GeneratorTestBase
@@ -13,24 +10,19 @@ public class ClassInterceptionTests : GeneratorTestBase
         // so that virtual dispatch correctly routes calls through the proxy.
         var source = """
             using PicoAop.Abs;
-
             class MyBaseClass
             {
                 public virtual int GetValue() => 42;
             }
-
             class MyInterceptor : InterceptorBase { }
-
             interface IDummyContainer
             {
                 IDummyContainer Register<T, TImpl>() where T : class where TImpl : class;
             }
-
             static class Ext
             {
                 internal static IDummyContainer InterceptBy<T>(this IDummyContainer c) where T : class => c;
             }
-
             static class Registration
             {
                 static void Do(IDummyContainer c)
@@ -39,7 +31,6 @@ public class ClassInterceptionTests : GeneratorTestBase
                 }
             }
             """;
-
         await RunGenerator(
             source,
             async result =>
@@ -47,7 +38,6 @@ public class ClassInterceptionTests : GeneratorTestBase
                 var output = GetGeneratedOutput(result);
                 Console.WriteLine("=== GENERATED OUTPUT ===");
                 Console.WriteLine(output);
-
                 // The generated proxy should have "public override" for the virtual method
                 await Assert.That(output.Contains("public override int GetValue(")).IsTrue();
             }
@@ -60,29 +50,23 @@ public class ClassInterceptionTests : GeneratorTestBase
         // Interface interception should still use "public" (not "public override")
         var source = """
             using PicoAop.Abs;
-
             interface IMyService
             {
                 int GetValue();
             }
-
             class MyService : IMyService
             {
                 public int GetValue() => 42;
             }
-
             class MyInterceptor : InterceptorBase { }
-
             interface IDummyContainer
             {
                 IDummyContainer Register<T, TImpl>() where T : class where TImpl : class;
             }
-
             static class Ext
             {
                 internal static IDummyContainer InterceptBy<T>(this IDummyContainer c) where T : class => c;
             }
-
             static class Registration
             {
                 static void Do(IDummyContainer c)
@@ -91,7 +75,6 @@ public class ClassInterceptionTests : GeneratorTestBase
                 }
             }
             """;
-
         await RunGenerator(
             source,
             async result =>
@@ -99,7 +82,6 @@ public class ClassInterceptionTests : GeneratorTestBase
                 var output = GetGeneratedOutput(result);
                 Console.WriteLine("=== GENERATED OUTPUT ===");
                 Console.WriteLine(output);
-
                 // Interface should keep "public" (no "override")
                 await Assert.That(output.Contains("public override")).IsFalse();
                 await Assert.That(output.Contains("public int GetValue(")).IsTrue();

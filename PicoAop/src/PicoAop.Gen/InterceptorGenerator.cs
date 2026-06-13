@@ -1,6 +1,3 @@
-using Microsoft.CodeAnalysis.Text;
-using PicoAop.Gen.Emission;
-
 namespace PicoAop.Gen;
 
 [Generator(LanguageNames.CSharp)]

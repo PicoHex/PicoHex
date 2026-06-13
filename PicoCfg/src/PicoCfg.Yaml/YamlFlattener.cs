@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace PicoCfg.Yaml;
 
 internal static class YamlFlattener

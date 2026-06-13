@@ -58,8 +58,8 @@ internal static class CfgServiceHelper
     /// This is a forwarding helper — the actual binding is deferred to runtime via the
     /// source-generated or reflection-based binder for the closed type.
     /// </summary>
-    #pragma warning disable PCFGGEN001 // Direct closed named target type required
+#pragma warning disable PCFGGEN001 // Direct closed named target type required
     internal static T Bind<T>(ISvcScope scope, string? section = null)
         where T : class => CfgBind.Bind<T>(ResolveCfg(scope), section);
-    #pragma warning restore PCFGGEN001
+#pragma warning restore PCFGGEN001
 }

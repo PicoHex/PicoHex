@@ -73,24 +73,28 @@ internal static class ProxyEmitter
             if (isAsync)
             {
                 var namedRet = method.ReturnType as INamedTypeSymbol;
-                var isOrigValueTask = namedRet?.MetadataName is "ValueTask" or "ValueTask`1";
-                var retType = isOrigValueTask
-                    ? namedRet!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                    : (
-                        namedRet?.TypeArguments.Length > 0
-                            ? $"ValueTask<{namedRet.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>"
-                            : "ValueTask"
-                    );
+                var metaName = namedRet?.MetadataName;
+                var isTaskOf = metaName is "Task`1";
+                var isValueTaskOf = metaName is "ValueTask`1";
+                var isTask = metaName is "Task";
+                var isValueTask = metaName is "ValueTask";
+                var hasAsyncReturn = isTaskOf || isValueTaskOf;
+
+                var retType =
+                    (isValueTask || isValueTaskOf)
+                        ? namedRet!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                        : (
+                            namedRet?.TypeArguments.Length > 0
+                                ? $"ValueTask<{namedRet.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>"
+                                : "ValueTask"
+                        );
                 sb.AppendLine(
                     $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}_Step0 = static inv => inv.InvokeTargetAsync();"
                 );
                 for (int step = 1; step < interceptorTypes.Count; step++)
                 {
                     int interceptorIdx = interceptorTypes.Count - step;
-                    var invokeMethod =
-                        (isOrigValueTask || retType == "ValueTask")
-                            ? "InvokeAsyncVoid"
-                            : "InvokeAsync";
+                    var invokeMethod = hasAsyncReturn ? "InvokeAsync" : "InvokeAsyncVoid";
                     sb.AppendLine(
                         $"    private static readonly Func<{multiStructName}, {retType}> s_{method.Name}_Step{step} = static inv => inv._i{interceptorIdx}.{invokeMethod}(inv, s_{method.Name}_Step{step - 1});"
                     );

@@ -1,11 +1,3 @@
-using System.Linq;
-using System.Reflection;
-using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using PicoDI.Abs;
-using PicoDI.Gen;
-
 namespace PicoDI.Test;
 
 public sealed class InterceptorLifetimeTests

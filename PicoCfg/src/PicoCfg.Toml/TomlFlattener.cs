@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace PicoCfg.Toml;
 
 internal static class TomlFlattener
