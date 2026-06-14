@@ -1,0 +1,5 @@
+<Project>
+  <ItemGroup>
+    <Analyzer Include="$(MSBuildThisFileDirectory)PicoMediator.Gen\analyzers\dotnet\cs\PicoMediator.Gen.dll" />
+  </ItemGroup>
+</Project>

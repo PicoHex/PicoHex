@@ -17,12 +17,16 @@
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+  <ItemGroup>
     <ProjectReference
       Include="..\PicoAop.Gen\PicoAop.Gen.csproj"
       OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
       PrivateAssets="all"
     />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
   </ItemGroup>
 
@@ -32,7 +36,7 @@
 
   <ItemGroup>
     <None
-      Include="$(OutputPath)/PicoAop.Gen.dll"
+      Include="..\PicoAop.Gen\$(OutputPath)\PicoAop.Gen.dll"
       Pack="true"
       PackagePath="analyzers/dotnet/cs"
       Visible="false"

@@ -16,17 +16,18 @@
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+  <ItemGroup>
     <ProjectReference
       Include="..\PicoCfg.Gen\PicoCfg.Gen.csproj"
       OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
       PrivateAssets="all"
     />
   </ItemGroup>
 
   <ItemGroup>
     <None
-      Include="$(OutputPath)/PicoCfg.Gen.dll"
+      Include="..\PicoCfg.Gen\$(OutputPath)\PicoCfg.Gen.dll"
       Pack="true"
       PackagePath="analyzers/dotnet/cs"
       Visible="false"

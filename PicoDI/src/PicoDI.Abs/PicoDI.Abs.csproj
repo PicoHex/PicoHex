@@ -17,17 +17,18 @@
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
+  <ItemGroup>
     <ProjectReference
       Include="..\PicoDI.Gen\PicoDI.Gen.csproj"
       OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
       PrivateAssets="all"
     />
   </ItemGroup>
 
   <ItemGroup>
     <None
-      Include="$(OutputPath)/PicoDI.Gen.dll"
+      Include="..\PicoDI.Gen\$(OutputPath)\PicoDI.Gen.dll"
       Pack="true"
       PackagePath="analyzers/dotnet/cs"
       Visible="false"

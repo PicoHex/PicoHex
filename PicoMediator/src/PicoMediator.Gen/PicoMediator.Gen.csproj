@@ -34,7 +34,13 @@
     <None
       Include="$(OutputPath)/$(AssemblyName).dll"
       Pack="true"
-      PackagePath="analyzers/dotnet/cs"
+      PackagePath="buildTransitive/PicoMediator.Gen/analyzers/dotnet/cs"
+      Visible="false"
+    />
+    <None
+      Include="buildTransitive\PicoMediator.Gen.props"
+      Pack="true"
+      PackagePath="buildTransitive/PicoMediator.Gen.props"
       Visible="false"
     />
   </ItemGroup>
