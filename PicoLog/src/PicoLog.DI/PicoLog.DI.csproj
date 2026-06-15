@@ -12,8 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference Include="..\PicoLog\PicoLog.csproj" />
-    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
+    <ProjectReference Include="..\PicoLog\PicoLog.csproj" PrivateAssets="Build" />
+    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" PrivateAssets="Build" />
     <ProjectReference
       Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
       OutputItemType="Analyzer"
@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoLog" />
-    <PackageReference Include="PicoDI.Abs" />
+    <PackageReference Include="PicoLog" PrivateAssets="Build" />
+    <PackageReference Include="PicoDI.Abs" PrivateAssets="Build" />
   </ItemGroup>
 
   <!-- PicoDI.Gen analyzer is required for cross-assembly open generic materialization

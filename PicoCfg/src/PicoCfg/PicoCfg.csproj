@@ -12,14 +12,11 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference Include="..\PicoCfg.Abs\PicoCfg.Abs.csproj">
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <Private>false</Private>
-    </ProjectReference>
+    <ProjectReference Include="..\PicoCfg.Abs\PicoCfg.Abs.csproj" PrivateAssets="Build" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoCfg.Abs" />
+    <PackageReference Include="PicoCfg.Abs" PrivateAssets="Build" />
   </ItemGroup>
 
   <ItemGroup>

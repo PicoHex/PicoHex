@@ -17,12 +17,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
-    <ProjectReference Include="..\PicoAop.Abs\PicoAop.Abs.csproj" />
-    <ProjectReference Include="..\PicoAop.DI\PicoAop.DI.csproj" />
+    <ProjectReference Include="..\PicoAop.Abs\PicoAop.Abs.csproj" PrivateAssets="Build" />
+    <ProjectReference Include="..\PicoAop.DI\PicoAop.DI.csproj" PrivateAssets="Build" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
-    <PackageReference Include="PicoAop.Abs" />
-    <PackageReference Include="PicoAop.DI" />
+    <PackageReference Include="PicoAop.Abs" PrivateAssets="Build" />
+    <PackageReference Include="PicoAop.DI" PrivateAssets="Build" />
   </ItemGroup>
 </Project>
