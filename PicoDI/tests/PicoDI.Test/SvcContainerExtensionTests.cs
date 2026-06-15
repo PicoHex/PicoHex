@@ -62,21 +62,19 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task Register_TypeType_NonGeneric_ThrowsInvalidOperation()
+    public async Task Register_TypeType_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert - Non-generic types require source generator
-        await Assert
-            .That(() =>
-                container.Register(
-                    typeof(ISimpleService),
-                    typeof(SimpleService),
-                    SvcLifetime.Transient
-                )
-            )
-            .Throws<InvalidOperationException>();
+        // Act - Type-based registration now creates a SvcDescriptor directly
+        container.Register(typeof(ISimpleService), typeof(SimpleService), SvcLifetime.Transient);
+        container.RegisterTransient<ISimpleService>(static _ => new SimpleService());
+        await using var scope = container.CreateScope();
+
+        // Assert
+        var svc = scope.GetService<ISimpleService>();
+        await Assert.That(svc).IsNotNull();
     }
 
     #endregion
@@ -132,15 +130,19 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task Register_Type_NonGeneric_ThrowsInvalidOperation()
+    public async Task Register_Type_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert
-        await Assert
-            .That(() => container.Register(typeof(SimpleService), SvcLifetime.Transient))
-            .Throws<InvalidOperationException>();
+        // Act - Self-type registration now creates a SvcDescriptor directly
+        container.Register(typeof(SimpleService), SvcLifetime.Transient);
+        container.RegisterTransient<SimpleService>(static _ => new SimpleService());
+        await using var scope = container.CreateScope();
+
+        // Assert
+        var svc = scope.GetService<SimpleService>();
+        await Assert.That(svc).IsNotNull();
     }
 
     #endregion
@@ -165,15 +167,19 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task RegisterTransient_TypeType_NonGeneric_ThrowsInvalidOperation()
+    public async Task RegisterTransient_TypeType_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert
-        await Assert
-            .That(() => container.RegisterTransient(typeof(ISimpleService), typeof(SimpleService)))
-            .Throws<InvalidOperationException>();
+        // Act
+        container.RegisterTransient(typeof(ISimpleService), typeof(SimpleService));
+        container.RegisterTransient<ISimpleService>(static _ => new SimpleService());
+        await using var scope = container.CreateScope();
+
+        // Assert
+        var svc = scope.GetService<ISimpleService>();
+        await Assert.That(svc).IsNotNull();
     }
 
     #endregion
@@ -197,15 +203,19 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task RegisterTransient_Type_NonGeneric_ThrowsInvalidOperation()
+    public async Task RegisterTransient_Type_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert
-        await Assert
-            .That(() => container.RegisterTransient(typeof(SimpleService)))
-            .Throws<InvalidOperationException>();
+        // Act
+        container.RegisterTransient(typeof(SimpleService));
+        container.RegisterTransient<SimpleService>(static _ => new SimpleService());
+        await using var scope = container.CreateScope();
+
+        // Assert
+        var svc = scope.GetService<SimpleService>();
+        await Assert.That(svc).IsNotNull();
     }
 
     #endregion
@@ -230,15 +240,19 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task RegisterScoped_TypeType_NonGeneric_ThrowsInvalidOperation()
+    public async Task RegisterScoped_TypeType_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert
-        await Assert
-            .That(() => container.RegisterScoped(typeof(ISimpleService), typeof(SimpleService)))
-            .Throws<InvalidOperationException>();
+        // Act
+        container.RegisterScoped(typeof(ISimpleService), typeof(SimpleService));
+        container.RegisterScoped<ISimpleService>(static _ => new SimpleService());
+        await using var scope = container.CreateScope();
+
+        // Assert
+        var svc = scope.GetService<ISimpleService>();
+        await Assert.That(svc).IsNotNull();
     }
 
     #endregion
@@ -262,15 +276,19 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task RegisterScoped_Type_NonGeneric_ThrowsInvalidOperation()
+    public async Task RegisterScoped_Type_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert
-        await Assert
-            .That(() => container.RegisterScoped(typeof(SimpleService)))
-            .Throws<InvalidOperationException>();
+        // Act
+        container.RegisterScoped(typeof(SimpleService));
+        container.RegisterScoped<SimpleService>(static _ => new SimpleService());
+        await using var scope = container.CreateScope();
+
+        // Assert
+        var svc = scope.GetService<SimpleService>();
+        await Assert.That(svc).IsNotNull();
     }
 
     #endregion
@@ -296,15 +314,22 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task RegisterSingleton_TypeType_NonGeneric_ThrowsInvalidOperation()
+    public async Task RegisterSingleton_TypeType_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert
-        await Assert
-            .That(() => container.RegisterSingleton(typeof(ISimpleService), typeof(SimpleService)))
-            .Throws<InvalidOperationException>();
+        // Act
+        container.RegisterSingleton(typeof(ISimpleService), typeof(SimpleService));
+        container.RegisterSingleton<ISimpleService>(static _ => new SimpleService());
+        await using var scope1 = container.CreateScope();
+        await using var scope2 = container.CreateScope();
+
+        // Assert - same instance across scopes (singleton)
+        var s1 = scope1.GetService<ISimpleService>();
+        var s2 = scope2.GetService<ISimpleService>();
+        await Assert.That(s1).IsNotNull();
+        await Assert.That(s1.InstanceId).IsEqualTo(s2.InstanceId);
     }
 
     #endregion
@@ -328,15 +353,22 @@ public class SvcContainerExtensionTests
     }
 
     [Test]
-    public async Task RegisterSingleton_Type_NonGeneric_ThrowsInvalidOperation()
+    public async Task RegisterSingleton_Type_NonGeneric_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert
-        await Assert
-            .That(() => container.RegisterSingleton(typeof(SimpleService)))
-            .Throws<InvalidOperationException>();
+        // Act
+        container.RegisterSingleton(typeof(SimpleService));
+        container.RegisterSingleton<SimpleService>(static _ => new SimpleService());
+        await using var scope1 = container.CreateScope();
+        await using var scope2 = container.CreateScope();
+
+        // Assert - same instance across scopes (singleton)
+        var s1 = scope1.GetService<SimpleService>();
+        var s2 = scope2.GetService<SimpleService>();
+        await Assert.That(s1).IsNotNull();
+        await Assert.That(s1.InstanceId).IsEqualTo(s2.InstanceId);
     }
 
     #endregion

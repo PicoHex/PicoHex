@@ -147,15 +147,21 @@ public class ErrorHandlingTests
     }
 
     [Test]
-    public async Task RegisterOpenGeneric_NonGenericType_ThrowsException()
+    public async Task RegisterOpenGeneric_NonGenericType_Works()
     {
         // Arrange
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        // Act & Assert - Non-generic types should throw
-        await Assert
-            .That(() => container.RegisterTransient(typeof(ISimpleService), typeof(SimpleService)))
-            .Throws<InvalidOperationException>();
+        // Act - Non-generic type-based registration now creates a SvcDescriptor directly
+        container.RegisterTransient(typeof(ISimpleService), typeof(SimpleService));
+
+        // Register a factory for resolution
+        container.RegisterTransient<ISimpleService>(static _ => new SimpleService());
+        await using var scope = container.CreateScope();
+
+        // Assert
+        var svc = scope.GetService<ISimpleService>();
+        await Assert.That(svc).IsNotNull();
     }
 
     #endregion

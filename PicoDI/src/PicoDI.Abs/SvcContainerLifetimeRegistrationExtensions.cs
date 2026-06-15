@@ -7,9 +7,6 @@ namespace PicoDI.Abs;
 /// </summary>
 public static class SvcContainerLifetimeRegistrationExtensions
 {
-    private const string SourceGenRequiredMessage =
-        "Compile-time generated registrations are required. Ensure PicoDI.Gen runs and call ConfigureGeneratedServices().";
-
     // ── Core helpers (internal, shared within assembly) ──
 
     internal static ISvcContainer RegisterTypeBased(
@@ -17,25 +14,13 @@ public static class SvcContainerLifetimeRegistrationExtensions
         Type serviceType,
         Type implementType,
         SvcLifetime lifetime
-    )
-    {
-        if (serviceType.IsGenericTypeDefinition && implementType.IsGenericTypeDefinition)
-            return container.Register(new SvcDescriptor(serviceType, implementType, lifetime));
-
-        throw new InvalidOperationException(SourceGenRequiredMessage);
-    }
+    ) => container.Register(new SvcDescriptor(serviceType, implementType, lifetime));
 
     internal static ISvcContainer RegisterSelfType(
         this ISvcContainer container,
         Type serviceType,
         SvcLifetime lifetime
-    )
-    {
-        if (serviceType.IsGenericTypeDefinition)
-            return container.Register(new SvcDescriptor(serviceType, serviceType, lifetime));
-
-        throw new InvalidOperationException(SourceGenRequiredMessage);
-    }
+    ) => container.Register(new SvcDescriptor(serviceType, serviceType, lifetime));
 
     internal static ISvcContainer RegisterFactory(
         this ISvcContainer container,
