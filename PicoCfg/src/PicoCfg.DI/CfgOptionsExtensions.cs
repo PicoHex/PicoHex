@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using static PicoCfg.DI.CfgServiceHelper;
 
 namespace PicoCfg.DI;
@@ -15,23 +16,29 @@ public static class CfgOptionsExtensions
         /// Each resolution returns the same cached instance.
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
-        public ISvcContainer RegisterCfgOptionsSingleton<T>(string? section = null)
-            where T : class =>
-            container.RegisterSingleton<ICfgOptions<T>>(scope => new CfgOptions<T>(
-                Resolve(scope),
-                section
-            ));
+        public ISvcContainer RegisterCfgOptionsSingleton<
+            [DynamicallyAccessedMembers(
+                DynamicallyAccessedMemberTypes.PublicConstructors
+                | DynamicallyAccessedMemberTypes.PublicProperties)]
+            T>(string? section = null)
+            where T : class
+            => container.RegisterSingleton<ICfgOptions<T>>(
+                scope => new CfgOptions<T>(Resolve(scope), section)
+            );
 
         /// <summary>
         /// Registers a scoped <see cref="ICfgOptions{T}"/> that rebinds the configuration value on every resolution.
         /// Each resolution creates a new instance from the current configuration state.
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
-        public ISvcContainer RegisterCfgOptionsScoped<T>(string? section = null)
-            where T : class =>
-            container.RegisterScoped<ICfgOptions<T>>(scope => new CfgOptionsSnapshot<T>(
-                Resolve(scope),
-                section
-            ));
+        public ISvcContainer RegisterCfgOptionsScoped<
+            [DynamicallyAccessedMembers(
+                DynamicallyAccessedMemberTypes.PublicConstructors
+                | DynamicallyAccessedMemberTypes.PublicProperties)]
+            T>(string? section = null)
+            where T : class
+            => container.RegisterScoped<ICfgOptions<T>>(
+                scope => new CfgOptionsSnapshot<T>(Resolve(scope), section)
+            );
     }
 }

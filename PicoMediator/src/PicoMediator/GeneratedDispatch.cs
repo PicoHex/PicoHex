@@ -57,7 +57,7 @@ internal static class GeneratedDispatch
         where TRequest : IRequest<TResponse>
     {
         // Lock-free fast path: use the cached snapshot
-        var switches = Volatile.Read(ref _switchesSnapshot);
+        var switches = _switchesSnapshot;
 
         if (switches is not null)
         {

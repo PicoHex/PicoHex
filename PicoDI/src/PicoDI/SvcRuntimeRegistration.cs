@@ -2,6 +2,7 @@ namespace PicoDI;
 
 internal sealed class SvcRuntimeRegistration
 {
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
     internal readonly Type ServiceType;
     internal readonly Func<ISvcScope, object>? Factory;
     internal readonly int GeneratedFactoryId;
@@ -9,7 +10,7 @@ internal sealed class SvcRuntimeRegistration
     internal readonly SvcRuntimeSingletonState? SingletonState;
 
     private SvcRuntimeRegistration(
-        Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
         Func<ISvcScope, object>? factory,
         int generatedFactoryId,
         SvcLifetime lifetime,
@@ -66,7 +67,7 @@ internal sealed class SvcRuntimeRegistration
 
     /// <summary>
     /// Sets the sealed flag on the singleton state, preventing any further
-    /// singleton creation through <see cref="GetOrCreateSingletonSlow"/>.
+    /// singleton creation through <c>GetOrCreateSingletonSlow</c>.
     /// Called by the container disposal path before iterating registrations.
     /// </summary>
     internal void SealSingletonState()
@@ -81,7 +82,7 @@ internal sealed class SvcRuntimeRegistration
     /// <summary>
     /// Atomically takes (reads and clears) the singleton instance under
     /// <see cref="SvcRuntimeSingletonState.SyncLock"/>. This establishes
-    /// happens-before with any in-flight <see cref="GetOrCreateSingletonSlow"/>
+    /// happens-before with any in-flight <c>GetOrCreateSingletonSlow</c>
     /// that wrote the instance under the same lock, closing the race window
     /// where the disposal pass disposes an instance that has already been
     /// returned to a caller.
@@ -116,7 +117,7 @@ internal sealed class SvcRuntimeSingletonState(object? instance, bool ownsInstan
 
     /// <summary>
     /// When true, the container is being disposed and no new singleton
-    /// instances should be created. <see cref="GetOrCreateSingletonSlow"/>
+    /// instances should be created. <c>GetOrCreateSingletonSlow</c>
     /// checks this flag inside the lock before writing the candidate.
     /// </summary>
     internal bool Sealed;

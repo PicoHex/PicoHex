@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using static PicoCfg.DI.CfgServiceHelper;
 
 namespace PicoCfg.DI;
@@ -26,21 +27,36 @@ public static class SvcContainerExtensions
         /// Registers a transient bound POCO of type <typeparamref name="T"/> resolved from the configuration root.
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
-        public ISvcContainer RegisterCfgTransient<T>(string? section = null)
+        public ISvcContainer RegisterCfgTransient<[
+            DynamicallyAccessedMembers(
+                DynamicallyAccessedMemberTypes.PublicConstructors
+                    | DynamicallyAccessedMemberTypes.PublicProperties
+            )]
+            T>(string? section = null)
             where T : class => container.RegisterTransient<T>(scope => Bind<T>(scope, section));
 
         /// <summary>
         /// Registers a scoped bound POCO of type <typeparamref name="T"/> resolved from the configuration root.
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
-        public ISvcContainer RegisterCfgScoped<T>(string? section = null)
+        public ISvcContainer RegisterCfgScoped<[
+            DynamicallyAccessedMembers(
+                DynamicallyAccessedMemberTypes.PublicConstructors
+                    | DynamicallyAccessedMemberTypes.PublicProperties
+            )]
+            T>(string? section = null)
             where T : class => container.RegisterScoped<T>(scope => Bind<T>(scope, section));
 
         /// <summary>
         /// Registers a singleton bound POCO of type <typeparamref name="T"/> resolved from the configuration root.
         /// Requires <c>RegisterCfgRoot</c> to have been called first.
         /// </summary>
-        public ISvcContainer RegisterCfgSingleton<T>(string? section = null)
+        public ISvcContainer RegisterCfgSingleton<[
+            DynamicallyAccessedMembers(
+                DynamicallyAccessedMemberTypes.PublicConstructors
+                    | DynamicallyAccessedMemberTypes.PublicProperties
+            )]
+            T>(string? section = null)
             where T : class => container.RegisterSingleton<T>(scope => Bind<T>(scope, section));
     }
 }

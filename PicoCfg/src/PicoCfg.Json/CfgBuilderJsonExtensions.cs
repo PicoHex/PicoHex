@@ -25,6 +25,7 @@ public static class CfgBuilderJsonExtensions
         /// The JSON is flattened into key:value pairs using ':' as the hierarchy separator.
         /// </summary>
         /// <param name="path">The path to the JSON file.</param>
+        /// <param name="encoding">Optional encoding to use when reading the file. If null, the file is read as raw bytes.</param>
         public CfgBuilder AddJsonFile(string path, Encoding? encoding = null)
         {
             ArgumentNullException.ThrowIfNull(path);

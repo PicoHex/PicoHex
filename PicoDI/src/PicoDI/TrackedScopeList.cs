@@ -16,6 +16,7 @@ internal sealed class TrackedScopeList
     /// Caller is responsible for setting <see cref="SvcScope.OwningContainer"/> or
     /// <see cref="SvcScope.ParentScope"/> before calling this method.
     /// </summary>
+    /// <param name="scope">The scope to insert at the head of the list.</param>
     /// <param name="containerName">The name of the containing type (SvcContainer or SvcScope).</param>
     public void AddToHead(SvcScope scope, string containerName = nameof(SvcScope))
     {

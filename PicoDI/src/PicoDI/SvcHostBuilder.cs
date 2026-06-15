@@ -26,7 +26,7 @@ public sealed class SvcHostBuilder : IAsyncDisposable
 
     /// <summary>
     /// Adds a configuration delegate to customize the container's service registrations.
-    /// Multiple calls accumulate — all delegates are applied in order during <see cref="Build"/>.
+    /// Multiple calls accumulate — all delegates are applied in order during <see cref="BuildAsync"/>.
     /// </summary>
     public SvcHostBuilder ConfigureServices(Action<ISvcContainer> configure)
     {

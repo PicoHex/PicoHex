@@ -6,7 +6,7 @@ namespace PicoCfg.Extensions;
 /// <remarks>
 /// The source types supported by these extensions are unified by their backing store:
 /// <list type="bullet">
-///   <item><description><b>Stream-based</b> — inline text, file stream, or any <see cref="Stream"/> factory (<see cref="CfgBuilderExtensions.Add(CfgBuilder, Func{Stream}, Encoding?, Func{object?}?)"/>).</description></item>
+///   <item><description><b>Stream-based</b> — inline text, file stream, or any <see cref="Stream"/> factory (<c>CfgBuilderExtensions.Add(CfgBuilder, Func{Stream}, Encoding?, Func{{object?}}?)</c>).</description></item>
 ///   <item><description><b>Dictionary-based</b> — in-memory <see cref="IDictionary{TKey, TValue}"/> or factory delegate (<see cref="CfgBuilderExtensions.Add(CfgBuilder, IDictionary{string, string}, Func{object?}?)"/>).</description></item>
 ///   <item><description><b>Environment variables</b> — OS environment with optional prefix filtering (<see cref="CfgBuilderExtensions.AddEnvironmentVariables(CfgBuilder, string?)"/>).</description></item>
 ///   <item><description><b>Command-line arguments</b> — structured CLI input (<see cref="CfgBuilderExtensions.AddCommandLine(CfgBuilder, string[], string?)"/>).</description></item>

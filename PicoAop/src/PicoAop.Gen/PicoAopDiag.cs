@@ -7,7 +7,7 @@ internal static class PicoAopDiag
     public static readonly DiagnosticDescriptor SealedType = new(
         "PICO101",
         "Sealed type cannot be intercepted",
-        "Type '{0}' is sealed. Extract an interface for interception",
+        "Type '{0}' is sealed; extract an interface for interception",
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true
@@ -16,7 +16,7 @@ internal static class PicoAopDiag
     public static readonly DiagnosticDescriptor ValueType = new(
         "PICO102",
         "Value type cannot be intercepted",
-        "Type '{0}' is a value type. Extract an interface for interception",
+        "Type '{0}' is a value type; extract an interface for interception",
         Category,
         DiagnosticSeverity.Error,
         isEnabledByDefault: true

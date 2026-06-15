@@ -38,6 +38,7 @@ public sealed class SvcDescriptor(
     /// <summary>
     /// Gets the service type (interface or base class) being registered.
     /// </summary>
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
     public Type ServiceType { get; } =
         serviceType ?? throw new ArgumentNullException(nameof(serviceType));
 
@@ -63,14 +64,10 @@ public sealed class SvcDescriptor(
     public Func<ISvcScope, object>? Factory { get; }
 
     /// <summary>
-    /// Gets the generated factory identifier for SG-registered services.
-    /// Negative values indicate runtime-registered services that use the Factory delegate.
-    /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    /// <summary>
     /// Sentinel value indicating this service was registered at runtime
     /// (not via PicoDI.Gen source generator).
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public const int RuntimeRegistrationId = -1;
 
     /// <summary>
