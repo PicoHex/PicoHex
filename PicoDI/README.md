@@ -22,7 +22,7 @@ var svc = scope.GetService<IService>();
 
 ## Registration
 
-All `Register*` methods return `ISvcContainer` for fluent chaining. There are two paths:
+All `Register*` methods return `ISvcContainer` for fluent chaining.
 
 ### Factory-Based (always works, no source gen required)
 
@@ -46,14 +46,35 @@ container.RegisterRange(new[] {
 });
 ```
 
-### Type-Based (requires PicoDI.Gen source generator)
+### Type-Based via `typeof()` (runtime, no source gen required)
+
+```csharp
+// These create a SvcDescriptor and register it at runtime
+container.Register(typeof(IService), typeof(Service), SvcLifetime.Singleton);
+container.RegisterScoped(typeof(IRepository), typeof(SqlRepository));
+container.RegisterTransient(typeof(IValidator), typeof(EmailValidator));
+
+// Self-type registration
+container.Register(typeof(MyService), SvcLifetime.Transient);
+```
+
+> These `typeof()` overloads delegate to `SvcDescriptor` and work with or without the source generator.
+> They record the type mapping in the container but do not provide a factory — pair with a factory
+> registration or the source generator for actual instance creation.
+
+### Type-Based via Generic Type Parameters (requires PicoDI.Gen)
 
 ```csharp
 // These compile to zero-allocation factory delegates
+// Requires PicoDI.Gen (embedded in PicoDI.Abs — available automatically)
 container.RegisterSingleton<IService, Service>();
 container.RegisterScoped<IRepository, SqlRepository>();
 container.RegisterTransient<IValidator, EmailValidator>();
 ```
+
+> These generic overloads are compile-time markers. PicoDI.Gen scans them and generates
+> AOT-compatible factory code. Without the source generator they throw
+> `SourceGeneratorRequiredException` at runtime.
 
 ### Open Generics
 
@@ -108,11 +129,11 @@ Multiple registrations for the same service type are supported. Resolution retur
 
 ## Source Generator (PicoDI.Gen)
 
-Add `PicoDI.Gen` as an analyzer to enable compile-time type-based registrations:
+PicoDI.Gen is **embedded** in `PicoDI.Abs` and activated automatically — no explicit
+package reference needed. Installing `PicoDI` or `PicoDI.Abs` is sufficient.
 
-```xml
-<PackageReference Include="PicoDI.Gen" PrivateAssets="all" />
-```
+The generator scans all generic `Register*` call sites (e.g. `RegisterScoped<TService, TImpl>()`)
+in your codebase and emits:
 
 The generator scans all `Register*` call sites in your codebase and emits:
 
@@ -130,7 +151,6 @@ The source generator validates implementation types at compile time and emits di
 | PICO003 | Error | Abstract type registered as implementation |
 | PICO004 | Error | Implementation type has no public constructor |
 | PICO005 | Error | Multiple constructors marked with `[SvcConstructor]` |
-| PICO006 | Warning | Use generic overload instead of `Register(Type, Type, lifetime)` |
 
 Mark the preferred constructor with `[SvcConstructor]` when the implementation has multiple constructors:
 
@@ -221,11 +241,9 @@ Startup order follows registration order. Shutdown reverses it (LIFO). Each host
 
 ## Interceptor / AOP (Compile-Time Decorators)
 
-Add `PicoDI.Gen` as an analyzer to enable compile-time interceptor generation:
-
-```xml
-<PackageReference Include="PicoDI.Gen" PrivateAssets="all" />
-```
+PicoDI.Gen is **embedded** in PicoDI.Abs and runs automatically — no separate
+package reference needed. The source generator detects `InterceptBy<T>()` markers
+at compile time and emits decorator classes.
 
 ### How it works
 
@@ -333,6 +351,6 @@ PicoDI is designed for concurrent use:
 |---|---|
 | **PicoDI** | DI container runtime |
 | **PicoDI.Abs** | Abstractions: `ISvcContainer`, `ISvcScope`, `SvcDescriptor`, `SvcLifetime`, `IHostedSvc`, `BackgroundSvc` |
-| **PicoDI.Gen** | Roslyn source generator + diagnostic analyzer |
+| **PicoDI.Gen** | Roslyn source generator + diagnostic analyzer (**embedded** in PicoDI.Abs — no separate reference needed) |
 
 [← Back to PicoHex](../README.md)
