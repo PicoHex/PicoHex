@@ -3,8 +3,7 @@ namespace PicoDI.Abs;
 /// <summary>
 /// Provides general-purpose runtime registration extensions for <see cref="ISvcContainer"/>.
 /// Type-based and factory-based overloads delegate to the shared core helpers in
-/// <see cref="SvcContainerLifetimeRegistrationExtensions"/> so that the open-generic
-/// gate and throw-site logic have a single source of truth.
+/// <see cref="SvcContainerLifetimeRegistrationExtensions"/>.
 /// </summary>
 public static class SvcContainerGeneralRegistrationExtensions
 {
@@ -12,14 +11,12 @@ public static class SvcContainerGeneralRegistrationExtensions
     {
         /// <summary>
         /// Registers a service with the specified implementation type and lifetime.
-        /// Supports runtime registration only for open generic definitions.
         /// </summary>
         public ISvcContainer Register(Type serviceType, Type implementType, SvcLifetime lifetime) =>
             container.RegisterTypeBased(serviceType, implementType, lifetime);
 
         /// <summary>
         /// Registers a service type as its own implementation with the specified lifetime.
-        /// Supports runtime registration only for open generic definitions.
         /// </summary>
         public ISvcContainer Register(Type serviceType, SvcLifetime lifetime) =>
             container.RegisterSelfType(serviceType, lifetime);
