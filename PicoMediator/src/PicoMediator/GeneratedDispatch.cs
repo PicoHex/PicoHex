@@ -31,7 +31,7 @@ internal static class GeneratedDispatch
         ArgumentNullException.ThrowIfNull(dispatch);
         lock (_switchesLock)
         {
-            _switches ??= new List<Func<Type, ISvcScope, object, CancellationToken, object?>>();
+            _switches ??= [];
             _switches.Add(dispatch);
             _switchesSnapshot = [.. _switches];
         }
@@ -63,7 +63,7 @@ internal static class GeneratedDispatch
         {
             foreach (var s in switches)
             {
-                var result = s(typeof(TRequest), scope, request!, ct);
+                var result = s(typeof(TRequest), scope, request, ct);
                 if (result is ValueTask<TResponse> typedResult)
                     return typedResult;
 
