@@ -41,14 +41,4 @@ internal static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Only one public constructor can be marked with [SvcConstructor] for PicoDI source-generated activation."
     );
-
-    public static readonly DiagnosticDescriptor GenericRegistrationOverload = new(
-        "PICO006",
-        "Use generic registration overload",
-        "Use the generic RegisterTransient<TService, TImplementation>() method instead of Register(typeof(TService), typeof(TImplementation), lifetime)",
-        PicoDiNames.RootNamespace,
-        DiagnosticSeverity.Warning,
-        isEnabledByDefault: true,
-        description: "The Register(Type, Type, SvcLifetime) overload is intended for open generic registrations only. Use the type-safe generic overload for concrete types."
-    );
 }

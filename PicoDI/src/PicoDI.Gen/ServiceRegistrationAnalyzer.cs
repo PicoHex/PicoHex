@@ -12,7 +12,6 @@ public class ServiceRegistrationAnalyzer : DiagnosticAnalyzer
             DiagnosticDescriptors.AbstractTypeRegistration,
             DiagnosticDescriptors.MissingPublicConstructor,
             DiagnosticDescriptors.MultipleMarkedConstructors,
-            DiagnosticDescriptors.GenericRegistrationOverload,
         ];
 
     public override void Initialize(AnalysisContext context)
@@ -73,22 +72,6 @@ public class ServiceRegistrationAnalyzer : DiagnosticAnalyzer
             )
             .OfType<INamedTypeSymbol>()
             .LastOrDefault();
-
-        // 4. Detect Register(Type, Type, SvcLifetime) used with non-open-generic types.
-        // The guarded Register(Type, Type, SvcLifetime) overload is only for open generics.
-        if (
-            methodName == "Register"
-            && genericNameSyntax is null
-            && typeOfExpressions.Count > 0
-            && explicitImplementationType is { IsUnboundGenericType: false }
-        )
-        {
-            var loc = typeOfExpressions.LastOrDefault()?.GetLocation();
-            context.ReportDiagnostic(
-                Diagnostic.Create(DiagnosticDescriptors.GenericRegistrationOverload, loc)
-            );
-            return;
-        }
 
         if (genericNameSyntax?.TypeArgumentList.Arguments.Count is null or 0)
         {
