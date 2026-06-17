@@ -31,10 +31,10 @@
     <PackageVersion Include="PicoCfg.Yaml" Version="$(Version)" />
     <PackageVersion Include="PicoLog.DI" Version="$(Version)" />
     <PackageVersion Include="PicoLog.Json" Version="$(Version)" />
-    <PackageVersion Include="PicoJetson" Version="2026.1.9" />
-    <PackageVersion Include="PicoYaml" Version="2026.1.9" />
-    <PackageVersion Include="PicoIni" Version="2026.1.9" />
-    <PackageVersion Include="PicoToml" Version="2026.1.9" />
+    <PackageVersion Include="PicoJetson" Version="2026.2.2" />
+    <PackageVersion Include="PicoYaml" Version="2026.2.2" />
+    <PackageVersion Include="PicoIni" Version="2026.2.2" />
+    <PackageVersion Include="PicoToml" Version="2026.2.2" />
     <PackageVersion Include="TUnit" Version="1.51.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.3" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.3" />
