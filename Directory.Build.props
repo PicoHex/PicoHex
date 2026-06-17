@@ -53,6 +53,9 @@
   <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
     <PublishAot>false</PublishAot>
     <IsAotCompatible>false</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <TrimMode>partial</TrimMode>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 
   <!-- Libraries: declare AOT-compatible but do not self-publish.
