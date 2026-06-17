@@ -10,31 +10,46 @@ public sealed class JsonLogSink : ILogSink, IFlushableLogSink
     private readonly Lock _writeLock = new();
     private FileStream? _stream;
     private StreamWriter? _writer;
+    private int _disposed;
 
     public JsonLogSink(string filePath)
     {
         _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
     }
 
-    private void EnsureWriter()
-    {
-        if (_writer is not null)
-            return;
-
-        var dir = Path.GetDirectoryName(_filePath);
-        if (dir is not null && !Directory.Exists(dir))
-            Directory.CreateDirectory(dir);
-
-        _stream = new FileStream(_filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-        _writer = new StreamWriter(_stream, Encoding.UTF8) { AutoFlush = false };
-    }
-
+    /// <summary>
+    /// Serializes the entry to JSON outside the lock, then writes under
+    /// a single lock acquisition — eliminating the race window between
+    /// EnsureWriter and the actual write that existed in the previous
+    /// double-lock pattern. Also checks disposed state under lock to
+    /// prevent silent writes after disposal.
+    /// </summary>
     public Task WriteAsync(LogEntry entry, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
+
+        // Serialize JSON outside the lock to minimize contention.
+        // The rented writer is released even on serialization failure.
+        var jsonWriter = SerializerExtensions.RentWriter();
+        string jsonLine;
+        try
+        {
+            WriteJsonEntry(jsonWriter, entry);
+            var bytes = jsonWriter.WrittenSpan;
+            jsonLine = Encoding.UTF8.GetString(bytes);
+        }
+        finally
+        {
+            jsonWriter.Clear();
+        }
+
         lock (_writeLock)
-            EnsureWriter();
-        WriteEntry(entry);
+        {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            EnsureWriterUnderLock();
+            _writer!.WriteLine(jsonLine);
+        }
+
         return Task.CompletedTask;
     }
 
@@ -45,29 +60,38 @@ public sealed class JsonLogSink : ILogSink, IFlushableLogSink
         {
             _writer?.Flush();
             _stream?.Flush();
-            _stream?.Flush(true); // flush to disk
+            _stream?.Flush(true);
         }
         return ValueTask.CompletedTask;
     }
 
-    private void WriteEntry(LogEntry entry)
+    public ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return ValueTask.CompletedTask;
+
         lock (_writeLock)
         {
-            var writer = SerializerExtensions.RentWriter();
-            try
-            {
-                WriteJsonEntry(writer, entry);
-                var bytes = writer.WrittenSpan;
-
-                _writer!.Write(Encoding.UTF8.GetString(bytes));
-                _writer.WriteLine();
-            }
-            finally
-            {
-                writer.Clear();
-            }
+            _writer?.Dispose();
+            _stream?.Dispose();
+            _writer = null;
+            _stream = null;
         }
+
+        return ValueTask.CompletedTask;
+    }
+
+    private void EnsureWriterUnderLock()
+    {
+        if (_writer is not null)
+            return;
+
+        var dir = Path.GetDirectoryName(_filePath);
+        if (dir is not null && !Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+
+        _stream = new FileStream(_filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+        _writer = new StreamWriter(_stream, Encoding.UTF8) { AutoFlush = false };
     }
 
     private static void WriteJsonEntry(IBufferWriter<byte> writer, LogEntry entry)
@@ -122,17 +146,5 @@ public sealed class JsonLogSink : ILogSink, IFlushableLogSink
             writer.WriteNull();
         else
             writer.WriteString(value);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        lock (_writeLock)
-        {
-            _writer?.Dispose();
-            _stream?.Dispose();
-            _writer = null;
-            _stream = null;
-        }
-        await Task.CompletedTask;
     }
 }

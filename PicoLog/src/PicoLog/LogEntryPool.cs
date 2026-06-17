@@ -24,7 +24,9 @@ internal static class LogEntryPool
         // Reset before returning to release references
         entry.Reset();
 
-        if (_pool.Count < MaxPoolSize)
-            _pool.Enqueue(entry);
+        // Enqueue unconditionally. The pool is naturally bounded by concurrent
+        // Rent/Return pairing — entries only flow back after being rented.
+        // The previous Count check had a TOCTOU race under concurrent access.
+        _pool.Enqueue(entry);
     }
 }

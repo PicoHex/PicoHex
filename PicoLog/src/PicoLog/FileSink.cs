@@ -191,31 +191,22 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
     private async ValueTask RotateIfNeededAsync()
     {
-        // Check size-based rotation
-        bool needsSizeRotation =
-            _options.MaxFileSizeBytes > 0 && _writer.BaseStream.Length >= _options.MaxFileSizeBytes;
-
-        // Check time-based rotation
-        bool needsTimeRotation =
-            _options.RotationInterval > TimeSpan.Zero
-            && (DateTime.UtcNow.Ticks - Volatile.Read(ref _lastRotationTimestamp))
-                >= _options.RotationInterval.Ticks;
-
-        if (!needsSizeRotation && !needsTimeRotation)
-            return;
-
+        // Called from the single _processingTask; all rotation decisions happen
+        // under _fileLock to coordinate with concurrent FlushAsync.
+        // There is no TOCTOU between check and execute because both the check
+        // and the mutation are inside the same lock scope.
         lock (_fileLock)
         {
-            // Re-check under lock
-            bool sizeReady =
+            bool needsSizeRotation =
                 _options.MaxFileSizeBytes > 0
                 && _writer.BaseStream.Length >= _options.MaxFileSizeBytes;
-            bool timeReady =
+
+            bool needsTimeRotation =
                 _options.RotationInterval > TimeSpan.Zero
-                && (DateTime.UtcNow.Ticks - Volatile.Read(ref _lastRotationTimestamp))
+                && (DateTime.UtcNow.Ticks - _lastRotationTimestamp)
                     >= _options.RotationInterval.Ticks;
 
-            if (!sizeReady && !timeReady)
+            if (!needsSizeRotation && !needsTimeRotation)
                 return;
 
             _writer.Dispose();

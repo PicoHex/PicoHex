@@ -8,7 +8,7 @@ internal static class ConfigDataComparer
 
         foreach (var (key, value) in values)
         {
-            fingerprint += Mix(key, value);
+            fingerprint ^= Mix(key, value);
         }
 
         return fingerprint;
