@@ -74,6 +74,7 @@ public sealed class SvcDescriptor(
     /// Gets the generated factory identifier for SG-registered services.
     /// <see cref="RuntimeRegistrationId"/> indicates runtime registration.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public int GeneratedFactoryId { get; set; } = RuntimeRegistrationId;
 
     /// <summary>
@@ -90,6 +91,15 @@ public sealed class SvcDescriptor(
             throw new ArgumentNullException(nameof(serviceType));
         if (instance is null)
             throw new ArgumentNullException(nameof(instance));
+        if (!serviceType.IsAssignableFrom(instance.GetType()))
+        {
+            throw new ArgumentException(
+                $"Instance of type '{instance.GetType().FullName}' cannot be registered as service type "
+                    + $"'{serviceType.FullName}' because the instance does not implement or extend "
+                    + "the service type.",
+                nameof(instance)
+            );
+        }
         var descriptor = new SvcDescriptor(serviceType, serviceType);
         descriptor.SingleInstance = instance;
         return descriptor;
