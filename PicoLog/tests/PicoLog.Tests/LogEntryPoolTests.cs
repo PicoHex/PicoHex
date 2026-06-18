@@ -1,7 +1,17 @@
 namespace PicoLog.Tests;
 
+[NotInParallel]
 public sealed class LogEntryPoolTests
 {
+    [Before(Test)]
+    public void ClearPool()
+    {
+        // Other test classes may have left entries in the shared static pool.
+        // Drain it so each test starts in a known-empty state.
+        while (LogEntryPool.Count > 0)
+            LogEntryPool.Rent();
+    }
+
     [Test]
     public async Task Rent_ReturnsInstance_WithDefaultValues()
     {
