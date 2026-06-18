@@ -62,5 +62,9 @@ public sealed class LogEntryPoolTests
 
         // Return it for cleanup
         LogEntryPool.Return(pooled);
+
+        // Restore pool to empty state so other tests are not affected
+        while (LogEntryPool.Count > 0)
+            LogEntryPool.Rent();
     }
 }
