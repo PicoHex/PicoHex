@@ -614,23 +614,4 @@ internal static class ProxyEmitter
         return $"    private static readonly Func<{structName}, {syncRetType}> s_{method.Name}Next = static inv => inv.InvokeTarget();";
     }
 
-    public static string EmitWrappersClass(
-        string safeSvcName,
-        INamedTypeSymbol serviceType,
-        ITypeSymbol interceptorType
-    )
-    {
-        var svcFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var intFullName = interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var intSuffix = InvocationEmitter.Sanitize(
-            interceptorType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-        );
-        var className = $"{PicoAopNames.InterceptedPrefix}{safeSvcName}_{intSuffix}";
-
-        return $"public static partial class {PicoAopNames.WrappersClass}\n"
-            + "{\n"
-            + $"    public static {svcFullName} Wrap_{safeSvcName}_{intSuffix}({svcFullName} inner, {intFullName} i0) =>\n"
-            + $"        new {className}(inner, i0);\n"
-            + "}\n";
-    }
 }

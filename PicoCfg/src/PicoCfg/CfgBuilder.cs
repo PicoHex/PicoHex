@@ -9,10 +9,6 @@ public sealed class CfgBuilder
     private readonly List<ICfgSource> _sources = [];
 
     /// <summary>
-    /// Adds a source to the builder.
-    /// Sources are evaluated in insertion order, and later sources override earlier ones.
-    /// </summary>
-    /// <summary>
     /// Adds a custom <see cref="ICfgSource"/> implementation to the builder.
     /// This is the extension point for third-party configuration sources
     /// (e.g. database, Redis, REST API).

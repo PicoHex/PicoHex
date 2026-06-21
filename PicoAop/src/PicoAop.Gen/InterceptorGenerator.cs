@@ -285,7 +285,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 );
             else
                 sb.AppendLine(
-                    $"    internal async {asyncRet} InvokeTargetAsync() => await _target.{method.Name}({paramArgs});"
+                    $"    internal {asyncRet} InvokeTargetAsync() => new(_target.{method.Name}({paramArgs}));"
                 );
         }
         else
