@@ -17,7 +17,7 @@
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">
     <PackageReference Include="PicoDI" />
-    <PackageReference Include="PicoLog.DI" Version="$(Version)" />
+    <PackageReference Include="PicoLog.DI" />
   </ItemGroup>
 
   <ItemGroup>
