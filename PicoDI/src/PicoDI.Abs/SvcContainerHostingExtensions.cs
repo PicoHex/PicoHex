@@ -15,10 +15,13 @@ public static class SvcContainerHostingExtensions
         public ISvcContainer RegisterHostedSvc<
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] THostedSvc
         >()
-            where THostedSvc : class, IHostedSvc =>
-            container.Register(
+            where THostedSvc : class, IHostedSvc
+        {
+            SvcHostedServiceRegistry.Types.Add(typeof(THostedSvc));
+            return container.Register(
                 new SvcDescriptor(typeof(THostedSvc), typeof(THostedSvc), SvcLifetime.Singleton)
             );
+        }
 
         /// <summary>
         /// Registers a hosted service type with a factory delegate as a singleton.
@@ -29,14 +32,17 @@ public static class SvcContainerHostingExtensions
         public ISvcContainer RegisterHostedSvc<
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] THostedSvc
         >(Func<ISvcScope, THostedSvc> factory)
-            where THostedSvc : class, IHostedSvc =>
-            container.Register(
+            where THostedSvc : class, IHostedSvc
+        {
+            SvcHostedServiceRegistry.Types.Add(typeof(THostedSvc));
+            return container.Register(
                 SvcDescriptor.Create(
                     typeof(THostedSvc),
                     scope => factory(scope)!,
                     SvcLifetime.Singleton
                 )
             );
+        }
 
         /// <summary>
         /// Registers a hosted service type as a singleton.
@@ -54,6 +60,7 @@ public static class SvcContainerHostingExtensions
                     $"Type '{hostedServiceType.FullName}' does not implement {nameof(IHostedSvc)}."
                 );
 
+            SvcHostedServiceRegistry.Types.Add(hostedServiceType);
             return container.Register(
                 new SvcDescriptor(hostedServiceType, hostedServiceType, SvcLifetime.Singleton)
             );
@@ -77,6 +84,7 @@ public static class SvcContainerHostingExtensions
                     $"Type '{hostedServiceType.FullName}' does not implement {nameof(IHostedSvc)}."
                 );
 
+            SvcHostedServiceRegistry.Types.Add(hostedServiceType);
             return container.Register(
                 new SvcDescriptor(hostedServiceType, factory, SvcLifetime.Singleton)
             );

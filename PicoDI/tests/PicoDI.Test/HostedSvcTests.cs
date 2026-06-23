@@ -78,6 +78,25 @@ public class HostedSvcTests
     }
 
     [Test]
+    public async Task Runtime_RegisterHostedSvc_adds_to_registry()
+    {
+        // Use non-generic Type overload — SG cannot pre-populate this
+        // (no typeof(T) expression in source for SG to extract type from)
+        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
+        container.RegisterHostedSvc(typeof(SimpleHostedSvc), _ => new SimpleHostedSvc());
+
+        await Assert.That(SvcHostedServiceRegistry.Contains(typeof(SimpleHostedSvc))).IsTrue();
+    }
+
+    // Test service
+    private class SimpleHostedSvc : IHostedSvc
+    {
+        public Task StartAsync(CancellationToken ct) => Task.CompletedTask;
+
+        public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+    }
+
+    [Test]
     public async Task RegisterHostedSvc_StartAsync_IsCalled()
     {
         // Arrange
