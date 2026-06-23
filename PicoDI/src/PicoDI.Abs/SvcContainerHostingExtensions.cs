@@ -17,7 +17,7 @@ public static class SvcContainerHostingExtensions
         >()
             where THostedSvc : class, IHostedSvc
         {
-            SvcHostedServiceRegistry.Types.Add(typeof(THostedSvc));
+            SvcHostedServiceRegistry.Register(typeof(THostedSvc));
             return container.Register(
                 new SvcDescriptor(typeof(THostedSvc), typeof(THostedSvc), SvcLifetime.Singleton)
             );
@@ -34,7 +34,7 @@ public static class SvcContainerHostingExtensions
         >(Func<ISvcScope, THostedSvc> factory)
             where THostedSvc : class, IHostedSvc
         {
-            SvcHostedServiceRegistry.Types.Add(typeof(THostedSvc));
+            SvcHostedServiceRegistry.Register(typeof(THostedSvc));
             return container.Register(
                 SvcDescriptor.Create(
                     typeof(THostedSvc),
@@ -60,7 +60,7 @@ public static class SvcContainerHostingExtensions
                     $"Type '{hostedServiceType.FullName}' does not implement {nameof(IHostedSvc)}."
                 );
 
-            SvcHostedServiceRegistry.Types.Add(hostedServiceType);
+            SvcHostedServiceRegistry.Register(hostedServiceType);
             return container.Register(
                 new SvcDescriptor(hostedServiceType, hostedServiceType, SvcLifetime.Singleton)
             );
@@ -84,7 +84,7 @@ public static class SvcContainerHostingExtensions
                     $"Type '{hostedServiceType.FullName}' does not implement {nameof(IHostedSvc)}."
                 );
 
-            SvcHostedServiceRegistry.Types.Add(hostedServiceType);
+            SvcHostedServiceRegistry.Register(hostedServiceType);
             return container.Register(
                 new SvcDescriptor(hostedServiceType, factory, SvcLifetime.Singleton)
             );

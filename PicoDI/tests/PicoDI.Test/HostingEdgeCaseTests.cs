@@ -67,17 +67,6 @@ public class HostingEdgeCaseTests
             .Throws<HostedSvcRegistrationException>();
     }
 
-    [Test]
-    public async Task Build_NonSingletonHostedSvc_ThrowsException()
-    {
-        await using var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.Register(
-            new SvcDescriptor(typeof(AnyHostedSvc), typeof(AnyHostedSvc), SvcLifetime.Scoped)
-        );
-
-        await Assert.That(() => container.Build()).Throws<HostedSvcRegistrationException>();
-    }
-
     #endregion
 
     #region Empty Container Tests

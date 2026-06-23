@@ -32,10 +32,6 @@ public sealed partial class SvcContainer
         return Interlocked.Exchange(ref _hostedState, 2) == 1;
     }
 
-    private static bool IsHostedSvcType(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType
-    ) => typeof(IHostedSvc).IsAssignableFrom(serviceType);
-
     private void TrackHostedServicesFromRegistrations(
         Dictionary<Type, List<SvcRuntimeRegistration>> cache
     )
@@ -43,12 +39,11 @@ public sealed partial class SvcContainer
         var lastByType = new Dictionary<Type, SvcRuntimeRegistration>();
         foreach (var (_, registrations) in cache)
         {
-            foreach (
-                var registration in registrations.Where(registration =>
-                    IsHostedSvcType(registration.ServiceType)
-                )
-            )
+            foreach (var registration in registrations)
             {
+                if (!SvcHostedServiceRegistry.Contains(registration.ServiceType))
+                    continue;
+
                 if (registration.Lifetime != SvcLifetime.Singleton)
                 {
                     throw new HostedSvcRegistrationException(

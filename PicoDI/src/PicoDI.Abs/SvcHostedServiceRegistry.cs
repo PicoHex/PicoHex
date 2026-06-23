@@ -7,7 +7,7 @@ namespace PicoDI.Abs;
 /// </summary>
 public static class SvcHostedServiceRegistry
 {
-    internal static HashSet<Type> Types { get; } = new();
+    public static HashSet<Type> Types { get; } = new();
 
     public static void Register(Type hostedType) => Types.Add(hostedType);
 

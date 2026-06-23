@@ -5,7 +5,7 @@ public class SvcHostedServiceRegistryTests
     [Test]
     public async Task Register_adds_type_to_Types()
     {
-        var type = typeof(ISimpleService);
+        var type = typeof(IHostedSvc);
         SvcHostedServiceRegistry.Register(type);
 
         await Assert.That(SvcHostedServiceRegistry.Contains(type)).IsTrue();
