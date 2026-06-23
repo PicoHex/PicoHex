@@ -61,12 +61,13 @@ internal static class CfgServiceHelper
     /// source-generated or reflection-based binder for the closed type.
     /// </summary>
 #pragma warning disable PCFGGEN001 // Direct closed named target type required
-    internal static T Bind<[
-        DynamicallyAccessedMembers(
+    internal static T Bind<
+        [DynamicallyAccessedMembers(
             DynamicallyAccessedMemberTypes.PublicConstructors
                 | DynamicallyAccessedMemberTypes.PublicProperties
         )]
-        T>(ISvcScope scope, string? section = null)
+            T
+    >(ISvcScope scope, string? section = null)
         where T : class => CfgBind.Bind<T>(ResolveCfg(scope), section);
 #pragma warning restore PCFGGEN001
 }

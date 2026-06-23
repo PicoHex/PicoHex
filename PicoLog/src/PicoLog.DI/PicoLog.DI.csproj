@@ -13,7 +13,10 @@
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\PicoLog\PicoLog.csproj" PrivateAssets="Build" />
-    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" PrivateAssets="Build" />
+    <ProjectReference
+      Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj"
+      PrivateAssets="Build"
+    />
     <ProjectReference
       Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
       OutputItemType="Analyzer"

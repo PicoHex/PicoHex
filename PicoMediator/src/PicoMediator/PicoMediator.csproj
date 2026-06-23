@@ -17,7 +17,10 @@
 
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\PicoMediator.Abs\PicoMediator.Abs.csproj" PrivateAssets="Build" />
-    <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" PrivateAssets="Build" />
+    <ProjectReference
+      Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj"
+      PrivateAssets="Build"
+    />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseProjectReferences)' != 'true'">

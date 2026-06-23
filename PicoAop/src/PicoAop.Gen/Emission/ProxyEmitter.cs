@@ -613,5 +613,4 @@ internal static class ProxyEmitter
         );
         return $"    private static readonly Func<{structName}, {syncRetType}> s_{method.Name}Next = static inv => inv.InvokeTarget();";
     }
-
 }

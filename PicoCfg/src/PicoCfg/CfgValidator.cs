@@ -13,7 +13,9 @@ public static class CfgValidator
     /// <typeparam name="T">The type to validate.</typeparam>
     /// <param name="instance">The instance to validate.</param>
     /// <returns>A list of validation errors, or an empty list when the instance is valid.</returns>
-    [RequiresUnreferencedCode("ValidationContext requires reflection and is not compatible with trimming")]
+    [RequiresUnreferencedCode(
+        "ValidationContext requires reflection and is not compatible with trimming"
+    )]
     public static List<ValidationResult> Validate<T>(T instance)
     {
 #if !PICOCFG_NO_VALIDATION
@@ -44,7 +46,9 @@ public static class CfgValidator
     /// <typeparam name="T">The type to validate.</typeparam>
     /// <param name="instance">The instance to validate.</param>
     /// <exception cref="CfgValidationException">Thrown when validation produces one or more errors.</exception>
-    [RequiresUnreferencedCode("ValidationContext requires reflection and is not compatible with trimming")]
+    [RequiresUnreferencedCode(
+        "ValidationContext requires reflection and is not compatible with trimming"
+    )]
     public static void ValidateOrThrow<T>(T instance)
     {
         var errors = Validate(instance);
@@ -64,7 +68,9 @@ public static class CfgValidationExtensions
     /// <param name="cfg">The configuration root.</param>
     /// <param name="section">Optional configuration section key prefix.</param>
     /// <returns>The bound and validated instance of <typeparamref name="T"/>.</returns>
-    [RequiresUnreferencedCode("ValidationContext requires reflection and is not compatible with trimming")]
+    [RequiresUnreferencedCode(
+        "ValidationContext requires reflection and is not compatible with trimming"
+    )]
     public static T BindAndValidate<
         [DynamicallyAccessedMembers(
             DynamicallyAccessedMemberTypes.PublicConstructors

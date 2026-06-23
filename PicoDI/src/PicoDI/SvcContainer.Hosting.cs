@@ -43,11 +43,12 @@ public sealed partial class SvcContainer
         var lastByType = new Dictionary<Type, SvcRuntimeRegistration>();
         foreach (var (_, registrations) in cache)
         {
-            foreach (var registration in registrations)
+            foreach (
+                var registration in registrations.Where(registration =>
+                    IsHostedSvcType(registration.ServiceType)
+                )
+            )
             {
-                if (!IsHostedSvcType(registration.ServiceType))
-                    continue;
-
                 if (registration.Lifetime != SvcLifetime.Singleton)
                 {
                     throw new HostedSvcRegistrationException(

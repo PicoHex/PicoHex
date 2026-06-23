@@ -19,12 +19,15 @@ public static class CfgOptionsExtensions
         public ISvcContainer RegisterCfgOptionsSingleton<
             [DynamicallyAccessedMembers(
                 DynamicallyAccessedMemberTypes.PublicConstructors
-                | DynamicallyAccessedMemberTypes.PublicProperties)]
-            T>(string? section = null)
-            where T : class
-            => container.RegisterSingleton<ICfgOptions<T>>(
-                scope => new CfgOptions<T>(Resolve(scope), section)
-            );
+                    | DynamicallyAccessedMemberTypes.PublicProperties
+            )]
+                T
+        >(string? section = null)
+            where T : class =>
+            container.RegisterSingleton<ICfgOptions<T>>(scope => new CfgOptions<T>(
+                Resolve(scope),
+                section
+            ));
 
         /// <summary>
         /// Registers a scoped <see cref="ICfgOptions{T}"/> that rebinds the configuration value on every resolution.
@@ -34,11 +37,14 @@ public static class CfgOptionsExtensions
         public ISvcContainer RegisterCfgOptionsScoped<
             [DynamicallyAccessedMembers(
                 DynamicallyAccessedMemberTypes.PublicConstructors
-                | DynamicallyAccessedMemberTypes.PublicProperties)]
-            T>(string? section = null)
-            where T : class
-            => container.RegisterScoped<ICfgOptions<T>>(
-                scope => new CfgOptionsSnapshot<T>(Resolve(scope), section)
-            );
+                    | DynamicallyAccessedMemberTypes.PublicProperties
+            )]
+                T
+        >(string? section = null)
+            where T : class =>
+            container.RegisterScoped<ICfgOptions<T>>(scope => new CfgOptionsSnapshot<T>(
+                Resolve(scope),
+                section
+            ));
     }
 }
