@@ -7,7 +7,7 @@ public class HostedSvcTests
 {
     #region Test Service Classes
 
-    private sealed class TestHostedSvc : IHostedSvc
+    internal sealed class TestHostedSvc : IHostedSvc
     {
         public bool Started { get; private set; }
         public bool Stopped { get; private set; }
@@ -66,6 +66,16 @@ public class HostedSvcTests
     #endregion
 
     #region IHostedSvc Lifecycle Tests
+
+    [Test]
+    public async Task SgGeneratedRegistry_includes_RegisterHostedSvc_types()
+    {
+        // The SG should have generated a ModuleInitializer that populates
+        // SvcHostedServiceRegistry with all types registered via
+        // RegisterHostedSvc<T>() in this assembly.
+        // TestHostedSvc is registered in this test class, so it should be in the registry.
+        await Assert.That(SvcHostedServiceRegistry.Contains(typeof(TestHostedSvc))).IsTrue();
+    }
 
     [Test]
     public async Task RegisterHostedSvc_StartAsync_IsCalled()

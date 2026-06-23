@@ -122,6 +122,55 @@ internal static class RegistrationSyntaxPipeline
     }
 
     /// <summary>
+    /// Fast syntax-only check to detect RegisterHostedSvc&lt;T&gt;() invocations.
+    /// Uses a dedicated pipeline separate from the factory-generation path.
+    /// </summary>
+    public static bool IsHostedSvcInvocation(SyntaxNode node)
+    {
+        if (node is not InvocationExpressionSyntax invocation)
+            return false;
+
+        var methodName = invocation.Expression switch
+        {
+            MemberAccessExpressionSyntax memberAccess => GetMethodNameFromMemberAccess(
+                memberAccess
+            ),
+            _ => null,
+        };
+
+        return methodName == PicoDiNames.RegisterHostedSvc;
+    }
+
+    /// <summary>
+    /// Extracts the hosted service type name from a RegisterHostedSvc&lt;T&gt;() invocation.
+    /// </summary>
+    public static string? GetHostedServiceTypeName(GeneratorSyntaxContext context)
+    {
+        var invocation = (InvocationExpressionSyntax)context.Node;
+        if (
+            invocation.Expression
+            is not MemberAccessExpressionSyntax { Name: GenericNameSyntax genericName }
+        )
+            return null;
+
+        if (genericName.TypeArgumentList.Arguments.Count < 1)
+            return null;
+
+        var typeArg = genericName.TypeArgumentList.Arguments[0];
+        var typeSymbol = context.SemanticModel.GetTypeInfo(typeArg).Type;
+
+        if (typeSymbol is null)
+            return null;
+
+        // Only include types that are accessible from the generated code.
+        // Private nested types can't be accessed via typeof() from outside their declaring class.
+        if (typeSymbol.DeclaredAccessibility == Accessibility.Private)
+            return null;
+
+        return typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+    }
+
+    /// <summary>
     /// Fast syntax-only check to filter potential Register* method calls.
     /// Excludes open generic registrations which are handled separately.
     /// </summary>

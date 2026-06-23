@@ -52,6 +52,11 @@ internal static class PicoDiNames
     ];
 
     /// <summary>
+    /// Method name for hosted service registration (handled separately from the factory pipeline).
+    /// </summary>
+    public const string RegisterHostedSvc = "RegisterHostedSvc";
+
+    /// <summary>
     /// Determines whether the given method symbol belongs to PicoDI.
     /// Uses namespace checks and semantic interface resolution instead of string matching.
     /// </summary>
