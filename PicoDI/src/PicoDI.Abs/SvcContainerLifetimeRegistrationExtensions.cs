@@ -50,13 +50,16 @@ public static class SvcContainerLifetimeRegistrationExtensions
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType
         ) => container.RegisterSelfType(serviceType, SvcLifetime.Transient);
 
-        public ISvcContainer RegisterTransient<TService>(Func<ISvcScope, TService> factory)
+        public ISvcContainer RegisterTransient<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService
+        >(Func<ISvcScope, TService> factory)
             where TService : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Transient);
 
-        public ISvcContainer RegisterTransient<TService, TImplementation>(
-            Func<ISvcScope, TImplementation> factory
-        )
+        public ISvcContainer RegisterTransient<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService,
+            TImplementation
+        >(Func<ISvcScope, TImplementation> factory)
             where TService : class
             where TImplementation : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Transient);
@@ -72,13 +75,16 @@ public static class SvcContainerLifetimeRegistrationExtensions
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType
         ) => container.RegisterSelfType(serviceType, SvcLifetime.Scoped);
 
-        public ISvcContainer RegisterScoped<TService>(Func<ISvcScope, TService> factory)
+        public ISvcContainer RegisterScoped<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService
+        >(Func<ISvcScope, TService> factory)
             where TService : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Scoped);
 
-        public ISvcContainer RegisterScoped<TService, TImplementation>(
-            Func<ISvcScope, TImplementation> factory
-        )
+        public ISvcContainer RegisterScoped<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService,
+            TImplementation
+        >(Func<ISvcScope, TImplementation> factory)
             where TService : class
             where TImplementation : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Scoped);
@@ -94,13 +100,16 @@ public static class SvcContainerLifetimeRegistrationExtensions
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType
         ) => container.RegisterSelfType(serviceType, SvcLifetime.Singleton);
 
-        public ISvcContainer RegisterSingleton<TService>(Func<ISvcScope, TService> factory)
+        public ISvcContainer RegisterSingleton<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService
+        >(Func<ISvcScope, TService> factory)
             where TService : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Singleton);
 
-        public ISvcContainer RegisterSingleton<TService, TImplementation>(
-            Func<ISvcScope, TImplementation> factory
-        )
+        public ISvcContainer RegisterSingleton<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService,
+            TImplementation
+        >(Func<ISvcScope, TImplementation> factory)
             where TService : class
             where TImplementation : class =>
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Singleton);
@@ -117,7 +126,9 @@ public static class SvcContainerLifetimeRegistrationExtensions
             return container.RegisterSingleInstance(serviceType, instance);
         }
 
-        public ISvcContainer RegisterSingle<TService>(TService instance)
+        public ISvcContainer RegisterSingle<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService
+        >(TService instance)
             where TService : class
         {
             if (instance is null)

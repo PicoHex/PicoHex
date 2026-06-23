@@ -126,10 +126,9 @@ public sealed class SvcDescriptor(
     /// <summary>
     /// Creates a typed service descriptor with a strongly-typed factory delegate.
     /// </summary>
-    public static SvcDescriptor Create<T>(
-        Func<ISvcScope, T> factory,
-        SvcLifetime lifetime = SvcLifetime.Singleton
-    )
+    public static SvcDescriptor Create<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T
+    >(Func<ISvcScope, T> factory, SvcLifetime lifetime = SvcLifetime.Singleton)
         where T : class
     {
         if (factory is null)
