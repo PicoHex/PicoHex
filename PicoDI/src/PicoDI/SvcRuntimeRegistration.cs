@@ -2,7 +2,6 @@ namespace PicoDI;
 
 internal sealed class SvcRuntimeRegistration
 {
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
     internal readonly Type ServiceType;
     internal readonly Func<ISvcScope, object>? Factory;
     internal readonly int GeneratedFactoryId;
@@ -10,7 +9,7 @@ internal sealed class SvcRuntimeRegistration
     internal readonly SvcRuntimeSingletonState? SingletonState;
 
     private SvcRuntimeRegistration(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
+        Type serviceType,
         Func<ISvcScope, object>? factory,
         int generatedFactoryId,
         SvcLifetime lifetime,

@@ -30,7 +30,7 @@
 /// <param name="implementationType">The concrete implementation type (optional, for open generics).</param>
 /// <param name="lifetime">The service lifetime (Transient, Scoped, or Singleton).</param>
 public sealed class SvcDescriptor(
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
+    Type serviceType,
     Type? implementationType,
     SvcLifetime lifetime = SvcLifetime.Singleton
 )
@@ -38,7 +38,6 @@ public sealed class SvcDescriptor(
     /// <summary>
     /// Gets the service type (interface or base class) being registered.
     /// </summary>
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
     public Type ServiceType { get; } =
         serviceType ?? throw new ArgumentNullException(nameof(serviceType));
 
@@ -113,7 +112,7 @@ public sealed class SvcDescriptor(
     /// This is the canonical factory method.
     /// </summary>
     public static SvcDescriptor Create(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
+        Type serviceType,
         Func<ISvcScope, object> factory,
         SvcLifetime lifetime = SvcLifetime.Singleton
     )
@@ -126,9 +125,10 @@ public sealed class SvcDescriptor(
     /// <summary>
     /// Creates a typed service descriptor with a strongly-typed factory delegate.
     /// </summary>
-    public static SvcDescriptor Create<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T
-    >(Func<ISvcScope, T> factory, SvcLifetime lifetime = SvcLifetime.Singleton)
+    public static SvcDescriptor Create<T>(
+        Func<ISvcScope, T> factory,
+        SvcLifetime lifetime = SvcLifetime.Singleton
+    )
         where T : class
     {
         if (factory is null)
@@ -142,11 +142,7 @@ public sealed class SvcDescriptor(
     /// <param name="serviceType">The service type being registered.</param>
     /// <param name="factory">The factory function to create instances.</param>
     /// <param name="lifetime">The service lifetime (default: Singleton).</param>
-    public SvcDescriptor(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
-        Func<ISvcScope, object> factory,
-        SvcLifetime lifetime
-    )
+    public SvcDescriptor(Type serviceType, Func<ISvcScope, object> factory, SvcLifetime lifetime)
         : this(serviceType, serviceType, lifetime) =>
         Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 }

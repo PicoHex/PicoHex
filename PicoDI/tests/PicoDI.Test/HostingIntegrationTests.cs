@@ -111,27 +111,9 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var log = new List<string>();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ISvcA),
-                _ => (object)new OrderedSvc(log, "A"),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ISvcB),
-                _ => (object)new OrderedSvc(log, "B"),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ISvcC),
-                _ => (object)new OrderedSvc(log, "C"),
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<ISvcA>(_ => new OrderedSvc(log, "A"));
+        container.RegisterHostedSvc<ISvcB>(_ => new OrderedSvc(log, "B"));
+        container.RegisterHostedSvc<ISvcC>(_ => new OrderedSvc(log, "C"));
         container.Build();
         var host = new SvcHost(container);
 
@@ -149,27 +131,9 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var log = new List<string>();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ISvcA),
-                _ => (object)new OrderedSvc(log, "A"),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ISvcB),
-                _ => (object)new OrderedSvc(log, "B"),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ISvcC),
-                _ => (object)new OrderedSvc(log, "C"),
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<ISvcA>(_ => new OrderedSvc(log, "A"));
+        container.RegisterHostedSvc<ISvcB>(_ => new OrderedSvc(log, "B"));
+        container.RegisterHostedSvc<ISvcC>(_ => new OrderedSvc(log, "C"));
         container.Build();
         var host = new SvcHost(container);
 
@@ -198,15 +162,9 @@ public class HostingIntegrationTests
         container.RegisterSingleton<ISimpleService>(static _ => new SimpleService());
 
         // Register the hosted service whose constructor takes ISimpleService
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(DependentSvc),
-                (Func<ISvcScope, object>)(
-                    scope => new DependentSvc(scope.GetService<ISimpleService>())
-                ),
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<DependentSvc>(scope => new DependentSvc(
+            scope.GetService<ISimpleService>()
+        ));
         container.Build();
         var host = new SvcHost(container);
 
@@ -225,20 +183,8 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var trackingSvc = new TrackingHostedSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(FailingStartSvc),
-                _ => (object)new FailingStartSvc(),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingHostedSvc),
-                _ => (object)trackingSvc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<FailingStartSvc>(_ => new FailingStartSvc());
+        container.RegisterHostedSvc<TrackingHostedSvc>(_ => trackingSvc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -256,20 +202,8 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var trackingSvc = new TrackingHostedSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(FailingStopSvc),
-                _ => (object)new FailingStopSvc(),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingHostedSvc),
-                _ => (object)trackingSvc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<FailingStopSvc>(_ => new FailingStopSvc());
+        container.RegisterHostedSvc<TrackingHostedSvc>(_ => trackingSvc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -294,13 +228,7 @@ public class HostingIntegrationTests
         var trackingSvc = new TrackingHostedSvc();
 
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingHostedSvc),
-                _ => (object)trackingSvc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<TrackingHostedSvc>(_ => trackingSvc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -326,13 +254,7 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var tokenSvc = new TokenCapturingSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TokenCapturingSvc),
-                _ => (object)tokenSvc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<TokenCapturingSvc>(_ => tokenSvc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -486,13 +408,7 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var log = new List<string>();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleA),
-                _ => (object)new LifecycleTrackingSvc(log, "A"),
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<ILifecycleA>(_ => new LifecycleTrackingSvc(log, "A"));
         container.Build();
         var host = new SvcHost(container);
 
@@ -510,13 +426,7 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var log = new List<string>();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleA),
-                _ => (object)new LifecycleTrackingSvc(log, "A"),
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<ILifecycleA>(_ => new LifecycleTrackingSvc(log, "A"));
         container.Build();
         var host = new SvcHost(container);
 
@@ -545,20 +455,8 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var log = new List<string>();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleA),
-                _ => (object)new LifecycleTrackingSvc(log, "A"),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleB),
-                _ => (object)new LifecycleTrackingSvc(log, "B"),
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<ILifecycleA>(_ => new LifecycleTrackingSvc(log, "A"));
+        container.RegisterHostedSvc<ILifecycleB>(_ => new LifecycleTrackingSvc(log, "B"));
         container.Build();
         var host = new SvcHost(container);
 
@@ -585,20 +483,8 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var log = new List<string>();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleA),
-                _ => (object)new LifecycleTrackingSvc(log, "A"),
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleB),
-                _ => (object)new LifecycleTrackingSvc(log, "B"),
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<ILifecycleA>(_ => new LifecycleTrackingSvc(log, "A"));
+        container.RegisterHostedSvc<ILifecycleB>(_ => new LifecycleTrackingSvc(log, "B"));
         container.Build();
         var host = new SvcHost(container);
 
@@ -637,13 +523,7 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var svc = new SlowStartingLifecycleSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(SlowStartingLifecycleSvc),
-                _ => (object)svc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<SlowStartingLifecycleSvc>(_ => svc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -661,13 +541,7 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var svc = new TrackingLifecycleSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingLifecycleSvc),
-                _ => (object)svc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<TrackingLifecycleSvc>(_ => svc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -686,13 +560,7 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var svc = new TrackingLifecycleSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingLifecycleSvc),
-                _ => (object)svc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<TrackingLifecycleSvc>(_ => svc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -712,13 +580,7 @@ public class HostingIntegrationTests
         var svc = new TrackingLifecycleSvc();
         var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingLifecycleSvc),
-                _ => (object)svc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<TrackingLifecycleSvc>(_ => svc);
         container.Build();
 
         await new SvcHost(container).StartAsync();
@@ -738,13 +600,7 @@ public class HostingIntegrationTests
         var svc = new TrackingLifecycleSvc();
         var container = new SvcContainer(autoConfigureFromGenerator: false);
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingLifecycleSvc),
-                _ => (object)svc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<TrackingLifecycleSvc>(_ => svc);
         container.Build();
 
         await new SvcHost(container).StartAsync();
@@ -768,13 +624,7 @@ public class HostingIntegrationTests
         await using var container = new SvcContainer(autoConfigureFromGenerator: false);
         var svc = new FailingLifecyclePhaseSvc("Starting");
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(FailingLifecyclePhaseSvc),
-                _ => (object)svc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<FailingLifecyclePhaseSvc>(_ => svc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -793,20 +643,8 @@ public class HostingIntegrationTests
         var failingSvc = new FailingLifecyclePhaseSvc("Start");
         var trackingSvc = new TrackingLifecycleSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleA),
-                _ => (object)failingSvc,
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingLifecycleSvc),
-                _ => (object)trackingSvc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<FailingLifecyclePhaseSvc>(_ => failingSvc);
+        container.RegisterHostedSvc<TrackingLifecycleSvc>(_ => trackingSvc);
         container.Build();
         var host = new SvcHost(container);
 
@@ -825,20 +663,8 @@ public class HostingIntegrationTests
         var failingSvc = new FailingLifecyclePhaseSvc("Stop");
         var trackingSvc = new TrackingLifecycleSvc();
 
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(ILifecycleA),
-                _ => (object)failingSvc,
-                SvcLifetime.Singleton
-            )
-        );
-        container.Register(
-            SvcDescriptor.Create(
-                typeof(TrackingLifecycleSvc),
-                _ => (object)trackingSvc,
-                SvcLifetime.Singleton
-            )
-        );
+        container.RegisterHostedSvc<FailingLifecyclePhaseSvc>(_ => failingSvc);
+        container.RegisterHostedSvc<TrackingLifecycleSvc>(_ => trackingSvc);
         container.Build();
         var host = new SvcHost(container);
 

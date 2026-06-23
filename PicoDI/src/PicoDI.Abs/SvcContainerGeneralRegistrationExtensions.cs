@@ -12,28 +12,20 @@ public static class SvcContainerGeneralRegistrationExtensions
         /// <summary>
         /// Registers a service with the specified implementation type and lifetime.
         /// </summary>
-        public ISvcContainer Register(
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
-                Type serviceType,
-            Type implementType,
-            SvcLifetime lifetime
-        ) => container.RegisterTypeBased(serviceType, implementType, lifetime);
+        public ISvcContainer Register(Type serviceType, Type implementType, SvcLifetime lifetime) =>
+            container.RegisterTypeBased(serviceType, implementType, lifetime);
 
         /// <summary>
         /// Registers a service type as its own implementation with the specified lifetime.
         /// </summary>
-        public ISvcContainer Register(
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
-                Type serviceType,
-            SvcLifetime lifetime
-        ) => container.RegisterSelfType(serviceType, lifetime);
+        public ISvcContainer Register(Type serviceType, SvcLifetime lifetime) =>
+            container.RegisterSelfType(serviceType, lifetime);
 
         /// <summary>
         /// Registers a service with a factory function and specified lifetime.
         /// </summary>
         public ISvcContainer Register(
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
-                Type serviceType,
+            Type serviceType,
             Func<ISvcScope, object> factory,
             SvcLifetime lifetime
         ) => container.RegisterFactory(serviceType, factory, lifetime);
@@ -41,19 +33,20 @@ public static class SvcContainerGeneralRegistrationExtensions
         /// <summary>
         /// Registers a service with a factory function and specified lifetime.
         /// </summary>
-        public ISvcContainer Register<
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService
-        >(Func<ISvcScope, TService> factory, SvcLifetime lifetime)
+        public ISvcContainer Register<TService>(
+            Func<ISvcScope, TService> factory,
+            SvcLifetime lifetime
+        )
             where TService : class =>
             container.RegisterFactory(typeof(TService), factory, lifetime);
 
         /// <summary>
         /// Registers a service with a factory function and specified lifetime.
         /// </summary>
-        public ISvcContainer Register<
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService,
-            TImplementation
-        >(Func<ISvcScope, TImplementation> factory, SvcLifetime lifetime)
+        public ISvcContainer Register<TService, TImplementation>(
+            Func<ISvcScope, TImplementation> factory,
+            SvcLifetime lifetime
+        )
             where TService : class
             where TImplementation : class =>
             container.RegisterFactory(typeof(TService), factory, lifetime);
