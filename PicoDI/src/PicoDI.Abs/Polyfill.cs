@@ -14,6 +14,7 @@ internal sealed class MaybeNullWhenAttribute : Attribute
     AttributeTargets.Class
         | AttributeTargets.Constructor
         | AttributeTargets.Field
+        | AttributeTargets.GenericParameter
         | AttributeTargets.Method
         | AttributeTargets.Property
         | AttributeTargets.Parameter

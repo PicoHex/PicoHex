@@ -7,6 +7,45 @@ namespace PicoDI.Test;
 /// </summary>
 public class SvcDescriptorTests
 {
+    // ── RED test: primary constructor serviceType param must have DynamicallyAccessedMembers annotation ──
+
+    [Test]
+    public async Task PrimaryConstructor_ServiceTypeParam_HasDynamicallyAccessedMembersInterfaces()
+    {
+        // The ServiceType property is annotated with [DynamicallyAccessedMembers(Interfaces)]
+        // so the constructor parameter assigned to it must have the same annotation.
+        // Without it, the trimmer emits IL2069 during publish.
+        //
+        // Note: PicoDI.Abs targets netstandard2.0 and uses a polyfill for
+        // DynamicallyAccessedMembersAttribute, so we check by attribute name
+        // rather than generic type lookup (the polyfill type != BCL type).
+
+        var ctor = typeof(SvcDescriptor)
+            .GetConstructors()
+            .First(c =>
+            {
+                var ps = c.GetParameters();
+                return ps.Length == 3
+                    && ps[0].ParameterType == typeof(Type)
+                    && ps[1].ParameterType == typeof(Type)
+                    && ps[2].ParameterType == typeof(SvcLifetime);
+            });
+        var serviceTypeParam = ctor.GetParameters()[0];
+        var attr = serviceTypeParam.CustomAttributes.FirstOrDefault(a =>
+            a.AttributeType.FullName
+            == "System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute"
+        );
+
+        await Assert.That(attr).IsNotNull();
+
+        // Verify it has DynamicallyAccessedMemberTypes.Interfaces (value = 0x2000)
+        var memberTypesArg = attr!.ConstructorArguments.FirstOrDefault();
+        await Assert.That(memberTypesArg.Value).IsNotNull();
+        await Assert
+            .That((int)memberTypesArg.Value!)
+            .IsEqualTo((int)DynamicallyAccessedMemberTypes.Interfaces);
+    }
+
     // ── RED test: GeneratedFactoryId should be hidden from IntelliSense ──
 
     [Test]

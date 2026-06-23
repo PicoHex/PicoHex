@@ -12,7 +12,9 @@ public static class SvcContainerHostingExtensions
         /// </summary>
         /// <typeparam name="THostedSvc">The hosted service type to register.</typeparam>
         /// <returns>The <see cref="ISvcContainer"/> instance for chaining.</returns>
-        public ISvcContainer RegisterHostedSvc<THostedSvc>()
+        public ISvcContainer RegisterHostedSvc<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] THostedSvc
+        >()
             where THostedSvc : class, IHostedSvc =>
             container.Register(
                 new SvcDescriptor(typeof(THostedSvc), typeof(THostedSvc), SvcLifetime.Singleton)
@@ -24,7 +26,9 @@ public static class SvcContainerHostingExtensions
         /// <typeparam name="THostedSvc">The hosted service type to register.</typeparam>
         /// <param name="factory">The factory delegate to create the hosted service instance.</param>
         /// <returns>The <see cref="ISvcContainer"/> instance for chaining.</returns>
-        public ISvcContainer RegisterHostedSvc<THostedSvc>(Func<ISvcScope, THostedSvc> factory)
+        public ISvcContainer RegisterHostedSvc<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] THostedSvc
+        >(Func<ISvcScope, THostedSvc> factory)
             where THostedSvc : class, IHostedSvc =>
             container.Register(
                 SvcDescriptor.Create(

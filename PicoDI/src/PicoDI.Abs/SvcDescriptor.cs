@@ -30,7 +30,7 @@
 /// <param name="implementationType">The concrete implementation type (optional, for open generics).</param>
 /// <param name="lifetime">The service lifetime (Transient, Scoped, or Singleton).</param>
 public sealed class SvcDescriptor(
-    Type serviceType,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
     Type? implementationType,
     SvcLifetime lifetime = SvcLifetime.Singleton
 )
@@ -85,7 +85,10 @@ public sealed class SvcDescriptor(
     /// <summary>
     /// Creates a service descriptor for a pre-existing singleton instance.
     /// </summary>
-    public static SvcDescriptor FromInstance(Type serviceType, object instance)
+    public static SvcDescriptor FromInstance(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
+        object instance
+    )
     {
         if (serviceType is null)
             throw new ArgumentNullException(nameof(serviceType));
@@ -110,7 +113,7 @@ public sealed class SvcDescriptor(
     /// This is the canonical factory method.
     /// </summary>
     public static SvcDescriptor Create(
-        Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
         Func<ISvcScope, object> factory,
         SvcLifetime lifetime = SvcLifetime.Singleton
     )
@@ -140,7 +143,11 @@ public sealed class SvcDescriptor(
     /// <param name="serviceType">The service type being registered.</param>
     /// <param name="factory">The factory function to create instances.</param>
     /// <param name="lifetime">The service lifetime (default: Singleton).</param>
-    public SvcDescriptor(Type serviceType, Func<ISvcScope, object> factory, SvcLifetime lifetime)
+    public SvcDescriptor(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
+        Func<ISvcScope, object> factory,
+        SvcLifetime lifetime
+    )
         : this(serviceType, serviceType, lifetime) =>
         Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 }
