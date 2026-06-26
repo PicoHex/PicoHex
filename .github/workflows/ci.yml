@@ -35,7 +35,7 @@ jobs:
       pico-aop: ${{ steps.filter.outputs.pico-aop }}
       pico-mediator: ${{ steps.filter.outputs.pico-mediator }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -108,7 +108,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -208,7 +208,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -378,7 +378,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -513,7 +513,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-dotnet@v4
@@ -608,7 +608,7 @@ jobs:
             runs-on: macos-latest
             rid: osx-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-dotnet@v4
