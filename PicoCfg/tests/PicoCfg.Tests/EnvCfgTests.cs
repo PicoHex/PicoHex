@@ -67,6 +67,28 @@ public class EnvCfgTests
     }
 
     [Test]
+    public async Task AddEnvironmentVariables_WithoutPrefix_DoubleUnderscoreNotConverted()
+    {
+        // Bug: without prefix, __ should NOT be converted to :  (match MS behavior)
+        var key = $"PICOCFG_TEST__{Guid.NewGuid():N}";
+        try
+        {
+            Environment.SetEnvironmentVariable(key, "expected_value");
+
+            await using var root = await Cfg.CreateBuilder().AddEnvironmentVariables().BuildAsync();
+
+            // Key should be returned as-is, preserving __
+            await Assert.That(root.GetValue(key)).IsEqualTo("expected_value");
+            // Should NOT be accessible via colon-converted key
+            await Assert.That(root.GetValue(key.Replace("__", ":"))).IsNull();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(key, null);
+        }
+    }
+
+    [Test]
     public async Task AddEnvironmentVariables_Empty_ReturnsNulls()
     {
         var uniquePrefix = $"NONEXISTENT_{Guid.NewGuid():N}_";

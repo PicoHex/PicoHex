@@ -48,7 +48,7 @@ internal sealed class EnvCfgProvider : ICfgProvider
 
             var configKey = _prefix is not null
                 ? keyStr[_prefix.Length..].Replace("__", ":")
-                : keyStr.Replace("__", ":");
+                : keyStr;
 
             newData[configKey] = valueStr ?? string.Empty;
         }
