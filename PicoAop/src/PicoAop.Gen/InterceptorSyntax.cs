@@ -72,15 +72,8 @@ internal static class InterceptorSyntax
                 return null;
 
             var serviceType = innerSymbol.TypeArguments[0];
-            var implType =
-                innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : null;
 
-            return new InterceptionInfo(
-                serviceType,
-                interceptorType,
-                implType,
-                HasMultipleRegisters: false
-            );
+            return new InterceptionInfo(serviceType, interceptorType);
         }
     }
 
@@ -99,6 +92,6 @@ internal static class InterceptorSyntax
         if (methodSymbol.TypeArguments.Length != 1)
             return null;
 
-        return new GlobalInterceptorInfo(methodSymbol.TypeArguments[0], null);
+        return new GlobalInterceptorInfo(methodSymbol.TypeArguments[0]);
     }
 }

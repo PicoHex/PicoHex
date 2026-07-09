@@ -1,11 +1,7 @@
 namespace PicoAop.Gen.Models;
 
-internal record InterceptionInfo(
-    ITypeSymbol ServiceType,
-    ITypeSymbol InterceptorType,
-    ITypeSymbol? ImplType,
-    bool HasMultipleRegisters
-) : IEquatable<InterceptionInfo>
+internal record InterceptionInfo(ITypeSymbol ServiceType, ITypeSymbol InterceptorType)
+    : IEquatable<InterceptionInfo>
 {
     public virtual bool Equals(InterceptionInfo? other)
     {
@@ -29,4 +25,4 @@ internal record InterceptionInfo(
     }
 }
 
-internal record GlobalInterceptorInfo(ITypeSymbol InterceptorType, ITypeSymbol? InterfaceFilter);
+internal record GlobalInterceptorInfo(ITypeSymbol InterceptorType);

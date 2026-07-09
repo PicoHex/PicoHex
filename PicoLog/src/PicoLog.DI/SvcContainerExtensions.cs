@@ -78,17 +78,10 @@ public static class SvcContainerExtensions
     {
         ArgumentNullException.ThrowIfNull(scope);
 
-        try
-        {
-            return scope.GetServices<T>();
-        }
-        catch (PicoDiException)
-        {
-            // PicoDI.Abs does not expose an IsRegistered<T>() query API.
-            // Catching PicoDiException from GetServices<T>() is the only non-throwing
-            // path to detect unregistered service types at this layer.
-            return [];
-        }
+        if (scope.TryGetServices(typeof(T), out var rawServices))
+            return rawServices.Cast<T>();
+
+        return [];
     }
 
     private static List<ILogSink> ResolveRegisteredSinks(ISvcScope scope)

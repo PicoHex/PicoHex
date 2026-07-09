@@ -75,7 +75,6 @@ internal static partial class ServiceRegistrationSourceEmitter
         AppendEnumerableRegistrations(sb, registrations);
         sb.AppendLine("    }");
         sb.AppendLine();
-        AppendPrebuiltCache(sb, registrations);
 
         var registrationLookup = registrations
             .GroupBy(r => r.ServiceTypeFullName)
@@ -228,45 +227,6 @@ internal static partial class ServiceRegistrationSourceEmitter
             sb.AppendLine("            global::PicoDI.Abs.SvcLifetime.Transient));");
             sb.AppendLine();
         }
-    }
-
-    private static void AppendPrebuiltCache(
-        StringBuilder sb,
-        ImmutableArray<ServiceRegistration> registrations
-    )
-    {
-        sb.AppendLine("    /// <summary>");
-        sb.AppendLine("    /// Pre-built frozen registration cache for zero-allocation Build().");
-        sb.AppendLine(
-            "    /// Generated at compile time to eliminate runtime dictionary allocation."
-        );
-        sb.AppendLine("    /// </summary>");
-        sb.AppendLine(
-            "    internal static readonly global::System.Collections.Frozen.FrozenDictionary<global::System.Type, global::PicoDI.Abs.SvcDescriptor[]> PrebuiltCache ="
-        );
-        sb.AppendLine(
-            "        new global::System.Collections.Generic.Dictionary<global::System.Type, global::PicoDI.Abs.SvcDescriptor[]>"
-        );
-        sb.AppendLine("        {");
-
-        foreach (var group in registrations.GroupBy(r => r.ServiceTypeFullName))
-        {
-            var serviceType = group.Key;
-            sb.AppendLine(
-                $"            {{ typeof({serviceType}), new global::PicoDI.Abs.SvcDescriptor[]"
-            );
-            sb.AppendLine("            {");
-            foreach (var reg in group)
-            {
-                sb.AppendLine(
-                    $"                new(typeof({reg.ServiceTypeFullName}), typeof({reg.ImplementationTypeFullName}), global::PicoDI.Abs.SvcLifetime.{reg.Lifetime}),"
-                );
-            }
-            sb.AppendLine("            } },");
-        }
-
-        sb.AppendLine("        }.ToFrozenDictionary();");
-        sb.AppendLine();
     }
 
     /// <summary>

@@ -81,11 +81,13 @@ public sealed class PicoDISourceGeneratorTests
             )
             .IsTrue();
 
-        var prebuiltField = generatedClass
+        // PrebuiltCache was removed — it was generated but never consumed by the
+        // runtime, wasting a FrozenDictionary allocation at assembly load time.
+        var hasPrebuiltCache = generatedClass
             .DescendantNodes()
             .OfType<FieldDeclarationSyntax>()
-            .Single(f => f.Declaration.Variables.Any(v => v.Identifier.Text == "PrebuiltCache"));
-        await Assert.That(prebuiltField.Declaration.Type.ToString()).Contains("FrozenDictionary");
+            .Any(f => f.Declaration.Variables.Any(v => v.Identifier.Text == "PrebuiltCache"));
+        await Assert.That(hasPrebuiltCache).IsFalse();
 
         var resolveClass = generatedClass
             .DescendantNodes()

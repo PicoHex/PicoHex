@@ -21,20 +21,16 @@ public sealed class Mediator(ISvcScope scope) : IMediator
     )
         where TNotification : INotification
     {
-        IReadOnlyList<INotificationHandler<TNotification>> handlers;
-        try
-        {
-            handlers = scope.GetServices<INotificationHandler<TNotification>>();
-        }
-        catch (PicoDiException)
+        if (!scope.TryGetServices(typeof(INotificationHandler<TNotification>), out var rawServices))
         {
             OnNoSubscribers?.Invoke(typeof(TNotification).FullName!);
             return;
         }
 
         List<Exception>? exceptions = null;
-        foreach (var h in handlers)
+        foreach (var raw in rawServices)
         {
+            var h = (INotificationHandler<TNotification>)raw;
             try
             {
                 await h.Handle(notification, ct);
@@ -57,25 +53,21 @@ public sealed class Mediator(ISvcScope scope) : IMediator
     )
         where TNotification : INotification
     {
-        IReadOnlyList<INotificationHandler<TNotification>> handlers;
-        try
-        {
-            handlers = scope.GetServices<INotificationHandler<TNotification>>();
-        }
-        catch (PicoDiException)
+        if (!scope.TryGetServices(typeof(INotificationHandler<TNotification>), out var rawServices))
         {
             OnNoSubscribers?.Invoke(typeof(TNotification).FullName!);
             return;
         }
 
-        var count = handlers.Count;
+        var count = rawServices.Count;
         var tasks = new Task[count];
         var exceptions = new Exception?[count];
 
         for (var i = 0; i < count; i++)
         {
             var idx = i;
-            tasks[i] = HandleSafelyAsync(handlers[idx], notification, ct, exceptions, idx);
+            var handler = (INotificationHandler<TNotification>)rawServices[idx];
+            tasks[i] = HandleSafelyAsync(handler, notification, ct, exceptions, idx);
         }
 
         await Task.WhenAll(tasks);
