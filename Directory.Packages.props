@@ -5,14 +5,13 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.9" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
-    <PackageVersion Include="PicoBench" Version="2026.2.0" />
+    <PackageVersion Include="PicoBench" Version="2026.2.4" />
     <PackageVersion Include="PicoDI" Version="$(Version)" />
     <PackageVersion Include="PicoDI.Abs" Version="$(Version)" />
     <PackageVersion Include="PicoCfg" Version="$(Version)" />
@@ -31,12 +30,12 @@
     <PackageVersion Include="PicoCfg.Yaml" Version="$(Version)" />
     <PackageVersion Include="PicoLog.DI" Version="$(Version)" />
     <PackageVersion Include="PicoLog.Json" Version="$(Version)" />
-    <PackageVersion Include="PicoJetson" Version="2026.2.6" />
-    <PackageVersion Include="PicoYaml" Version="2026.2.6" />
-    <PackageVersion Include="PicoIni" Version="2026.2.6" />
-    <PackageVersion Include="PicoToml" Version="2026.2.6" />
-    <PackageVersion Include="TUnit" Version="1.56.25" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.3" />
+    <PackageVersion Include="PicoJetson" Version="2026.3.19" />
+    <PackageVersion Include="PicoYaml" Version="2026.3.19" />
+    <PackageVersion Include="PicoIni" Version="2026.3.19" />
+    <PackageVersion Include="PicoToml" Version="2026.3.19" />
+    <PackageVersion Include="TUnit" Version="1.58.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.3.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.3.1" />
   </ItemGroup>
 </Project>
