@@ -306,4 +306,44 @@ public sealed class CfgBindTests
         await Assert.That(config.Providers["openai"].BaseUrl).IsEqualTo("https://api.openai.com");
         await Assert.That(config.Providers["openai"].ApiFormat).IsNull();
     }
+
+    // --- Section-scoped case-insensitive lookup (CfgSection fallback) ---
+
+    /// <summary>
+    /// Snapshot-like config that provides <see cref="ICfgSnapshot.GetAllValues"/>
+    /// but does NOT have a case-insensitive TryGetValue fallback.
+    /// Used to verify that <see cref="CfgSection.TryGetValue"/> provides its own
+    /// fallback by scanning the parent's key set.
+    /// </summary>
+    private sealed class ExactOnlySnapshot(IReadOnlyDictionary<string, string> values)
+        : ICfgSnapshot
+    {
+        public bool TryGetValue(string path, out string? value) =>
+            values.TryGetValue(path, out value);
+
+        public IReadOnlyDictionary<string, string> GetAllValues() => values;
+    }
+
+    [Test]
+    public async Task GetSection_CamelCaseKeys_FindsViaCfgSectionFallback()
+    {
+        // ExactOnlySnapshot does NOT do case-insensitive TryGetValue.
+        // CfgSection must provide its own fallback by scanning the parent's
+        // GetAllValues() + filtering by section prefix (OrdinalIgnoreCase).
+        var snapshot = new ExactOnlySnapshot(
+            new Dictionary<string, string>
+            {
+                ["section:key"] = "value",
+                ["section:nested:deep"] = "deep-value",
+            }
+        );
+        var section = snapshot.GetSection("Section"); // PascalCase vs "section"
+
+        await Assert.That(section.TryGetValue("key", out var val) ? val : null).IsEqualTo("value");
+        await Assert
+            .That(section.TryGetValue("nested:deep", out var nested) ? nested : null)
+            .IsEqualTo("deep-value");
+        // Exact match should still fail (case mismatch), fallback should find it
+        await Assert.That(snapshot.TryGetValue("Section:key", out var _)).IsFalse();
+    }
 }

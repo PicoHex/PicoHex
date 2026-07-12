@@ -24,8 +24,56 @@ internal sealed class CfgSection : ICfgSection
 
     public bool TryGetValue(string key, out string? value)
     {
-        return string.IsNullOrEmpty(_path)
-            ? _parent.TryGetValue(key, out value)
-            : _parent.TryGetValue(string.Concat(_path, ":", key), out value);
+        // Fast path: exact match
+        var fullKey = string.IsNullOrEmpty(_path) ? key : string.Concat(_path, ":", key);
+        if (_parent.TryGetValue(fullKey, out value))
+            return true;
+
+        // Case-insensitive fallback for parents that lack the built-in
+        // fallback in CfgSnapshot / CfgSnapshotComposer.  Enumerate
+        // all parent keys and compare relative keys within this section.
+        IReadOnlyDictionary<string, string>? parentAll = TryGetAll(_parent);
+        if (parentAll is { Count: > 0 })
+        {
+            var searchPrefix = string.IsNullOrEmpty(_path) ? "" : (_path + ":");
+            foreach (var kvp in parentAll)
+            {
+                if (kvp.Key.StartsWith(searchPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    var relativeKey = kvp.Key.Substring(searchPrefix.Length);
+                    if (string.Equals(relativeKey, key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = kvp.Value;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static IReadOnlyDictionary<string, string>? TryGetAll(ICfg cfg)
+    {
+        if (cfg is ICfgSnapshot s)
+            return s.GetAllValues();
+        if (cfg is CfgSection cs)
+        {
+            // Walk up the section chain to find the root enumerable
+            var rootAll = TryGetAll(cs._parent);
+            if (rootAll is null or { Count: 0 })
+                return rootAll;
+
+            var searchPrefix = string.IsNullOrEmpty(cs._path) ? "" : (cs._path + ":");
+            var filtered = new Dictionary<string, string>(rootAll.Count);
+            foreach (var kvp in rootAll)
+            {
+                if (kvp.Key.StartsWith(searchPrefix, StringComparison.OrdinalIgnoreCase))
+                    filtered[kvp.Key.Substring(searchPrefix.Length)] = kvp.Value;
+            }
+            return filtered;
+        }
+        return null;
     }
 }

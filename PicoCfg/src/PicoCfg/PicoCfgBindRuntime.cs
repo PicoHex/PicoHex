@@ -39,9 +39,29 @@ public static partial class CfgBindRuntime
 
     /// <summary>
     /// Tries to get a configuration value by section + property name,
-    /// with case-insensitive fallback. Fast path: exact match via <see cref="ICfg.TryGetValue"/>.
-    /// Slow path: case-insensitive scan of the section-scoped key set.
+    /// with case-insensitive fallback.
     /// </summary>
+    /// <remarks>
+    /// Two-layer lookup:
+    /// <list type="number">
+    /// <item>
+    /// <b>Fast path</b> — exact match via <see cref="ICfg.TryGetValue"/>.
+    /// When <paramref name="cfg"/> is a snapshot or composed snapshot,
+    /// this also triggers the built-in case-insensitive fallback in
+    /// <see cref="CfgSnapshot"/> / <see cref="CfgSnapshotComposer"/>,
+    /// so the lookup succeeds even for camelCase / PascalCase mismatches
+    /// without reaching step 2.
+    /// </item>
+    /// <item>
+    /// <b>Slow path</b> — case-insensitive scan of the section-scoped key
+    /// set.  Only reached when <paramref name="cfg"/> is a non-snapshot
+    /// <see cref="ICfg"/> implementation (e.g. inline dictionaries) that
+    /// lacks the built-in fallback.  <see cref="CfgSection.GetAll"/>
+    /// uses <see cref="StringComparison.OrdinalIgnoreCase"/> to return
+    /// matching keys regardless of casing.
+    /// </item>
+    /// </list>
+    /// </remarks>
     public static bool TryGetValueIgnoreCase(
         ICfg cfg,
         string? section,
@@ -49,12 +69,12 @@ public static partial class CfgBindRuntime
         out string? value
     )
     {
-        // Fast path: exact match (e.g., PascalCase config key = PascalCase property)
+        // Layer 1: exact match + snapshot built-in case-insensitive fallback
         var path = CombinePath(section, propertyName);
         if (cfg.TryGetValue(path, out value))
             return true;
 
-        // Slow path: case-insensitive fallback (e.g., camelCase JSON/YAML keys)
+        // Layer 2: fallback for non-snapshot ICfg implementations
         var scope = string.IsNullOrEmpty(section) ? cfg : cfg.GetSection(section);
         foreach (var (key, val) in scope.GetAll())
         {

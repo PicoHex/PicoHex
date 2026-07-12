@@ -32,7 +32,7 @@ public static class CfgEnumerationExtensions
 
             foreach (var kvp in parentAll)
             {
-                if (kvp.Key.StartsWith(searchPrefix, StringComparison.Ordinal))
+                if (kvp.Key.StartsWith(searchPrefix, StringComparison.OrdinalIgnoreCase))
                     filtered[kvp.Key[searchPrefix.Length..]] = kvp.Value;
             }
 
