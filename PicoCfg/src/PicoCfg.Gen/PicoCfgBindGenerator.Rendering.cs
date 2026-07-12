@@ -218,6 +218,160 @@ public sealed partial class PicoCfgBindGenerator
         sb.AppendLine();
     }
 
+    /// <summary>
+    /// Shared scalar property binding used by both the BindInto path
+    /// (<see cref="AppendBindProperty"/>) and the init-only inline path
+    /// (<see cref="AppendInlinePropertyValues"/>).
+    /// </summary>
+    /// <param name="assignmentLeft">
+    /// Left-hand side of the assignment, e.g. "instance.Name" (BindInto)
+    /// or "__value_Name" (inline).
+    /// </param>
+    /// <param name="emitAnyVar">
+    /// Whether to emit <c>any = true;</c> in the try-bind path.
+    /// </param>
+    /// <param name="valueTypeDeclaration">
+    /// Optional type name for a local variable declaration emitted before
+    /// the lookup.  <see langword="null" /> for the BindInto path.
+    /// </param>
+    /// <param name="isRequired">
+    /// Whether to emit the <c>else { default }</c> fallback for required
+    /// properties (BindInto path only).
+    /// </param>
+    /// <param name="appendTrailingLine">
+    /// Whether to append an empty line after the closing brace.
+    /// </param>
+    private static void AppendScalarBindingCore(
+        StringBuilder sb,
+        TargetModel target,
+        PropertyModel property,
+        bool throwOnFailure,
+        string assignmentLeft,
+        bool emitAnyVar,
+        string? valueTypeDeclaration,
+        bool isRequired,
+        bool appendTrailingLine
+    )
+    {
+        var propertyPathLiteral = SymbolDisplay.FormatLiteral(property.Name, true);
+        var targetDisplay = SymbolDisplay.FormatLiteral(
+            property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+            true
+        );
+        var memberDisplay = SymbolDisplay.FormatLiteral(
+            target.TargetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
+                + "."
+                + property.Name,
+            true
+        );
+        var rawName = "__raw_" + property.Name;
+        var pathName = "__path_" + property.Name;
+        var valueName = "__value_" + property.Name;
+
+        if (valueTypeDeclaration is { } vt)
+        {
+            var valueType =
+                property.ScalarKind == ScalarKind.String ? property.Type
+                : property.IsNullable ? property.Type
+                : property.UnderlyingType;
+            var defaultValue = valueType.IsReferenceType ? "default!" : "default";
+
+            sb.Append("        ")
+                .Append(vt)
+                .Append(" ")
+                .Append(assignmentLeft)
+                .Append(" = ")
+                .Append(defaultValue)
+                .AppendLine(";");
+        }
+
+        sb.Append("        var ")
+            .Append(pathName)
+            .Append(" = global::PicoCfg.CfgBindRuntime.CombinePath(section, ")
+            .Append(propertyPathLiteral)
+            .AppendLine(");");
+        sb.Append("        if (global::PicoCfg.CfgBindRuntime.TryGetValueIgnoreCase(cfg, section, ")
+            .Append(propertyPathLiteral)
+            .Append(", out var ")
+            .Append(rawName)
+            .AppendLine("))");
+        sb.AppendLine("        {");
+
+        if (emitAnyVar)
+            sb.AppendLine("            any = true;");
+
+        if (property.ScalarKind == ScalarKind.String)
+        {
+            sb.Append("            ")
+                .Append(assignmentLeft)
+                .Append(" = ")
+                .Append(rawName)
+                .AppendLine(";");
+        }
+        else if (property.IsNullable)
+        {
+            sb.Append("            if (string.IsNullOrEmpty(").Append(rawName).AppendLine("))");
+            sb.AppendLine("            {");
+            sb.Append("                ").Append(assignmentLeft).AppendLine(" = null;");
+            sb.AppendLine("            }");
+            sb.AppendLine("            else");
+            sb.AppendLine("            {");
+            AppendParseBlock(
+                sb,
+                property,
+                rawName,
+                valueName,
+                pathName,
+                targetDisplay,
+                memberDisplay,
+                throwOnFailure,
+                indent: "                ",
+                declareVariable: valueTypeDeclaration is null
+            );
+            sb.Append("                ")
+                .Append(assignmentLeft)
+                .Append(" = ")
+                .Append(valueName)
+                .AppendLine(";");
+            sb.AppendLine("            }");
+        }
+        else
+        {
+            AppendParseBlock(
+                sb,
+                property,
+                rawName,
+                valueName,
+                pathName,
+                targetDisplay,
+                memberDisplay,
+                throwOnFailure,
+                indent: "            ",
+                declareVariable: valueTypeDeclaration is null
+            );
+            sb.Append("            ")
+                .Append(assignmentLeft)
+                .Append(" = ")
+                .Append(valueName)
+                .AppendLine(";");
+        }
+
+        sb.AppendLine("        }");
+
+        if (isRequired)
+        {
+            sb.AppendLine("        else");
+            sb.AppendLine("        {");
+            sb.Append("            ").Append(assignmentLeft).Append(" = ");
+            sb.Append(property.Type.IsReferenceType ? "default!" : "default");
+            sb.AppendLine(";");
+            sb.AppendLine("        }");
+        }
+
+        if (appendTrailingLine)
+            sb.AppendLine();
+    }
+
     private static void AppendInlinePropertyValues(
         StringBuilder sb,
         TargetModel target,
@@ -244,137 +398,17 @@ public sealed partial class PicoCfgBindGenerator
                 continue;
             }
 
-            var valueName = "__value_" + property.Name;
-            var pathName = "__path_" + property.Name;
-            var rawName = "__raw_" + property.Name;
-            var propertyPathLiteral = SymbolDisplay.FormatLiteral(property.Name, true);
-            var targetDisplay = SymbolDisplay.FormatLiteral(
-                property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
-                true
+            AppendScalarBindingCore(
+                sb,
+                target,
+                property,
+                throwOnFailure,
+                assignmentLeft: "__value_" + property.Name,
+                emitAnyVar: hasAnyVar,
+                valueTypeDeclaration: GetValueTypeName(property),
+                isRequired: false,
+                appendTrailingLine: true
             );
-            var memberDisplay = SymbolDisplay.FormatLiteral(
-                target.TargetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
-                    + "."
-                    + property.Name,
-                true
-            );
-
-            var valueTypeName =
-                property.ScalarKind == ScalarKind.String ? "string"
-                : property.IsNullable
-                    ? property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                : property.UnderlyingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            var valueType =
-                property.ScalarKind == ScalarKind.String ? property.Type
-                : property.IsNullable ? property.Type
-                : property.UnderlyingType;
-            var defaultValue = valueType.IsReferenceType ? "default!" : "default";
-
-            sb.Append("        ")
-                .Append(valueTypeName)
-                .Append(" ")
-                .Append(valueName)
-                .Append(" = ")
-                .Append(defaultValue)
-                .AppendLine(";");
-
-            sb.Append("        var ")
-                .Append(pathName)
-                .Append(" = global::PicoCfg.CfgBindRuntime.CombinePath(section, ")
-                .Append(propertyPathLiteral)
-                .AppendLine(");");
-            sb.Append(
-                    "        if (global::PicoCfg.CfgBindRuntime.TryGetValueIgnoreCase(cfg, section, "
-                )
-                .Append(propertyPathLiteral)
-                .Append(", out var ")
-                .Append(rawName)
-                .AppendLine("))");
-            sb.AppendLine("        {");
-
-            if (hasAnyVar)
-                sb.AppendLine("            any = true;");
-
-            if (property.ScalarKind == ScalarKind.String)
-            {
-                sb.Append("            ")
-                    .Append(valueName)
-                    .Append(" = ")
-                    .Append(rawName)
-                    .AppendLine(";");
-            }
-            else if (property.IsNullable)
-            {
-                sb.Append("            if (string.IsNullOrEmpty(").Append(rawName).AppendLine("))");
-                sb.AppendLine("            {");
-                sb.Append("                ").Append(valueName).AppendLine(" = default!;");
-                sb.AppendLine("            }");
-                sb.AppendLine("            else");
-                sb.AppendLine("            {");
-                var parseCall = GetParseCall(
-                    property.ScalarKind,
-                    rawName,
-                    valueName,
-                    property.UnderlyingType.ToDisplayString(
-                        SymbolDisplayFormat.FullyQualifiedFormat
-                    ),
-                    declareVariable: false
-                );
-                sb.Append("                if (!").Append(parseCall).AppendLine(")");
-                sb.AppendLine("                {");
-                if (throwOnFailure)
-                {
-                    sb.Append(
-                            "                    throw global::PicoCfg.CfgBindRuntime.CreateConversionException("
-                        )
-                        .Append(pathName)
-                        .Append(", ")
-                        .Append(targetDisplay)
-                        .Append(", ")
-                        .Append(memberDisplay)
-                        .AppendLine(");");
-                }
-                else
-                {
-                    sb.AppendLine("                    return false;");
-                }
-                sb.AppendLine("                }");
-                sb.AppendLine("            }");
-            }
-            else
-            {
-                var parseCall = GetParseCall(
-                    property.ScalarKind,
-                    rawName,
-                    valueName,
-                    property.UnderlyingType.ToDisplayString(
-                        SymbolDisplayFormat.FullyQualifiedFormat
-                    ),
-                    declareVariable: false
-                );
-                sb.Append("            if (!").Append(parseCall).AppendLine(")");
-                sb.AppendLine("            {");
-                if (throwOnFailure)
-                {
-                    sb.Append(
-                            "                throw global::PicoCfg.CfgBindRuntime.CreateConversionException("
-                        )
-                        .Append(pathName)
-                        .Append(", ")
-                        .Append(targetDisplay)
-                        .Append(", ")
-                        .Append(memberDisplay)
-                        .AppendLine(");");
-                }
-                else
-                {
-                    sb.AppendLine("                return false;");
-                }
-                sb.AppendLine("            }");
-            }
-
-            sb.AppendLine("        }");
-            sb.AppendLine();
         }
     }
 
@@ -402,99 +436,25 @@ public sealed partial class PicoCfgBindGenerator
             return;
         }
 
-        var propertyPathLiteral = SymbolDisplay.FormatLiteral(property.Name, true);
-        var targetDisplay = SymbolDisplay.FormatLiteral(
-            property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
-            true
+        AppendScalarBindingCore(
+            sb,
+            target,
+            property,
+            throwOnFailure,
+            assignmentLeft: "instance." + property.Name,
+            emitAnyVar: !throwOnFailure,
+            valueTypeDeclaration: null,
+            isRequired: property.IsRequired,
+            appendTrailingLine: false
         );
-        var memberDisplay = SymbolDisplay.FormatLiteral(
-            target.TargetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
-                + "."
-                + property.Name,
-            true
-        );
-        var rawName = "__raw_" + property.Name;
-        var pathName = "__path_" + property.Name;
-        var valueName = "__value_" + property.Name;
+    }
 
-        sb.Append("        var ")
-            .Append(pathName)
-            .Append(" = global::PicoCfg.CfgBindRuntime.CombinePath(section, ")
-            .Append(propertyPathLiteral)
-            .AppendLine(");");
-        sb.Append("        if (global::PicoCfg.CfgBindRuntime.TryGetValueIgnoreCase(cfg, section, ")
-            .Append(propertyPathLiteral)
-            .Append(", out var ")
-            .Append(rawName)
-            .AppendLine("))");
-        sb.AppendLine("        {");
-        if (!throwOnFailure)
-            sb.AppendLine("            any = true;");
-
-        if (property.ScalarKind == ScalarKind.String)
-        {
-            sb.Append("            instance.")
-                .Append(property.Name)
-                .Append(" = ")
-                .Append(rawName)
-                .AppendLine(";");
-        }
-        else if (property.IsNullable)
-        {
-            sb.Append("            if (string.IsNullOrEmpty(").Append(rawName).AppendLine("))");
-            sb.AppendLine("            {");
-            sb.Append("                instance.").Append(property.Name).AppendLine(" = null;");
-            sb.AppendLine("            }");
-            sb.AppendLine("            else");
-            sb.AppendLine("            {");
-            AppendParseBlock(
-                sb,
-                property,
-                rawName,
-                valueName,
-                pathName,
-                targetDisplay,
-                memberDisplay,
-                throwOnFailure,
-                indent: "                "
-            );
-            sb.Append("                instance.")
-                .Append(property.Name)
-                .Append(" = ")
-                .Append(valueName)
-                .AppendLine(";");
-            sb.AppendLine("            }");
-        }
-        else
-        {
-            AppendParseBlock(
-                sb,
-                property,
-                rawName,
-                valueName,
-                pathName,
-                targetDisplay,
-                memberDisplay,
-                throwOnFailure,
-                indent: "            "
-            );
-            sb.Append("            instance.")
-                .Append(property.Name)
-                .Append(" = ")
-                .Append(valueName)
-                .AppendLine(";");
-        }
-
-        sb.AppendLine("        }");
-        if (property.IsRequired)
-        {
-            sb.AppendLine("        else");
-            sb.AppendLine("        {");
-            sb.Append("            instance.").Append(property.Name).Append(" = ");
-            sb.Append(property.Type.IsReferenceType ? "default!" : "default");
-            sb.AppendLine(";");
-            sb.AppendLine("        }");
-        }
+    private static string GetValueTypeName(PropertyModel property)
+    {
+        return property.ScalarKind == ScalarKind.String ? "string"
+            : property.IsNullable
+                ? property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+            : property.UnderlyingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     }
 
     private static void AppendNestedBindProperty(
@@ -861,13 +821,20 @@ public sealed partial class PicoCfgBindGenerator
         string targetDisplay,
         string memberDisplay,
         bool throwOnFailure,
-        string indent
+        string indent,
+        bool declareVariable = true
     )
     {
         var targetTypeName = property.UnderlyingType.ToDisplayString(
             SymbolDisplayFormat.FullyQualifiedFormat
         );
-        var parseCall = GetParseCall(property.ScalarKind, rawName, valueName, targetTypeName);
+        var parseCall = GetParseCall(
+            property.ScalarKind,
+            rawName,
+            valueName,
+            targetTypeName,
+            declareVariable: declareVariable
+        );
 
         sb.Append(indent).Append("if (!").Append(parseCall).AppendLine(")");
         sb.Append(indent).AppendLine("{");
