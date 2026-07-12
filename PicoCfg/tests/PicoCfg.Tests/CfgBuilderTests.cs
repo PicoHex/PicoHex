@@ -48,6 +48,9 @@ public class CfgBuilderTests
             result = null;
             return false;
         }
+
+        public IReadOnlyDictionary<string, string> GetAllValues() =>
+            new Dictionary<string, string> { [key] = value };
     }
 
     [Test]
@@ -216,6 +219,9 @@ public class CfgBuilderTests
             value = resolver(path);
             return value is not null;
         }
+
+        public IReadOnlyDictionary<string, string> GetAllValues() =>
+            new Dictionary<string, string>();
     }
 
     private class MockSource(string key = "sourceKey", string value = "sourceValue") : ICfgSource
@@ -251,6 +257,9 @@ public class CfgBuilderTests
             resolvedValue = null;
             return false;
         }
+
+        public IReadOnlyDictionary<string, string> GetAllValues() =>
+            new Dictionary<string, string> { [key] = value };
     }
 
     private sealed class TrackingSource(TrackingProvider provider) : ICfgSource

@@ -178,5 +178,8 @@ public class CfgSnapshotComposerTests
             value = resolver(path);
             return value is not null;
         }
+
+        public IReadOnlyDictionary<string, string> GetAllValues() =>
+            new Dictionary<string, string>();
     }
 }

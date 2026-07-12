@@ -64,4 +64,19 @@ public class CfgBuilderJsonExtensionsTests
 
         await Assert.That(root.GetValue("Key")).IsEqualTo("second");
     }
+
+    [Test]
+    public async Task GetAll_WithJsonSource_ReturnsAllFlattenedKeys()
+    {
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson("""{"model": "deepseek-v4-flash", "timeout": 30}""");
+
+        var root = await builder.BuildAsync();
+
+        var all = root.GetAll();
+
+        await Assert.That(all.Count).IsEqualTo(2);
+        await Assert.That(all["model"]).IsEqualTo("deepseek-v4-flash");
+        await Assert.That(all["timeout"]).IsEqualTo("30");
+    }
 }

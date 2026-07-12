@@ -39,6 +39,8 @@ internal sealed class ChainedSnapshot : ICfgSnapshot
 
     public bool TryGetValue(string path, out string? value) =>
         _chainedConfig.TryGetValue(path, out value);
+
+    public IReadOnlyDictionary<string, string> GetAllValues() => _chainedConfig.GetAll();
 }
 
 internal sealed class ChainedCfgSource : ICfgSource

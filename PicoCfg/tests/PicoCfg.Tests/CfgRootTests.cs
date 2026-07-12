@@ -617,6 +617,9 @@ public class CfgRootTests
             value = resolver(path);
             return value is not null;
         }
+
+        public IReadOnlyDictionary<string, string> GetAllValues() =>
+            new Dictionary<string, string>();
     }
 
     private sealed class GatedReloadProvider : ICfgProvider
@@ -703,6 +706,8 @@ public class CfgRootTests
             value = null;
             return false;
         }
+
+        public IReadOnlyDictionary<string, string> GetAllValues() => Values;
     }
 
     private sealed class ControllableMockChangeSignal

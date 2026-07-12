@@ -92,5 +92,7 @@ public sealed class CfgRootConsumerContractTests
             value = null;
             return false;
         }
+
+        public IReadOnlyDictionary<string, string> GetAllValues() => values;
     }
 }

@@ -37,4 +37,6 @@ internal sealed class YamlCfgProvider(byte[] yamlBytes) : ICfgProvider
 internal sealed class YamlCfgSnapshot(Dictionary<string, string> values) : ICfgSnapshot
 {
     public bool TryGetValue(string path, out string? value) => values.TryGetValue(path, out value);
+
+    public IReadOnlyDictionary<string, string> GetAllValues() => values;
 }

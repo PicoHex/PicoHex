@@ -57,4 +57,6 @@ internal sealed class JsonCfgProvider(byte[] jsonBytes) : ICfgProvider
 internal sealed class JsonCfgSnapshot(Dictionary<string, string> values) : ICfgSnapshot
 {
     public bool TryGetValue(string path, out string? value) => values.TryGetValue(path, out value);
+
+    public IReadOnlyDictionary<string, string> GetAllValues() => values;
 }

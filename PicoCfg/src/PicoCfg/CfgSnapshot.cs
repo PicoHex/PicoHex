@@ -16,7 +16,7 @@ internal sealed class CfgSnapshot : ICfgSnapshot
     internal IReadOnlyDictionary<string, string> Values { get; }
     internal int Fingerprint { get; }
 
-    internal IReadOnlyDictionary<string, string> GetAllValues() => Values;
+    public IReadOnlyDictionary<string, string> GetAllValues() => Values;
 
     public bool TryGetValue(string path, out string? value)
     {

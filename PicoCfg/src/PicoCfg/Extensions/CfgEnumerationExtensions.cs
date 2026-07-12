@@ -7,29 +7,18 @@ public static class CfgEnumerationExtensions
 {
     /// <summary>
     /// Returns all key-value pairs from the configuration view.
-    /// When the underlying snapshot is a native PicoCfg snapshot (single or composed), the returned
-    /// dictionary contains all keys merged in provider order — later providers override earlier ones.
-    /// External <see cref="ICfg"/> implementations return an empty dictionary.
+    /// Keys are merged in provider order — later providers override earlier ones.
+    /// When the view wraps an <see cref="ICfgSnapshot"/>, all keys from that
+    /// snapshot are returned. External <see cref="ICfg"/> implementations that do
+    /// not implement <see cref="ICfgSnapshot"/> return an empty dictionary.
     /// </summary>
     public static IReadOnlyDictionary<string, string> GetAll(this ICfg cfg)
     {
-        if (cfg is CfgSnapshot snapshot)
+        if (cfg is ICfgSnapshot snapshot)
             return snapshot.GetAllValues();
 
-        if (cfg is CfgSnapshotComposer.CompositeCfgSnapshot composite)
-            return composite.GetAllValues();
-
         if (cfg is IInternalCfgRootSnapshotAccessor rootAccessor)
-        {
-            if (rootAccessor.CurrentSnapshot is CfgSnapshot rootSnapshot)
-                return rootSnapshot.GetAllValues();
-
-            if (
-                rootAccessor.CurrentSnapshot
-                is CfgSnapshotComposer.CompositeCfgSnapshot rootComposite
-            )
-                return rootComposite.GetAllValues();
-        }
+            return rootAccessor.CurrentSnapshot.GetAllValues();
 
         if (cfg is CfgSection section)
         {

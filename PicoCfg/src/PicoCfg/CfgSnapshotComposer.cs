@@ -106,28 +106,21 @@ internal static class CfgSnapshotComposer
         }
 
         /// <summary>
-        /// Returns all configuration values from native <see cref="CfgSnapshot"/> providers.
-        /// Non-native <see cref="ICfgSnapshot"/> implementations are skipped because
-        /// the interface does not expose a bulk-read operation — their values remain
-        /// accessible through <see cref="TryGetValue"/> but are not included here.
+        /// Returns all configuration values from all providers, merged in provider order
+        /// (later providers override earlier ones on key conflict). All providers are
+        /// enumerated via <see cref="ICfgSnapshot.GetAllValues"/>.
         /// </summary>
-        internal IReadOnlyDictionary<string, string> GetAllValues()
+        public IReadOnlyDictionary<string, string> GetAllValues()
         {
             var capacity = 0;
             for (var i = 0; i < snapshots.Count; i++)
-            {
-                if (snapshots[i] is CfgSnapshot cfgSnapshot)
-                    capacity += cfgSnapshot.Values.Count;
-            }
+                capacity += snapshots[i].GetAllValues().Count;
 
             var merged = new Dictionary<string, string>(capacity);
             for (var i = 0; i < snapshots.Count; i++)
             {
-                if (snapshots[i] is CfgSnapshot cfgSnapshot)
-                {
-                    foreach (var (key, value) in cfgSnapshot.Values)
-                        merged[key] = value;
-                }
+                foreach (var (key, value) in snapshots[i].GetAllValues())
+                    merged[key] = value;
             }
 
             return merged;

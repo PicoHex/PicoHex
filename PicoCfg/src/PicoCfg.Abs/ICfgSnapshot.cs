@@ -7,4 +7,13 @@ namespace PicoCfg.Abs;
 /// a single dictionary-backed root snapshot, while custom <see cref="ICfgSnapshot"/> implementations may
 /// be composed via read-time fallback lookups to preserve custom lookup behavior.
 /// </summary>
-public interface ICfgSnapshot : ICfg;
+public interface ICfgSnapshot : ICfg
+{
+    /// <summary>
+    /// Returns all key-value pairs contained in this snapshot.
+    /// Custom implementations that support bulk enumeration should return their
+    /// internal storage here. Implementations that cannot enumerate all keys
+    /// (e.g., network-backed sources) may return an empty dictionary.
+    /// </summary>
+    IReadOnlyDictionary<string, string> GetAllValues();
+}
