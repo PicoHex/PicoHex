@@ -193,6 +193,8 @@ public sealed partial class PicoCfgBindGenerator
             .AppendLine(" value)");
         sb.AppendLine("    {");
         sb.AppendLine("        var any = false;");
+        sb.Append("        value = default!;").AppendLine();
+        sb.AppendLine();
 
         AppendInlinePropertyValues(sb, target, throwOnFailure: false, hasAnyVar: true);
 
@@ -238,7 +240,7 @@ public sealed partial class PicoCfgBindGenerator
                     or ScalarKind.Collection_Dictionary
             )
             {
-                AppendCollectionInlineValue(sb, property, hasAnyVar);
+                AppendCollectionInlineValue(sb, property, hasAnyVar, throwOnFailure);
                 continue;
             }
 
@@ -639,7 +641,7 @@ public sealed partial class PicoCfgBindGenerator
                     .Append(property.CollectionElementNestedIndex)
                     .Append("(__elem_")
                     .Append(property.Name)
-                    .AppendLine(", null));");
+                    .AppendLine(", null);");
             }
             else if (
                 property.ElementType is { } dictElemType
@@ -672,25 +674,7 @@ public sealed partial class PicoCfgBindGenerator
                     sb.AppendLine("            {");
                     if (throwOnFailure)
                     {
-                        sb.Append(
-                                "                throw global::PicoCfg.CfgBindRuntime.CreateConversionException("
-                            )
-                            .Append(pathName)
-                            .Append(
-                                " + \":\" + __i.ToString(global::System.Globalization.CultureInfo.InvariantCulture)"
-                            )
-                            .Append(", ")
-                            .Append(
-                                SymbolDisplay.FormatLiteral(
-                                    property.Type.ToDisplayString(
-                                        SymbolDisplayFormat.MinimallyQualifiedFormat
-                                    ),
-                                    true
-                                )
-                            )
-                            .Append(", ")
-                            .Append(SymbolDisplay.FormatLiteral(property.Name, true))
-                            .AppendLine(");");
+                        AppendCollectionElementConversionExceptionThrow(sb, pathName, property);
                     }
                     else
                     {
@@ -757,25 +741,7 @@ public sealed partial class PicoCfgBindGenerator
                     sb.AppendLine("            {");
                     if (throwOnFailure)
                     {
-                        sb.Append(
-                                "                throw global::PicoCfg.CfgBindRuntime.CreateConversionException("
-                            )
-                            .Append(pathName)
-                            .Append(
-                                " + \":\" + __i.ToString(global::System.Globalization.CultureInfo.InvariantCulture)"
-                            )
-                            .Append(", ")
-                            .Append(
-                                SymbolDisplay.FormatLiteral(
-                                    property.Type.ToDisplayString(
-                                        SymbolDisplayFormat.MinimallyQualifiedFormat
-                                    ),
-                                    true
-                                )
-                            )
-                            .Append(", ")
-                            .Append(SymbolDisplay.FormatLiteral(property.Name, true))
-                            .AppendLine(");");
+                        AppendCollectionElementConversionExceptionThrow(sb, pathName, property);
                     }
                     else
                     {
@@ -813,7 +779,8 @@ public sealed partial class PicoCfgBindGenerator
     private static void AppendCollectionInlineValue(
         StringBuilder sb,
         PropertyModel property,
-        bool hasAnyVar
+        bool hasAnyVar,
+        bool throwOnFailure
     )
     {
         var valueName = "__value_" + property.Name;
@@ -893,7 +860,7 @@ public sealed partial class PicoCfgBindGenerator
                     .Append(property.CollectionElementNestedIndex)
                     .Append("(__elem_")
                     .Append(property.Name)
-                    .AppendLine(", null));");
+                    .AppendLine(", null);");
             }
             else if (
                 property.ElementType is { } dictElemType
@@ -924,7 +891,14 @@ public sealed partial class PicoCfgBindGenerator
                     );
                     sb.Append("            if (!").Append(parseCall).AppendLine(")");
                     sb.AppendLine("            {");
-                    sb.AppendLine("                return false;");
+                    if (throwOnFailure)
+                    {
+                        AppendCollectionElementConversionExceptionThrow(sb, pathName, property);
+                    }
+                    else
+                    {
+                        sb.AppendLine("                return false;");
+                    }
                     sb.AppendLine("            }");
                     sb.Append("            ").Append(accName).AppendLine("[__rawKey] = __parsed;");
                 }
@@ -984,7 +958,14 @@ public sealed partial class PicoCfgBindGenerator
                     );
                     sb.Append("            if (!").Append(parseCall).AppendLine(")");
                     sb.AppendLine("            {");
-                    sb.AppendLine("                return false;");
+                    if (throwOnFailure)
+                    {
+                        AppendCollectionElementConversionExceptionThrow(sb, pathName, property);
+                    }
+                    else
+                    {
+                        sb.AppendLine("                return false;");
+                    }
                     sb.AppendLine("            }");
                     sb.Append("            ").Append(accName).AppendLine(".Add(__parsed);");
                 }
@@ -1047,6 +1028,29 @@ public sealed partial class PicoCfgBindGenerator
         }
 
         sb.Append(indent).AppendLine("}");
+    }
+
+    private static void AppendCollectionElementConversionExceptionThrow(
+        StringBuilder sb,
+        string pathName,
+        PropertyModel property
+    )
+    {
+        sb.Append("                throw global::PicoCfg.CfgBindRuntime.CreateConversionException(")
+            .Append(pathName)
+            .Append(
+                " + \":\" + __i.ToString(global::System.Globalization.CultureInfo.InvariantCulture)"
+            )
+            .Append(", ")
+            .Append(
+                SymbolDisplay.FormatLiteral(
+                    property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                    true
+                )
+            )
+            .Append(", ")
+            .Append(SymbolDisplay.FormatLiteral(property.Name, true))
+            .AppendLine(");");
     }
 
     private static string GetParseCall(

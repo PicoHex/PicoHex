@@ -148,6 +148,11 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
                 if (member is not IPropertySymbol prop)
                     continue;
 
+                // Skip compiler-synthesized members (e.g., record EqualityContract)
+                // to avoid descending into framework types.
+                if (prop.IsImplicitlyDeclared)
+                    continue;
+
                 if (
                     IsNestedBindableType(prop.Type)
                     && !targets.ContainsKey(prop.Type)

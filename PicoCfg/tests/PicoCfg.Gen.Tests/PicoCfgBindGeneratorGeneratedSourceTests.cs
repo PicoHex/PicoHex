@@ -133,6 +133,141 @@ public class PicoCfgBindGeneratorGeneratedSourceTests
         );
     }
 
+    [Test]
+    public async Task DictionaryWithNestedComplexValueType_GeneratesCompilableCode()
+    {
+        var generatedSource = await GenerateSourceAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class ProviderEntry
+            {
+                public string? Name { get; set; }
+                public int Port { get; set; }
+            }
+
+            public sealed class AgentConfig
+            {
+                public Dictionary<string, ProviderEntry> Providers { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static AgentConfig Run(ICfg cfg) => CfgBind.Bind<AgentConfig>(cfg);
+            }
+            """
+        );
+
+        await Assert.That(generatedSource).IsNotNullOrEmpty();
+    }
+
+    [Test]
+    public async Task DictionaryWithNestedInitOnlyType_GeneratesCompilableCode()
+    {
+        // Reproduction for: CS0825 'var' may only appear within a local variable declaration
+        //                  CS0708 cannot declare instance members in a static class
+        // The bug triggers when a Dictionary<string, NestedInitOnlyType> is bound
+        // and NestedInitOnlyType has init-only properties requiring inline binding.
+        var generatedSource = await GenerateSourceAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class ProviderEntry
+            {
+                public string? Name { get; init; }
+                public int Port { get; init; }
+            }
+
+            public sealed class AgentConfig
+            {
+                public Dictionary<string, ProviderEntry> Providers { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static AgentConfig Run(ICfg cfg) => CfgBind.Bind<AgentConfig>(cfg);
+            }
+            """
+        );
+
+        await Assert.That(generatedSource).IsNotNullOrEmpty();
+    }
+
+    [Test]
+    public async Task NestedDictOfDictWithInitOnly_GeneratesCompilableCode()
+    {
+        // Deeper nesting: a type with a Dictionary property whose value type also
+        // has a Dictionary property with an init-only value type.
+        var generatedSource = await GenerateSourceAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class InnerConfig
+            {
+                public string? Key { get; init; }
+                public int Value { get; init; }
+            }
+
+            public sealed class NestedConfig
+            {
+                public Dictionary<string, InnerConfig> Items { get; set; } = new();
+            }
+
+            public sealed class RootConfig
+            {
+                public Dictionary<string, NestedConfig> Sections { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static RootConfig Run(ICfg cfg) => CfgBind.Bind<RootConfig>(cfg);
+            }
+            """
+        );
+
+        await Assert.That(generatedSource).IsNotNullOrEmpty();
+    }
+
+    [Test]
+    public async Task TypeWithDictAndNestedTypeHavingDict_GeneratesCompilableCode()
+    {
+        // A type with Dictionary<string, X> where X also has a Dictionary<string, Y>
+        // and Y has init-only scalar properties.
+        var generatedSource = await GenerateSourceAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class ProviderEntry
+            {
+                public string? Name { get; init; }
+                public int Port { get; init; }
+                public Dictionary<string, string>? Tags { get; init; }
+            }
+
+            public sealed class AgentConfig
+            {
+                public string? Name { get; set; }
+                public Dictionary<string, ProviderEntry> Providers { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static AgentConfig Run(ICfg cfg) => CfgBind.Bind<AgentConfig>(cfg);
+            }
+            """
+        );
+
+        await Assert.That(generatedSource).IsNotNullOrEmpty();
+    }
+
     private static async Task AssertGeneratedSourceContainsAsync(
         string generatedSource,
         params string[] expectedFragments
