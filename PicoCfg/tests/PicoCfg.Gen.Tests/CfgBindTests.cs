@@ -125,4 +125,137 @@ public sealed class CfgBindTests
         await Assert.That(settings.Inner!.Value).IsEqualTo("nested-value");
         await Assert.That(settings.Inner.Count).IsEqualTo(99);
     }
+
+    // --- Dictionary<string, NestedType> binding (settable properties) ---
+
+    public sealed class ProviderEntry
+    {
+        public string? Name { get; set; }
+        public int Port { get; set; }
+    }
+
+    public sealed class DictAgentConfig
+    {
+        public string? Model { get; set; }
+        public bool Te { get; set; }
+        public int Mt { get; set; }
+        public Dictionary<string, ProviderEntry> Providers { get; set; } = new();
+    }
+
+    [Test]
+    public async Task Bind_DictOfNestedType_ResolvesKeysAndValues()
+    {
+        // Uses the dictionary key-value indexed format:
+        //   Section:0:Key, Section:0:Value:Name, Section:0:Value:Port, ...
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Model"] = "gpt4",
+                    ["Te"] = "false",
+                    ["Mt"] = "100",
+                    ["Providers:0:Key"] = "primary",
+                    ["Providers:0:Value:Name"] = "main",
+                    ["Providers:0:Value:Port"] = "8080",
+                    ["Providers:1:Key"] = "secondary",
+                    ["Providers:1:Value:Name"] = "backup",
+                    ["Providers:1:Value:Port"] = "8081",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<DictAgentConfig>(root);
+
+        await Assert.That(config.Model).IsEqualTo("gpt4");
+        await Assert.That(config.Te).IsFalse();
+        await Assert.That(config.Mt).IsEqualTo(100);
+        await Assert.That(config.Providers).IsNotNull();
+        await Assert.That(config.Providers.Count).IsEqualTo(2);
+        await Assert.That(config.Providers["primary"].Name).IsEqualTo("main");
+        await Assert.That(config.Providers["primary"].Port).IsEqualTo(8080);
+        await Assert.That(config.Providers["secondary"].Name).IsEqualTo("backup");
+        await Assert.That(config.Providers["secondary"].Port).IsEqualTo(8081);
+    }
+
+    // --- Dictionary<string, NestedType> with init-only properties ---
+
+    public sealed class ProviderEntryInit
+    {
+        public string? Name { get; init; }
+        public int Port { get; init; }
+    }
+
+    public sealed class DictAgentConfigInit
+    {
+        public string? Model { get; init; }
+        public bool Te { get; init; }
+        public int Mt { get; init; }
+        public Dictionary<string, ProviderEntryInit> Providers { get; init; } = new();
+    }
+
+    [Test]
+    public async Task Bind_DictOfNestedInitOnlyType_ResolvesKeysAndValues()
+    {
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Model"] = "gpt4",
+                    ["Te"] = "false",
+                    ["Mt"] = "100",
+                    ["Providers:0:Key"] = "primary",
+                    ["Providers:0:Value:Name"] = "main",
+                    ["Providers:0:Value:Port"] = "8080",
+                    ["Providers:1:Key"] = "secondary",
+                    ["Providers:1:Value:Name"] = "backup",
+                    ["Providers:1:Value:Port"] = "8081",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<DictAgentConfigInit>(root);
+
+        await Assert.That(config.Model).IsEqualTo("gpt4");
+        await Assert.That(config.Te).IsFalse();
+        await Assert.That(config.Mt).IsEqualTo(100);
+        await Assert.That(config.Providers).IsNotNull();
+        await Assert.That(config.Providers.Count).IsEqualTo(2);
+        await Assert.That(config.Providers["primary"].Name).IsEqualTo("main");
+        await Assert.That(config.Providers["primary"].Port).IsEqualTo(8080);
+        await Assert.That(config.Providers["secondary"].Name).IsEqualTo("backup");
+        await Assert.That(config.Providers["secondary"].Port).IsEqualTo(8081);
+    }
+
+    // --- Dictionary<string, string> regression ---
+
+    public sealed class DictStringConfig
+    {
+        public string? Name { get; set; }
+        public Dictionary<string, string> Metadata { get; set; } = new();
+    }
+
+    [Test]
+    public async Task Bind_DictOfStringType_ResolvesKeysAndValues()
+    {
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Name"] = "app",
+                    ["Metadata:0:Key"] = "env",
+                    ["Metadata:0:Value"] = "production",
+                    ["Metadata:1:Key"] = "region",
+                    ["Metadata:1:Value"] = "us-east-1",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<DictStringConfig>(root);
+
+        await Assert.That(config.Name).IsEqualTo("app");
+        await Assert.That(config.Metadata).IsNotNull();
+        await Assert.That(config.Metadata.Count).IsEqualTo(2);
+        await Assert.That(config.Metadata["env"]).IsEqualTo("production");
+        await Assert.That(config.Metadata["region"]).IsEqualTo("us-east-1");
+    }
 }

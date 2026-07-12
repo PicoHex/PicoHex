@@ -565,10 +565,34 @@ public sealed partial class PicoCfgBindGenerator
         sb.AppendLine();
     }
 
-    private static void AppendCollectionBindProperty(
+    /// <summary>
+    /// Shared collection binding loop used by both the BindInto path
+    /// (<see cref="AppendCollectionBindProperty"/>) and the init-only
+    /// inline path (<see cref="AppendCollectionInlineValue"/>).
+    /// </summary>
+    /// <param name="assignmentLeft">
+    /// Left-hand side of the final assignment, e.g. "instance.Providers"
+    /// (BindInto) or "__value_Providers" (inline).
+    /// </param>
+    /// <param name="emitAnyVar">
+    /// Whether to emit <c>any = true;</c> after the loop.
+    /// </param>
+    /// <param name="valueTypeDeclaration">
+    /// Optional fully-qualified type name for a local variable declaration
+    /// emitted before the loop.  <see langword="null" /> for the BindInto
+    /// path; non-null for the init-only inline path.
+    /// </param>
+    /// <param name="appendTrailingLine">
+    /// Whether to append an empty line after the closing brace.
+    /// </param>
+    private static void AppendCollectionBindingCore(
         StringBuilder sb,
         PropertyModel property,
-        bool throwOnFailure
+        bool throwOnFailure,
+        string assignmentLeft,
+        bool emitAnyVar,
+        string? valueTypeDeclaration,
+        bool appendTrailingLine
     )
     {
         var propertyPathLiteral = SymbolDisplay.FormatLiteral(property.Name, true);
@@ -589,6 +613,15 @@ public sealed partial class PicoCfgBindGenerator
         else
         {
             accTypeFqn = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        }
+
+        if (valueTypeDeclaration is { } vt)
+        {
+            sb.Append("        ")
+                .Append(vt)
+                .Append(" ")
+                .Append(assignmentLeft)
+                .AppendLine(" = default!;");
         }
 
         sb.Append("        var ")
@@ -618,12 +651,6 @@ public sealed partial class PicoCfgBindGenerator
                     ".TryGetValue(__i.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + \":Key\", out var __rawKey))"
                 );
             sb.AppendLine("                break;");
-            sb.Append("            if (!")
-                .Append(sectionName)
-                .AppendLine(
-                    ".TryGetValue(__i.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + \":Value\", out var __rawValue))"
-                );
-            sb.AppendLine("                break;");
 
             if (property.CollectionElementNestedIndex >= 0)
             {
@@ -632,7 +659,7 @@ public sealed partial class PicoCfgBindGenerator
                     .Append(" = global::PicoCfg.CfgBindRuntime.CreateScopedView(")
                     .Append(sectionName)
                     .Append(
-                        ", __i.ToString(global::System.Globalization.CultureInfo.InvariantCulture));"
+                        ", __i.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + \":Value\");"
                     )
                     .AppendLine();
                 sb.Append("            ")
@@ -652,6 +679,13 @@ public sealed partial class PicoCfgBindGenerator
                 )
             )
             {
+                sb.Append("            if (!")
+                    .Append(sectionName)
+                    .AppendLine(
+                        ".TryGetValue(__i.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + \":Value\", out var __rawValue))"
+                    );
+                sb.AppendLine("                break;");
+
                 if (dictElemScalarKind == ScalarKind.String)
                 {
                     sb.Append("            ")
@@ -755,25 +789,45 @@ public sealed partial class PicoCfgBindGenerator
 
         sb.AppendLine("        }");
 
-        if (!throwOnFailure)
+        if (emitAnyVar)
             sb.AppendLine("        any = true;");
 
         if (property.ScalarKind == ScalarKind.Collection_Array)
         {
-            sb.Append("        instance.")
-                .Append(property.Name)
+            sb.Append("        ")
+                .Append(assignmentLeft)
                 .Append(" = ")
                 .Append(accName)
                 .AppendLine(".ToArray();");
         }
         else
         {
-            sb.Append("        instance.")
-                .Append(property.Name)
+            sb.Append("        ")
+                .Append(assignmentLeft)
                 .Append(" = ")
                 .Append(accName)
                 .AppendLine(";");
         }
+
+        if (appendTrailingLine)
+            sb.AppendLine();
+    }
+
+    private static void AppendCollectionBindProperty(
+        StringBuilder sb,
+        PropertyModel property,
+        bool throwOnFailure
+    )
+    {
+        AppendCollectionBindingCore(
+            sb,
+            property,
+            throwOnFailure,
+            assignmentLeft: "instance." + property.Name,
+            emitAnyVar: !throwOnFailure,
+            valueTypeDeclaration: null,
+            appendTrailingLine: false
+        );
     }
 
     private static void AppendCollectionInlineValue(
@@ -783,213 +837,17 @@ public sealed partial class PicoCfgBindGenerator
         bool throwOnFailure
     )
     {
-        var valueName = "__value_" + property.Name;
-        var propertyPathLiteral = SymbolDisplay.FormatLiteral(property.Name, true);
-        var pathName = "__path_" + property.Name;
-        var sectionName = "__section_" + property.Name;
-        var isDictionary = property.ScalarKind == ScalarKind.Collection_Dictionary;
-        var accName = isDictionary ? "__dict_" + property.Name : "__list_" + property.Name;
-        var valueTypeName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-        string accTypeFqn;
-        if (
-            property.ScalarKind == ScalarKind.Collection_Array
-            && property.ElementType is { } arrElemType
-        )
-        {
-            var arrElemFqn = arrElemType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            accTypeFqn = "global::System.Collections.Generic.List<" + arrElemFqn + ">";
-        }
-        else
-        {
-            accTypeFqn = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        }
-
-        sb.Append("        ")
-            .Append(valueTypeName)
-            .Append(" ")
-            .Append(valueName)
-            .AppendLine(" = default!;");
-        sb.Append("        var ")
-            .Append(pathName)
-            .Append(" = global::PicoCfg.CfgBindRuntime.CombinePath(section, ")
-            .Append(propertyPathLiteral)
-            .AppendLine(");");
-        sb.Append("        var ")
-            .Append(sectionName)
-            .Append(" = global::PicoCfg.CfgBindRuntime.CreateScopedView(cfg, ")
-            .Append(pathName)
-            .AppendLine(");");
-        sb.Append("        var ")
-            .Append(accName)
-            .Append(" = new ")
-            .Append(accTypeFqn)
-            .AppendLine("();");
-
-        sb.AppendLine("        for (var __i = 0; ; __i++)");
-        sb.AppendLine("        {");
-
-        if (isDictionary)
-        {
-            sb.Append("            if (!")
-                .Append(sectionName)
-                .AppendLine(
-                    ".TryGetValue(__i.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + \":Key\", out var __rawKey))"
-                );
-            sb.AppendLine("                break;");
-            sb.Append("            if (!")
-                .Append(sectionName)
-                .AppendLine(
-                    ".TryGetValue(__i.ToString(global::System.Globalization.CultureInfo.InvariantCulture) + \":Value\", out var __rawValue))"
-                );
-            sb.AppendLine("                break;");
-
-            if (property.CollectionElementNestedIndex >= 0)
-            {
-                sb.Append("            var __elem_")
-                    .Append(property.Name)
-                    .Append(" = global::PicoCfg.CfgBindRuntime.CreateScopedView(")
-                    .Append(sectionName)
-                    .Append(
-                        ", __i.ToString(global::System.Globalization.CultureInfo.InvariantCulture));"
-                    )
-                    .AppendLine();
-                sb.Append("            ")
-                    .Append(accName)
-                    .Append("[__rawKey] = Bind_")
-                    .Append(property.CollectionElementNestedIndex)
-                    .Append("(__elem_")
-                    .Append(property.Name)
-                    .AppendLine(", null);");
-            }
-            else if (
-                property.ElementType is { } dictElemType
-                && TryGetScalarKind(
-                    dictElemType,
-                    out var dictElemScalarKind,
-                    out var dictElemUnderlyingType
-                )
-            )
-            {
-                if (dictElemScalarKind == ScalarKind.String)
-                {
-                    sb.Append("            ")
-                        .Append(accName)
-                        .AppendLine("[__rawKey] = __rawValue;");
-                }
-                else
-                {
-                    var dictElemFqn = dictElemUnderlyingType.ToDisplayString(
-                        SymbolDisplayFormat.FullyQualifiedFormat
-                    );
-                    var parseCall = GetParseCall(
-                        dictElemScalarKind,
-                        "__rawValue",
-                        "__parsed",
-                        dictElemFqn,
-                        declareVariable: true
-                    );
-                    sb.Append("            if (!").Append(parseCall).AppendLine(")");
-                    sb.AppendLine("            {");
-                    if (throwOnFailure)
-                    {
-                        AppendCollectionElementConversionExceptionThrow(sb, pathName, property);
-                    }
-                    else
-                    {
-                        sb.AppendLine("                return false;");
-                    }
-                    sb.AppendLine("            }");
-                    sb.Append("            ").Append(accName).AppendLine("[__rawKey] = __parsed;");
-                }
-            }
-        }
-        else
-        {
-            sb.Append("            if (!")
-                .Append(sectionName)
-                .AppendLine(
-                    ".TryGetValue(__i.ToString(global::System.Globalization.CultureInfo.InvariantCulture), out var __raw))"
-                );
-            sb.AppendLine("                break;");
-
-            if (property.CollectionElementNestedIndex >= 0)
-            {
-                sb.Append("            var __elem_")
-                    .Append(property.Name)
-                    .Append(" = global::PicoCfg.CfgBindRuntime.CreateScopedView(")
-                    .Append(sectionName)
-                    .Append(
-                        ", __i.ToString(global::System.Globalization.CultureInfo.InvariantCulture));"
-                    )
-                    .AppendLine();
-                sb.Append("            ")
-                    .Append(accName)
-                    .Append(".Add(Bind_")
-                    .Append(property.CollectionElementNestedIndex)
-                    .Append("(__elem_")
-                    .Append(property.Name)
-                    .AppendLine(", null));");
-            }
-            else if (
-                property.ElementType is { } listElemType
-                && TryGetScalarKind(
-                    listElemType,
-                    out var elemScalarKind,
-                    out var elemUnderlyingType
-                )
-            )
-            {
-                if (elemScalarKind == ScalarKind.String)
-                {
-                    sb.Append("            ").Append(accName).AppendLine(".Add(__raw);");
-                }
-                else
-                {
-                    var elemTypeFqn = elemUnderlyingType.ToDisplayString(
-                        SymbolDisplayFormat.FullyQualifiedFormat
-                    );
-                    var parseCall = GetParseCall(
-                        elemScalarKind,
-                        "__raw",
-                        "__parsed",
-                        elemTypeFqn,
-                        declareVariable: true
-                    );
-                    sb.Append("            if (!").Append(parseCall).AppendLine(")");
-                    sb.AppendLine("            {");
-                    if (throwOnFailure)
-                    {
-                        AppendCollectionElementConversionExceptionThrow(sb, pathName, property);
-                    }
-                    else
-                    {
-                        sb.AppendLine("                return false;");
-                    }
-                    sb.AppendLine("            }");
-                    sb.Append("            ").Append(accName).AppendLine(".Add(__parsed);");
-                }
-            }
-        }
-
-        sb.AppendLine("        }");
-
-        if (hasAnyVar)
-            sb.AppendLine("        any = true;");
-
-        if (property.ScalarKind == ScalarKind.Collection_Array)
-        {
-            sb.Append("        ")
-                .Append(valueName)
-                .Append(" = ")
-                .Append(accName)
-                .AppendLine(".ToArray();");
-        }
-        else
-        {
-            sb.Append("        ").Append(valueName).Append(" = ").Append(accName).AppendLine(";");
-        }
-        sb.AppendLine();
+        AppendCollectionBindingCore(
+            sb,
+            property,
+            throwOnFailure,
+            assignmentLeft: "__value_" + property.Name,
+            emitAnyVar: hasAnyVar,
+            valueTypeDeclaration: property.Type.ToDisplayString(
+                SymbolDisplayFormat.FullyQualifiedFormat
+            ),
+            appendTrailingLine: true
+        );
     }
 
     private static void AppendParseBlock(
