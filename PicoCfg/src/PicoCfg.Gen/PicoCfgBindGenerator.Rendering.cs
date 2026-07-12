@@ -283,8 +283,10 @@ public sealed partial class PicoCfgBindGenerator
                 .Append(" = global::PicoCfg.CfgBindRuntime.CombinePath(section, ")
                 .Append(propertyPathLiteral)
                 .AppendLine(");");
-            sb.Append("        if (cfg.TryGetValue(")
-                .Append(pathName)
+            sb.Append(
+                    "        if (global::PicoCfg.CfgBindRuntime.TryGetValueIgnoreCase(cfg, section, "
+                )
+                .Append(propertyPathLiteral)
                 .Append(", out var ")
                 .Append(rawName)
                 .AppendLine("))");
@@ -420,8 +422,8 @@ public sealed partial class PicoCfgBindGenerator
             .Append(" = global::PicoCfg.CfgBindRuntime.CombinePath(section, ")
             .Append(propertyPathLiteral)
             .AppendLine(");");
-        sb.Append("        if (cfg.TryGetValue(")
-            .Append(pathName)
+        sb.Append("        if (global::PicoCfg.CfgBindRuntime.TryGetValueIgnoreCase(cfg, section, ")
+            .Append(propertyPathLiteral)
             .Append(", out var ")
             .Append(rawName)
             .AppendLine("))");

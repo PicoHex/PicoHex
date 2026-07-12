@@ -26,6 +26,17 @@ internal sealed class CfgSnapshot : ICfgSnapshot
             return true;
         }
 
+        // Case-insensitive fallback so JSON camelCase / YAML / INI / TOML keys
+        // match PascalCase C# property names during binding.
+        foreach (var (key, val) in Values)
+        {
+            if (string.Equals(key, path, StringComparison.OrdinalIgnoreCase))
+            {
+                value = val;
+                return true;
+            }
+        }
+
         value = null;
         return false;
     }

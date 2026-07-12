@@ -37,6 +37,38 @@ public static partial class CfgBindRuntime
             : string.Concat(section, ":", propertyName);
     }
 
+    /// <summary>
+    /// Tries to get a configuration value by section + property name,
+    /// with case-insensitive fallback. Fast path: exact match via <see cref="ICfg.TryGetValue"/>.
+    /// Slow path: case-insensitive scan of the section-scoped key set.
+    /// </summary>
+    public static bool TryGetValueIgnoreCase(
+        ICfg cfg,
+        string? section,
+        string propertyName,
+        out string? value
+    )
+    {
+        // Fast path: exact match (e.g., PascalCase config key = PascalCase property)
+        var path = CombinePath(section, propertyName);
+        if (cfg.TryGetValue(path, out value))
+            return true;
+
+        // Slow path: case-insensitive fallback (e.g., camelCase JSON/YAML keys)
+        var scope = string.IsNullOrEmpty(section) ? cfg : cfg.GetSection(section);
+        foreach (var (key, val) in scope.GetAll())
+        {
+            if (string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                value = val;
+                return true;
+            }
+        }
+
+        value = null;
+        return false;
+    }
+
     /// <summary>Creates a <see cref="FormatException"/> describing a configuration value conversion failure.</summary>
     public static FormatException CreateConversionException(
         string path,

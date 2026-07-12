@@ -101,6 +101,19 @@ internal static class CfgSnapshotComposer
                     return true;
             }
 
+            // Case-insensitive fallback across all snapshots
+            for (var i = snapshots.Count - 1; i >= 0; i--)
+            {
+                foreach (var (key, val) in snapshots[i].GetAllValues())
+                {
+                    if (string.Equals(key, path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = val;
+                        return true;
+                    }
+                }
+            }
+
             value = null;
             return false;
         }

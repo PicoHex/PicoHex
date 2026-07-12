@@ -258,4 +258,52 @@ public sealed class CfgBindTests
         await Assert.That(config.Metadata["env"]).IsEqualTo("production");
         await Assert.That(config.Metadata["region"]).IsEqualTo("us-east-1");
     }
+
+    // --- CamelCase key → PascalCase property (case-insensitive lookup) ---
+
+    public sealed class PnProviderEntry
+    {
+        public string ApiKey { get; set; } = "";
+        public string? BaseUrl { get; set; }
+        public string? ApiFormat { get; set; }
+    }
+
+    public sealed class PnAgentConfig
+    {
+        public string? Model { get; set; }
+        public bool ThinkingEnabled { get; set; }
+        public int? MaxTokens { get; set; }
+        public Dictionary<string, PnProviderEntry> Providers { get; set; } = [];
+    }
+
+    [Test]
+    public async Task Bind_CamelCaseKeys_BindsToPascalCaseProperties()
+    {
+        // JSON convention: camelCase keys; C# convention: PascalCase properties.
+        // Gen should do case-insensitive lookup so binding succeeds.
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["model"] = "gpt-4",
+                    ["thinkingEnabled"] = "true",
+                    ["maxTokens"] = "8192",
+                    ["providers:0:Key"] = "openai",
+                    ["providers:0:Value:apiKey"] = "sk-123",
+                    ["providers:0:Value:baseUrl"] = "https://api.openai.com",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<PnAgentConfig>(root);
+
+        await Assert.That(config.Model).IsEqualTo("gpt-4");
+        await Assert.That(config.ThinkingEnabled).IsTrue();
+        await Assert.That(config.MaxTokens).IsEqualTo(8192);
+        await Assert.That(config.Providers).IsNotNull();
+        await Assert.That(config.Providers.Count).IsEqualTo(1);
+        await Assert.That(config.Providers["openai"].ApiKey).IsEqualTo("sk-123");
+        await Assert.That(config.Providers["openai"].BaseUrl).IsEqualTo("https://api.openai.com");
+        await Assert.That(config.Providers["openai"].ApiFormat).IsNull();
+    }
 }
