@@ -15,22 +15,30 @@ using PicoMediator.Abs;
 
 var container = new SvcContainer();
 
-// Register handlers
-container.Register<IRequestHandler<Ping, string>, PingHandler>(SvcLifetime.Transient);
-container.RegisterSingle<INotificationHandler<OrderCreated>>(new OrderCreatedEmailHandler());
-
-// Register mediator
+// Declare-and-subscribe: PicoMediator.Gen scans handler implementations
+// and AddPicoMediator() registers them automatically — no manual wiring.
 container.AddPicoMediator();
 container.Build();
 
 await using var scope = container.CreateScope();
 var mediator = scope.GetService<IMediator>();
 
-// Send: 1:1 request → response
+// Send: 1:1 command → response
 var result = await mediator.Send<Ping, string>(new Ping());
 
-// Publish: 1:N notification → all subscribers
+// Publish: 1:N event → all subscribers
 await mediator.Publish(new OrderCreated(Guid.NewGuid(), "book"));
+```
+
+Handler implementations are discovered automatically:
+
+```csharp
+public record Ping(string Message) : ICommand<string>;
+
+public sealed class PingHandler : ICommandHandler<Ping, string>
+{
+    public ValueTask<string> Handle(Ping c, CancellationToken ct) => new($"pong:{c.Message}");
+}
 ```
 
 ## Core Concepts
@@ -41,20 +49,19 @@ PicoMediator follows the ZeroMQ-inspired principle: **interaction patterns are a
 
 | Pattern | ZeroMQ | C# Type | Cardinality | Response |
 |---------|--------|---------|:---:|:---:|
-| Request | REQ/REP | `IRequest<TResponse>` | 1:1 | Yes |
-| Notification | PUB/SUB | `INotification` | 1:N | No |
+| Command | REQ/REP | `ICommand<TResponse>` | 1:1 | Yes |
+| Event | PUB/SUB | `IEvent` | 1:N | No |
 
-No `ICommand`/`IQuery` split — define your own via interface inheritance if needed:
+Both derive from `IMessage`. No `IQuery` split — a query is a command whose result is a read. Define your own via interface inheritance if needed:
 
 ```csharp
-public interface ICommand<T> : IRequest<T> { }
-public interface IQuery<T> : IRequest<T> { }
+public interface IQuery<T> : ICommand<T> { }
 ```
 
 No `IStreamRequest` — wrap `IAsyncEnumerable<T>` in the response:
 
 ```csharp
-public record ExportUsers : IRequest<ExportUsersResponse>;
+public record ExportUsers : ICommand<ExportUsersResponse>;
 public record ExportUsersResponse(IAsyncEnumerable<User> Users);
 ```
 
@@ -63,9 +70,9 @@ public record ExportUsersResponse(IAsyncEnumerable<User> Users);
 Use `VoidResult` (from `PicoDI.Abs`) for fire-and-forget commands:
 
 ```csharp
-public record DeleteOrder(Guid Id) : IRequest<VoidResult>;
+public record DeleteOrder(Guid Id) : ICommand<VoidResult>;
 
-public class DeleteOrderHandler : IRequestHandler<DeleteOrder, VoidResult>
+public class DeleteOrderHandler : ICommandHandler<DeleteOrder, VoidResult>
 {
     public async ValueTask<VoidResult> Handle(DeleteOrder r, CancellationToken ct)
     {
@@ -81,12 +88,12 @@ Publish follows ZeroMQ PUB/SUB semantics:
 - Publisher does not know subscribers
 - No return value (protocol forbids it)
 - No subscribers → **silent drop** (not an error)
-- Multiple subscribers → each receives the notification
+- Multiple subscribers → each receives the event
 
 ```csharp
 // 2 subscribers
-container.RegisterSingle<INotificationHandler<OrderCreated>>(new EmailHandler());
-container.RegisterSingle<INotificationHandler<OrderCreated>>(new AuditHandler());
+public sealed class EmailHandler : ISubscriber<OrderCreated> { ... }
+public sealed class AuditHandler : ISubscriber<OrderCreated> { ... }
 
 await mediator.Publish(new OrderCreated(id, item));
 // → EmailHandler.Handle() called
@@ -95,20 +102,32 @@ await mediator.Publish(new OrderCreated(id, item));
 
 ## Registration
 
-### Handlers
+### Declare-and-Subscribe (primary path)
 
-Handlers are standard PicoDI registrations:
+PicoMediator.Gen scans all closed, non-abstract `ICommandHandler<T, R>` / `ISubscriber<T>` implementations in your assembly. `AddPicoMediator()` applies them as **Transient** registrations:
 
 ```csharp
-// Factory-based
-container.RegisterTransient<IRequestHandler<Ping, string>>(_ => new PingHandler());
-container.RegisterScoped<IRequestHandler<CreateOrder, OrderResult>>(_ => new CreateOrderHandler());
+container.AddPicoMediator(); // auto-registers all scanned handlers
+```
 
-// Instance
-container.RegisterSingle<INotificationHandler<OrderCreated>>(new EmailHandler());
+- Constructor dependencies are resolved from the container (typed, zero reflection).
+- One class implementing several handler interfaces yields one registration per interface.
+- Open-generic handler classes are skipped (register closed forms manually).
 
-// Type-based (requires PicoDI.Gen source generator)
-container.Register<IRequestHandler<Ping, string>, PingHandler>(SvcLifetime.Transient);
+### Manual Registration (override path)
+
+Manual registrations made **before** `AddPicoMediator()` win over generated ones (dedup is per service type):
+
+```csharp
+// Custom lifetime or instance — manual wins, generator skips this service type
+container.RegisterSingle<ISubscriber<OrderCreated>>(new EmailHandler());
+container.AddPicoMediator();
+```
+
+To disable auto-registration entirely:
+
+```csharp
+container.AddPicoMediator(autoRegisterHandlers: false);
 ```
 
 ### Mediator
@@ -119,20 +138,36 @@ One line — registers `IMediator` as Scoped:
 container.AddPicoMediator();
 ```
 
+Scoped is the default for request-scoped isolation. Use `AddPicoMediator(SvcLifetime.Singleton)` for a stateless mediator.
+
 ### Narrow Ports
 
 Depend on the narrowest interface for your component:
 
 ```csharp
-// Only sends requests
-public sealed class OrderController(ISender sender) { ... }
+// Only sends commands
+public sealed class OrderController(IRequester requester) { ... }
 
-// Only publishes notifications
+// Only publishes events
 public sealed class EventSource(IPublisher publisher) { ... }
 
 // Orchestration — needs both
 public sealed class CheckoutService(IMediator mediator) { ... }
 ```
+
+## Rename Map
+
+The REQ/REP + PUB/SUB pattern vocabulary replaced the old protocol markers:
+
+| Old | New |
+|---|---|
+| `IRequest<TResponse>` | `ICommand<TResponse>` |
+| `IRequestHandler<T, R>` | `ICommandHandler<T, R>` |
+| `INotification` | `IEvent` |
+| `INotificationHandler<T>` | `ISubscriber<T>` |
+| `ISender` | `IRequester` |
+
+`IPublisher` / `IMediator` / `VoidResult` are unchanged. `IMessage` is the new root marker for both `ICommand<TResponse>` and `IEvent`.
 
 ## Pipeline Behaviors (via PicoAop)
 
@@ -143,8 +178,8 @@ PicoMediator does NOT define its own pipeline abstraction. Use PicoAop intercept
 container.Register<IMediator, Mediator>(SvcLifetime.Scoped)
     .InterceptBy<MetricsInterceptor>();
 
-// Handler-level — applies to a specific request type
-container.Register<IRequestHandler<CreateOrder, OrderResult>, CreateOrderHandler>(SvcLifetime.Transient)
+// Handler-level — applies to a specific command type
+container.Register<ICommandHandler<CreateOrder, OrderResult>, CreateOrderHandler>(SvcLifetime.Transient)
     .InterceptBy<LoggingInterceptor>()
     .InterceptBy<ValidationInterceptor>()
     .InterceptBy<TransactionInterceptor>();
@@ -161,12 +196,13 @@ Add `PicoMediator.Gen` as an analyzer:
 <PackageReference Include="PicoMediator.Gen" PrivateAssets="all" />
 ```
 
-The generator scans `IRequestHandler<T, T>` implementations and emits:
+The generator scans `ICommandHandler<T, R>` / `ISubscriber<T>` implementations and emits:
 
-- **`GeneratedMediatorDispatch.Send()`** — switch-based dispatch with `Unsafe.As` cast (zero allocation)
+- **`MediatorSwitch.g.cs`** — switch-based typed `Send` dispatch (fully-qualified, non-generic resolution; compiles in non-friend assemblies with no `using PicoDI.Abs` dependency)
+- **`MediatorHandlerRegistrations_<assembly>.g.cs`** — the declare-and-subscribe registrations applied by `AddPicoMediator()`
 - **Runtime fallback** — `scope.GetService<T>()` for handlers not in the switch table
 
-Without the generator, `Mediator.Send()` still works via the runtime `GetService` fallback.
+Without the generator, `Mediator.Send()` still works via the runtime `GetService` fallback, but handlers must be registered manually.
 
 ## Error Handling
 
@@ -182,9 +218,9 @@ Without the generator, `Mediator.Send()` still works via the runtime `GetService
 
 | Package | Description |
 |---|---|
-| **PicoMediator.Abs** | `IRequest<T>`, `INotification`, `IRequestHandler<T, T>`, `INotificationHandler<T>`, `ISender`, `IPublisher`, `IMediator` |
-| **PicoMediator** | `Mediator(ISvcScope)` runtime |
-| **PicoMediator.Gen** | Source generator — switch dispatch |
+| **PicoMediator.Abs** | `IMessage`, `ICommand<T>`, `IEvent`, `ICommandHandler<T, T>`, `ISubscriber<T>`, `IRequester`, `IPublisher`, `IMediator` |
+| **PicoMediator** | `Mediator(ISvcScope)` runtime, `GeneratedDispatch`, `MediatorAutoSubscriptionRegistry` |
+| **PicoMediator.Gen** | Source generator — switch dispatch + handler registrations |
 | **PicoMediator.DI** | `container.AddPicoMediator()` |
 
 [← Back to PicoHex](../README.md)
