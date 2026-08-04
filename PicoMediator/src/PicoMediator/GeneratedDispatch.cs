@@ -1,6 +1,6 @@
 namespace PicoMediator;
 
-internal static class GeneratedDispatch
+public static class GeneratedDispatch
 {
     private static readonly Lock _switchesLock = new();
     private static List<Func<Type, ISvcScope, object, CancellationToken, object?>>? _switches;
@@ -19,12 +19,13 @@ internal static class GeneratedDispatch
 
     /// <summary>
     /// Registers a compile-time dispatch switch. Called by
-    /// PicoMediator.Gen's [ModuleInitializer] from each assembly
-    /// that contains handler implementations. Multiple assemblies
-    /// can register switches — each is tried in registration order
-    /// until one returns a non-null result.
+    /// PicoMediator.Gen's [ModuleInitializer] from each assembly that contains
+    /// handler implementations. Multiple assemblies can register switches —
+    /// each is tried in registration order until one returns a non-null result.
+    /// Not intended for direct use — generated code only.
     /// </summary>
-    internal static void RegisterSwitch(
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void RegisterSwitch(
         Func<Type, ISvcScope, object, CancellationToken, object?> dispatch
     )
     {
@@ -49,12 +50,12 @@ internal static class GeneratedDispatch
         }
     }
 
-    internal static ValueTask<TResponse> Send<TRequest, TResponse>(
+    internal static ValueTask<TResponse> Send<TCommand, TResponse>(
         ISvcScope scope,
-        TRequest request,
+        TCommand command,
         CancellationToken ct
     )
-        where TRequest : IRequest<TResponse>
+        where TCommand : ICommand<TResponse>
     {
         // Lock-free fast path: use the cached snapshot
         var switches = _switchesSnapshot;
@@ -63,14 +64,14 @@ internal static class GeneratedDispatch
         {
             foreach (var s in switches)
             {
-                var result = s(typeof(TRequest), scope, request, ct);
+                var result = s(typeof(TCommand), scope, command, ct);
                 if (result is ValueTask<TResponse> typedResult)
                     return typedResult;
 
                 if (result is not null)
                 {
                     throw new InvalidOperationException(
-                        $"Generated dispatch type mismatch for request '{typeof(TRequest).FullName}': "
+                        $"Generated dispatch type mismatch for request '{typeof(TCommand).FullName}': "
                             + $"expected ValueTask<{typeof(TResponse).FullName}>, "
                             + $"got '{result.GetType().FullName}'. "
                             + "This typically indicates a version mismatch between "
@@ -80,12 +81,12 @@ internal static class GeneratedDispatch
             }
         }
 
-        var handler = scope.GetService<IRequestHandler<TRequest, TResponse>>();
+        var handler = scope.GetService<ICommandHandler<TCommand, TResponse>>();
         if (handler is null)
             throw new InvalidOperationException(
-                $"No handler registered for {typeof(TRequest).FullName}."
+                $"No handler registered for {typeof(TCommand).FullName}."
             );
 
-        return handler.Handle(request, ct);
+        return handler.Handle(command, ct);
     }
 }

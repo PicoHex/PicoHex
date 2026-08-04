@@ -2,9 +2,9 @@ namespace PicoMediator.Tests;
 
 public class PublishFanoutTests
 {
-    public record OrderCreated(Guid OrderId, string Item) : INotification;
+    public record OrderCreated(Guid OrderId, string Item) : IEvent;
 
-    public sealed class OrderCreatedEmailHandler : INotificationHandler<OrderCreated>
+    public sealed class OrderCreatedEmailHandler : ISubscriber<OrderCreated>
     {
         public List<OrderCreated> Received { get; } = [];
 
@@ -15,7 +15,7 @@ public class PublishFanoutTests
         }
     }
 
-    public sealed class OrderCreatedAuditHandler : INotificationHandler<OrderCreated>
+    public sealed class OrderCreatedAuditHandler : ISubscriber<OrderCreated>
     {
         public List<OrderCreated> Received { get; } = [];
 
@@ -32,8 +32,8 @@ public class PublishFanoutTests
         var container = new SvcContainer(autoConfigureFromGenerator: false);
         var emailHandler = new OrderCreatedEmailHandler();
         var auditHandler = new OrderCreatedAuditHandler();
-        container.RegisterSingle<INotificationHandler<OrderCreated>>(emailHandler);
-        container.RegisterSingle<INotificationHandler<OrderCreated>>(auditHandler);
+        container.RegisterSingle<ISubscriber<OrderCreated>>(emailHandler);
+        container.RegisterSingle<ISubscriber<OrderCreated>>(auditHandler);
         container.Build();
         await using var scope = container.CreateScope();
 

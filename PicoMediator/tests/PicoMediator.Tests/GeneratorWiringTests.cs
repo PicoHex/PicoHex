@@ -2,9 +2,9 @@ namespace PicoMediator.Tests;
 
 public class GeneratorWiringTests
 {
-    public record SwitchPing : IRequest<string>;
+    public record SwitchPing : ICommand<string>;
 
-    public sealed class SwitchPingHandler : IRequestHandler<SwitchPing, string>
+    public sealed class SwitchPingHandler : ICommandHandler<SwitchPing, string>
     {
         public ValueTask<string> Handle(SwitchPing r, CancellationToken ct) =>
             ValueTask.FromResult("switched");
@@ -16,7 +16,7 @@ public class GeneratorWiringTests
         GeneratedDispatch.ClearSwitches();
 
         var container = new SvcContainer();
-        container.RegisterScoped<IRequestHandler<SwitchPing, string>>(_ => new SwitchPingHandler());
+        container.RegisterScoped<ICommandHandler<SwitchPing, string>>(_ => new SwitchPingHandler());
         container.AddPicoMediator();
         container.Build();
 
@@ -35,7 +35,7 @@ public class GeneratorWiringTests
         GeneratedDispatch.ClearSwitches();
 
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterScoped<IRequestHandler<SwitchPing, string>>(_ => new SwitchPingHandler());
+        container.RegisterScoped<ICommandHandler<SwitchPing, string>>(_ => new SwitchPingHandler());
         container.AddPicoMediator();
         container.Build();
 

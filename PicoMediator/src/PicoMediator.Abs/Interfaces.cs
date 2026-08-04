@@ -1,50 +1,52 @@
 namespace PicoMediator.Abs;
 
-// ── Protocol markers ──
+// ── Message taxonomy (domain semantics) ──
 
-/// <summary>REQ — 1:1 request with response. The response type is encoded in the generic parameter.</summary>
-public interface IRequest<TResponse> { }
+/// <summary>Root marker: everything that flows through the mediator.</summary>
+public interface IMessage { }
 
-/// <summary>PUB — 1:N notification. No response by protocol design.</summary>
-public interface INotification { }
+/// <summary>REQ — an intent that something should happen, expecting a response.
+/// Queries are commands whose result is a read. Void commands use
+/// PicoDI.Abs.VoidResult.</summary>
+public interface ICommand<TResponse> : IMessage { }
 
-// ── Handlers ──
+/// <summary>PUB — a fact that has already happened. 1:N, no response.</summary>
+public interface IEvent : IMessage { }
 
-/// <summary>REP — handles a specific request type. One handler per request type (1:1 protocol).</summary>
-public interface IRequestHandler<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+// ── Handler contracts (pattern vocabulary) ──
+
+/// <summary>REP — handles one command type. 1:1 protocol.</summary>
+public interface ICommandHandler<TCommand, TResponse>
+    where TCommand : ICommand<TResponse>
 {
-    ValueTask<TResponse> Handle(TRequest request, CancellationToken ct = default);
+    ValueTask<TResponse> Handle(TCommand command, CancellationToken ct = default);
 }
 
-/// <summary>SUB — handles a specific notification type. Multiple handlers per notification (1:N protocol).</summary>
-public interface INotificationHandler<TNotification>
-    where TNotification : INotification
+/// <summary>SUB — handles one event type. 1:N protocol.</summary>
+public interface ISubscriber<in TEvent>
+    where TEvent : IEvent
 {
-    ValueTask Handle(TNotification notification, CancellationToken ct = default);
+    ValueTask Handle(TEvent @event, CancellationToken ct = default);
 }
 
 // ── Caller ports ──
 
 /// <summary>REQ socket — can Send, cannot Publish.</summary>
-public interface ISender
+public interface IRequester
 {
-    ValueTask<TResponse> Send<TRequest, TResponse>(TRequest request, CancellationToken ct = default)
-        where TRequest : IRequest<TResponse>;
+    ValueTask<TResponse> Send<TCommand, TResponse>(TCommand command, CancellationToken ct = default)
+        where TCommand : ICommand<TResponse>;
 }
 
 /// <summary>PUB socket — can Publish, cannot Send.</summary>
 public interface IPublisher
 {
-    ValueTask Publish<TNotification>(TNotification notification, CancellationToken ct = default)
-        where TNotification : INotification;
+    ValueTask Publish<TEvent>(TEvent @event, CancellationToken ct = default)
+        where TEvent : IEvent;
 
-    ValueTask PublishParallel<TNotification>(
-        TNotification notification,
-        CancellationToken ct = default
-    )
-        where TNotification : INotification;
+    ValueTask PublishParallel<TEvent>(TEvent @event, CancellationToken ct = default)
+        where TEvent : IEvent;
 }
 
-/// <summary>Combined REQ + PUB socket. Only for orchestration-level code.</summary>
-public interface IMediator : ISender, IPublisher { }
+/// <summary>Combined REQ + PUB socket. Orchestration-level code only.</summary>
+public interface IMediator : IRequester, IPublisher { }

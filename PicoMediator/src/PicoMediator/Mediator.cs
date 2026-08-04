@@ -8,37 +8,33 @@ public sealed class Mediator(ISvcScope scope) : IMediator
     /// </summary>
     public Action<string>? OnNoSubscribers { get; set; }
 
-    public ValueTask<TResponse> Send<TRequest, TResponse>(
-        TRequest request,
+    public ValueTask<TResponse> Send<TCommand, TResponse>(
+        TCommand command,
         CancellationToken ct = default
     )
-        where TRequest : IRequest<TResponse> =>
-        GeneratedDispatch.Send<TRequest, TResponse>(scope, request, ct);
+        where TCommand : ICommand<TResponse> =>
+        GeneratedDispatch.Send<TCommand, TResponse>(scope, command, ct);
 
-    public async ValueTask Publish<TNotification>(
-        TNotification notification,
-        CancellationToken ct = default
-    )
-        where TNotification : INotification
+    public async ValueTask Publish<TEvent>(TEvent @event, CancellationToken ct = default)
+        where TEvent : IEvent
     {
-        if (!scope.TryGetServices(typeof(INotificationHandler<TNotification>), out var rawServices))
+        if (!scope.TryGetServices(typeof(ISubscriber<TEvent>), out var rawServices))
         {
-            OnNoSubscribers?.Invoke(typeof(TNotification).FullName!);
+            OnNoSubscribers?.Invoke(typeof(TEvent).FullName!);
             return;
         }
 
         List<Exception>? exceptions = null;
         foreach (var raw in rawServices)
         {
-            var h = (INotificationHandler<TNotification>)raw;
+            var h = (ISubscriber<TEvent>)raw;
             try
             {
-                await h.Handle(notification, ct);
+                await h.Handle(@event, ct);
             }
             catch (Exception ex)
             {
-                if (exceptions is null)
-                    exceptions = [];
+                exceptions ??= [];
                 exceptions.Add(ex);
             }
         }
@@ -47,15 +43,12 @@ public sealed class Mediator(ISvcScope scope) : IMediator
             throw new AggregateException(exceptions);
     }
 
-    public async ValueTask PublishParallel<TNotification>(
-        TNotification notification,
-        CancellationToken ct = default
-    )
-        where TNotification : INotification
+    public async ValueTask PublishParallel<TEvent>(TEvent @event, CancellationToken ct = default)
+        where TEvent : IEvent
     {
-        if (!scope.TryGetServices(typeof(INotificationHandler<TNotification>), out var rawServices))
+        if (!scope.TryGetServices(typeof(ISubscriber<TEvent>), out var rawServices))
         {
-            OnNoSubscribers?.Invoke(typeof(TNotification).FullName!);
+            OnNoSubscribers?.Invoke(typeof(TEvent).FullName!);
             return;
         }
 
@@ -66,8 +59,8 @@ public sealed class Mediator(ISvcScope scope) : IMediator
         for (var i = 0; i < count; i++)
         {
             var idx = i;
-            var handler = (INotificationHandler<TNotification>)rawServices[idx];
-            tasks[i] = HandleSafelyAsync(handler, notification, ct, exceptions, idx);
+            var handler = (ISubscriber<TEvent>)rawServices[idx];
+            tasks[i] = HandleSafelyAsync(handler, @event, ct, exceptions, idx);
         }
 
         await Task.WhenAll(tasks);
@@ -83,18 +76,18 @@ public sealed class Mediator(ISvcScope scope) : IMediator
             throw new AggregateException(actual);
     }
 
-    private static async Task HandleSafelyAsync<TNotification>(
-        INotificationHandler<TNotification> handler,
-        TNotification notification,
+    private static async Task HandleSafelyAsync<TEvent>(
+        ISubscriber<TEvent> subscriber,
+        TEvent @event,
         CancellationToken ct,
         Exception?[] exceptions,
         int index
     )
-        where TNotification : INotification
+        where TEvent : IEvent
     {
         try
         {
-            await handler.Handle(notification, ct);
+            await subscriber.Handle(@event, ct);
         }
         catch (Exception ex)
         {

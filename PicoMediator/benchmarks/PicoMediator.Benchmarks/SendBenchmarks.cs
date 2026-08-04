@@ -6,20 +6,20 @@ public partial class SendBenchmarks
     private SvcContainer _container = null!;
     private ISvcScope _scope = null!;
     private IMediator _mediator = null!;
-    private IRequestHandler<Ping, string> _handler = null!;
+    private ICommandHandler<Ping, string> _handler = null!;
     private Ping _request = null!;
 
     [GlobalSetup]
     public void Setup()
     {
         _container = new SvcContainer();
-        _container.RegisterTransient<IRequestHandler<Ping, string>>(_ => new PingHandler());
+        _container.RegisterTransient<ICommandHandler<Ping, string>>(_ => new PingHandler());
         _container.AddPicoMediator();
         _container.Build();
 
         _scope = _container.CreateScope();
         _mediator = _scope.GetService<IMediator>();
-        _handler = _scope.GetService<IRequestHandler<Ping, string>>();
+        _handler = _scope.GetService<ICommandHandler<Ping, string>>();
         _request = new Ping();
     }
 
@@ -36,9 +36,9 @@ public partial class SendBenchmarks
     [Benchmark(Description = "Mediator.Send")]
     public ValueTask<string> MediatorSend() => _mediator.Send<Ping, string>(_request);
 
-    public record Ping : IRequest<string>;
+    public record Ping : ICommand<string>;
 
-    public sealed class PingHandler : IRequestHandler<Ping, string>
+    public sealed class PingHandler : ICommandHandler<Ping, string>
     {
         public ValueTask<string> Handle(Ping r, CancellationToken ct) =>
             ValueTask.FromResult("pong");
@@ -57,7 +57,7 @@ public partial class PublishBenchmarks
     public void Setup()
     {
         _container = new SvcContainer(autoConfigureFromGenerator: false);
-        _container.RegisterSingle<INotificationHandler<PingNotif>>(new NoopHandler());
+        _container.RegisterSingle<ISubscriber<PingNotif>>(new NoopHandler());
         _container.AddPicoMediator();
         _container.Build();
 
@@ -76,9 +76,9 @@ public partial class PublishBenchmarks
     [Benchmark(Baseline = true, Description = "Publish 1 subscriber")]
     public ValueTask Publish1() => _mediator.Publish(_notification);
 
-    public record PingNotif : INotification;
+    public record PingNotif : IEvent;
 
-    public sealed class NoopHandler : INotificationHandler<PingNotif>
+    public sealed class NoopHandler : ISubscriber<PingNotif>
     {
         public ValueTask Handle(PingNotif n, CancellationToken ct) => ValueTask.CompletedTask;
     }

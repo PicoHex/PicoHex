@@ -2,9 +2,9 @@ namespace PicoMediator.Tests;
 
 public class PublishExceptionTests
 {
-    public record Boom : INotification;
+    public record Boom : IEvent;
 
-    public sealed class BoomHandler(string label, List<string> log) : INotificationHandler<Boom>
+    public sealed class BoomHandler(string label, List<string> log) : ISubscriber<Boom>
     {
         public ValueTask Handle(Boom n, CancellationToken ct)
         {
@@ -18,14 +18,14 @@ public class PublishExceptionTests
     {
         var log = new List<string>();
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterSingle<INotificationHandler<Boom>>(new BoomHandler("A", log));
-        container.RegisterSingle<INotificationHandler<Boom>>(new BoomHandler("B", log));
-        container.RegisterSingle<INotificationHandler<Boom>>(new BoomHandler("C", log));
+        container.RegisterSingle<ISubscriber<Boom>>(new BoomHandler("A", log));
+        container.RegisterSingle<ISubscriber<Boom>>(new BoomHandler("B", log));
+        container.RegisterSingle<ISubscriber<Boom>>(new BoomHandler("C", log));
         container.Build();
         await using var scope = container.CreateScope();
 
         // Verify all 3 handlers are registered
-        var handlers = scope.GetServices<INotificationHandler<Boom>>();
+        var handlers = scope.GetServices<ISubscriber<Boom>>();
         await Assert.That(handlers.Count).IsEqualTo(3);
 
         var mediator = new Mediator(scope);
@@ -40,8 +40,8 @@ public class PublishExceptionTests
     public async Task Publish_MultipleHandlers_AggregatesExceptions()
     {
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterSingle<INotificationHandler<Boom>>(new BoomHandler("X", []));
-        container.RegisterSingle<INotificationHandler<Boom>>(new BoomHandler("Y", []));
+        container.RegisterSingle<ISubscriber<Boom>>(new BoomHandler("X", []));
+        container.RegisterSingle<ISubscriber<Boom>>(new BoomHandler("Y", []));
         container.Build();
         await using var scope = container.CreateScope();
         var mediator = new Mediator(scope);

@@ -2,10 +2,9 @@ namespace PicoMediator.Tests;
 
 public class PublishParallelExceptionTests
 {
-    public record ParaBoom : INotification;
+    public record ParaBoom : IEvent;
 
-    public sealed class ParaBoomHandler(string label, List<string> log)
-        : INotificationHandler<ParaBoom>
+    public sealed class ParaBoomHandler(string label, List<string> log) : ISubscriber<ParaBoom>
     {
         public ValueTask Handle(ParaBoom n, CancellationToken ct)
         {
@@ -19,9 +18,9 @@ public class PublishParallelExceptionTests
     {
         var log = new List<string>();
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterSingle<INotificationHandler<ParaBoom>>(new ParaBoomHandler("A", log));
-        container.RegisterSingle<INotificationHandler<ParaBoom>>(new ParaBoomHandler("B", log));
-        container.RegisterSingle<INotificationHandler<ParaBoom>>(new ParaBoomHandler("C", log));
+        container.RegisterSingle<ISubscriber<ParaBoom>>(new ParaBoomHandler("A", log));
+        container.RegisterSingle<ISubscriber<ParaBoom>>(new ParaBoomHandler("B", log));
+        container.RegisterSingle<ISubscriber<ParaBoom>>(new ParaBoomHandler("C", log));
         container.Build();
         await using var scope = container.CreateScope();
         var mediator = new Mediator(scope);
@@ -38,8 +37,8 @@ public class PublishParallelExceptionTests
     public async Task PublishParallel_AggregatesExceptions()
     {
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterSingle<INotificationHandler<ParaBoom>>(new ParaBoomHandler("X", []));
-        container.RegisterSingle<INotificationHandler<ParaBoom>>(new ParaBoomHandler("Y", []));
+        container.RegisterSingle<ISubscriber<ParaBoom>>(new ParaBoomHandler("X", []));
+        container.RegisterSingle<ISubscriber<ParaBoom>>(new ParaBoomHandler("Y", []));
         container.Build();
         await using var scope = container.CreateScope();
         var mediator = new Mediator(scope);

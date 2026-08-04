@@ -2,9 +2,9 @@ namespace PicoMediator.Tests;
 
 public class DiIntegrationTests
 {
-    public record Ping : IRequest<string>;
+    public record Ping : ICommand<string>;
 
-    public sealed class PingHandler : IRequestHandler<Ping, string>
+    public sealed class PingHandler : ICommandHandler<Ping, string>
     {
         public ValueTask<string> Handle(Ping r, CancellationToken ct) =>
             ValueTask.FromResult("pong");
@@ -14,7 +14,7 @@ public class DiIntegrationTests
     public async Task AddPicoMediator_RegistersMediatorAsScoped()
     {
         var container = new SvcContainer();
-        container.RegisterScoped<IRequestHandler<Ping, string>>(_ => new PingHandler());
+        container.RegisterScoped<ICommandHandler<Ping, string>>(_ => new PingHandler());
         container.AddPicoMediator();
         container.Build();
 

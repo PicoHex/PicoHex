@@ -11,21 +11,21 @@ public class SendDispatchTests
 
     // ── Request types ──
 
-    public record CreateOrder(string Item, int Qty) : IRequest<OrderResult>;
+    public record CreateOrder(string Item, int Qty) : ICommand<OrderResult>;
 
     public record OrderResult(Guid Id);
 
-    public record DeleteOrder(Guid Id) : IRequest<PicoDI.Abs.VoidResult>;
+    public record DeleteOrder(Guid Id) : ICommand<PicoDI.Abs.VoidResult>;
 
     // ── Handlers ──
 
-    public sealed class CreateOrderHandler : IRequestHandler<CreateOrder, OrderResult>
+    public sealed class CreateOrderHandler : ICommandHandler<CreateOrder, OrderResult>
     {
         public ValueTask<OrderResult> Handle(CreateOrder r, CancellationToken ct) =>
             ValueTask.FromResult(new OrderResult(Guid.NewGuid()));
     }
 
-    public sealed class DeleteOrderHandler : IRequestHandler<DeleteOrder, PicoDI.Abs.VoidResult>
+    public sealed class DeleteOrderHandler : ICommandHandler<DeleteOrder, PicoDI.Abs.VoidResult>
     {
         public int CallCount;
 
@@ -87,7 +87,7 @@ public class SendDispatchTests
     {
         // Verify the type-safe dispatch still works for correct registrations.
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterTransient<IRequestHandler<CreateOrder, OrderResult>>(
+        container.RegisterTransient<ICommandHandler<CreateOrder, OrderResult>>(
             _ => new CreateOrderHandler()
         );
         container.Build();
@@ -99,7 +99,7 @@ public class SendDispatchTests
             {
                 if (requestType == typeof(CreateOrder))
                 {
-                    var handler = s.GetService<IRequestHandler<CreateOrder, OrderResult>>();
+                    var handler = s.GetService<ICommandHandler<CreateOrder, OrderResult>>();
                     return handler!.Handle((CreateOrder)request, ct);
                 }
                 return null;
@@ -116,7 +116,7 @@ public class SendDispatchTests
     public async Task Send_WithRegisteredHandler_ReturnsResponse()
     {
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterTransient<IRequestHandler<CreateOrder, OrderResult>>(
+        container.RegisterTransient<ICommandHandler<CreateOrder, OrderResult>>(
             _ => new CreateOrderHandler()
         );
         container.Build();
@@ -134,7 +134,7 @@ public class SendDispatchTests
     {
         var container = new SvcContainer(autoConfigureFromGenerator: false);
         var handler = new DeleteOrderHandler();
-        container.RegisterSingle<IRequestHandler<DeleteOrder, PicoDI.Abs.VoidResult>>(handler);
+        container.RegisterSingle<ICommandHandler<DeleteOrder, PicoDI.Abs.VoidResult>>(handler);
         container.Build();
         await using var scope = container.CreateScope();
 

@@ -2,9 +2,9 @@ namespace PicoMediator.Tests;
 
 public class ConcurrencyStressTests
 {
-    public record StressPing(int Id) : IRequest<string>;
+    public record StressPing(int Id) : ICommand<string>;
 
-    public sealed class StressPingHandler : IRequestHandler<StressPing, string>
+    public sealed class StressPingHandler : ICommandHandler<StressPing, string>
     {
         public int CallCount;
 
@@ -15,9 +15,9 @@ public class ConcurrencyStressTests
         }
     }
 
-    public record StressNotif(int Id) : INotification;
+    public record StressNotif(int Id) : IEvent;
 
-    public sealed class StressNotifHandler(List<int> received) : INotificationHandler<StressNotif>
+    public sealed class StressNotifHandler(List<int> received) : ISubscriber<StressNotif>
     {
         public ValueTask Handle(StressNotif n, CancellationToken ct)
         {
@@ -32,7 +32,7 @@ public class ConcurrencyStressTests
     {
         var handler = new StressPingHandler();
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterSingle<IRequestHandler<StressPing, string>>(handler);
+        container.RegisterSingle<ICommandHandler<StressPing, string>>(handler);
         container.AddPicoMediator();
         container.Build();
 
@@ -64,9 +64,7 @@ public class ConcurrencyStressTests
         var container = new SvcContainer(autoConfigureFromGenerator: false);
 
         for (var i = 0; i < subscriberCount; i++)
-            container.RegisterSingle<INotificationHandler<StressNotif>>(
-                new StressNotifHandler(received)
-            );
+            container.RegisterSingle<ISubscriber<StressNotif>>(new StressNotifHandler(received));
 
         container.AddPicoMediator();
         container.Build();

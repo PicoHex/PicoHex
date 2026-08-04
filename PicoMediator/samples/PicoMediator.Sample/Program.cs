@@ -4,10 +4,10 @@ Console.WriteLine("=== PicoMediator Demo ===\n");
 var container = new SvcContainer();
 
 // Register handlers
-container.RegisterScoped<IRequestHandler<CreateOrder, OrderResult>>(_ => new CreateOrderHandler());
-container.RegisterScoped<IRequestHandler<CancelOrder, VoidResult>>(_ => new CancelOrderHandler());
-container.RegisterSingle<INotificationHandler<OrderCreated>>(new OrderCreatedEmailHandler());
-container.RegisterSingle<INotificationHandler<OrderCreated>>(new OrderCreatedAuditHandler());
+container.RegisterScoped<ICommandHandler<CreateOrder, OrderResult>>(_ => new CreateOrderHandler());
+container.RegisterScoped<ICommandHandler<CancelOrder, VoidResult>>(_ => new CancelOrderHandler());
+container.RegisterSingle<ISubscriber<OrderCreated>>(new OrderCreatedEmailHandler());
+container.RegisterSingle<ISubscriber<OrderCreated>>(new OrderCreatedAuditHandler());
 
 container.AddPicoMediator();
 container.Build();
@@ -43,9 +43,9 @@ Console.WriteLine("4. PublishParallel<OrderCreated> (concurrent fan-out)");
 
 // Register additional handlers to demonstrate parallelism
 var container5 = new SvcContainer();
-container5.RegisterSingle<INotificationHandler<OrderShipped>>(new SlowShipHandler("Warehouse-A"));
-container5.RegisterSingle<INotificationHandler<OrderShipped>>(new SlowShipHandler("Warehouse-B"));
-container5.RegisterSingle<INotificationHandler<OrderShipped>>(new SlowShipHandler("Warehouse-C"));
+container5.RegisterSingle<ISubscriber<OrderShipped>>(new SlowShipHandler("Warehouse-A"));
+container5.RegisterSingle<ISubscriber<OrderShipped>>(new SlowShipHandler("Warehouse-B"));
+container5.RegisterSingle<ISubscriber<OrderShipped>>(new SlowShipHandler("Warehouse-C"));
 container5.AddPicoMediator();
 container5.Build();
 await using var scope5 = container5.CreateScope();
@@ -105,25 +105,25 @@ Console.WriteLine("=== Demo Complete ===");
 // ════════════════════════════════════════════════════════════════
 // Request types
 // ════════════════════════════════════════════════════════════════
-public record CreateOrder(string Item, int Qty) : IRequest<OrderResult>;
+public record CreateOrder(string Item, int Qty) : ICommand<OrderResult>;
 
 public record OrderResult(Guid Id);
 
-public record CancelOrder(Guid Id) : IRequest<VoidResult>;
+public record CancelOrder(Guid Id) : ICommand<VoidResult>;
 
 // ════════════════════════════════════════════════════════════════
 // Notification types
 // ════════════════════════════════════════════════════════════════
-public record OrderCreated(Guid OrderId, string Item) : INotification;
+public record OrderCreated(Guid OrderId, string Item) : IEvent;
 
-public record OrderShipped(Guid OrderId) : INotification;
+public record OrderShipped(Guid OrderId) : IEvent;
 
-public record NoSubscriberNotification : INotification;
+public record NoSubscriberNotification : IEvent;
 
 // ════════════════════════════════════════════════════════════════
 // Request handlers
 // ════════════════════════════════════════════════════════════════
-public sealed class CreateOrderHandler : IRequestHandler<CreateOrder, OrderResult>
+public sealed class CreateOrderHandler : ICommandHandler<CreateOrder, OrderResult>
 {
     public async ValueTask<OrderResult> Handle(CreateOrder r, CancellationToken ct)
     {
@@ -135,7 +135,7 @@ public sealed class CreateOrderHandler : IRequestHandler<CreateOrder, OrderResul
     }
 }
 
-public sealed class CancelOrderHandler : IRequestHandler<CancelOrder, VoidResult>
+public sealed class CancelOrderHandler : ICommandHandler<CancelOrder, VoidResult>
 {
     public ValueTask<VoidResult> Handle(CancelOrder r, CancellationToken ct)
     {
@@ -147,7 +147,7 @@ public sealed class CancelOrderHandler : IRequestHandler<CancelOrder, VoidResult
 // ════════════════════════════════════════════════════════════════
 // Notification handlers
 // ════════════════════════════════════════════════════════════════
-public sealed class OrderCreatedEmailHandler : INotificationHandler<OrderCreated>
+public sealed class OrderCreatedEmailHandler : ISubscriber<OrderCreated>
 {
     public ValueTask Handle(OrderCreated n, CancellationToken ct)
     {
@@ -156,7 +156,7 @@ public sealed class OrderCreatedEmailHandler : INotificationHandler<OrderCreated
     }
 }
 
-public sealed class OrderCreatedAuditHandler : INotificationHandler<OrderCreated>
+public sealed class OrderCreatedAuditHandler : ISubscriber<OrderCreated>
 {
     public ValueTask Handle(OrderCreated n, CancellationToken ct)
     {
@@ -166,7 +166,7 @@ public sealed class OrderCreatedAuditHandler : INotificationHandler<OrderCreated
 }
 
 // ── Handler with simulated delay for PublishParallel demo ──
-public sealed class SlowShipHandler(string name) : INotificationHandler<OrderShipped>
+public sealed class SlowShipHandler(string name) : ISubscriber<OrderShipped>
 {
     public async ValueTask Handle(OrderShipped n, CancellationToken ct)
     {

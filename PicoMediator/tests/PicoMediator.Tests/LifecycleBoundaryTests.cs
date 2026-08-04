@@ -2,21 +2,21 @@ namespace PicoMediator.Tests;
 
 public class LifecycleBoundaryTests
 {
-    public record LifePing : IRequest<string>;
+    public record LifePing : ICommand<string>;
 
-    public sealed class LifePingHandler : IRequestHandler<LifePing, string>
+    public sealed class LifePingHandler : ICommandHandler<LifePing, string>
     {
         public ValueTask<string> Handle(LifePing r, CancellationToken ct) =>
             ValueTask.FromResult("ok");
     }
 
-    public record DisposedNotification : INotification;
+    public record DisposedNotification : IEvent;
 
     [Test]
     public async Task Send_AfterScopeDisposed_Throws()
     {
         var container = new SvcContainer(autoConfigureFromGenerator: false);
-        container.RegisterTransient<IRequestHandler<LifePing, string>>(_ => new LifePingHandler());
+        container.RegisterTransient<ICommandHandler<LifePing, string>>(_ => new LifePingHandler());
         container.AddPicoMediator();
         container.Build();
 

@@ -2,9 +2,9 @@ namespace PicoMediator.Tests;
 
 public class MediatorLifetimeTests
 {
-    public record Ping : IRequest<string>;
+    public record Ping : ICommand<string>;
 
-    public sealed class PingHandler : IRequestHandler<Ping, string>
+    public sealed class PingHandler : ICommandHandler<Ping, string>
     {
         public ValueTask<string> Handle(Ping r, CancellationToken ct) =>
             ValueTask.FromResult("pong");
@@ -15,7 +15,7 @@ public class MediatorLifetimeTests
     {
         // Default behavior should remain Scoped for backward compatibility
         var container = new SvcContainer();
-        container.RegisterScoped<IRequestHandler<Ping, string>>(_ => new PingHandler());
+        container.RegisterScoped<ICommandHandler<Ping, string>>(_ => new PingHandler());
         container.AddPicoMediator();
         container.Build();
 
@@ -30,7 +30,7 @@ public class MediatorLifetimeTests
         // 🔴 RED: Currently AddPicoMediator() doesn't accept a lifetime parameter
         // and always registers as Scoped. After the fix, this should work.
         var container = new SvcContainer();
-        container.RegisterScoped<IRequestHandler<Ping, string>>(_ => new PingHandler());
+        container.RegisterScoped<ICommandHandler<Ping, string>>(_ => new PingHandler());
         container.AddPicoMediator(SvcLifetime.Singleton);
         container.Build();
 
@@ -49,7 +49,7 @@ public class MediatorLifetimeTests
     public async Task AddPicoMediator_ScopedExplicit_BehavesAsScoped()
     {
         var container = new SvcContainer();
-        container.RegisterScoped<IRequestHandler<Ping, string>>(_ => new PingHandler());
+        container.RegisterScoped<ICommandHandler<Ping, string>>(_ => new PingHandler());
         container.AddPicoMediator(SvcLifetime.Scoped);
         container.Build();
 
