@@ -241,23 +241,23 @@ container.AddPicoLog(o => {
 
 ---
 
-### PicoMediator — Compile-Time Request/Notification Dispatch
+### PicoMediator — Compile-Time Command/Event Dispatch
 
 ```shell
 dotnet add package PicoMediator
 ```
 
-In-process messaging with clean port separation: `ISender` for request/response, `IPublisher` for pub/sub, `IMediator` for both.
+In-process messaging with clean port separation: `IRequester` for command/response, `IPublisher` for pub/sub, `IMediator` for both.
 
 ```csharp
-// Define a request
-public record GetUser(int Id) : IRequest<User>;
+// Define a command
+public record GetUser(int Id) : ICommand<User>;
 
 // Define a handler
-public class GetUserHandler : IRequestHandler<GetUser, User>
+public class GetUserHandler : ICommandHandler<GetUser, User>
 {
-    public ValueTask<User> Handle(GetUser request, CancellationToken ct)
-        => ValueTask.FromResult(new User(request.Id, "Alice"));
+    public ValueTask<User> Handle(GetUser command, CancellationToken ct)
+        => ValueTask.FromResult(new User(command.Id, "Alice"));
 }
 
 // Dispatch
@@ -266,16 +266,16 @@ var user = await mediator.Send<GetUser, User>(new GetUser(1));
 
 **Architecture from source:**
 
-- **Protocol separation** — `ISender` (Send only), `IPublisher` (Publish/PublishParallel only), `IMediator` (both). Prevents orchestration-layer pollution in domain code.
-- **Protocol markers** — `IRequest<TResponse>` (1:1), `INotification` (1:N).
+- **Protocol separation** — `IRequester` (Send only), `IPublisher` (Publish/PublishParallel only), `IMediator` (both). Prevents orchestration-layer pollution in domain code.
+- **Protocol markers** — `ICommand<TResponse>` (1:1), `IEvent` (1:N).
 - **`GeneratedDispatch`** — Static registry of switch dispatch functions registered via `ModuleInitializer`. Tries each registered switch in order; falls through to DI resolution.
 - **`MediatorGenerator` (`PicoMediator.Gen`):**
-  - Scans for `IRequestHandler<TRequest, TResponse>` implementations
+  - Scans for `ICommandHandler<TCommand, TResponse>` / `ISubscriber<TEvent>` implementations
   - Emits a `MediatorSwitchDispatch` class with a type-switch over all request types
   - Registers via `GeneratedDispatch.RegisterSwitch()` in a `ModuleInitializer`
   - Compile-time dispatch avoids `IMediator.Send<T>` boxing overhead on the hot path
 - **`PublishParallel`** — Fan-out with `Task.WhenAll`, collects exceptions into `AggregateException`.
-- **`OnNoSubscribers`** — Optional callback for notifications with zero handlers; silent drop by default (PUB/SUB semantics).
+- **`OnNoSubscribers`** — Optional callback for events with zero subscribers; silent drop by default (PUB/SUB semantics).
 - **DI integration (`PicoMediator.DI`)** — `container.AddPicoMediator()` registers `IMediator` as a singleton.
 
 ---
@@ -290,7 +290,7 @@ Every PicoHex module uses `IIncrementalGenerator` for caching, incremental build
 | **PicoAop.Gen** | `.InterceptBy<T>()` and `AddInterceptor<T>()` calls | Per-method invocation structs, proxy classes, wrapper factories |
 | **PicoCfg.Gen** | `CfgBind.Bind<T>()` / `TryBind<T>()` / `BindInto<T>()` calls, nested types | `Bind<T>` / `TryBind<T>` / `BindInto<T>` delegates with topological sort |
 | **PicoLog.Gen** | `[PicoLogMessage]` attribute on partial methods | Typed logging extension methods with string interpolation |
-| **PicoMediator.Gen** | `IRequestHandler<TRequest, TResponse>` implementations | Type-switch dispatch method + `ModuleInitializer` registration |
+| **PicoMediator.Gen** | `ICommandHandler<TCommand, TResponse>` / `ISubscriber<TEvent>` implementations | Type-switch dispatch method + `ModuleInitializer` registration + handler auto-registrations |
 
 All generators follow the same wire-up pattern:
 
@@ -424,8 +424,8 @@ var mediator = scope.GetService<IMediator>();
 ### Mediator
 | Package | Description |
 |---|---|
-| **PicoMediator** | Compile-time request/notification dispatch |
-| **PicoMediator.Abs** | Abstractions (`IMediator`, `ISender`, `IPublisher`, `IRequest<T>`, `INotification`, handler interfaces) |
+| **PicoMediator** | Compile-time command/event dispatch |
+| **PicoMediator.Abs** | Abstractions (`IMediator`, `IRequester`, `IPublisher`, `ICommand<T>`, `IEvent`, handler interfaces) |
 | **PicoMediator.Gen** | Handler → switch dispatch source generator |
 | **PicoMediator.DI** | DI integration — `AddPicoMediator()` |
 
@@ -461,7 +461,7 @@ var mediator = scope.GetService<IMediator>();
 - [PicoAop](PicoAop/README.md) — AOT-first interception (zero-allocation Invocation structs + proxy generation)
 - [PicoCfg](PicoCfg/README.md) — Configuration providers, binding, file watching
 - [PicoLog](PicoLog/README.md) — Structured logging, sinks, message templates
-- [PicoMediator](PicoMediator/README.md) — Request/notification dispatch
+- [PicoMediator](PicoMediator/README.md) — Command/event dispatch
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 
