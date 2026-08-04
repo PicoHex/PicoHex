@@ -26,14 +26,14 @@ public static class Program
     public static async Task Main()
     {
         var container = new SvcContainer();
-        container.RegisterTransient<ICommandHandler<Ping, string>>(_ => new PingHandler());
-        container.RegisterSingle<ISubscriber<OrderPaid>>(new OrderPaidSubscriber());
         container.AddPicoMediator();
         container.Build();
 
         await using var scope = container.CreateScope();
         var mediator = (IMediator)scope.GetService(typeof(IMediator));
 
+        // Auto-subscription: PingHandler and OrderPaidSubscriber were registered
+        // by the generated configurator — no manual registration.
         var r = await mediator.Send<Ping, string>(new Ping("hi"));
         if (r != "pong:hi")
             throw new Exception($"Send failed: '{r}'");

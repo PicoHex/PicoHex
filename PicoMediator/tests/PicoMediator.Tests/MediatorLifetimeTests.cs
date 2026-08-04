@@ -27,8 +27,6 @@ public class MediatorLifetimeTests
     [Test]
     public async Task AddPicoMediator_Singleton_Works()
     {
-        // 🔴 RED: Currently AddPicoMediator() doesn't accept a lifetime parameter
-        // and always registers as Scoped. After the fix, this should work.
         var container = new SvcContainer();
         container.RegisterScoped<ICommandHandler<Ping, string>>(_ => new PingHandler());
         container.AddPicoMediator(SvcLifetime.Singleton);

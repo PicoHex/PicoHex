@@ -4,6 +4,10 @@ public class DiIntegrationTests
 {
     public record Ping : ICommand<string>;
 
+    // Deliberately has NO handler class anywhere in the test assembly, so
+    // auto-registration can never provide a handler for it.
+    public record UnhandledPing : ICommand<string>;
+
     public sealed class PingHandler : ICommandHandler<Ping, string>
     {
         public ValueTask<string> Handle(Ping r, CancellationToken ct) =>
@@ -36,6 +40,10 @@ public class DiIntegrationTests
         await using var scope = container.CreateScope();
         var mediator = scope.GetService<IMediator>();
 
-        await Assert.ThrowsAsync(async () => await mediator.Send<Ping, string>(new Ping()));
+        // No handler class exists for this request type anywhere in the test
+        // assembly, so auto-registration cannot provide one.
+        await Assert.ThrowsAsync(async () =>
+            await mediator.Send<UnhandledPing, string>(new UnhandledPing())
+        );
     }
 }
