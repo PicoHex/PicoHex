@@ -100,6 +100,28 @@ await mediator.Publish(new OrderCreated(id, item));
 // → AuditHandler.Handle() called
 ```
 
+### Base-Type Publish
+
+Publishing through a base-typed variable reaches concrete subscribers via
+generated bridge subscribers (`PicoMediator.Gen` scans all `IEvent`
+implementations and their inheritance; `AddPicoMediator()` registers one
+bridge per non-concrete base type):
+
+```csharp
+IReadOnlyList<IEvent> events = [new OrderPaid(1), new OrderShipped(2)];
+foreach (var e in events)
+    await mediator.Publish(e);   // delivered to ISubscriber<OrderPaid> / ISubscriber<OrderShipped>
+```
+
+Contract of base-typed `Publish<T>`: base-key direct subscribers + all
+concrete subscribers of the runtime type. Documented deltas vs exact-type
+publish: `PublishParallel<Base>` forwards sequentially inside the bridge;
+`OnNoSubscribers` does not fire for base-typed publishes; base-declared
+subscribers (`ISubscriber<IEvent>`) do NOT receive concrete-typed publishes.
+The generator warns (PMGEN001) at call sites where a base type has no known
+concrete event types. No `xxUntyped` APIs exist by design — dispatch is
+compile-time-table based, AOT-safe, zero reflection.
+
 ## Registration
 
 ### Declare-and-Subscribe (primary path)
