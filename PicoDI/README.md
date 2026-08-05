@@ -127,6 +127,8 @@ if (container.IsRegistered(typeof(IService)))
 
 Multiple registrations for the same service type are supported. Resolution returns the last (most recent) registration. `GetServices<T>()` returns all registrations in order.
 
+**Singleton factories run against the container root scope.** A singleton factory's `scope` parameter is the container-internal root scope (not the resolving scope), so dependencies resolved inside a singleton factory live until container disposal — they never die with a short-lived request scope. Scoped/transient disposables created this way are disposed by the container.
+
 ## Source Generator (PicoDI.Gen)
 
 PicoDI.Gen is **embedded** in `PicoDI.Abs` and activated automatically — no explicit

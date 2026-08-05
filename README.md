@@ -276,7 +276,7 @@ var user = await mediator.Send<GetUser, User>(new GetUser(1));
   - Compile-time dispatch avoids `IMediator.Send<T>` boxing overhead on the hot path
 - **`PublishParallel`** — Fan-out with `Task.WhenAll`, collects exceptions into `AggregateException`.
 - **`OnNoSubscribers`** — Optional callback for events with zero subscribers; silent drop by default (PUB/SUB semantics).
-- **DI integration (`PicoMediator.DI`)** — `container.AddPicoMediator()` registers `IMediator` as a singleton.
+- **DI integration (`PicoMediator.DI`)** — `container.AddPicoMediator()` registers `IMediator` as Scoped by default (`SvcLifetime.Singleton` opt-in); `autoRegisterHandlers: true` (default) applies the generated declare-and-subscribe registrations.
 
 ---
 
