@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>true</IsPackable>
     <PackageId>PicoMediator</PackageId>
-    <Description>Compile-time request/notification dispatch for PicoDI</Description>
+    <Description>Compile-time command/event dispatch for PicoDI</Description>
     <PackageTags>PicoHex;Mediator;Messaging;AOT</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
