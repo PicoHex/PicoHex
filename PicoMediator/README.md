@@ -124,8 +124,9 @@ publish: `PublishParallel<Base>` forwards sequentially inside the bridge;
 `OnNoSubscribers` does not fire for base-typed publishes; base-declared
 subscribers (`ISubscriber<IEvent>`) do NOT receive concrete-typed publishes.
 The generator warns (PMGEN001) at call sites where a base type has no known
-concrete event types. No `xxUntyped` APIs exist by design — dispatch is
-compile-time-table based, AOT-safe, zero reflection.
+concrete event types. Both `class` and `record struct` events are supported
+(boxed dispatch through the bridge). No `xxUntyped` APIs exist by design —
+dispatch is compile-time-table based, AOT-safe, zero reflection.
 
 ## Registration
 
