@@ -9,7 +9,23 @@ public class BasePublishTests
     public interface IBpDomain : IEvent { }
 
     public record BpPaid(int Id) : IBpDomain;
+
     public record BpShipped(int Id) : IBpDomain;
+
+    // Struct events must be supported by the event graph scan (dispatcher
+    // cases + base-typed delivery).
+    public readonly record struct BpStructPaid(int Id) : IEvent;
+
+    public sealed class BpStructSubscriber : ISubscriber<BpStructPaid>
+    {
+        public List<int> Received { get; } = [];
+
+        public ValueTask Handle(BpStructPaid e, CancellationToken ct)
+        {
+            Received.Add(e.Id);
+            return ValueTask.CompletedTask;
+        }
+    }
 
     public sealed class BpPaidSubscriber : ISubscriber<BpPaid>
     {
@@ -54,12 +70,11 @@ public class BasePublishTests
     private sealed class TestHarness(SvcContainer container) : IAsyncDisposable
     {
         public required Mediator Mediator { get; init; }
+
         public ValueTask DisposeAsync() => container.DisposeAsync();
     }
 
-    private static async Task<TestHarness> CreateMediator(
-        Action<SvcContainer>? register = null
-    )
+    private static async Task<TestHarness> CreateMediator(Action<SvcContainer>? register = null)
     {
         var container = new SvcContainer(autoConfigureFromGenerator: false);
         register?.Invoke(container);
@@ -164,11 +179,32 @@ public class BasePublishTests
         await using var h = await CreateMediator(); // nothing registered
         var mediator = h.Mediator;
 
+        // Documented delta: base-typed publishes never fire OnNoSubscribers
+        // (the bridge always exists) — the real contract here is "no throw and
+        // no subscriber notification".
+        string? notified = null;
+        mediator.OnNoSubscribers = name => notified = name;
+
         IReadOnlyList<IEvent> events = [new BpPaid(1)];
         foreach (var e in events)
             await mediator.Publish(e); // must not throw
 
-        await Assert.That(true).IsTrue();
+        await Assert.That(notified).IsNull();
+    }
+
+    [Test]
+    public async Task Publish_BaseTyped_StructEvent_ReachesConcreteSubscribers()
+    {
+        var sub = new BpStructSubscriber();
+        await using var h = await CreateMediator(c =>
+            c.RegisterSingle<ISubscriber<BpStructPaid>>(sub)
+        );
+
+        IReadOnlyList<IEvent> events = [new BpStructPaid(21)];
+        foreach (var e in events)
+            await h.Mediator.Publish(e);
+
+        await Assert.That(sub.Received).IsEquivalentTo([21]);
     }
 
     [Test]

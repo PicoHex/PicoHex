@@ -323,7 +323,10 @@ public sealed class MediatorGenerator : IIncrementalGenerator
         var typeSymbol = ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) as INamedTypeSymbol;
         if (typeSymbol is null || typeSymbol.IsAbstract || typeSymbol.IsGenericType)
             return null;
-        if (typeSymbol.TypeKind != TypeKind.Class)
+        // Class OR struct (record struct) events are both supported — the
+        // dispatcher's switch matches boxed struct instances on the interface
+        // parameter, and Forward<TEvent> handles struct TEvent.
+        if (typeSymbol.TypeKind is not (TypeKind.Class or TypeKind.Struct))
             return null;
         if (!typeSymbol.AllInterfaces.Any(i => i.ToDisplayString() == "PicoMediator.Abs.IEvent"))
             return null;
