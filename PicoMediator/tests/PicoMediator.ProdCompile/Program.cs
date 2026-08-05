@@ -1,6 +1,4 @@
 using PicoDI;
-using PicoDI.Abs;
-using PicoMediator;
 using PicoMediator.Abs;
 using PicoMediator.DI;
 

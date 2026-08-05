@@ -7,7 +7,7 @@ public interface IMessage { }
 
 /// <summary>REQ — an intent that something should happen, expecting a response.
 /// Queries are commands whose result is a read. Void commands use
-/// PicoDI.Abs.VoidResult.</summary>
+/// <see cref="PicoDI.Abs.VoidResult"/>.</summary>
 public interface ICommand<TResponse> : IMessage { }
 
 /// <summary>PUB — a fact that has already happened. 1:N, no response.</summary>
