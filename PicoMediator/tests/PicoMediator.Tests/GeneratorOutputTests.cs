@@ -9,6 +9,11 @@ namespace PicoMediator.Tests;
 // handlers configurator id must Ordinal-sort BEFORE the emitted bridges
 // configurator id for ANY assembly name. If the generator templates change,
 // this test fails because it asserts on the generated sources themselves.
+//
+// Coverage map (bridge defect #2 regression suite):
+//   - ordering invariant on REAL generator output  → this test
+//   - user base-key subscriber + bridge coexist contract
+//     → BasePublishTests.Publish_BaseTyped_NoDoubleDelivery
 public sealed class GeneratorOutputTests
 {
     private const string InputSource = """
