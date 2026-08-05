@@ -41,6 +41,20 @@ public sealed class MediatorGenerator : IIncrementalGenerator
             combinedEvents,
             static (spc, pair) => GenerateEventDispatchers(spc, pair.Left, pair.Right)
         );
+
+        var callSites = context
+            .SyntaxProvider.CreateSyntaxProvider(
+                predicate: static (node, _) => node is InvocationExpressionSyntax,
+                transform: static (ctx, ct) => AnalyzePublishCallSite(ctx, ct)
+            )
+            .Where(static x => x is not null);
+
+        context.RegisterSourceOutput(
+            context
+                .CompilationProvider.Combine(eventDeclarations.Collect())
+                .Combine(callSites.Collect()),
+            static (spc, pair) => ReportBasePublishDiagnostics(spc, pair.Left.Right, pair.Right)
+        );
     }
 
     private enum HandlerKind
@@ -195,6 +209,110 @@ public sealed class MediatorGenerator : IIncrementalGenerator
             h.ConstructorParameterTypes.Select(p => $"({p})scope.GetService(typeof({p}))")
         );
         return $"static scope => new {h.ImplementationType}({args})";
+    }
+
+    private static readonly DiagnosticDescriptor BasePublishNoDerivedRule = new(
+        id: "PMGEN001",
+        title: "Base-typed publish cannot reach concrete subscribers",
+        messageFormat: "Publish of base type '{0}' cannot reach concrete subscribers: "
+            + "no concrete event type deriving from '{0}' is visible to PicoMediator.Gen",
+        category: "PicoMediator.Gen",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true
+    );
+
+    private sealed class CallSiteInfo
+    {
+        public Location Location { get; }
+        public string ArgTypeFqn { get; }
+        public bool IsEventFamily { get; }
+        public bool IsConcrete { get; }
+
+        public CallSiteInfo(
+            Location location,
+            string argTypeFqn,
+            bool isEventFamily,
+            bool isConcrete
+        )
+        {
+            Location = location;
+            ArgTypeFqn = argTypeFqn;
+            IsEventFamily = isEventFamily;
+            IsConcrete = isConcrete;
+        }
+    }
+
+    private static CallSiteInfo? AnalyzePublishCallSite(
+        GeneratorSyntaxContext ctx,
+        CancellationToken ct
+    )
+    {
+        if (ctx.Node is not InvocationExpressionSyntax inv)
+            return null;
+        if (inv.ArgumentList.Arguments.Count < 1)
+            return null;
+
+        var methodSymbol = ctx.SemanticModel.GetSymbolInfo(inv, ct).Symbol as IMethodSymbol;
+        if (methodSymbol is null)
+            return null;
+        if (methodSymbol.Name is not ("Publish" or "PublishParallel"))
+            return null;
+        // Matches both interface-typed receivers (symbol declaring type is
+        // IPublisher itself, whose AllInterfaces is empty) and concrete
+        // receivers (Mediator : IMediator : IPublisher).
+        var containingType = methodSymbol.ContainingType;
+        var isPublisher =
+            containingType.ToDisplayString() == "PicoMediator.Abs.IPublisher"
+            || containingType.AllInterfaces.Any(i =>
+                i.ToDisplayString() == "PicoMediator.Abs.IPublisher"
+            );
+        if (!isPublisher)
+            return null;
+
+        var argType = ctx
+            .SemanticModel.GetTypeInfo(inv.ArgumentList.Arguments[0].Expression, ct)
+            .Type;
+
+        if (argType is not INamedTypeSymbol named)
+            return null; // type parameters and unresolved types are skipped
+
+        var isEventFamily =
+            named.ToDisplayString() == "PicoMediator.Abs.IEvent"
+            || named.AllInterfaces.Any(i => i.ToDisplayString() == "PicoMediator.Abs.IEvent");
+        if (!isEventFamily)
+            return null; // not an event publish (e.g. ICommand) — no diagnostic
+
+        var isConcrete = named.TypeKind == TypeKind.Class && !named.IsAbstract;
+
+        return new CallSiteInfo(
+            inv.GetLocation(),
+            named.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            true,
+            isConcrete
+        );
+    }
+
+    private static void ReportBasePublishDiagnostics(
+        SourceProductionContext context,
+        ImmutableArray<INamedTypeSymbol?> events,
+        ImmutableArray<CallSiteInfo?> callSites
+    )
+    {
+        var baseMap = BuildBaseMap([
+            .. events.Where(static e => e is not null).Cast<INamedTypeSymbol>(),
+        ]);
+
+        foreach (var cs in callSites)
+        {
+            if (cs is null || cs.IsConcrete)
+                continue;
+            if (baseMap.ContainsKey(cs.ArgTypeFqn))
+                continue; // covered by a dispatcher
+
+            context.ReportDiagnostic(
+                Diagnostic.Create(BasePublishNoDerivedRule, cs.Location, cs.ArgTypeFqn)
+            );
+        }
     }
 
     private static INamedTypeSymbol? GetEventInfos(GeneratorSyntaxContext ctx, CancellationToken ct)
@@ -364,7 +482,7 @@ public sealed class MediatorGenerator : IIncrementalGenerator
                 $"                if (!_scope.TryGetServices(typeof(global::PicoMediator.Abs.ISubscriber<{d}>), out var raws))"
             );
             sb.AppendLine("                    return;");
-            sb.AppendLine("                await Forward(raws, typed, ct);");
+            sb.AppendLine("                await Forward(raws!, typed, ct);");
             sb.AppendLine("                return;");
             sb.AppendLine("            }");
         }
