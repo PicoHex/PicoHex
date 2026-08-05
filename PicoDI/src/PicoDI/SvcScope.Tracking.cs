@@ -10,6 +10,7 @@ public sealed partial class SvcScope
         var childScope = new SvcScope(_registrationCache);
 
         childScope.ParentScope = this;
+        childScope.OwningContainer = OwningContainer;
 
         try
         {

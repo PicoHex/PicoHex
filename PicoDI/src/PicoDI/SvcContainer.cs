@@ -29,6 +29,29 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
     /// </summary>
     private FrozenDictionary<Type, SvcRuntimeRegistration[]>? _frozenCache;
 
+    /// <summary>
+    /// Container-internal root scope used to invoke singleton factories, so
+    /// singletons never capture a (possibly short-lived) resolving scope.
+    /// Lazily created; not tracked in <see cref="_rootScopes"/>; disposed by
+    /// the container.
+    /// </summary>
+    private SvcScope? _implicitRootScope;
+
+    internal SvcScope GetImplicitRootScope()
+    {
+        var scope = Volatile.Read(ref _implicitRootScope);
+        if (scope is not null)
+            return scope;
+
+        lock (_registrationLock)
+        {
+            return _implicitRootScope ??= new SvcScope(Volatile.Read(ref _frozenCache)!)
+            {
+                OwningContainer = this,
+            };
+        }
+    }
+
     bool IGeneratedConfigurationStateContainer.IsGeneratedConfigurationApplied { get; set; }
 
     private int _disposed;

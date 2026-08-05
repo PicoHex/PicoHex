@@ -12,8 +12,25 @@ public sealed partial class SvcContainer
         await StopHostedServicesAsync().ConfigureAwait(false);
 
         await DisposeSingletonInstancesAsync().ConfigureAwait(false);
+        await DisposeImplicitRootScopeAsync().ConfigureAwait(false);
         await DisposeHostingScopeAsync().ConfigureAwait(false);
         await DisposeRootScopesAsync().ConfigureAwait(false);
+    }
+
+    private async ValueTask DisposeImplicitRootScopeAsync()
+    {
+        var scope = Interlocked.Exchange(ref _implicitRootScope, null);
+        if (scope is not null)
+        {
+            try
+            {
+                await scope.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(ex, "Error disposing implicit root scope");
+            }
+        }
     }
 
     private async ValueTask DisposeHostingScopeAsync()

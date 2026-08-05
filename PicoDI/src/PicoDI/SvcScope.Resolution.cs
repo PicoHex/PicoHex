@@ -209,10 +209,12 @@ public sealed partial class SvcScope
             return fastInstance;
 
         // Build outside the lock — prevents deadlock when factory transitively
-        // resolves a service that depends on this singleton.
+        // resolves a service that depends on this singleton. Singleton factories
+        // run against the container-internal root scope (E1 fix) so singletons
+        // never capture a possibly short-lived resolving scope.
         var candidate =
             registration.Factory != null
-                ? registration.Factory(this)
+                ? registration.Factory(OwningContainer?.GetImplicitRootScope() ?? this)
                 : throw new PicoDiException(
                     $"No factory or instance registered for singleton service '{serviceType.FullName}'. "
                         + FormatSourceGenReminder(serviceType.FullName ?? serviceType.Name)
