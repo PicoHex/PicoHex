@@ -6,13 +6,9 @@ public class SingletonRootScopeTests
 
     public sealed class ScopedDep : IScopedDep, IDisposable
     {
-        public static int DisposedCount;
         public bool Disposed;
-        public void Dispose()
-        {
-            Disposed = true;
-            DisposedCount++;
-        }
+
+        public void Dispose() => Disposed = true;
     }
 
     public interface ISingletonWithDep
@@ -30,8 +26,9 @@ public class SingletonRootScopeTests
     {
         var container = new SvcContainer();
         container.RegisterScoped<IScopedDep>(_ => new ScopedDep());
-        container.RegisterSingleton<ISingletonWithDep>(scope =>
-            new SingletonWithDep(scope.GetService<IScopedDep>()));
+        container.RegisterSingleton<ISingletonWithDep>(scope => new SingletonWithDep(
+            scope.GetService<IScopedDep>()
+        ));
         container.Build();
 
         // Trigger creation from a short-lived scope (the E1 scenario)
@@ -53,11 +50,16 @@ public class SingletonRootScopeTests
     [Test]
     public async Task SingletonFactory_ScopedDep_DisposedAtContainerDisposal_NotBefore()
     {
-        ScopedDep.DisposedCount = 0;
+        // Instance-based assertions (no static counters): safe under parallel
+        // execution — each test tracks the exact ScopedDep instance it created.
+        ScopedDep? dep = null;
         var container = new SvcContainer();
         container.RegisterScoped<IScopedDep>(_ => new ScopedDep());
         container.RegisterSingleton<ISingletonWithDep>(scope =>
-            new SingletonWithDep(scope.GetService<IScopedDep>()));
+        {
+            dep = (ScopedDep)scope.GetService<IScopedDep>();
+            return new SingletonWithDep(dep);
+        });
         container.Build();
 
         await using (var requestScope = container.CreateScope())
@@ -66,10 +68,10 @@ public class SingletonRootScopeTests
         }
 
         // The dep must outlive the request scope (lives in the container root).
-        await Assert.That(ScopedDep.DisposedCount).IsEqualTo(0);
+        await Assert.That(dep!.Disposed).IsFalse();
 
         await container.DisposeAsync();
-        await Assert.That(ScopedDep.DisposedCount).IsEqualTo(1);
+        await Assert.That(dep.Disposed).IsTrue();
     }
 
     [Test]
@@ -77,8 +79,9 @@ public class SingletonRootScopeTests
     {
         var container = new SvcContainer();
         container.RegisterScoped<IScopedDep>(_ => new ScopedDep());
-        container.RegisterSingleton<ISingletonWithDep>(scope =>
-            new SingletonWithDep(scope.GetService<IScopedDep>()));
+        container.RegisterSingleton<ISingletonWithDep>(scope => new SingletonWithDep(
+            scope.GetService<IScopedDep>()
+        ));
         container.Build();
 
         ISingletonWithDep singleton;

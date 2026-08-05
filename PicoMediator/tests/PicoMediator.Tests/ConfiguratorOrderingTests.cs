@@ -15,7 +15,7 @@ namespace PicoMediator.Tests;
 public class ConfiguratorOrderingTests
 {
     // Deliberately has NO implementers in this assembly: the real generated
-    // configurators never register this key, isolating the test from them.
+    // configurators never touch this key, isolating the test from them.
     public interface IFakeBase : IEvent { }
 
     public sealed class FakeBridge : ISubscriber<IFakeBase>
@@ -50,6 +50,10 @@ public class ConfiguratorOrderingTests
         // Single assembly name ("myapp" — the defect trigger): the registry is
         // global, so a multi-name loop would accumulate fake configurators and
         // pollute every container. Isolation comes from the IFakeBase key.
+        // NOTE: the two fake configurators registered below PERSIST in the
+        // global registry for the rest of this test process and are applied to
+        // every subsequent container (AddPicoMediator) — harmless because they
+        // only ever register the IFakeBase key, which no other test touches.
         var asm = "myapp";
 
         var container = new SvcContainer(autoConfigureFromGenerator: false);
