@@ -2,6 +2,11 @@
 
 Compile-time request/notification dispatch for PicoDI. Zero reflection, AOT-first.
 
+> **Requirements: .NET 10+** — the `PicoMediator` runtime and ALL generated code
+> (dispatch switches, handler registrations, base-type bridges) require net10.0+
+> consumers. `PicoMediator.Abs` alone targets netstandard2.0 but provides no
+> runtime; the source generator is unusable from netstandard2.0 assemblies.
+
 ## Quick Start
 
 ```shell
