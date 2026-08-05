@@ -110,6 +110,7 @@ PicoMediator.Gen scans all closed, non-abstract `ICommandHandler<T, R>` / `ISubs
 container.AddPicoMediator(); // auto-registers all scanned handlers
 ```
 
+- **Multi-assembly:** handlers in referenced library assemblies are included — every assembly that references `PicoMediator.Gen` contributes its own scanned handlers, and `AddPicoMediator()` applies configurators from all loaded assemblies (the "library of handlers" pattern).
 - Constructor dependencies are resolved from the container (typed, zero reflection).
 - One class implementing several handler interfaces yields one registration per interface.
 - Open-generic handler classes are skipped (register closed forms manually).
