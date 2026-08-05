@@ -45,12 +45,19 @@ public static class MediatorAutoSubscriptionRegistry
     {
         ArgumentNullException.ThrowIfNull(container);
 
+        // Bookkeeping under the lock; configurators run OUTSIDE it. Running
+        // them under the lock deadlocks with the loader lock when a
+        // configurator's first JIT of a cold assembly triggers that assembly's
+        // module initializer (which calls Register): the JIT thread waits for
+        // the loader lock while the initializer thread waits for ApplyLock
+        // (2026-08-05 deadlock regression).
+        Action<ISvcContainer>[] snapshot;
         lock (ApplyLock)
         {
             if (Applied.TryGetValue(container, out _))
                 return false;
 
-            var snapshot = SortedSnapshot;
+            snapshot = SortedSnapshot;
             if (snapshot is null)
             {
                 if (Configurators.Count is 0)
@@ -64,11 +71,25 @@ public static class MediatorAutoSubscriptionRegistry
                 SortedSnapshot = snapshot;
             }
 
+            // Mark applied BEFORE running the configurators: two concurrent
+            // callers for the same container must not both run them.
+            Applied.Add(container, Sentinel);
+        }
+
+        try
+        {
             foreach (var configurator in snapshot)
                 configurator(container);
-
-            Applied.Add(container, Sentinel);
             return true;
+        }
+        catch
+        {
+            // Roll back the marker so a later call can retry (documented
+            // contract: "if any configurator throws, the container is NOT
+            // marked as applied").
+            lock (ApplyLock)
+                Applied.Remove(container);
+            throw;
         }
     }
 
