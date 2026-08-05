@@ -13,6 +13,12 @@
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Test fixture: a separate "library of handlers" assembly. Not a NuGet
+         package, so it is referenced unconditionally. -->
+    <ProjectReference Include="..\PicoMediator.IntegrationHandlers\PicoMediator.IntegrationHandlers.csproj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(UseProjectReferences)' == 'true'">
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
     <ProjectReference Include="..\..\src\PicoMediator\PicoMediator.csproj" />

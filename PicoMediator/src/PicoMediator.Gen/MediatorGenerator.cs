@@ -42,7 +42,15 @@ public sealed class MediatorGenerator : IIncrementalGenerator
             return [];
 
         var typeSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl, ct) as INamedTypeSymbol;
-        if (typeSymbol is null || typeSymbol.IsAbstract || typeSymbol.IsGenericType)
+        var accessibility = typeSymbol?.DeclaredAccessibility;
+        if (
+            typeSymbol is null
+            || typeSymbol.IsAbstract
+            || typeSymbol.IsGenericType
+            // Private/protected nested classes cannot be instantiated by the
+            // generated code (same assembly access only) — skip them.
+            || (accessibility != Accessibility.Public && accessibility != Accessibility.Internal)
+        )
             return [];
 
         var results = ImmutableArray.CreateBuilder<HandlerInfo>();

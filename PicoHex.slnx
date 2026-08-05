@@ -93,6 +93,7 @@
   </Folder>
   <Folder Name="/PicoMediator/tests/">
     <Project Path="PicoMediator/tests/PicoMediator.Tests/PicoMediator.Tests.csproj" />
+    <Project Path="PicoMediator/tests/PicoMediator.IntegrationHandlers/PicoMediator.IntegrationHandlers.csproj" />
     <Project Path="PicoMediator/tests/PicoMediator.ProdCompile/PicoMediator.ProdCompile.csproj" />
   </Folder>
   <Folder Name="/PicoMediator/benchmarks/">
