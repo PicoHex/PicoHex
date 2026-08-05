@@ -3,12 +3,8 @@ Console.WriteLine("=== PicoMediator Demo ===\n");
 // ── Setup ──────────────────────────────────────────────────────
 var container = new SvcContainer();
 
-// Register handlers
-container.RegisterScoped<ICommandHandler<CreateOrder, OrderResult>>(_ => new CreateOrderHandler());
-container.RegisterScoped<ICommandHandler<CancelOrder, VoidResult>>(_ => new CancelOrderHandler());
-container.RegisterSingle<ISubscriber<OrderCreated>>(new OrderCreatedEmailHandler());
-container.RegisterSingle<ISubscriber<OrderCreated>>(new OrderCreatedAuditHandler());
-
+// Declare-and-subscribe: PicoMediator.Gen scans the handler implementations
+// below and AddPicoMediator() registers them automatically — no manual wiring.
 container.AddPicoMediator();
 container.Build();
 
@@ -41,7 +37,9 @@ Console.WriteLine("   Notification delivered to all handlers.\n");
 // ════════════════════════════════════════════════════════════════
 Console.WriteLine("4. PublishParallel<OrderCreated> (concurrent fan-out)");
 
-// Register additional handlers to demonstrate parallelism
+// Register additional handlers to demonstrate parallelism.
+// Manual registration still works and wins over auto-registration (IsRegistered
+// dedup) — required here because SlowShipHandler takes a constructor argument.
 var container5 = new SvcContainer();
 container5.RegisterSingle<ISubscriber<OrderShipped>>(new SlowShipHandler("Warehouse-A"));
 container5.RegisterSingle<ISubscriber<OrderShipped>>(new SlowShipHandler("Warehouse-B"));
