@@ -16,7 +16,13 @@ public record OrderPaid(int OrderId) : IEvent;
 
 public sealed class OrderPaidSubscriber : ISubscriber<OrderPaid>
 {
-    public ValueTask Handle(OrderPaid e, CancellationToken ct) => ValueTask.CompletedTask;
+    public static int Calls;
+
+    public ValueTask Handle(OrderPaid e, CancellationToken ct)
+    {
+        Interlocked.Increment(ref Calls);
+        return ValueTask.CompletedTask;
+    }
 }
 
 public static class Program
@@ -37,6 +43,17 @@ public static class Program
             throw new Exception($"Send failed: '{r}'");
 
         await mediator.Publish(new OrderPaid(42));
+
+        // Base-typed publish via generated bridge (no new API):
+        OrderPaidSubscriber.Calls = 0;
+        IReadOnlyList<IEvent> events = [new OrderPaid(1), new OrderPaid(2)];
+        foreach (var e in events)
+            await mediator.Publish(e);
+        if (OrderPaidSubscriber.Calls != 2)
+            throw new Exception(
+                $"Base-typed publish failed: {OrderPaidSubscriber.Calls}/2 delivered"
+            );
+
         Console.WriteLine("ProdCompile smoke OK");
     }
 }
