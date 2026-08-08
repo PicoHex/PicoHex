@@ -31,7 +31,7 @@ public static class SvcContainerLifetimeRegistrationExtensions
 
     internal static ISvcContainer RegisterSingleInstance(
         this ISvcContainer container,
-        Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type serviceType,
         object instance
     ) => container.Register(SvcDescriptor.FromInstance(serviceType, instance));
 
@@ -94,14 +94,20 @@ public static class SvcContainerLifetimeRegistrationExtensions
             container.RegisterFactory(typeof(TService), factory, SvcLifetime.Singleton);
 
         // ── RegisterSingle (pre-built instance, always Singleton) ──
-        public ISvcContainer RegisterSingle(Type serviceType, object instance)
+        public ISvcContainer RegisterSingle(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
+                Type serviceType,
+            object instance
+        )
         {
             if (instance is null)
                 throw new ArgumentNullException(nameof(instance));
             return container.RegisterSingleInstance(serviceType, instance);
         }
 
-        public ISvcContainer RegisterSingle<TService>(TService instance)
+        public ISvcContainer RegisterSingle<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TService
+        >(TService instance)
             where TService : class
         {
             if (instance is null)
