@@ -4,21 +4,45 @@ internal static partial class InterceptionHelper
 {
     public const string InterceptBy = "InterceptBy";
     public const string AddInterceptor = "AddInterceptor";
+    public const string WithoutInterceptor = "WithoutInterceptor";
+    public const string WithoutInterceptors = "WithoutInterceptors";
 
-    public static bool IsInterceptByInvocation(SyntaxNode node) =>
-        node switch
-        {
-            InvocationExpressionSyntax
+    /// <summary>
+    /// Fast syntax check for the OUTERMOST call of an interception chain:
+    /// <c>InterceptBy&lt;T&gt;()</c>, <c>WithoutInterceptor&lt;T&gt;()</c> and
+    /// <c>WithoutInterceptors()</c>. Inner chain calls are excluded — they
+    /// are projections of the same chain and would double-count interceptors
+    /// during merging.
+    /// </summary>
+    public static bool IsInterceptionChainInvocation(SyntaxNode node)
+    {
+        if (
+            node
+            is not InvocationExpressionSyntax
             {
-                Expression: MemberAccessExpressionSyntax
-                {
-                    Name: GenericNameSyntax { Identifier.ValueText: InterceptBy }
-                }
-            } => true,
-            _ => false,
-        };
+                Expression: MemberAccessExpressionSyntax { Name: GenericNameSyntax gn }
+            }
+        )
+            return false;
 
-    public static InterceptionInfo? ExtractInterceptionInfo(
+        if (
+            gn.Identifier.ValueText
+            is not (InterceptBy or WithoutInterceptor or WithoutInterceptors)
+        )
+            return false;
+
+        // Outermost call only: its parent must not be a member access whose
+        // expression is this invocation (i.e. another chain call follows).
+        return node.Parent
+            is not MemberAccessExpressionSyntax { Expression: InvocationExpressionSyntax };
+    }
+
+    /// <summary>
+    /// Walks a full interception chain and computes its final state:
+    /// the interceptors that survive any <c>WithoutInterceptor&lt;T&gt;()</c>
+    /// exclusions, plus a suppression flag for <c>WithoutInterceptors()</c>.
+    /// </summary>
+    public static InterceptionChainInfo? ExtractInterceptionChainInfo(
         GeneratorSyntaxContext ctx,
         CancellationToken ct
     )
@@ -28,18 +52,48 @@ internal static partial class InterceptionHelper
 
         if (semanticModel.GetSymbolInfo(invocation, ct).Symbol is not IMethodSymbol methodSymbol)
             return null;
-        if (methodSymbol.Name != InterceptBy)
-            return null;
-        if (methodSymbol.TypeArguments.Length != 1)
+
+        var chainName = methodSymbol.Name;
+        if (chainName is not (InterceptBy or WithoutInterceptor or WithoutInterceptors))
             return null;
 
-        var interceptorType = methodSymbol.TypeArguments[0];
+        var comparer = SymbolEqualityComparer.Default;
+        var interceptors = new List<ITypeSymbol>();
+        var removed = new List<ITypeSymbol>();
+        var suppressed = false;
 
-        // Walk up through InterceptBy chain: Register*().InterceptBy<A>().InterceptBy<B>()
-        // For InterceptBy<B>, skip past InterceptBy<A> to find Register*().
+        // Walk up through the chain from the outermost call:
+        // Register*().InterceptBy<A>().InterceptBy<B>().WithoutInterceptor<A>()
+        // Exclusions are processed before the adds they apply to because the
+        // walk runs in reverse source order. The loop consumes ONE pending
+        // operation per iteration — seeded with the starting call itself,
+        // then fed by each inner chain call.
+        var pendingOp = chainName;
+        ITypeSymbol? pendingArg =
+            methodSymbol.TypeArguments.Length >= 1 ? methodSymbol.TypeArguments[0] : null;
         var current = invocation;
         while (true)
         {
+            switch (pendingOp)
+            {
+                case InterceptBy:
+                    if (pendingArg is null)
+                        return null;
+                    if (!removed.Any(r => comparer.Equals(r, pendingArg)))
+                        interceptors.Insert(0, pendingArg);
+                    break;
+
+                case WithoutInterceptor:
+                    if (pendingArg is null)
+                        return null;
+                    removed.Add(pendingArg);
+                    break;
+
+                case WithoutInterceptors:
+                    suppressed = true;
+                    break;
+            }
+
             if (current.Expression is not MemberAccessExpressionSyntax outerMember)
                 return null;
             if (outerMember.Expression is not InvocationExpressionSyntax innerInvocation)
@@ -50,9 +104,11 @@ internal static partial class InterceptionHelper
             if (innerSymbol == null)
                 return null;
 
-            // Skip past intermediate InterceptBy calls
-            if (innerSymbol.Name == InterceptBy)
+            if (innerSymbol.Name is InterceptBy or WithoutInterceptor or WithoutInterceptors)
             {
+                pendingOp = innerSymbol.Name;
+                pendingArg =
+                    innerSymbol.TypeArguments.Length >= 1 ? innerSymbol.TypeArguments[0] : null;
                 current = innerInvocation;
                 continue;
             }
@@ -65,19 +121,43 @@ internal static partial class InterceptionHelper
             var implType =
                 innerSymbol.TypeArguments.Length > 1 ? innerSymbol.TypeArguments[1] : serviceType;
 
-            // Infer lifetime from the Register*() method name
+            // Prefer an explicit SvcLifetime ARGUMENT (e.g.
+            // Register<ISvc, Impl>(SvcLifetime.Transient)) over method-name
+            // inference — "Register" alone would otherwise default to
+            // Singleton and silently change the requested lifetime.
             var lifetime = PicoDiNames.InferLifetimeFromMethodName(innerSymbol.Name);
+            foreach (var arg in innerInvocation.ArgumentList.Arguments)
+            {
+                if (
+                    arg.Expression is MemberAccessExpressionSyntax memberAccess
+                    && semanticModel.GetTypeInfo(arg.Expression).Type?.Name
+                        == PicoDiNames.SvcLifetime
+                )
+                {
+                    lifetime = PicoDiNames.ParseLifetimeFromExpression(
+                        memberAccess.Name.Identifier.ValueText
+                    );
+                    break;
+                }
+            }
 
-            return new InterceptionInfo(serviceType, implType, interceptorType, lifetime);
+            return new InterceptionChainInfo(
+                serviceType,
+                implType,
+                lifetime,
+                [.. interceptors],
+                suppressed
+            );
         }
     }
 }
 
-internal record InterceptionInfo(
+internal record InterceptionChainInfo(
     ITypeSymbol ServiceType,
     ITypeSymbol ImplType,
-    ITypeSymbol InterceptorType,
-    string Lifetime
+    string Lifetime,
+    ImmutableArray<ITypeSymbol> Interceptors,
+    bool Suppressed
 );
 
 internal record GlobalInterceptorInfo(ITypeSymbol InterceptorType, ITypeSymbol? InterfaceFilter);

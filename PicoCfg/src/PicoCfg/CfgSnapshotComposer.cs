@@ -93,6 +93,11 @@ internal static class CfgSnapshotComposer
 
     internal sealed class CompositeCfgSnapshot(IReadOnlyList<ICfgSnapshot> snapshots) : ICfgSnapshot
     {
+        // Lazily built case-insensitive index for the fallback path, built in
+        // reverse provider order so higher-precedence providers win for keys
+        // that differ only by case — matching the previous reverse scan.
+        private Dictionary<string, string>? _caseInsensitiveIndex;
+
         public bool TryGetValue(string path, out string? value)
         {
             for (var i = snapshots.Count - 1; i >= 0; i--)
@@ -101,21 +106,26 @@ internal static class CfgSnapshotComposer
                     return true;
             }
 
-            // Case-insensitive fallback across all snapshots
-            for (var i = snapshots.Count - 1; i >= 0; i--)
-            {
-                foreach (var (key, val) in snapshots[i].GetAllValues())
-                {
-                    if (string.Equals(key, path, StringComparison.OrdinalIgnoreCase))
-                    {
-                        value = val;
-                        return true;
-                    }
-                }
-            }
+            var index = LazyInitializer.EnsureInitialized(
+                ref _caseInsensitiveIndex,
+                BuildCaseInsensitiveIndex
+            );
+            if (index.TryGetValue(path, out value))
+                return true;
 
             value = null;
             return false;
+        }
+
+        private Dictionary<string, string> BuildCaseInsensitiveIndex()
+        {
+            var index = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = snapshots.Count - 1; i >= 0; i--)
+            {
+                foreach (var (key, value) in snapshots[i].GetAllValues())
+                    index.TryAdd(key, value);
+            }
+            return index;
         }
 
         /// <summary>

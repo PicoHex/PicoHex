@@ -7,8 +7,10 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
     {
         var interceptionCalls = context
             .SyntaxProvider.CreateSyntaxProvider(
-                predicate: static (node, _) => InterceptorSyntax.IsInterceptByInvocation(node),
-                transform: static (ctx, ct) => InterceptorSyntax.ExtractInterceptionInfo(ctx, ct)
+                predicate: static (node, _) =>
+                    InterceptorSyntax.IsInterceptionChainInvocation(node),
+                transform: static (ctx, ct) =>
+                    InterceptorSyntax.ExtractInterceptionChainInfo(ctx, ct)
             )
             .Where(static info => info is not null);
 
@@ -28,7 +30,7 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
 
     private static void Generate(
         SourceProductionContext spc,
-        ImmutableArray<InterceptionInfo?> infos,
+        ImmutableArray<InterceptionChainInfo?> infos,
         ImmutableArray<GlobalInterceptorInfo?> globals
     )
     {
@@ -45,17 +47,41 @@ public sealed partial class InterceptorGenerator : IIncrementalGenerator
                 globalInts.Add(g.InterceptorType);
         }
 
-        // Merge by service type using a dictionary
+        // Merge by service type using a dictionary. Suppression from ANY
+        // chain on the service wins — explicit opt-out beats opt-in chains
+        // elsewhere.
+        var suppressedServices = new HashSet<ITypeSymbol>(comparer);
         var serviceMap = new Dictionary<ITypeSymbol, List<ITypeSymbol>>(comparer);
-        foreach (var info in infos.OfType<InterceptionInfo>())
+        foreach (var info in infos.OfType<InterceptionChainInfo>())
         {
             if (info.ServiceType == null)
                 continue;
+            if (info.Suppressed)
+            {
+                suppressedServices.Add(info.ServiceType);
+                continue;
+            }
             if (!serviceMap.TryGetValue(info.ServiceType, out var ints))
                 serviceMap[info.ServiceType] = ints = new List<ITypeSymbol>();
-            if (!ints.Any(i => comparer.Equals(i, info.InterceptorType)))
-                ints.Add(info.InterceptorType);
+            foreach (var interceptor in info.Interceptors)
+            {
+                if (!ints.Any(i => comparer.Equals(i, interceptor)))
+                    ints.Add(interceptor);
+            }
         }
+
+        foreach (var suppressed in suppressedServices)
+            serviceMap.Remove(suppressed);
+
+        // Empty final lists mean every interceptor was removed — no proxy
+        // generation for those services.
+        foreach (
+            var empty in serviceMap
+                .Where(kvp => kvp.Value.Count == 0)
+                .Select(kvp => kvp.Key)
+                .ToList()
+        )
+            serviceMap.Remove(empty);
 
         // Apply global interceptors to ALL services
         if (globalInts.Count > 0)

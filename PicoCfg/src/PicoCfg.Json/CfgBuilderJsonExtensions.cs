@@ -12,6 +12,7 @@ public static class CfgBuilderJsonExtensions
         /// Adds a JSON string as a configuration source.
         /// The JSON is flattened into key:value pairs using ':' as the hierarchy separator.
         /// Nested objects become compound keys; arrays are skipped.
+        /// The in-memory string source does NOT watch for changes.
         /// </summary>
         public CfgBuilder AddJson(string json)
         {
@@ -21,17 +22,36 @@ public static class CfgBuilderJsonExtensions
         }
 
         /// <summary>
-        /// Adds a JSON file as a configuration source.
-        /// The JSON is flattened into key:value pairs using ':' as the hierarchy separator.
+        /// Adds a JSON file as a configuration source with file-change
+        /// auto-reload: the file is re-parsed (with debounce) after changes
+        /// and the new values are published on the next root reload.
+        /// The JSON is flattened into key:value pairs using ':' as the
+        /// hierarchy separator; arrays are skipped.
         /// </summary>
         /// <param name="path">The path to the JSON file.</param>
-        /// <param name="encoding">Optional encoding to use when reading the file. If null, the file is read as raw bytes.</param>
-        public CfgBuilder AddJsonFile(string path, Encoding? encoding = null)
+        public CfgBuilder AddJsonFile(string path)
         {
             ArgumentNullException.ThrowIfNull(path);
-            var bytes = File.ReadAllBytes(path);
-            return builder.AddCustomSource(new JsonCfgSource(bytes));
+            return builder.AddSource(
+                builder.CreateFileWatchingSource(
+                    path,
+                    ParseJsonFileAsync,
+                    () => File.GetLastWriteTimeUtc(path)
+                )
+            );
         }
+    }
+
+    private static Task<Dictionary<string, string>> ParseJsonFileAsync(
+        Stream stream,
+        CancellationToken ct
+    )
+    {
+        ct.ThrowIfCancellationRequested();
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        ct.ThrowIfCancellationRequested();
+        return Task.FromResult(JsonFlattener.Flatten(buffer.ToArray()));
     }
 }
 

@@ -117,6 +117,14 @@ public static class SvcContainerAutoConfiguration
         if (container is null)
             throw new ArgumentNullException(nameof(container));
 
+        // Bookkeeping under the lock; configurators run OUTSIDE it. Running
+        // them under the lock deadlocks with the loader lock when a
+        // configurator's first JIT of a cold assembly triggers that assembly's
+        // module initializer (which constructs a container and re-enters
+        // TryApplyConfiguration): the JIT thread waits for the loader lock
+        // while the initializer thread waits for the apply lock.
+        // (Same regression as MediatorAutoSubscriptionRegistry, 2026-08-05.)
+        Action<ISvcContainer>[] snapshot;
         lock (_applyLock)
         {
             if (HasAppliedGeneratedConfiguration(container))
@@ -126,13 +134,33 @@ public static class SvcContainerAutoConfiguration
             if (configurators.Length is 0)
                 return false;
 
-            foreach (var configurator in configurators)
+            snapshot = configurators;
+
+            // Mark applied BEFORE running the configurators: two concurrent
+            // callers for the same container must not both run them.
+            MarkGeneratedConfigurationApplied(container);
+        }
+
+        try
+        {
+            foreach (var configurator in snapshot)
             {
                 configurator(container);
             }
 
-            MarkGeneratedConfigurationApplied(container);
             return true;
+        }
+        catch
+        {
+            // Roll back the marker so a later call can retry (documented
+            // contract: "if any configurator throws, the container is NOT
+            // marked as applied").
+            lock (_applyLock)
+            {
+                if (container is IGeneratedConfigurationStateContainer s)
+                    s.IsGeneratedConfigurationApplied = false;
+            }
+            throw;
         }
     }
 

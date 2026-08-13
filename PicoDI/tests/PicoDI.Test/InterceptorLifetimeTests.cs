@@ -235,4 +235,79 @@ public sealed class InterceptorLifetimeTests
         await Assert.That(lifetime).IsNotNull();
         await Assert.That(lifetime).IsNotEqualTo("Scoped");
     }
+
+    [Test]
+    public async Task InterceptedLifetimeArgument_UsesArgumentLifetime()
+    {
+        if (s_picoAopAbsPath is null)
+        {
+            TestContext.Current!.OutputWriter.WriteLine("Skipped");
+            return;
+        }
+
+        // Register<TService, TImplementation>(SvcLifetime) passes the lifetime
+        // as an ARGUMENT — the interception override must honor the argument
+        // instead of defaulting to Singleton via method-name inference.
+        var source = """
+            using PicoDI;
+            using PicoDI.Abs;
+
+            interface ISvc { void Do(); }
+            class Impl : ISvc { public void Do() {} }
+            class MyInterceptor {}
+
+            static class Ext
+            {
+                internal static ISvcContainer InterceptBy<T>(this ISvcContainer c) where T : class => c;
+            }
+
+            static class Setup
+            {
+                static void X(SvcContainer c)
+                {
+                    c.Register<ISvc, Impl>(SvcLifetime.Transient).InterceptBy<MyInterceptor>();
+                }
+            }
+            """;
+
+        var lifetime = RunGeneratorAndGetIntercepted(source);
+        await Assert.That(lifetime).IsNotNull();
+        await Assert.That(lifetime).IsEqualTo("Transient");
+    }
+
+    [Test]
+    public async Task InterceptedLifetimeArgumentScoped_UsesArgumentLifetime()
+    {
+        if (s_picoAopAbsPath is null)
+        {
+            TestContext.Current!.OutputWriter.WriteLine("Skipped");
+            return;
+        }
+
+        var source = """
+            using PicoDI;
+            using PicoDI.Abs;
+
+            interface ISvc { void Do(); }
+            class Impl : ISvc { public void Do() {} }
+            class MyInterceptor {}
+
+            static class Ext
+            {
+                internal static ISvcContainer InterceptBy<T>(this ISvcContainer c) where T : class => c;
+            }
+
+            static class Setup
+            {
+                static void X(SvcContainer c)
+                {
+                    c.Register<ISvc, Impl>(SvcLifetime.Scoped).InterceptBy<MyInterceptor>();
+                }
+            }
+            """;
+
+        var lifetime = RunGeneratorAndGetIntercepted(source);
+        await Assert.That(lifetime).IsNotNull();
+        await Assert.That(lifetime).IsEqualTo("Scoped");
+    }
 }

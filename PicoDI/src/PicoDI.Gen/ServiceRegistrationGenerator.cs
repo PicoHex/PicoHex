@@ -57,8 +57,10 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
 
         var interceptionInvocations = context
             .SyntaxProvider.CreateSyntaxProvider(
-                predicate: static (node, _) => InterceptionHelper.IsInterceptByInvocation(node),
-                transform: static (ctx, ct) => InterceptionHelper.ExtractInterceptionInfo(ctx, ct)
+                predicate: static (node, _) =>
+                    InterceptionHelper.IsInterceptionChainInvocation(node),
+                transform: static (ctx, ct) =>
+                    InterceptionHelper.ExtractInterceptionChainInfo(ctx, ct)
             )
             .Where(static x => x is not null);
 
@@ -170,7 +172,7 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         ImmutableArray<ITypeSymbol?> closedGenericUsages,
         ImmutableArray<ITypeSymbol?> closedGenericDeclarations,
         ImmutableArray<ITypeSymbol> ctorClosedGenerics,
-        ImmutableArray<InterceptionInfo?> interceptionInfos,
+        ImmutableArray<InterceptionChainInfo?> interceptionInfos,
         ImmutableArray<GlobalInterceptorInfo?> globalInterceptorInfos,
         Compilation compilation,
         SourceProductionContext context
@@ -191,14 +193,11 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         );
         ReportRegistrationDiagnostics(generationPlan.Diagnostics, context);
 
-        if (!generationPlan.HasSourcesToEmit)
-            return;
-
-        ReportCircularDependencyDiagnostics(generationPlan.Registrations, context);
-        ServiceRegistrationSourceEmitter.EmitSources(generationPlan, compilation, context);
-
         // Interception: emit overrides for services with InterceptBy<T>() / AddInterceptor<T>()
         // Only emit when PicoAop.Abs is referenced in the compilation.
+        // MUST run before the HasSourcesToEmit early return: a factory-based
+        // registration produces no generated registration, but interception on
+        // it must still report PICO006 instead of failing silently.
         var hasPicoAop = compilation.References.Any(r => (r.Display ?? "").Contains("PicoAop.Abs"));
         if (hasPicoAop)
             EmitInterceptorOverrides(
@@ -207,16 +206,22 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 normalizedRegistrations,
                 context
             );
+
+        if (!generationPlan.HasSourcesToEmit)
+            return;
+
+        ReportCircularDependencyDiagnostics(generationPlan.Registrations, context);
+        ServiceRegistrationSourceEmitter.EmitSources(generationPlan, compilation, context);
     }
 
     private static void EmitInterceptorOverrides(
-        ImmutableArray<InterceptionInfo?> interceptionInfos,
+        ImmutableArray<InterceptionChainInfo?> interceptionInfos,
         ImmutableArray<GlobalInterceptorInfo?> globalInterceptorInfos,
         RegistrationSemanticBatch normalizedRegistrations,
         SourceProductionContext context
     )
     {
-        var allInfos = interceptionInfos.OfType<InterceptionInfo>().ToList();
+        var allInfos = interceptionInfos.OfType<InterceptionChainInfo>().ToList();
         var allGlobals = globalInterceptorInfos.OfType<GlobalInterceptorInfo>().ToList();
         if (allInfos.Count == 0 && allGlobals.Count == 0)
             return;
@@ -234,7 +239,10 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 globalInts.Add(g.InterceptorType);
         }
 
-        // Merge by service type
+        // Merge by service type. Suppression from ANY chain on the service
+        // wins — WithoutInterceptors() is an explicit opt-out that beats
+        // opt-in InterceptBy chains elsewhere.
+        var suppressedServices = new HashSet<ITypeSymbol>(comparer);
         var serviceMap = new Dictionary<
             ITypeSymbol,
             (ITypeSymbol ImplType, List<ITypeSymbol> Interceptors, string Lifetime)
@@ -243,14 +251,25 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         {
             if (info.ServiceType == null)
                 continue;
+            if (info.Suppressed)
+            {
+                suppressedServices.Add(info.ServiceType);
+                continue;
+            }
             if (!serviceMap.TryGetValue(info.ServiceType, out var entry))
             {
-                entry = (info.ImplType ?? info.ServiceType, new List<ITypeSymbol>(), info.Lifetime);
+                entry = (info.ImplType ?? info.ServiceType, [], info.Lifetime);
                 serviceMap[info.ServiceType] = entry;
             }
-            if (!entry.Interceptors.Any(i => comparer.Equals(i, info.InterceptorType)))
-                entry.Interceptors.Add(info.InterceptorType);
+            foreach (var interceptor in info.Interceptors)
+            {
+                if (!entry.Interceptors.Any(i => comparer.Equals(i, interceptor)))
+                    entry.Interceptors.Add(interceptor);
+            }
         }
+
+        foreach (var suppressed in suppressedServices)
+            serviceMap.Remove(suppressed);
 
         // Apply globals to all services
         foreach (var ints in serviceMap.Values.Select(e => e.Interceptors))
@@ -265,7 +284,17 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         if (serviceMap.Count == 0)
             return;
 
+        // The wrapper must construct the implementation directly instead of
+        // resolving it via GetService<Impl>() — the implementation is NOT
+        // registered under its own type unless the user does so explicitly.
+        // Factory-based registrations have no visible implementation
+        // construction, so they cannot be intercepted: report PICO006.
+        var registrationLookup = normalizedRegistrations
+            .Registrations.GroupBy(static r => r.ServiceTypeFullName)
+            .ToDictionary(static g => g.Key, static g => g.Last());
+
         var sb = new StringBuilder();
+        var emittedCount = 0;
         sb.AppendLine("// <auto-generated/>");
         sb.AppendLine("#nullable enable");
         sb.AppendLine("namespace PicoDI.Generated;");
@@ -279,11 +308,31 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
 
         foreach (var kvp in serviceMap)
         {
+            // An empty final interceptor list means the chain removed every
+            // interceptor — interception is a no-op, so keep the original
+            // registration and emit nothing for this service.
+            if (kvp.Value.Interceptors.Count == 0)
+                continue;
+
             var svcType = kvp.Key;
-            var implType = kvp.Value.ImplType;
             var interceptors = kvp.Value.Interceptors;
             var svcFullName = svcType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            var implFullName = implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            if (
+                !registrationLookup.TryGetValue(svcFullName, out var innerRegistration)
+                || innerRegistration.HasFactory
+            )
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.FactoryInterceptionUnsupported,
+                        Location.None,
+                        svcFullName
+                    )
+                );
+                continue;
+            }
+
             var safeSvc = SanitizeForWrap(svcFullName);
 
             var intSuffix = string.Join(
@@ -300,15 +349,28 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
                 )
             );
 
+            // Inline the implementation construction the same way the
+            // non-intercepted generated registration would — transient
+            // dependencies are inlined recursively, everything else resolves
+            // through the scope. No self-registration of the implementation
+            // type is required.
+            var innerConstruction = GenerateWrapperInnerConstruction(
+                innerRegistration,
+                registrationLookup,
+                [],
+                "scope"
+            );
+
             sb.AppendLine("        container.Register(");
             sb.AppendLine("            SvcDescriptor.Create(");
             sb.AppendLine($"                typeof({svcFullName}),");
             sb.AppendLine(
                 $"                static scope => global::PicoAop.Generated.PicoAopWrappers.{wrapperName}("
             );
-            sb.AppendLine($"                    scope.GetService<{implFullName}>(),");
+            sb.AppendLine($"                    {innerConstruction},");
             sb.AppendLine($"                    {getServiceArgs}),");
             sb.AppendLine($"                SvcLifetime.{kvp.Value.Lifetime}));");
+            emittedCount++;
         }
 
         sb.AppendLine("    }");
@@ -327,19 +389,70 @@ public partial class ServiceRegistrationGenerator : IIncrementalGenerator
         sb.AppendLine("    }");
         sb.AppendLine("}");
 
-        context.AddSource(
-            "PicoDI.InterceptedRegistrations.g.cs",
-            SourceText.From(sb.ToString(), Encoding.UTF8)
-        );
+        if (emittedCount > 0)
+        {
+            context.AddSource(
+                "PicoDI.InterceptedRegistrations.g.cs",
+                SourceText.From(sb.ToString(), Encoding.UTF8)
+            );
+        }
+    }
+
+    /// <summary>
+    /// Generates the expression that constructs the implementation for a
+    /// wrapped (intercepted) service. Transient dependencies with a known
+    /// type-based registration are inlined recursively; scoped/singleton
+    /// dependencies and unregistered types resolve through the scope.
+    /// Unlike the main registration path this never emits typed
+    /// <c>Resolve.*</c> references — the intercepted file is self-contained.
+    /// </summary>
+    private static string GenerateWrapperInnerConstruction(
+        ServiceRegistration registration,
+        Dictionary<string, ServiceRegistration> registrationLookup,
+        HashSet<string> visitedTypes,
+        string scopeVarName
+    )
+    {
+        if (registration.ConstructorParameters.IsEmpty)
+            return $"new {registration.ImplementationTypeFullName}()";
+
+        var arguments = new List<string>();
+        foreach (var parameterType in registration.ConstructorParameters)
+        {
+            if (
+                registrationLookup.TryGetValue(parameterType, out var dependency)
+                && dependency.Lifetime == PicoDiNames.Transient
+                && !dependency.HasFactory
+                && !visitedTypes.Contains(parameterType)
+            )
+            {
+                var nested = new HashSet<string>(visitedTypes) { parameterType };
+                arguments.Add(
+                    GenerateWrapperInnerConstruction(
+                        dependency,
+                        registrationLookup,
+                        nested,
+                        scopeVarName
+                    )
+                );
+                continue;
+            }
+
+            arguments.Add($"({parameterType}){scopeVarName}.GetService(typeof({parameterType}))");
+        }
+
+        return $"new {registration.ImplementationTypeFullName}({string.Join(", ", arguments)})";
     }
 
     private static string SanitizeForWrap(string name) =>
         name.Replace("global::", "")
-            .Replace(".", "_")
-            .Replace("<", "_")
-            .Replace(">", "")
-            .Replace(", ", "_")
-            .Replace(",", "_");
+            .Replace("::", "_")
+            .Replace('.', '_')
+            .Replace('<', '_')
+            .Replace('>', '_')
+            .Replace(',', '_')
+            .Replace(' ', '_')
+            .Replace('+', '_');
 
     private static void ReportRegistrationDiagnostics(
         IEnumerable<Diagnostic> diagnostics,

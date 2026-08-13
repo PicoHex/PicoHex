@@ -13,8 +13,26 @@ public static class CfgBuilderYamlExtensions
         public CfgBuilder AddYamlFile(string path)
         {
             ArgumentNullException.ThrowIfNull(path);
-            return builder.AddCustomSource(new YamlCfgSource(File.ReadAllBytes(path)));
+            return builder.AddSource(
+                builder.CreateFileWatchingSource(
+                    path,
+                    ParseYamlFileAsync,
+                    () => File.GetLastWriteTimeUtc(path)
+                )
+            );
         }
+    }
+
+    private static Task<Dictionary<string, string>> ParseYamlFileAsync(
+        Stream stream,
+        CancellationToken ct
+    )
+    {
+        ct.ThrowIfCancellationRequested();
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        ct.ThrowIfCancellationRequested();
+        return Task.FromResult(YamlFlattener.Flatten(buffer.ToArray()));
     }
 }
 

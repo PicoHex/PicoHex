@@ -47,8 +47,21 @@ public sealed partial class SvcScope : ISvcScope
 
     private int _disposed; // 0 = not disposed, 1 = disposed (for thread-safe Interlocked operations)
 
-    internal SvcScope(FrozenDictionary<Type, SvcRuntimeRegistration[]> registrationCache)
+    internal SvcScope(
+        FrozenDictionary<Type, SvcRuntimeRegistration[]> registrationCache,
+        SvcContainer owner
+    )
     {
         _registrationCache = registrationCache;
+        Owner = owner;
     }
+
+    /// <summary>
+    /// Immutable owning container reference, assigned once at construction.
+    /// Unlike <see cref="OwningContainer"/> — which tracking-list bookkeeping
+    /// clears when a scope is detached/disposed — this reference is never
+    /// cleared, so in-flight singleton creation stays safe when a scope is
+    /// disposed concurrently with resolution.
+    /// </summary>
+    internal SvcContainer Owner { get; }
 }

@@ -214,7 +214,7 @@ public sealed partial class SvcScope
         // never capture a possibly short-lived resolving scope.
         var candidate =
             registration.Factory != null
-                ? registration.Factory(OwningContainer?.GetImplicitRootScope() ?? this)
+                ? registration.Factory(Owner.GetImplicitRootScope())
                 : throw new PicoDiException(
                     $"No factory or instance registered for singleton service '{serviceType.FullName}'. "
                         + FormatSourceGenReminder(serviceType.FullName ?? serviceType.Name)
@@ -243,8 +243,10 @@ public sealed partial class SvcScope
             // Tag the construction order BEFORE publishing the instance so the
             // disposal pass can release singletons in reverse construction
             // order (LIFO) — a singleton may rely on its dependencies inside
-            // its own Dispose method.
-            singletonState.CreationOrder = OwningContainer!.NextSingletonCreationOrder();
+            // its own Dispose method. Owner is immutable and never cleared by
+            // scope tracking, so this is safe even when the resolving scope was
+            // disposed while the factory was running.
+            singletonState.CreationOrder = Owner.NextSingletonCreationOrder();
             Volatile.Write(ref singletonState.Instance, candidate);
             return candidate;
         }
@@ -358,7 +360,7 @@ public sealed partial class SvcScope
                 }
                 catch (Exception ex)
                 {
-                    OwningContainer?.OnError?.Invoke(ex, "Error disposing instance");
+                    Owner.OnError?.Invoke(ex, "Error disposing instance");
                 }
 
                 break;
@@ -369,7 +371,7 @@ public sealed partial class SvcScope
                 }
                 catch (Exception ex)
                 {
-                    OwningContainer?.OnError?.Invoke(ex, "Error disposing instance");
+                    Owner.OnError?.Invoke(ex, "Error disposing instance");
                 }
 
                 break;

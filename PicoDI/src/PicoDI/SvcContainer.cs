@@ -43,12 +43,23 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
         if (scope is not null)
             return scope;
 
+        var frozen = Volatile.Read(ref _frozenCache);
+        if (frozen is null)
+        {
+            // Covers the race where the container was disposed between a
+            // resolution path reading the frozen cache and entering this
+            // method. Build() throws ObjectDisposedException for a disposed
+            // container — a clean failure instead of a NullReferenceException.
+            Build();
+            frozen = Volatile.Read(ref _frozenCache);
+        }
+
+        if (frozen is null)
+            throw new ObjectDisposedException(nameof(SvcContainer));
+
         lock (_registrationLock)
         {
-            return _implicitRootScope ??= new SvcScope(Volatile.Read(ref _frozenCache)!)
-            {
-                OwningContainer = this,
-            };
+            return _implicitRootScope ??= new SvcScope(frozen, this);
         }
     }
 

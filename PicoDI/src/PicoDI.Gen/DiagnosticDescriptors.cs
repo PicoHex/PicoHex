@@ -41,4 +41,15 @@ internal static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Only one public constructor can be marked with [SvcConstructor] for PicoDI source-generated activation."
     );
+
+    public static readonly DiagnosticDescriptor FactoryInterceptionUnsupported = new(
+        "PICO006",
+        "Factory-based registration cannot be intercepted",
+        "Interception of '{0}' requires a type-based registration (Register<TService, TImplementation>()); "
+            + "factory-based registrations cannot be intercepted at compile time",
+        PicoDiNames.RootNamespace,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "PicoAop interception needs the implementation type to generate the wrapper. Use a type-based registration instead of a factory delegate."
+    );
 }

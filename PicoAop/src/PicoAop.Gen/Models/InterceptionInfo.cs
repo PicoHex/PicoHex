@@ -1,28 +1,14 @@
 namespace PicoAop.Gen.Models;
 
-internal record InterceptionInfo(ITypeSymbol ServiceType, ITypeSymbol InterceptorType)
-    : IEquatable<InterceptionInfo>
-{
-    public virtual bool Equals(InterceptionInfo? other)
-    {
-        if (other is null)
-            return false;
-        return SymbolEqualityComparer.Default.Equals(ServiceType, other.ServiceType)
-            && SymbolEqualityComparer.Default.Equals(InterceptorType, other.InterceptorType);
-    }
-
-    public override int GetHashCode()
-    {
-        var comparer = SymbolEqualityComparer.Default;
-        unchecked
-        {
-            var hash = 17;
-            hash = (hash * 23) + (ServiceType != null ? comparer.GetHashCode(ServiceType) : 0);
-            hash =
-                (hash * 23) + (InterceptorType != null ? comparer.GetHashCode(InterceptorType) : 0);
-            return hash;
-        }
-    }
-}
+/// <summary>
+/// Final state of one interception chain: the surviving interceptors in
+/// source order (after <c>WithoutInterceptor&lt;T&gt;()</c> exclusions) and a
+/// suppression flag for <c>WithoutInterceptors()</c>.
+/// </summary>
+internal record InterceptionChainInfo(
+    ITypeSymbol ServiceType,
+    ImmutableArray<ITypeSymbol> Interceptors,
+    bool Suppressed
+);
 
 internal record GlobalInterceptorInfo(ITypeSymbol InterceptorType);

@@ -7,7 +7,7 @@ public sealed partial class SvcScope
     {
         DisposalGuards.ThrowIfDisposed(ref _disposed, nameof(SvcScope));
 
-        var childScope = new SvcScope(_registrationCache);
+        var childScope = new SvcScope(_registrationCache, Owner);
 
         childScope.ParentScope = this;
         childScope.OwningContainer = OwningContainer;
@@ -28,7 +28,7 @@ public sealed partial class SvcScope
             }
             catch (Exception ex)
             {
-                OwningContainer?.OnError?.Invoke(ex, "Error disposing orphaned child scope");
+                Owner.OnError?.Invoke(ex, "Error disposing orphaned child scope");
             }
             throw;
         }

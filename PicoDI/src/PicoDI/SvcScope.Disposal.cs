@@ -24,7 +24,7 @@ public sealed partial class SvcScope
             }
             catch (Exception ex)
             {
-                OwningContainer?.OnError?.Invoke(ex, "Error disposing child scope asynchronously");
+                Owner.OnError?.Invoke(ex, "Error disposing child scope asynchronously");
             }
         }
     }
@@ -58,7 +58,7 @@ public sealed partial class SvcScope
                 }
                 catch (Exception ex)
                 {
-                    OwningContainer?.OnError?.Invoke(
+                    Owner.OnError?.Invoke(
                         ex,
                         $"Error disposing service instance of type '{svc.GetType().FullName}'"
                     );
@@ -91,7 +91,7 @@ public sealed partial class SvcScope
             }
             catch (Exception ex)
             {
-                OwningContainer?.OnError?.Invoke(
+                Owner.OnError?.Invoke(
                     ex,
                     $"Error disposing service instance of type '{svc?.GetType().FullName ?? "unknown"}'"
                 );
@@ -116,7 +116,7 @@ public sealed partial class SvcScope
             }
             catch (Exception ex)
             {
-                OwningContainer?.OnError?.Invoke(
+                Owner.OnError?.Invoke(
                     ex,
                     $"Error disposing service instance of type '{instance.GetType().FullName}'"
                 );

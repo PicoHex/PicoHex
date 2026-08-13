@@ -51,4 +51,38 @@ public class CfgBuilderYamlExtensionsTests
 
         await Assert.That(root.GetValue("Key")).IsEqualTo("second");
     }
+
+    [Test]
+    public async Task AddYamlFile_FileChanged_ReloadPublishesNewValue()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"picocfg-yaml-{Guid.NewGuid():N}.yaml");
+        await File.WriteAllTextAsync(path, "Name: first");
+
+        ICfgRoot? root = null;
+        try
+        {
+            var builder = Cfg.CreateBuilder();
+            builder.AddYamlFile(path);
+            root = await builder.BuildAsync();
+
+            await Assert.That(root.GetValue("Name")).IsEqualTo("first");
+
+            await File.WriteAllTextAsync(path, "Name: second");
+
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+            while (root.GetValue("Name") != "second" && DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(100);
+                await root.ReloadAsync();
+            }
+
+            await Assert.That(root.GetValue("Name")).IsEqualTo("second");
+        }
+        finally
+        {
+            if (root is not null)
+                await root.DisposeAsync();
+            File.Delete(path);
+        }
+    }
 }

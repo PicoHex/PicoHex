@@ -2,18 +2,38 @@ namespace PicoAop.Gen;
 
 internal static class InterceptorSyntax
 {
-    public static bool IsInterceptByInvocation(SyntaxNode node) =>
-        node switch
-        {
-            InvocationExpressionSyntax
+    /// <summary>
+    /// Fast syntax check for the OUTERMOST call of an interception chain:
+    /// <c>InterceptBy&lt;T&gt;()</c>, <c>WithoutInterceptor&lt;T&gt;()</c> and
+    /// <c>WithoutInterceptors()</c>. Inner chain calls are excluded — they
+    /// are projections of the same chain and would double-count interceptors.
+    /// </summary>
+    public static bool IsInterceptionChainInvocation(SyntaxNode node)
+    {
+        if (
+            node
+            is not InvocationExpressionSyntax
             {
-                Expression: MemberAccessExpressionSyntax
-                {
-                    Name: GenericNameSyntax { Identifier.ValueText: PicoAopNames.InterceptBy }
-                }
-            } => true,
-            _ => false,
-        };
+                Expression: MemberAccessExpressionSyntax { Name: GenericNameSyntax gn }
+            }
+        )
+            return false;
+
+        if (
+            gn.Identifier.ValueText
+            is not (
+                PicoAopNames.InterceptBy
+                or PicoAopNames.WithoutInterceptor
+                or PicoAopNames.WithoutInterceptors
+            )
+        )
+            return false;
+
+        // Outermost call only: its parent must not be a member access whose
+        // expression is this invocation (i.e. another chain call follows).
+        return node.Parent
+            is not MemberAccessExpressionSyntax { Expression: InvocationExpressionSyntax };
+    }
 
     public static bool IsAddInterceptorInvocation(SyntaxNode node) =>
         node switch
@@ -28,7 +48,12 @@ internal static class InterceptorSyntax
             _ => false,
         };
 
-    public static InterceptionInfo? ExtractInterceptionInfo(
+    /// <summary>
+    /// Walks a full interception chain and computes its final state: the
+    /// interceptors that survive any <c>WithoutInterceptor&lt;T&gt;()</c>
+    /// exclusions, plus a suppression flag for <c>WithoutInterceptors()</c>.
+    /// </summary>
+    public static InterceptionChainInfo? ExtractInterceptionChainInfo(
         GeneratorSyntaxContext ctx,
         CancellationToken ct
     )
@@ -38,18 +63,54 @@ internal static class InterceptorSyntax
 
         if (semanticModel.GetSymbolInfo(invocation, ct).Symbol is not IMethodSymbol methodSymbol)
             return null;
-        if (methodSymbol.Name != PicoAopNames.InterceptBy)
-            return null;
-        if (methodSymbol.TypeArguments.Length != 1)
+
+        var chainName = methodSymbol.Name;
+        if (
+            chainName
+            is not (
+                PicoAopNames.InterceptBy
+                or PicoAopNames.WithoutInterceptor
+                or PicoAopNames.WithoutInterceptors
+            )
+        )
             return null;
 
-        var interceptorType = methodSymbol.TypeArguments[0];
+        var comparer = SymbolEqualityComparer.Default;
+        var interceptors = new List<ITypeSymbol>();
+        var removed = new List<ITypeSymbol>();
+        var suppressed = false;
 
-        // Walk up through InterceptBy chain: Register*().InterceptBy<A>().InterceptBy<B>()
-        // For InterceptBy<B>, we need to skip past InterceptBy<A> to find Register*().
+        // Walk from the outermost call backwards. Exclusions are processed
+        // before the adds they apply to because the walk runs in reverse
+        // source order. The loop consumes ONE pending operation per
+        // iteration — seeded with the starting call itself, then fed by each
+        // inner chain call.
+        var pendingOp = chainName;
+        ITypeSymbol? pendingArg =
+            methodSymbol.TypeArguments.Length >= 1 ? methodSymbol.TypeArguments[0] : null;
         var current = invocation;
         while (true)
         {
+            switch (pendingOp)
+            {
+                case PicoAopNames.InterceptBy:
+                    if (pendingArg is null)
+                        return null;
+                    if (!removed.Any(r => comparer.Equals(r, pendingArg)))
+                        interceptors.Insert(0, pendingArg);
+                    break;
+
+                case PicoAopNames.WithoutInterceptor:
+                    if (pendingArg is null)
+                        return null;
+                    removed.Add(pendingArg);
+                    break;
+
+                case PicoAopNames.WithoutInterceptors:
+                    suppressed = true;
+                    break;
+            }
+
             if (current.Expression is not MemberAccessExpressionSyntax outerMember)
                 return null;
             if (outerMember.Expression is not InvocationExpressionSyntax innerInvocation)
@@ -60,20 +121,29 @@ internal static class InterceptorSyntax
             if (innerSymbol == null)
                 return null;
 
-            // If the inner call is another InterceptBy, walk past it
-            if (innerSymbol.Name == PicoAopNames.InterceptBy)
+            if (
+                innerSymbol.Name
+                is PicoAopNames.InterceptBy
+                    or PicoAopNames.WithoutInterceptor
+                    or PicoAopNames.WithoutInterceptors
+            )
             {
+                pendingOp = innerSymbol.Name;
+                pendingArg =
+                    innerSymbol.TypeArguments.Length >= 1 ? innerSymbol.TypeArguments[0] : null;
                 current = innerInvocation;
                 continue;
             }
 
-            // Found Register*() call — extract types
+            // Found Register*() call — extract the service type.
             if (innerSymbol.TypeArguments.Length < 1)
                 return null;
 
-            var serviceType = innerSymbol.TypeArguments[0];
-
-            return new InterceptionInfo(serviceType, interceptorType);
+            return new InterceptionChainInfo(
+                innerSymbol.TypeArguments[0],
+                [.. interceptors],
+                suppressed
+            );
         }
     }
 

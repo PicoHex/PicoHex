@@ -14,7 +14,7 @@ public sealed partial class SvcContainer
             frozenCache = Volatile.Read(ref _frozenCache)!;
         }
 
-        var scope = new SvcScope(frozenCache);
+        var scope = new SvcScope(frozenCache, this);
 
         scope.OwningContainer = this;
 

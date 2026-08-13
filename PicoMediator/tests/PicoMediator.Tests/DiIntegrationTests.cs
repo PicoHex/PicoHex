@@ -41,9 +41,13 @@ public class DiIntegrationTests
         var mediator = scope.GetService<IMediator>();
 
         // No handler class exists for this request type anywhere in the test
-        // assembly, so auto-registration cannot provide one.
-        await Assert.ThrowsAsync(async () =>
+        // assembly, so auto-registration cannot provide one. The failure must
+        // be the descriptive InvalidOperationException, not a raw DI
+        // resolution exception.
+        var ex = await Assert.ThrowsAsync(async () =>
             await mediator.Send<UnhandledPing, string>(new UnhandledPing())
         );
+        await Assert.That(ex).IsTypeOf<InvalidOperationException>();
+        await Assert.That(ex.Message).Contains("No handler registered for");
     }
 }

@@ -81,12 +81,17 @@ public static class GeneratedDispatch
             }
         }
 
-        var handler = scope.GetService<ICommandHandler<TCommand, TResponse>>();
-        if (handler is null)
+        // No generated switch handled this request — fall back to direct
+        // container resolution. Use TryGetService so the missing-handler
+        // failure carries a descriptive message instead of a raw DI
+        // resolution exception.
+        if (!scope.TryGetService(typeof(ICommandHandler<TCommand, TResponse>), out var handler))
             throw new InvalidOperationException(
-                $"No handler registered for {typeof(TCommand).FullName}."
+                $"No handler registered for {typeof(TCommand).FullName}. "
+                    + "Register an ICommandHandler for the command or ensure PicoMediator.Gen "
+                    + "can discover its handler implementation."
             );
 
-        return handler.Handle(command, ct);
+        return ((ICommandHandler<TCommand, TResponse>)handler).Handle(command, ct);
     }
 }

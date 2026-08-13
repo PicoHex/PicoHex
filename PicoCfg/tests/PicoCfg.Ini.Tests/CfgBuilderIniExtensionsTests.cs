@@ -37,4 +37,38 @@ public class CfgBuilderIniExtensionsTests
 
         await Assert.That(root.GetValue("Section:Key")).IsEqualTo("second");
     }
+
+    [Test]
+    public async Task AddIniFile_FileChanged_ReloadPublishesNewValue()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"picocfg-ini-{Guid.NewGuid():N}.ini");
+        await File.WriteAllTextAsync(path, "Name=first");
+
+        ICfgRoot? root = null;
+        try
+        {
+            var builder = Cfg.CreateBuilder();
+            builder.AddIniFile(path);
+            root = await builder.BuildAsync();
+
+            await Assert.That(root.GetValue("Name")).IsEqualTo("first");
+
+            await File.WriteAllTextAsync(path, "Name=second");
+
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+            while (root.GetValue("Name") != "second" && DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(100);
+                await root.ReloadAsync();
+            }
+
+            await Assert.That(root.GetValue("Name")).IsEqualTo("second");
+        }
+        finally
+        {
+            if (root is not null)
+                await root.DisposeAsync();
+            File.Delete(path);
+        }
+    }
 }

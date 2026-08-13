@@ -13,8 +13,26 @@ public static class CfgBuilderIniExtensions
         public CfgBuilder AddIniFile(string path)
         {
             ArgumentNullException.ThrowIfNull(path);
-            return builder.AddCustomSource(new IniCfgSource(File.ReadAllBytes(path)));
+            return builder.AddSource(
+                builder.CreateFileWatchingSource(
+                    path,
+                    ParseIniFileAsync,
+                    () => File.GetLastWriteTimeUtc(path)
+                )
+            );
         }
+    }
+
+    private static Task<Dictionary<string, string>> ParseIniFileAsync(
+        Stream stream,
+        CancellationToken ct
+    )
+    {
+        ct.ThrowIfCancellationRequested();
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        ct.ThrowIfCancellationRequested();
+        return Task.FromResult(IniFlattener.Flatten(buffer.ToArray()));
     }
 }
 

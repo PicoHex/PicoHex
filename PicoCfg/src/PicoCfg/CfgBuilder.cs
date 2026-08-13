@@ -127,6 +127,40 @@ public sealed class CfgBuilder
             static (values, fingerprint) => new CfgSnapshot(values, fingerprint)
         );
 
+    /// <summary>
+    /// Creates a file-watching stream source with a custom parser. Used by
+    /// the format packages (Json/Yaml/Ini/Toml) so their file sources reload
+    /// on change like the line-based <c>AddFile</c> source.
+    /// </summary>
+    internal ICfgSource CreateFileWatchingSource(
+        string filePath,
+        Func<Stream, CancellationToken, Task<Dictionary<string, string>>> parser,
+        Func<object?>? versionStampFactory = null,
+        TimeSpan? debounceInterval = null
+    )
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(parser);
+
+        return new FileWatchingCfgSource(
+            new StreamCfgSource(() =>
+                new StreamCfgProvider(
+                    ct =>
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        return new ValueTask<Stream>(File.OpenRead(filePath));
+                    },
+                    versionStampFactory,
+                    parser,
+                    CreateProviderState()
+                )
+            ),
+            filePath,
+            debounceInterval,
+            OnFileWatchError
+        );
+    }
+
     internal Func<IReadOnlyList<ICfgSnapshot>, ICfgSnapshot> CreateSnapshotComposer() =>
         providerSnapshots =>
             CfgSnapshotComposer.CreateSnapshot(

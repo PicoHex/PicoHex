@@ -2,3 +2,7 @@
 [assembly: InternalsVisibleTo("PicoCfg.DI")]
 [assembly: InternalsVisibleTo("PicoCfg.DI.Tests")]
 [assembly: InternalsVisibleTo("PicoCfg.Gen.Tests")]
+[assembly: InternalsVisibleTo("PicoCfg.Json")]
+[assembly: InternalsVisibleTo("PicoCfg.Yaml")]
+[assembly: InternalsVisibleTo("PicoCfg.Ini")]
+[assembly: InternalsVisibleTo("PicoCfg.Toml")]
