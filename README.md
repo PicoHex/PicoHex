@@ -181,7 +181,7 @@ var settings = CfgBind.Bind<AppSettings>(cfg, "App");
   - Environment variables (`__` → `:`)
   - Command-line args (`--key=value`, `--key value`, `/key`)
   - Key-per-file directory
-  - JSON, YAML, INI, TOML (separate packages: `PicoCfg.Json`, `PicoCfg.Yaml`, etc.)
+  - JSON, YAML, INI, TOML (separate packages: `PicoCfg.Json`, `PicoCfg.Yaml`, etc.) — file sources (`AddJsonFile`, `AddYamlFile`, `AddIniFile`, `AddTomlFile`) are file-watching with debounced auto-reload; string sources (`AddJson(string)`, …) are static
 - **Binding (`PicoCfg.Gen`):**
   - Generates `Bind<T>` / `TryBind<T>` / `BindInto<T>` delegates for any type used with `CfgBind.Bind<T>()`
   - **Topological sort** of nested types to ensure inner types generate before their parents
@@ -287,7 +287,7 @@ Every PicoHex module uses `IIncrementalGenerator` for caching, incremental build
 | Generator | Input | Output |
 |---|---|---|
 | **PicoDI.Gen** | `ISvcContainer.Register*()` calls, open generic usages | Factory delegates per service, closed generic materialization, intercepted registration rewrites |
-| **PicoAop.Gen** | `.InterceptBy<T>()` and `AddInterceptor<T>()` calls | Per-method invocation structs, proxy classes, wrapper factories |
+| **PicoAop.Gen** | `.InterceptBy<T>()`, `.AddInterceptor<T>()`, `.WithoutInterceptor<T>()`, `.WithoutInterceptors()` calls | Per-method invocation structs, proxy classes, wrapper factories |
 | **PicoCfg.Gen** | `CfgBind.Bind<T>()` / `TryBind<T>()` / `BindInto<T>()` calls, nested types | `Bind<T>` / `TryBind<T>` / `BindInto<T>` delegates with topological sort |
 | **PicoLog.Gen** | `[PicoLogMessage]` attribute on partial methods | Typed logging extension methods with string interpolation |
 | **PicoMediator.Gen** | `ICommandHandler<TCommand, TResponse>` / `ISubscriber<TEvent>` implementations | Type-switch dispatch method + `ModuleInitializer` registration + handler auto-registrations |
@@ -398,7 +398,7 @@ var mediator = scope.GetService<IMediator>();
 |---|---|
 | **PicoAop.Abs** | AOT-first interceptor abstractions — `IInterceptor`, `IInvocation`, `InterceptorBase` |
 | **PicoAop.Gen** | Compile-time invocation struct + proxy class generation |
-| **PicoAop.DI** | DI integration — `.InterceptBy<T>()`, `.AddInterceptor<T>()`, `.WithoutInterceptors()` |
+| **PicoAop.DI** | DI integration — `.InterceptBy<T>()`, `.AddInterceptor<T>()`, `.WithoutInterceptor<T>()`, `.WithoutInterceptors()` |
 
 ### Configuration
 | Package | Description |
