@@ -10,6 +10,7 @@ public class AutoSubscriptionTests
     public sealed class ListLog : ILog
     {
         public List<string> Entries { get; } = [];
+
         public void Write(string message) => Entries.Add(message);
     }
 
