@@ -21,6 +21,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- PicoDI.Generators analyzer 鈥?source-generates type-based Register* registrations -->
+    <ProjectReference
+      Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- PicoLog.Generators analyzer — source-generates [PicoLogMessage] method bodies -->
     <ProjectReference
       Include="..\..\src\PicoLog.Gen\PicoLog.Gen.csproj"

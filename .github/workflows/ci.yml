@@ -150,6 +150,9 @@ jobs:
       - name: AOT publish validation
         run: dotnet publish PicoDI/src/PicoDI/ -p:PublishAot=true -r ${{ matrix.rid }} --configuration Release
 
+      - name: Run PicoDI.Sample (managed smoke test)
+        run: dotnet run --project PicoDI/samples/PicoDI.Sample/ -c Release -p:PublishAot=false
+
       - name: Pack CI packages (package-consumer validation)
         shell: bash
         run: |
@@ -437,6 +440,9 @@ jobs:
       - name: AOT publish validation
         run: dotnet publish PicoLog/src/PicoLog/ -p:PublishAot=true -r ${{ matrix.rid }} --configuration Release
 
+      - name: Run PicoLog.Sample (managed smoke test)
+        run: dotnet run --project PicoLog/samples/PicoLog.Sample/ -c Release -p:PublishAot=false
+
       - name: Pack CI packages (package-consumer validation)
         shell: bash
         run: |
@@ -538,8 +544,21 @@ jobs:
         run: |
           dotnet test --project PicoAop/tests/PicoAop.Tests/PicoAop.Tests.csproj --configuration Release --no-build -p:UseProjectReferences=true
 
+      - name: Build PicoAop benchmarks
+        run: dotnet build PicoAop/benchmarks/PicoAop.Benchmarks/PicoAop.Benchmarks.csproj --configuration Release -p:PublishAot=false
+
       - name: AOT publish validation
         run: dotnet publish PicoAop/samples/PicoAop.Sample/ -r ${{ matrix.rid }} --configuration Release
+
+      - name: Run AOT-published sample (publish != run guard)
+        shell: bash
+        run: |
+          PUBLISH_DIR="PicoAop/samples/PicoAop.Sample/bin/Release/net10.0/${{ matrix.rid }}/publish"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            "$PUBLISH_DIR/PicoAop.Sample.exe"
+          else
+            "$PUBLISH_DIR/PicoAop.Sample"
+          fi
 
       - name: Pack CI packages (package-consumer validation)
         shell: bash
@@ -635,6 +654,16 @@ jobs:
 
       - name: AOT publish validation
         run: dotnet publish PicoMediator/samples/PicoMediator.Sample/ -r ${{ matrix.rid }} --configuration Release
+
+      - name: Run AOT-published sample (publish != run guard)
+        shell: bash
+        run: |
+          PUBLISH_DIR="PicoMediator/samples/PicoMediator.Sample/bin/Release/net10.0/${{ matrix.rid }}/publish"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            "$PUBLISH_DIR/PicoMediator.Sample.exe"
+          else
+            "$PUBLISH_DIR/PicoMediator.Sample"
+          fi
 
       - name: Pack CI packages (package-consumer validation)
         shell: bash

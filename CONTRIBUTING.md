@@ -34,6 +34,26 @@ Or run all tests at once:
 dotnet test PicoHex.slnx
 ```
 
+### Testing-Platform 2.x flakiness ("Zero tests ran")
+
+On some machines, `dotnet test` against Microsoft Testing Platform 2.x is
+unreliable: the first run may report `Zero tests ran` (exit code 5/8) or hang
+because stale `testhost.exe` processes hold file locks on freshly built
+dlls. If you see this:
+
+```shell
+# 1. Clear stale test hosts holding file locks (Windows)
+taskkill //F //IM testhost.exe
+
+# 2. Run the test project directly through its executable. The repo defaults
+#    to PublishAot=true, so explicitly disable AOT for a managed test run:
+dotnet run --project PicoDI/tests/PicoDI.Test/PicoDI.Test.csproj -c Release -p:PublishAot=false
+```
+
+`-p:PublishAot=false` is required because the repo default `PublishAot=true`
+turns a managed test run into an AOT publish. The `dotnet run` form is the
+reliable path for local development; CI uses `dotnet test` after a clean build.
+
 ## PR Workflow
 
 1. Fork the repository on GitHub.

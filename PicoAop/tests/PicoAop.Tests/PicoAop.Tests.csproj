@@ -23,6 +23,10 @@
       Include="..\..\src\PicoAop.Gen\PicoAop.Gen.csproj"
       OutputItemType="Analyzer"
     />
+    <ProjectReference
+      Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
+      OutputItemType="Analyzer"
+    />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
   </ItemGroup>

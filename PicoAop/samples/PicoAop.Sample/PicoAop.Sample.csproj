@@ -17,5 +17,16 @@
     <ProjectReference Include="..\..\src\PicoAop.DI\PicoAop.DI.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI\PicoDI.csproj" />
     <ProjectReference Include="..\..\..\PicoDI\src\PicoDI.Abs\PicoDI.Abs.csproj" />
+    <!-- Explicit analyzer references to ensure source generators run -->
+    <ProjectReference
+      Include="..\..\src\PicoAop.Gen\PicoAop.Gen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
+    <ProjectReference
+      Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
   </ItemGroup>
 </Project>

@@ -70,16 +70,16 @@ public partial class MethodCallReturnBenchmarks
     }
 
     [Benchmark(Baseline = true, Description = "D0 (raw)")]
-    public int D0() => _svc0.Get();
+    public void D0() => _ = _svc0.Get();
 
     [Benchmark(Description = "D1")]
-    public int D1() => _svc1.Get();
+    public void D1() => _ = _svc1.Get();
 
     [Benchmark(Description = "D3")]
-    public int D3() => _svc3.Get();
+    public void D3() => _ = _svc3.Get();
 
     [Benchmark(Description = "D5")]
-    public int D5() => _svc5.Get();
+    public void D5() => _ = _svc5.Get();
 }
 
 [BenchmarkClass(Description = "ValueTask DoAsync() — decorator chain overhead")]

@@ -12,5 +12,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PicoDI\PicoDI.csproj" />
     <ProjectReference Include="..\PicoDI.Sample.Services\PicoDI.Sample.Services.csproj" />
+    <!-- Explicit analyzer reference to ensure source generator runs -->
+    <ProjectReference
+      Include="../../src/PicoDI.Gen/PicoDI.Gen.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false"
+    />
   </ItemGroup>
 </Project>

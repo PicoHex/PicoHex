@@ -56,7 +56,7 @@ public static partial class CfgBindRuntime
     /// <b>Slow path</b> — case-insensitive scan of the section-scoped key
     /// set.  Only reached when <paramref name="cfg"/> is a non-snapshot
     /// <see cref="ICfg"/> implementation (e.g. inline dictionaries) that
-    /// lacks the built-in fallback.  <see cref="CfgSection.GetAll"/>
+    /// lacks the built-in fallback.  <see cref="PicoCfg.Extensions.CfgEnumerationExtensions.GetAll(ICfg)"/>
     /// uses <see cref="StringComparison.OrdinalIgnoreCase"/> to return
     /// matching keys regardless of casing.
     /// </item>

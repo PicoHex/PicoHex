@@ -58,6 +58,10 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
 
         _writer = new StreamWriter(fileStream, Encoding.UTF8);
         _lastRotationTimestamp = DateTime.UtcNow.Ticks;
+        // Seed the rotation counter from files already on disk so that a
+        // process restart continues after the highest existing rotation index
+        // instead of overwriting the previous run's oldest retained file.
+        _rotationIndex = GetExistingRotationIndex();
         _processingTask = ProcessWritesAsync();
     }
 
@@ -212,7 +216,10 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
             _writer.Dispose();
 
             var rotatedPath = GetRotatedFilePath();
-            File.Move(_baseFilePath, rotatedPath, overwrite: true);
+            // overwrite:false — with a correctly seeded index the target path is
+            // always new, so any collision is an unexpected state that must surface
+            // instead of silently destroying previously retained log data.
+            File.Move(_baseFilePath, rotatedPath, overwrite: false);
             CleanUpOldFiles();
 
             var fs = new FileStream(
@@ -246,12 +253,7 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         var ext = Path.GetExtension(_baseFilePath);
         var rotatedFiles = Directory
             .GetFiles(dir, $"{name}.*{ext}")
-            .OrderBy(f =>
-            {
-                var fname = Path.GetFileNameWithoutExtension(f);
-                var suffix = fname.Substring(name.Length + 1);
-                return int.TryParse(suffix, out var n) ? n : 0;
-            })
+            .OrderBy(f => GetRotationIndexFromFile(f, name))
             .ToList();
 
         while (rotatedFiles.Count > _options.MaxRetainedFiles)
@@ -260,9 +262,44 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
             {
                 File.Delete(rotatedFiles[0]);
             }
-            catch { }
+            catch
+            {
+                // Retention cleanup failures must not be silent: record them so
+                // the sink-failure counter surfaces the problem to telemetry.
+                PicoLogMetrics.RecordSinkFailure();
+            }
             rotatedFiles.RemoveAt(0);
         }
+    }
+
+    private int GetExistingRotationIndex()
+    {
+        var dir = Path.GetDirectoryName(_baseFilePath)!;
+        var name = Path.GetFileNameWithoutExtension(_baseFilePath);
+        var ext = Path.GetExtension(_baseFilePath);
+        var maxIndex = 0;
+
+        foreach (var file in Directory.GetFiles(dir, $"{name}.*{ext}"))
+        {
+            var index = GetRotationIndexFromFile(file, name);
+            if (index > maxIndex)
+                maxIndex = index;
+        }
+
+        return maxIndex;
+    }
+
+    private static int GetRotationIndexFromFile(string file, string name)
+    {
+        var fileName = Path.GetFileNameWithoutExtension(file);
+        if (
+            fileName.Length <= name.Length
+            || !fileName.StartsWith(name + ".", StringComparison.Ordinal)
+        )
+            return 0;
+
+        var suffix = fileName[(name.Length + 1)..];
+        return int.TryParse(suffix, out var index) ? index : 0;
     }
 
     public async ValueTask DisposeAsync()
