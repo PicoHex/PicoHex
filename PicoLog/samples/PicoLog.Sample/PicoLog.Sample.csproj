@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- PicoDI.Generators analyzer 鈥?source-generates type-based Register* registrations -->
+    <!-- PicoDI.Generators analyzer —source-generates type-based Register* registrations -->
     <ProjectReference
       Include="..\..\..\PicoDI\src\PicoDI.Gen\PicoDI.Gen.csproj"
       OutputItemType="Analyzer"

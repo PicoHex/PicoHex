@@ -99,6 +99,61 @@ public class FileSinkRotationTests
             Message = message,
         };
 
+    [Test]
+    public async Task Rotation_Collision_RecordsSinkFailure()
+    {
+        var filePath = GetTempFilePath();
+        var fileName = Path.GetFileNameWithoutExtension(filePath);
+        var directory = Path.GetDirectoryName(filePath)!;
+
+        var options = new FileSinkOptions
+        {
+            FilePath = filePath,
+            MaxFileSizeBytes = 32, // every formatted line exceeds this -> rotate on each message
+            BatchSize = 1,
+        };
+
+        using var listener = new MeterListener();
+        var failures = new ConcurrentQueue<long>();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (
+                instrument.Meter.Name == PicoLogMetrics.MeterName
+                && instrument.Name == PicoLogMetrics.SinkFailuresName
+            )
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>(
+            (instrument, measurement, _, _) => failures.Enqueue(measurement)
+        );
+        listener.Start();
+
+        var sink = new FileSink(new ConsoleFormatter(), options);
+
+        // Occupy the file that the first rotation will target so that
+        // File.Move(base, target, overwrite:false) collides. This simulates a
+        // concurrent process creating the rotated file after seeding.
+        File.WriteAllText(Path.Combine(directory, $"{fileName}.1.log"), "occupied");
+
+        await sink.WriteAsync(CreateEntry("collision-trigger"));
+
+        // The processing exception surfaces at dispose; swallow it here — the
+        // point of the test is that the collision is observable via telemetry.
+        try
+        {
+            await sink.DisposeAsync();
+        }
+        catch
+        {
+            // expected: processing failure rethrown at shutdown
+        }
+
+        await Assert.That(failures.IsEmpty).IsFalse();
+
+        foreach (var f in Directory.GetFiles(directory, $"{fileName}.*"))
+            TryDelete(f);
+    }
+
     private static void TryDelete(string path)
     {
         try

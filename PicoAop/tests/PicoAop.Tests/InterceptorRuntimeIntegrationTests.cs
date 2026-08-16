@@ -7,6 +7,11 @@ public class InterceptorRuntimeIntegrationTests
     [Test]
     public async Task InterceptBy_Chain_AppliesInterceptor_AtRuntime()
     {
+        // Reset the shared counter so same-process reruns/retries stay
+        // deterministic (TUnit may retry a failed test in-process, and the
+        // interceptor is a container singleton).
+        RuntimeCountingInterceptor.InvocationCount = 0;
+
         var container = new SvcContainer();
         container.RegisterSingleton<RuntimeCountingInterceptor>();
         container

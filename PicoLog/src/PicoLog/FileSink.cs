@@ -153,6 +153,9 @@ public sealed class FileSink : ILogSink, IFlushableLogSink
         catch (Exception ex)
         {
             _processingException = ex;
+            // Surface the failure via telemetry immediately — the pipeline has
+            // stopped, so waiting until DisposeAsync would hide it indefinitely.
+            PicoLogMetrics.RecordSinkFailure();
         }
     }
 

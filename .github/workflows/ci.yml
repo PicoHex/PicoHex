@@ -153,6 +153,9 @@ jobs:
       - name: Run PicoDI.Sample (managed smoke test)
         run: dotnet run --project PicoDI/samples/PicoDI.Sample/ -c Release -p:PublishAot=false
 
+      - name: Run PicoDI.Sample.Host (managed smoke test)
+        run: dotnet run --project PicoDI/samples/PicoDI.Sample.Host/ -c Release -p:PublishAot=false
+
       - name: Pack CI packages (package-consumer validation)
         shell: bash
         run: |
@@ -553,7 +556,13 @@ jobs:
       - name: Run AOT-published sample (publish != run guard)
         shell: bash
         run: |
-          PUBLISH_DIR="PicoAop/samples/PicoAop.Sample/bin/Release/net10.0/${{ matrix.rid }}/publish"
+          # Glob the TFM segment so a TargetFramework bump does not silently
+          # break this guard (ls -d returns 0 even with no match; guard it).
+          PUBLISH_DIR=$(ls -d PicoAop/samples/PicoAop.Sample/bin/Release/*/${{ matrix.rid }}/publish | head -n 1)
+          if [ -z "$PUBLISH_DIR" ]; then
+            echo "::error::publish directory not found for PicoAop.Sample"
+            exit 1
+          fi
           if [ "$RUNNER_OS" = "Windows" ]; then
             "$PUBLISH_DIR/PicoAop.Sample.exe"
           else
@@ -658,7 +667,13 @@ jobs:
       - name: Run AOT-published sample (publish != run guard)
         shell: bash
         run: |
-          PUBLISH_DIR="PicoMediator/samples/PicoMediator.Sample/bin/Release/net10.0/${{ matrix.rid }}/publish"
+          # Glob the TFM segment so a TargetFramework bump does not silently
+          # break this guard (ls -d returns 0 even with no match; guard it).
+          PUBLISH_DIR=$(ls -d PicoMediator/samples/PicoMediator.Sample/bin/Release/*/${{ matrix.rid }}/publish | head -n 1)
+          if [ -z "$PUBLISH_DIR" ]; then
+            echo "::error::publish directory not found for PicoMediator.Sample"
+            exit 1
+          fi
           if [ "$RUNNER_OS" = "Windows" ]; then
             "$PUBLISH_DIR/PicoMediator.Sample.exe"
           else

@@ -8,6 +8,14 @@ namespace PicoAop.DI;
 /// perform real work. When the generators are missing, the failure is surfaced by
 /// <c>PicoDI.Gen</c> emitting unresolved wrapper references (build error) or by the
 /// PicoDI <c>Register*</c> marker methods throwing <c>SourceGeneratorRequiredException</c>.
+/// <para>
+/// <b>Known limitation:</b> the surfacing above only holds while a generator is
+/// referenced. A consumer that uses only runtime registration (e.g. the non-generic
+/// <c>Register(Type, ...)</c>) and references <b>no</b> generator will silently get
+/// un-intercepted services — these markers no-op and no diagnostic is produced.
+/// This matches the pre-<c>af96e08</c> runtime behavior; interception still requires
+/// <c>PicoAop.Gen</c> + <c>PicoDI.Gen</c> to be referenced.
+/// </para>
 /// </summary>
 public static class SvcContainerInterceptorExtensions
 {
