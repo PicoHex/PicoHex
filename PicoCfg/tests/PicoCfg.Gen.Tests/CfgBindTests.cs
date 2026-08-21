@@ -525,6 +525,144 @@ public sealed class CfgBindTests
         await Assert.That(config.Items[1].Port).IsEqualTo(8081);
     }
 
+    // --- Deep POCO nesting inside collections ---
+
+    public sealed class EndpointDto
+    {
+        public string Url { get; set; } = "";
+        public int Port { get; set; }
+    }
+
+    public sealed class ProviderDto
+    {
+        public string Name { get; set; } = "";
+        public Dictionary<string, EndpointDto> Endpoints { get; set; } = new();
+    }
+
+    public sealed class DeepPocoConfig
+    {
+        public Dictionary<string, Dictionary<string, ProviderDto>> Regions { get; set; } = new();
+        public List<Dictionary<string, ProviderDto>> Groups { get; set; } = new();
+        public List<List<EndpointDto>> Matrix { get; set; } = new();
+        public Dictionary<string, List<Dictionary<string, EndpointDto>>> Complex { get; set; } =
+            new();
+    }
+
+    [Test]
+    public async Task Bind_DictOfDictOfPoco_BindsDeepEntries()
+    {
+        // dict -> dict -> POCO (with a nested dict -> POCO property inside)
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Regions:0:Key"] = "eu",
+                    ["Regions:0:Value:0:Key"] = "prod",
+                    ["Regions:0:Value:0:Value:Name"] = "prod-eu",
+                    ["Regions:0:Value:0:Value:Endpoints:0:Key"] = "api",
+                    ["Regions:0:Value:0:Value:Endpoints:0:Value:Url"] = "https://api.eu",
+                    ["Regions:0:Value:0:Value:Endpoints:0:Value:Port"] = "443",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<DeepPocoConfig>(root);
+
+        await Assert.That(config.Regions.Count).IsEqualTo(1);
+        await Assert.That(config.Regions["eu"].Count).IsEqualTo(1);
+        var provider = config.Regions["eu"]["prod"];
+        await Assert.That(provider.Name).IsEqualTo("prod-eu");
+        await Assert.That(provider.Endpoints.Count).IsEqualTo(1);
+        await Assert.That(provider.Endpoints["api"].Url).IsEqualTo("https://api.eu");
+        await Assert.That(provider.Endpoints["api"].Port).IsEqualTo(443);
+    }
+
+    [Test]
+    public async Task Bind_ListOfDictOfPoco_BindsEntries()
+    {
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Groups:0:0:Key"] = "g1",
+                    ["Groups:0:0:Value:Name"] = "group-one",
+                    ["Groups:1:0:Key"] = "g2",
+                    ["Groups:1:0:Value:Name"] = "group-two",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<DeepPocoConfig>(root);
+
+        await Assert.That(config.Groups.Count).IsEqualTo(2);
+        await Assert.That(config.Groups[0]["g1"].Name).IsEqualTo("group-one");
+        await Assert.That(config.Groups[1]["g2"].Name).IsEqualTo("group-two");
+    }
+
+    [Test]
+    public async Task Bind_ListOfListOfPoco_BindsElements()
+    {
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Matrix:0:0:Url"] = "https://m00",
+                    ["Matrix:0:0:Port"] = "80",
+                    ["Matrix:0:1:Url"] = "https://m01",
+                    ["Matrix:0:1:Port"] = "81",
+                    ["Matrix:1:0:Url"] = "https://m10",
+                    ["Matrix:1:0:Port"] = "82",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<DeepPocoConfig>(root);
+
+        await Assert.That(config.Matrix.Count).IsEqualTo(2);
+        await Assert.That(config.Matrix[0].Count).IsEqualTo(2);
+        await Assert.That(config.Matrix[0][0].Url).IsEqualTo("https://m00");
+        await Assert.That(config.Matrix[0][0].Port).IsEqualTo(80);
+        await Assert.That(config.Matrix[0][1].Url).IsEqualTo("https://m01");
+        await Assert.That(config.Matrix[1][0].Url).IsEqualTo("https://m10");
+        await Assert.That(config.Matrix[1][0].Port).IsEqualTo(82);
+    }
+
+    [Test]
+    public async Task Bind_DictOfListOfDictOfPoco_BindsDeepEntries()
+    {
+        // dict -> list -> dict -> POCO (four levels, mixed containers)
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Complex:0:Key"] = "c1",
+                    ["Complex:0:Value:0:0:Key"] = "e1",
+                    ["Complex:0:Value:0:0:Value:Url"] = "https://e1",
+                    ["Complex:0:Value:0:0:Value:Port"] = "8080",
+                    ["Complex:0:Value:0:1:Key"] = "e2",
+                    ["Complex:0:Value:0:1:Value:Url"] = "https://e2",
+                    ["Complex:0:Value:0:1:Value:Port"] = "8081",
+                    ["Complex:1:Key"] = "c2",
+                    ["Complex:1:Value:0:0:Key"] = "e3",
+                    ["Complex:1:Value:0:0:Value:Url"] = "https://e3",
+                    ["Complex:1:Value:0:0:Value:Port"] = "8082",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<DeepPocoConfig>(root);
+
+        await Assert.That(config.Complex.Count).IsEqualTo(2);
+        await Assert.That(config.Complex["c1"].Count).IsEqualTo(1);
+        await Assert.That(config.Complex["c1"][0].Count).IsEqualTo(2);
+        await Assert.That(config.Complex["c1"][0]["e1"].Url).IsEqualTo("https://e1");
+        await Assert.That(config.Complex["c1"][0]["e1"].Port).IsEqualTo(8080);
+        await Assert.That(config.Complex["c1"][0]["e2"].Url).IsEqualTo("https://e2");
+        await Assert.That(config.Complex["c1"][0]["e2"].Port).IsEqualTo(8081);
+        await Assert.That(config.Complex["c2"][0]["e3"].Url).IsEqualTo("https://e3");
+        await Assert.That(config.Complex["c2"][0]["e3"].Port).IsEqualTo(8082);
+    }
+
     // --- CamelCase key → PascalCase property (case-insensitive lookup) ---
 
     public sealed class PnProviderEntry
