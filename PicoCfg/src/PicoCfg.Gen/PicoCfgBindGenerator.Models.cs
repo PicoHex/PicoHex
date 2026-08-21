@@ -47,7 +47,7 @@ public sealed partial class PicoCfgBindGenerator
         bool isNullable,
         bool requiresInitializerSyntax,
         INamedTypeSymbol? nestedType = null,
-        ITypeSymbol? elementType = null,
+        ElementBindingModel? elementBinding = null,
         bool isRequired = false
     )
     {
@@ -59,9 +59,28 @@ public sealed partial class PicoCfgBindGenerator
         public bool RequiresInitializerSyntax { get; } = requiresInitializerSyntax;
         public INamedTypeSymbol? NestedType { get; } = nestedType;
         public int NestedModelIndex { get; set; } = -1;
-        public int CollectionElementNestedIndex { get; set; } = -1;
-        public ITypeSymbol? ElementType { get; } = elementType;
+        public ElementBindingModel? ElementBinding { get; } = elementBinding;
         public bool IsRequired { get; } = isRequired;
+    }
+
+    /// <summary>
+    /// Recursive description of a collection element. An element is either a
+    /// scalar (<see cref="Kind"/> is a scalar kind), a nested class
+    /// (<see cref="Kind"/> is <see cref="ScalarKind.Nested"/>), or another
+    /// collection (<see cref="Kind"/> is a collection kind and
+    /// <see cref="Element"/> describes its own element).
+    /// </summary>
+    private sealed class ElementBindingModel(
+        ScalarKind kind,
+        ITypeSymbol type,
+        ElementBindingModel? element = null
+    )
+    {
+        /// <summary>Scalar → underlying (non-nullable) type; nested → the class; collection → the collection type itself.</summary>
+        public ScalarKind Kind { get; } = kind;
+        public ITypeSymbol Type { get; } = type;
+        public int NestedModelIndex { get; set; } = -1;
+        public ElementBindingModel? Element { get; } = element;
     }
 
     [Flags]

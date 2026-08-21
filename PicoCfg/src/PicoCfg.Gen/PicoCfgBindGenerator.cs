@@ -83,19 +83,13 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
             }
         }
 
-        // Also fill collection element nested indices
+        // Also fill collection element nested indices (recursively — nested classes
+        // can appear at any collection depth, e.g. Dictionary<string, List<SubConfig>>)
         foreach (var target in validTargets)
         {
             foreach (var prop in target.Properties)
             {
-                if (
-                    prop.ElementType is INamedTypeSymbol elemNamedType
-                    && IsNestedBindableType(elemNamedType)
-                    && sortedTypeToIndex.TryGetValue(elemNamedType, out var elemNestedIdx)
-                )
-                {
-                    prop.CollectionElementNestedIndex = elemNestedIdx;
-                }
+                FillNestedElementIndices(prop.ElementBinding, sortedTypeToIndex);
             }
         }
 
@@ -167,16 +161,58 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
 
                 if (
                     TryGetCollectionKind(prop.Type, out _, out var elementType)
-                    && elementType is INamedTypeSymbol nestedElementType
-                    && IsNestedBindableType(nestedElementType)
-                    && !targets.ContainsKey(nestedElementType)
+                    && elementType is not null
                 )
                 {
-                    targets.Add(nestedElementType, new TargetRegistration(nestedElementType));
-                    depth[nestedElementType] = currentDepth + 1;
-                    queue.Enqueue(nestedElementType);
+                    DiscoverNestedElementTargets(elementType, targets, depth, queue, currentDepth);
                 }
             }
+        }
+    }
+
+    private static void FillNestedElementIndices(
+        ElementBindingModel? element,
+        Dictionary<ITypeSymbol, int> sortedTypeToIndex
+    )
+    {
+        if (element is null)
+            return;
+
+        if (
+            element.Kind == ScalarKind.Nested
+            && element.Type is INamedTypeSymbol nestedType
+            && sortedTypeToIndex.TryGetValue(nestedType, out var nestedIdx)
+        )
+        {
+            element.NestedModelIndex = nestedIdx;
+        }
+
+        FillNestedElementIndices(element.Element, sortedTypeToIndex);
+    }
+
+    /// <summary>
+    /// Recursively discovers nested-class targets inside collection element types
+    /// (e.g. the <c>SubConfig</c> in <c>Dictionary&lt;string, List&lt;SubConfig&gt;&gt;</c>).
+    /// </summary>
+    private static void DiscoverNestedElementTargets(
+        ITypeSymbol type,
+        Dictionary<ITypeSymbol, TargetRegistration> targets,
+        Dictionary<ITypeSymbol, int> depth,
+        Queue<ITypeSymbol> queue,
+        int parentDepth
+    )
+    {
+        if (IsNestedBindableType(type) && !targets.ContainsKey(type))
+        {
+            targets.Add(type, new TargetRegistration(type));
+            depth[type] = parentDepth + 1;
+            queue.Enqueue(type);
+            return;
+        }
+
+        if (TryGetCollectionKind(type, out _, out var elementType) && elementType is not null)
+        {
+            DiscoverNestedElementTargets(elementType, targets, depth, queue, parentDepth);
         }
     }
 
@@ -213,6 +249,14 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
                     adj[nestedTypeIdx].Add(parentIdx);
                     inDegree[parentIdx]++;
                 }
+
+                AddCollectionElementDependencies(
+                    prop.ElementBinding,
+                    parentIdx,
+                    typeToIndex,
+                    adj,
+                    inDegree
+                );
             }
         }
 
@@ -254,6 +298,35 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
         }
 
         return sorted;
+    }
+
+    /// <summary>
+    /// Adds topological dependency edges for nested-class elements inside collections
+    /// (recursively — a nested class at any collection depth must render before its
+    /// owning type).
+    /// </summary>
+    private static void AddCollectionElementDependencies(
+        ElementBindingModel? element,
+        int parentIdx,
+        Dictionary<ITypeSymbol, int> typeToIndex,
+        List<int>[] adj,
+        int[] inDegree
+    )
+    {
+        if (element is null)
+            return;
+
+        if (
+            element.Kind == ScalarKind.Nested
+            && typeToIndex.TryGetValue(element.Type, out var nestedIdx)
+            && nestedIdx != parentIdx
+        )
+        {
+            adj[nestedIdx].Add(parentIdx);
+            inDegree[parentIdx]++;
+        }
+
+        AddCollectionElementDependencies(element.Element, parentIdx, typeToIndex, adj, inDegree);
     }
 
     private static string FormatCyclePath(

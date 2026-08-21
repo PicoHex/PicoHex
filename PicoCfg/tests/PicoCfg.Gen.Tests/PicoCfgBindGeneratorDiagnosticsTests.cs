@@ -102,18 +102,21 @@ public class PicoCfgBindGeneratorDiagnosticsTests
     [Test]
     public async Task NestedDictionaryElement_ProducesDiagnostic()
     {
-        // BUG-REPORT regression: Dictionary<string, Dictionary<string, string>>
-        // previously bound silently to an empty dictionary — no error, no warning.
-        // Nested collection element types are unsupported and must fail loudly.
+        // Struct elements are not bindable — must fail loudly, never bind silently.
         var diagnostics = await CompileAndGetDiagnosticsAsync(
             """
             using System.Collections.Generic;
             using PicoCfg;
             using PicoCfg.Abs;
 
+            public struct ComplexChild
+            {
+                public int Value { get; set; }
+            }
+
             public sealed class NestedDictSettings
             {
-                public Dictionary<string, Dictionary<string, string>> Values { get; set; } = new();
+                public List<ComplexChild> Values { get; set; } = new();
             }
 
             public static class Entry
@@ -132,9 +135,10 @@ public class PicoCfgBindGeneratorDiagnosticsTests
     }
 
     [Test]
-    public async Task NestedCollectionElement_ProducesDiagnostic()
+    public async Task UnsupportedCollectionElement_ProducesDiagnostic()
     {
-        // List<List<int>> previously bound silently to an empty list.
+        // HashSet<T> is a collection but not a supported bindable collection — the
+        // element must be rejected with PCFGGEN010 instead of binding silently.
         var diagnostics = await CompileAndGetDiagnosticsAsync(
             """
             using System.Collections.Generic;
@@ -143,7 +147,7 @@ public class PicoCfgBindGeneratorDiagnosticsTests
 
             public sealed class NestedListSettings
             {
-                public List<List<int>> Values { get; set; } = new();
+                public List<HashSet<int>> Values { get; set; } = new();
             }
 
             public static class Entry

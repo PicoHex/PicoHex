@@ -130,7 +130,7 @@ CfgBind.BindInto(cfg, instance, "App");
 
 Supported property types: `string`, `bool`, `int`, `long`, `float`, `double`, `decimal`, `Guid`, `enum`, `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `TimeSpan`, `Uri`, `Version`, `BigInteger`, nested classes, `List<T>`, `T[]`, `Dictionary<string,T>`, `IReadOnlyList<T>`, `IReadOnlyCollection<T>`, `IEnumerable<T>`.
 
-Init-only properties and `record` types are fully supported. Nested **collection** element types (e.g. `Dictionary<string, Dictionary<string, string>>`, `List<List<int>>`) are rejected with the `PCFGGEN010` diagnostic rather than binding silently to an empty collection.
+Init-only properties and `record` types are fully supported. **Nested collections bind natively at any depth** — `Dictionary<string, Dictionary<string, string>>`, `List<List<int>>`, `Dictionary<string, List<T>>` etc. use the indexed format extended per level (`Section:0:Key`, `Section:0:Value:0:Key`, `Section:0:Value:0:Value`). Only truly unbindable element types (structs, `HashSet<T>`) are rejected with the `PCFGGEN010` diagnostic rather than binding silently to an empty collection.
 
 ## Options Pattern
 

@@ -167,8 +167,9 @@ public sealed partial class PicoCfgBindGenerator
         if (TryGetCollectionKind(property.Type, out var collectionKind, out var elementType))
         {
             // Nested collection element types (e.g. Dictionary<string, Dictionary<string, string>>,
-            // List<List<int>>) cannot be bound — reject them loudly instead of silently
-            // binding to an empty collection (BUG-REPORT regression).
+            // List<List<int>>) bind natively — the generator recurses through the full
+            // element graph. Only truly unbindable elements (structs, unsupported
+            // collection implementations like HashSet<T>) are rejected with PCFGGEN010.
             if (elementType is not null && !IsSupportedCollectionElementType(elementType))
             {
                 ReportAll(
@@ -189,7 +190,7 @@ public sealed partial class PicoCfgBindGenerator
                 property.Type,
                 IsNullable(property.Type),
                 property.SetMethod?.IsInitOnly ?? false,
-                elementType: elementType,
+                elementBinding: elementType is null ? null : BuildElementBinding(elementType),
                 isRequired: isRequired
             );
             return true;
@@ -564,8 +565,36 @@ public sealed partial class PicoCfgBindGenerator
         return false;
     }
 
-    private static bool IsSupportedCollectionElementType(ITypeSymbol type) =>
-        TryGetScalarKind(type, out _, out _) || IsNestedBindableType(type);
+    private static bool IsSupportedCollectionElementType(ITypeSymbol type)
+    {
+        if (TryGetScalarKind(type, out _, out _))
+            return true;
+        if (IsNestedBindableType(type))
+            return true;
+        if (TryGetCollectionKind(type, out _, out var elementType))
+            return elementType is not null && IsSupportedCollectionElementType(elementType);
+        return false;
+    }
+
+    private static ElementBindingModel? BuildElementBinding(ITypeSymbol elementType)
+    {
+        if (TryGetScalarKind(elementType, out var scalarKind, out var underlyingType))
+            return new ElementBindingModel(scalarKind, underlyingType);
+
+        if (IsNestedBindableType(elementType))
+            return new ElementBindingModel(ScalarKind.Nested, elementType);
+
+        if (TryGetCollectionKind(elementType, out var collectionKind, out var nestedElement))
+        {
+            return new ElementBindingModel(
+                collectionKind,
+                elementType,
+                nestedElement is null ? null : BuildElementBinding(nestedElement)
+            );
+        }
+
+        return null;
+    }
 
     private static bool IsSilentlySkippablePropertyType(ITypeSymbol type)
     {

@@ -112,6 +112,25 @@ partial class CfgBindRuntime
         );
 
     /// <summary>
+    /// True when any key exists under <paramref name="path"/> (i.e. a key starting
+    /// with <c>path:</c>). Used by generated nested-collection loops: a list element
+    /// holding a nested collection or nested class stores its data at
+    /// <c>Section:N:...</c>, so the element exists when either the leaf
+    /// <c>Section:N</c> or the <c>Section:N:</c> prefix is present.
+    /// </summary>
+    public static bool HasKeyPrefix(ICfg cfg, string path)
+    {
+        ArgumentNullException.ThrowIfNull(cfg);
+        var prefix = string.IsNullOrEmpty(path) ? ":" : path + ":";
+        foreach (var (key, _) in cfg.GetAll())
+        {
+            if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Creates a scoped configuration view that prepends <paramref name="section"/>
     /// to all key lookups. The returned view is a live delegation to the parent
     /// <paramref name="cfg"/> and reflects any reloads the parent observes.

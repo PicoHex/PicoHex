@@ -89,7 +89,7 @@ public sealed partial class PicoCfgBindGenerator
         public static readonly DiagnosticDescriptor UnsupportedCollectionElementType = new(
             id: "PCFGGEN010",
             title: "Collection element type is not supported",
-            messageFormat: "PicoCfg.Gen v1 does not support collection element type '{2}' of property '{0}.{1}'; supported element types are scalars and nested classes",
+            messageFormat: "PicoCfg.Gen v1 does not support collection element type '{2}' of property '{0}.{1}'; supported element types are scalars, nested classes, and supported collections (List<T>, T[], Dictionary<string,T>, IReadOnlyList<T>, IReadOnlyCollection<T>, IEnumerable<T>)",
             category: "PicoCfg.Gen",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true

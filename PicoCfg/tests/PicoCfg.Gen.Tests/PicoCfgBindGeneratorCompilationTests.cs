@@ -252,6 +252,68 @@ public sealed class PicoCfgBindGeneratorCompilationTests
         await AssertCompilationSucceeded(result);
     }
 
+    [Test]
+    public async Task NestedCollectionElementTypes_CompileWithoutDiagnostics()
+    {
+        // Feature: nested collections bind natively — dict-of-dict, list-of-list,
+        // dict-of-list and list-of-dict must all compile warning-free.
+        var result = await CompileAndGetErrorsAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class NestedCollectionSettings
+            {
+                public Dictionary<string, Dictionary<string, string>> DictOfDict { get; set; } = new();
+                public List<List<int>> ListOfLists { get; set; } = new();
+                public Dictionary<string, List<int>> DictOfList { get; set; } = new();
+                public List<Dictionary<string, string>> ListOfDict { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static NestedCollectionSettings Run(ICfg cfg) => CfgBind.Bind<NestedCollectionSettings>(cfg);
+            }
+            """
+        );
+
+        await AssertCompilationSucceeded(result);
+    }
+
+    [Test]
+    public async Task DeeplyNestedCollections_CompileWithoutDiagnostics()
+    {
+        // Three-level dictionaries, read-only interface nesting, and nested classes
+        // at depth > 1 must all bind.
+        var result = await CompileAndGetErrorsAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class SubConfig
+            {
+                public string? Name { get; init; }
+            }
+
+            public sealed class DeepNestedSettings
+            {
+                public Dictionary<string, Dictionary<string, Dictionary<string, string>>> Deep { get; set; } = new();
+                public IReadOnlyList<List<int>>? ReadOnlyNested { get; set; }
+                public Dictionary<string, List<SubConfig>> Groups { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static DeepNestedSettings Run(ICfg cfg) => CfgBind.Bind<DeepNestedSettings>(cfg);
+            }
+            """
+        );
+
+        await AssertCompilationSucceeded(result);
+    }
+
     private static async Task AssertCompilationSucceeded(CompilationResult result)
     {
         if (result.Errors.Length > 0)
