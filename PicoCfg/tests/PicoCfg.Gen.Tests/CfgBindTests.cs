@@ -259,6 +259,81 @@ public sealed class CfgBindTests
         await Assert.That(config.Metadata["region"]).IsEqualTo("us-east-1");
     }
 
+    // --- Record with init-only scalar properties (BUG-REPORT regression) ---
+
+    public sealed record ProbeModelRecord
+    {
+        public bool MustEchoReasoning { get; init; }
+    }
+
+    public sealed record AppSettingsRecord
+    {
+        public Dictionary<string, ProbeModelRecord> Models { get; init; } = new();
+    }
+
+    [Test]
+    public async Task Bind_RecordWithInitOnlyScalars_BindsValues()
+    {
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Models:0:Key"] = "m1",
+                    ["Models:0:Value:MustEchoReasoning"] = "True",
+                }
+            )
+            .BuildAsync();
+
+        var settings = CfgBind.Bind<AppSettingsRecord>(root);
+
+        await Assert.That(settings.Models).IsNotNull();
+        await Assert.That(settings.Models.Count).IsEqualTo(1);
+        await Assert.That(settings.Models["m1"].MustEchoReasoning).IsTrue();
+    }
+
+    // --- Read-only collection interfaces (BUG-REPORT regression) ---
+
+    public sealed class ReadOnlyCollectionsConfig
+    {
+        public IReadOnlyList<string>? Tiers { get; set; }
+        public IReadOnlyCollection<int>? Ports { get; set; }
+        public IEnumerable<string>? Tags { get; set; }
+    }
+
+    [Test]
+    public async Task Bind_ReadOnlyCollectionInterfaces_BindsElements()
+    {
+        await using var root = await Cfg.CreateBuilder()
+            .Add(
+                new Dictionary<string, string>
+                {
+                    ["Tiers:0"] = "basic",
+                    ["Tiers:1"] = "pro",
+                    ["Ports:0"] = "8080",
+                    ["Ports:1"] = "8081",
+                    ["Tags:0"] = "a",
+                    ["Tags:1"] = "b",
+                }
+            )
+            .BuildAsync();
+
+        var config = CfgBind.Bind<ReadOnlyCollectionsConfig>(root);
+
+        await Assert.That(config.Tiers).IsNotNull();
+        await Assert.That(config.Tiers!.Count).IsEqualTo(2);
+        await Assert.That(config.Tiers![0]).IsEqualTo("basic");
+        await Assert.That(config.Tiers![1]).IsEqualTo("pro");
+
+        await Assert.That(config.Ports).IsNotNull();
+        await Assert.That(config.Ports!.Count).IsEqualTo(2);
+
+        await Assert.That(config.Tags).IsNotNull();
+        var tagCount = 0;
+        foreach (var _ in config.Tags!)
+            tagCount++;
+        await Assert.That(tagCount).IsEqualTo(2);
+    }
+
     // --- CamelCase key → PascalCase property (case-insensitive lookup) ---
 
     public sealed class PnProviderEntry

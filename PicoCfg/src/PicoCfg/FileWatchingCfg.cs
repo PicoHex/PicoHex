@@ -41,7 +41,12 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
     private CancellationTokenSource? _debounceCts;
     private Task? _pendingReload;
     private readonly Lock _debounceLock = new();
+    private readonly Lock _watcherLock = new();
+    private System.Threading.Timer? _watchRetryTimer;
     private int _disposed;
+
+    /// <summary>Interval between attempts to re-create the watcher after its directory disappeared.</summary>
+    private const int WatchRetryIntervalMs = 2000;
 
     /// <summary>
     /// Optional callback for observing errors during reload/cleanup.
@@ -62,7 +67,7 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         _inner = inner;
         _filePath = filePath;
         _debounceInterval = debounceInterval ?? TimeSpan.FromMilliseconds(200);
-        StartWatcher();
+        TryStartWatcher();
     }
 
     public ICfgSnapshot Snapshot => _inner.Snapshot;
@@ -76,7 +81,13 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
 
         try
         {
-            _watcher?.Dispose();
+            lock (_watcherLock)
+            {
+                _watchRetryTimer?.Dispose();
+                _watchRetryTimer = null;
+                _watcher?.Dispose();
+                _watcher = null;
+            }
         }
         catch (Exception ex)
         {
@@ -112,15 +123,56 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         await _inner.DisposeAsync();
     }
 
-    private void StartWatcher()
+    /// <summary>
+    /// Creates the <see cref="FileSystemWatcher"/> for the watched file.
+    /// Tolerates a missing watched directory: the failure is surfaced through
+    /// <see cref="OnError"/> (context "watch") and a retry timer re-attempts
+    /// until the directory exists again.
+    /// </summary>
+    private void TryStartWatcher()
     {
-        var dir = Path.GetDirectoryName(_filePath) ?? ".";
-        var file = Path.GetFileName(_filePath);
-        _watcher = new FileSystemWatcher(dir, file) { EnableRaisingEvents = true };
-        _watcher.Changed += OnFileChanged;
-        _watcher.Created += OnFileChanged;
-        _watcher.Error += OnWatcherError;
+        lock (_watcherLock)
+        {
+            if (Volatile.Read(ref _disposed) == 1)
+                return;
+
+            var dir = Path.GetDirectoryName(_filePath) ?? ".";
+            var file = Path.GetFileName(_filePath);
+            try
+            {
+                var watcher = new FileSystemWatcher(dir, file) { EnableRaisingEvents = true };
+                watcher.Changed += OnFileChanged;
+                watcher.Created += OnFileChanged;
+                watcher.Error += OnWatcherError;
+                _watcher = watcher;
+
+                _watchRetryTimer?.Dispose();
+                _watchRetryTimer = null;
+            }
+            catch (Exception ex) when (IsWatchStartException(ex))
+            {
+                OnError?.Invoke("watch", ex);
+                Trace.TraceError(
+                    $"[PicoCfg] File watching could not start for '{_filePath}': {ex}"
+                );
+
+                // The watched directory does not exist (yet) — retry until it appears.
+                _watchRetryTimer ??= new Timer(
+                    static state => ((FileWatchingCfgProvider)state!).TryStartWatcher(),
+                    this,
+                    WatchRetryIntervalMs,
+                    WatchRetryIntervalMs
+                );
+            }
+        }
     }
+
+    private static bool IsWatchStartException(Exception ex) =>
+        ex
+            is ArgumentException
+                or IOException
+                or UnauthorizedAccessException
+                or NotSupportedException;
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
@@ -161,9 +213,16 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         if (Volatile.Read(ref _disposed) == 1)
             return;
 
+        FileSystemWatcher? failedWatcher;
+        lock (_watcherLock)
+        {
+            failedWatcher = _watcher;
+            _watcher = null;
+        }
+
         try
         {
-            _watcher?.Dispose();
+            failedWatcher?.Dispose();
         }
         catch (Exception ex)
         {
@@ -174,6 +233,6 @@ internal sealed class FileWatchingCfgProvider : ICfgProvider
         if (Volatile.Read(ref _disposed) == 1)
             return;
 
-        StartWatcher();
+        TryStartWatcher();
     }
 }

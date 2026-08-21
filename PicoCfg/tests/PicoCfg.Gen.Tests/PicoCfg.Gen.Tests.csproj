@@ -6,8 +6,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <!-- Allow PCFGGEN003 for partial binding test types -->
+    <!-- Allow PCFGGEN003 for partial binding test types (ConfigWithStruct) -->
     <NoWarn>$(NoWarn);PCFGGEN003</NoWarn>
+    <!-- Generated binding code must compile warning-free under strict policies (BUG-REPORT regression) -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 

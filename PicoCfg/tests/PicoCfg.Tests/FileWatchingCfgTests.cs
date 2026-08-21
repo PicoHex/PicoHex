@@ -1,5 +1,7 @@
 namespace PicoCfg.Tests;
 
+using System.Collections.Concurrent;
+
 public class FileWatchingCfgTests
 {
     [Test]
@@ -140,6 +142,81 @@ public class FileWatchingCfgTests
             catch
             { /* best-effort cleanup */
             }
+        }
+    }
+
+    [Test]
+    public async Task FileWatchingCfgProvider_DirectoryDeleted_ReportsErrorAndRecovers()
+    {
+        // BUG-REPORT regression: deleting the watched directory made FileSystemWatcher
+        // raise its Error event; the provider then re-created the watcher against the
+        // missing directory, throwing an unhandled ArgumentException on a thread-pool
+        // thread and crashing the whole process. The watcher must instead report via
+        // OnFileWatchError and retry until the directory exists again.
+        var tempDir = Path.Combine(
+            Path.GetTempPath(),
+            "picocfg-fw-" + Guid.NewGuid().ToString("N")
+        );
+        var tempPath = Path.Combine(tempDir, "settings.txt");
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            await File.WriteAllTextAsync(tempPath, "key=value1", Encoding.UTF8);
+
+            var watchErrors = new ConcurrentQueue<(string Context, Exception Error)>();
+            var builder = Cfg.CreateBuilder();
+            builder.OnFileWatchError = (context, ex) => watchErrors.Enqueue((context, ex));
+
+            await using var root = await builder
+                .Add(
+                    ct => ValueTask.FromResult<Stream>(File.OpenRead(tempPath)),
+                    watchPath: tempPath
+                )
+                .BuildAsync();
+
+            await Assert.That(root.GetValue("key")).IsEqualTo("value1");
+
+            // Delete the whole watched directory — must not crash the process.
+            Directory.Delete(tempDir, recursive: true);
+
+            // The error must surface through OnFileWatchError (before the fix this
+            // path threw an unhandled exception and killed the test host).
+            await WaitUntilAsync(() => watchErrors.Count > 0, TimeSpan.FromSeconds(10));
+            await Assert.That(watchErrors).IsNotEmpty();
+
+            // Recreate the directory + file — the provider must recover and keep working.
+            Directory.CreateDirectory(tempDir);
+            await File.WriteAllTextAsync(tempPath, "key=value2", Encoding.UTF8);
+
+            // Allow the retry timer to re-attach the watcher, then reload.
+            await Task.Delay(2500);
+            var changed = await root.ReloadAsync();
+            await Assert.That(changed).IsTrue();
+            await Assert.That(root.GetValue("key")).IsEqualTo("value2");
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(tempDir))
+                    Directory.Delete(tempDir, recursive: true);
+            }
+            catch
+            { /* best-effort cleanup */
+            }
+        }
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (!condition())
+        {
+            if (DateTime.UtcNow >= deadline)
+                throw new TimeoutException(
+                    $"Condition was not met within {timeout} ({nameof(FileWatchingCfgTests)})."
+                );
+            await Task.Delay(100);
         }
     }
 }

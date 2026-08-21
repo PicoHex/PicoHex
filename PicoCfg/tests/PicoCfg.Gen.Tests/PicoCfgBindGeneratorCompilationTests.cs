@@ -142,6 +142,116 @@ public sealed class PicoCfgBindGeneratorCompilationTests
         await AssertCompilationSucceeded(result);
     }
 
+    [Test]
+    public async Task RecordWithInitOnlyScalarProperties_CompileWithoutDiagnostics()
+    {
+        // BUG-REPORT regression: record/init-only DTOs generated '__value_X = __value_X;'
+        // (CS1717), which breaks builds under TreatWarningsAsErrors.
+        var result = await CompileAndGetErrorsAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed record ProbeModel
+            {
+                public bool MustEchoReasoning { get; init; }
+            }
+
+            public sealed record AppSettings
+            {
+                public Dictionary<string, ProbeModel> Models { get; init; } = new();
+            }
+
+            public static class Entry
+            {
+                public static AppSettings Run(ICfg cfg) => CfgBind.Bind<AppSettings>(cfg);
+            }
+            """
+        );
+
+        await AssertCompilationSucceeded(result);
+    }
+
+    [Test]
+    public async Task InitOnlyNullableValueTypes_CompileWithoutDiagnostics()
+    {
+        // BUG-REPORT regression: nullable scalars in init-only DTOs generated
+        // 'out bool?' where 'out bool' was expected (CS1503).
+        var result = await CompileAndGetErrorsAsync(
+            """
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed record NullableSettings
+            {
+                public bool? Flag { get; init; }
+                public int? Count { get; init; }
+            }
+
+            public static class Entry
+            {
+                public static NullableSettings Run(ICfg cfg) => CfgBind.Bind<NullableSettings>(cfg);
+            }
+            """
+        );
+
+        await AssertCompilationSucceeded(result);
+    }
+
+    [Test]
+    public async Task SettableNullableScalars_CompileWithoutDiagnostics()
+    {
+        // Regression guard: nullable scalars on plain settable DTOs must stay clean.
+        var result = await CompileAndGetErrorsAsync(
+            """
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class ModelDto
+            {
+                public bool? MustEchoReasoning { get; set; }
+                public string? Extends { get; set; }
+            }
+
+            public static class Entry
+            {
+                public static ModelDto Run(ICfg cfg) => CfgBind.Bind<ModelDto>(cfg);
+            }
+            """
+        );
+
+        await AssertCompilationSucceeded(result);
+    }
+
+    [Test]
+    public async Task ReadOnlyCollectionInterfaceProperties_CompileWithoutDiagnostics()
+    {
+        // BUG-REPORT regression: IReadOnlyList<T>/IReadOnlyCollection<T>/IEnumerable<T>
+        // properties failed with the misleading PCFGGEN003 diagnostic.
+        var result = await CompileAndGetErrorsAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class TiersSettings
+            {
+                public IReadOnlyList<string>? Tiers { get; set; }
+                public IReadOnlyCollection<int> Ports { get; set; } = new List<int>();
+                public IEnumerable<string>? Tags { get; set; }
+            }
+
+            public static class Entry
+            {
+                public static TiersSettings Run(ICfg cfg) => CfgBind.Bind<TiersSettings>(cfg);
+            }
+            """
+        );
+
+        await AssertCompilationSucceeded(result);
+    }
+
     private static async Task AssertCompilationSucceeded(CompilationResult result)
     {
         if (result.Errors.Length > 0)
@@ -167,7 +277,11 @@ public sealed class PicoCfgBindGeneratorCompilationTests
             assemblyName: "CompilationTest",
             syntaxTrees: [syntaxTree],
             references: RoslynTestHelpers.GetMetadataReferences(),
-            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+            options: new CSharpCompilationOptions(
+                OutputKind.DynamicallyLinkedLibrary,
+                nullableContextOptions: NullableContextOptions.Enable,
+                generalDiagnosticOption: ReportDiagnostic.Error
+            )
         );
 
         var generator = new PicoCfgBindGenerator();

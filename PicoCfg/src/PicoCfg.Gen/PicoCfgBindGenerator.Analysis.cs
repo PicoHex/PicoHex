@@ -166,6 +166,22 @@ public sealed partial class PicoCfgBindGenerator
 
         if (TryGetCollectionKind(property.Type, out var collectionKind, out var elementType))
         {
+            // Nested collection element types (e.g. Dictionary<string, Dictionary<string, string>>,
+            // List<List<int>>) cannot be bound — reject them loudly instead of silently
+            // binding to an empty collection (BUG-REPORT regression).
+            if (elementType is not null && !IsSupportedCollectionElementType(elementType))
+            {
+                ReportAll(
+                    context,
+                    registration.Locations.Concat([property.Locations[0]]),
+                    Diagnostics.UnsupportedCollectionElementType,
+                    namedType.ToDisplayString(),
+                    property.Name,
+                    elementType.ToDisplayString()
+                );
+                return false;
+            }
+
             propertyModel = new PropertyModel(
                 property.Name,
                 property.Type,
@@ -459,10 +475,20 @@ public sealed partial class PicoCfgBindGenerator
                     == SpecialType.System_Collections_Generic_IList_T
             )
             {
-                if (named.TypeKind == TypeKind.Class)
+                if (named.TypeKind is TypeKind.Class or TypeKind.Interface)
                     return true;
             }
         }
+
+        // Non-generic collection interfaces (IEnumerable, ICollection, IList) are
+        // collections too — report them as unsupported collections, not "complex types".
+        if (
+            named.TypeArguments.Length == 0
+            && named.OriginalDefinition.Name is "IEnumerable" or "ICollection" or "IList"
+            && named.OriginalDefinition.ContainingNamespace.ToDisplayString()
+                == "System.Collections"
+        )
+            return true;
 
         if (
             named.TypeArguments.Length == 2
@@ -506,6 +532,23 @@ public sealed partial class PicoCfgBindGenerator
             return true;
         }
 
+        // Read-only collection interfaces bind like List<T>: the generated code
+        // accumulates into a List<T> and assigns to the interface property.
+        if (
+            named.TypeArguments.Length == 1
+            && named.OriginalDefinition.Name
+                is "IReadOnlyList"
+                    or "IReadOnlyCollection"
+                    or "IEnumerable"
+            && named.OriginalDefinition.ContainingNamespace.ToDisplayString()
+                == "System.Collections.Generic"
+        )
+        {
+            scalarKind = ScalarKind.Collection_List;
+            elementType = named.TypeArguments[0];
+            return true;
+        }
+
         if (
             named.TypeArguments.Length == 2
             && named.OriginalDefinition.Name == "Dictionary"
@@ -520,6 +563,9 @@ public sealed partial class PicoCfgBindGenerator
 
         return false;
     }
+
+    private static bool IsSupportedCollectionElementType(ITypeSymbol type) =>
+        TryGetScalarKind(type, out _, out _) || IsNestedBindableType(type);
 
     private static bool IsSilentlySkippablePropertyType(ITypeSymbol type)
     {

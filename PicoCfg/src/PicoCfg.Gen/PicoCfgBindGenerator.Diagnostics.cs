@@ -26,7 +26,7 @@ public sealed partial class PicoCfgBindGenerator
         public static readonly DiagnosticDescriptor UnsupportedComplexProperty = new(
             id: "PCFGGEN003",
             title: "Complex properties are not supported",
-            messageFormat: "PicoCfg.Gen v1 only supports flat scalar properties; '{0}.{1}' has unsupported complex type '{2}'",
+            messageFormat: "PicoCfg.Gen v1 does not support property '{0}.{1}' of complex type '{2}'; supported property types: scalars, List<T>/T[], Dictionary<string,T>, IReadOnlyList<T>/IReadOnlyCollection<T>/IEnumerable<T>, and nested classes",
             category: "PicoCfg.Gen",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true
@@ -83,6 +83,15 @@ public sealed partial class PicoCfgBindGenerator
             messageFormat: "Nesting depth limit of {0} reached; type '{1}' and its nested properties will not be bound",
             category: "PicoCfg.Gen",
             defaultSeverity: DiagnosticSeverity.Warning,
+            isEnabledByDefault: true
+        );
+
+        public static readonly DiagnosticDescriptor UnsupportedCollectionElementType = new(
+            id: "PCFGGEN010",
+            title: "Collection element type is not supported",
+            messageFormat: "PicoCfg.Gen v1 does not support collection element type '{2}' of property '{0}.{1}'; supported element types are scalars and nested classes",
+            category: "PicoCfg.Gen",
+            defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true
         );
     }

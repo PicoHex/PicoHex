@@ -128,7 +128,9 @@ var instance = new AppSettings();
 CfgBind.BindInto(cfg, instance, "App");
 ```
 
-Supported property types: `string`, `bool`, `int`, `long`, `float`, `double`, `decimal`, `Guid`, `enum`, `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `TimeSpan`, `Uri`, `Version`, `BigInteger`, nested classes, `List<T>`, `T[]`, `Dictionary<string,T>`.
+Supported property types: `string`, `bool`, `int`, `long`, `float`, `double`, `decimal`, `Guid`, `enum`, `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `TimeSpan`, `Uri`, `Version`, `BigInteger`, nested classes, `List<T>`, `T[]`, `Dictionary<string,T>`, `IReadOnlyList<T>`, `IReadOnlyCollection<T>`, `IEnumerable<T>`.
+
+Init-only properties and `record` types are fully supported. Nested **collection** element types (e.g. `Dictionary<string, Dictionary<string, string>>`, `List<List<int>>`) are rejected with the `PCFGGEN010` diagnostic rather than binding silently to an empty collection.
 
 ## Options Pattern
 

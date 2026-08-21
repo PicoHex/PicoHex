@@ -69,6 +69,9 @@ public class PicoCfgBindGeneratorDiagnosticsTests
     [Test]
     public async Task CollectionInterfaceProperty_ProducesDiagnostic()
     {
+        // IList<T> is a collection interface but is not part of the supported
+        // collection set — it must produce the precise collection diagnostic
+        // (PCFGGEN004), not the misleading "complex property" one.
         var diagnostics = await CompileAndGetDiagnosticsAsync(
             """
             using System.Collections.Generic;
@@ -90,8 +93,70 @@ public class PicoCfgBindGeneratorDiagnosticsTests
 
         await AssertDiagnosticAsync(
             diagnostics,
-            "PCFGGEN003",
+            "PCFGGEN004",
             "InterfaceCollectionSettings.Values",
+            expectedCount: 2
+        );
+    }
+
+    [Test]
+    public async Task NestedDictionaryElement_ProducesDiagnostic()
+    {
+        // BUG-REPORT regression: Dictionary<string, Dictionary<string, string>>
+        // previously bound silently to an empty dictionary — no error, no warning.
+        // Nested collection element types are unsupported and must fail loudly.
+        var diagnostics = await CompileAndGetDiagnosticsAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class NestedDictSettings
+            {
+                public Dictionary<string, Dictionary<string, string>> Values { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static NestedDictSettings Run(ICfg cfg) => CfgBind.Bind<NestedDictSettings>(cfg);
+            }
+            """
+        );
+
+        await AssertDiagnosticAsync(
+            diagnostics,
+            "PCFGGEN010",
+            "NestedDictSettings.Values",
+            expectedCount: 2
+        );
+    }
+
+    [Test]
+    public async Task NestedCollectionElement_ProducesDiagnostic()
+    {
+        // List<List<int>> previously bound silently to an empty list.
+        var diagnostics = await CompileAndGetDiagnosticsAsync(
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed class NestedListSettings
+            {
+                public List<List<int>> Values { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static NestedListSettings Run(ICfg cfg) => CfgBind.Bind<NestedListSettings>(cfg);
+            }
+            """
+        );
+
+        await AssertDiagnosticAsync(
+            diagnostics,
+            "PCFGGEN010",
+            "NestedListSettings.Values",
             expectedCount: 2
         );
     }
