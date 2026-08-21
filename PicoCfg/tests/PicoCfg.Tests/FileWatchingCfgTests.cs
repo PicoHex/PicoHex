@@ -176,13 +176,30 @@ public class FileWatchingCfgTests
 
             await Assert.That(root.GetValue("key")).IsEqualTo("value1");
 
-            // Delete the whole watched directory — must not crash the process.
+            // Delete the whole watched directory.
+            // Windows: FileSystemWatcher raises its Error event here — the provider must
+            // report via OnFileWatchError instead of crashing (before the fix this threw
+            // an unhandled ArgumentException on a thread-pool thread and killed the host).
+            // Linux/macOS: inotify does not raise an Error event for a deleted watch —
+            // the callback assertion is therefore Windows-only; the no-crash + recovery
+            // assertions apply on every platform.
             Directory.Delete(tempDir, recursive: true);
 
-            // The error must surface through OnFileWatchError (before the fix this
-            // path threw an unhandled exception and killed the test host).
-            await WaitUntilAsync(() => watchErrors.Count > 0, TimeSpan.FromSeconds(10));
-            await Assert.That(watchErrors).IsNotEmpty();
+            if (OperatingSystem.IsWindows())
+            {
+                // The "watch" context proves TryStartWatcher's missing-directory path
+                // surfaced through the user callback instead of throwing.
+                await WaitUntilAsync(
+                    () => watchErrors.Any(static e => e.Context == "watch"),
+                    TimeSpan.FromSeconds(10)
+                );
+                await Assert.That(watchErrors).IsNotEmpty();
+            }
+            else
+            {
+                // Give any platform-specific events time to be processed (validates no crash).
+                await Task.Delay(1500);
+            }
 
             // Recreate the directory + file — the provider must recover and keep working.
             Directory.CreateDirectory(tempDir);
