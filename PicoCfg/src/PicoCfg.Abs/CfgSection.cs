@@ -7,18 +7,27 @@ namespace PicoCfg.Abs;
 /// This is a live view — it always delegates to the parent and reflects any reloads
 /// the parent might observe.
 /// </summary>
-internal sealed class CfgSection : ICfgSection
+/// <remarks>
+/// Implementation detail of <c>GetSection</c> — public only so the PicoCfg runtime
+/// package can construct it without InternalsVisibleTo (same pattern as
+/// <c>PicoCfgBindRuntime</c>). Do not reference this type directly.
+/// </remarks>
+[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+public sealed class CfgSection : ICfgSection
 {
     private readonly ICfg _parent;
     private readonly string _path;
 
-    internal CfgSection(ICfg parent, string path)
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public CfgSection(ICfg parent, string path)
     {
         _parent = parent ?? throw new ArgumentNullException(nameof(parent));
         _path = path ?? string.Empty;
     }
 
-    internal ICfg Parent => _parent;
+    /// <summary>The parent view this section delegates to.</summary>
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public ICfg Parent => _parent;
 
     public string Path => _path;
 

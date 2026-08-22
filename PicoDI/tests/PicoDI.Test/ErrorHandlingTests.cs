@@ -550,10 +550,8 @@ public class ErrorHandlingTests
         public string Configuration { get; } = configuration;
     }
 
-    private sealed class FakeContainer : ISvcContainer, IGeneratedConfigurationStateContainer
+    private sealed class FakeContainer : ISvcContainer
     {
-        public bool IsGeneratedConfigurationApplied { get; set; }
-
         public ISvcContainer Register(SvcDescriptor descriptor)
         {
             return this;

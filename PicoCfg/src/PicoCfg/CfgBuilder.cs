@@ -21,7 +21,13 @@ public sealed class CfgBuilder
         return this;
     }
 
-    internal CfgBuilder AddSource(ICfgSource source)
+    /// <summary>
+    /// Adds an <see cref="ICfgSource"/> without watching. Public only so the
+    /// format packages (Json/Yaml/Ini/Toml) can compose file-watching sources
+    /// without InternalsVisibleTo (same pattern as <c>CfgBindRuntime</c>).
+    /// </summary>
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public CfgBuilder AddSource(ICfgSource source)
     {
         ArgumentNullException.ThrowIfNull(source);
         _sources.Add(source);
@@ -131,8 +137,11 @@ public sealed class CfgBuilder
     /// Creates a file-watching stream source with a custom parser. Used by
     /// the format packages (Json/Yaml/Ini/Toml) so their file sources reload
     /// on change like the line-based <c>AddFile</c> source.
+    /// Public only so the format packages can call it without InternalsVisibleTo
+    /// (same pattern as <c>CfgBindRuntime</c>) — not part of the supported API.
     /// </summary>
-    internal ICfgSource CreateFileWatchingSource(
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public ICfgSource CreateFileWatchingSource(
         string filePath,
         Func<Stream, CancellationToken, Task<Dictionary<string, string>>> parser,
         Func<object?>? versionStampFactory = null,

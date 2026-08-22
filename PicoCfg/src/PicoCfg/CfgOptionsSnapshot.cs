@@ -5,7 +5,12 @@ namespace PicoCfg;
 /// Each <see cref="Value"/> call creates a new instance from the underlying configuration.
 /// </summary>
 /// <typeparam name="T">The bound configuration type.</typeparam>
-internal sealed class CfgOptionsSnapshot<
+/// <remarks>
+/// Implementation detail of the options pattern — public only so PicoCfg.DI can
+/// construct it without InternalsVisibleTo (same pattern as <c>CfgBindRuntime</c>).
+/// </remarks>
+[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+public sealed class CfgOptionsSnapshot<
     [DynamicallyAccessedMembers(
         DynamicallyAccessedMemberTypes.PublicConstructors
             | DynamicallyAccessedMemberTypes.PublicProperties

@@ -22,6 +22,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="PicoCfg.Tests" />
     <InternalsVisibleTo Include="PicoCfg.DI.Tests" />
+    <InternalsVisibleTo Include="PicoCfg.Gen.Tests" />
   </ItemGroup>
 
   <ItemGroup>

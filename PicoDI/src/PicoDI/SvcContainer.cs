@@ -7,7 +7,7 @@ namespace PicoDI;
 /// <remarks>
 /// Use <c>DisposeAsync()</c> for proper asynchronous cleanup of hosted services and scopes.
 /// </remarks>
-public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfigurationStateContainer
+public sealed partial class SvcContainer : ISvcContainer
 {
     private Dictionary<Type, List<SvcRuntimeRegistration>>? _registrationCache;
 
@@ -62,8 +62,6 @@ public sealed partial class SvcContainer : ISvcContainer, IGeneratedConfiguratio
             return _implicitRootScope ??= new SvcScope(frozen, this);
         }
     }
-
-    bool IGeneratedConfigurationStateContainer.IsGeneratedConfigurationApplied { get; set; }
 
     private int _disposed;
 
