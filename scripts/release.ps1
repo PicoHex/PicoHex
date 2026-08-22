@@ -131,7 +131,7 @@ try {
 
     # --- Tag + push ----------------------------------------------------------------
 
-    git tag -a $tag -m "PicoHex $Version — packed locally + published via release.yml"
+    git tag -a $tag -m "PicoHex $Version - packed locally + published via release.yml"
     if ($LASTEXITCODE -ne 0) { Fail "git tag failed" }
 
     if (-not $NoPush) {
