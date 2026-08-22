@@ -26,11 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="PicoDI.Test" />
-    <InternalsVisibleTo Include="PicoMediator.Tests" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None
       Include="..\PicoDI.Gen\$(OutputPath)\PicoDI.Gen.dll"
       Pack="true"
