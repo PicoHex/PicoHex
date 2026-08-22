@@ -49,7 +49,10 @@
     <IlcGenerateUnwindStackTraceData>false</IlcGenerateUnwindStackTraceData>
   </PropertyGroup>
 
-  <!-- ⚠️ netstandard2.0 must NEVER AOT — this block MUST come after the AOT level blocks -->
+  <!-- ⚠️ netstandard2.0 must NEVER AOT — this block MUST come after the AOT level blocks.
+       Only source generators (PicoXxx.Gen) remain on netstandard2.0 (Roslyn loader
+       compatibility); all Abs packages moved to net10.0 and follow the library AOT
+       policy above. -->
   <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
     <PublishAot>false</PublishAot>
     <IsAotCompatible>false</IsAotCompatible>

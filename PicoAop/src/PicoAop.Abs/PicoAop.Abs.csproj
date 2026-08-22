@@ -1,10 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PublishAot>false</PublishAot>
     <IsPackable>true</IsPackable>
     <PackageId>PicoAop.Abs</PackageId>
     <Description>Abstractions for PicoAop — compile-time AOP interceptors for PicoDI</Description>
@@ -49,7 +48,4 @@
     />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-  </ItemGroup>
 </Project>
