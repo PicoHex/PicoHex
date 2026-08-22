@@ -16,8 +16,8 @@ public sealed partial class PicoCfgBindGenerator
 
         public static readonly DiagnosticDescriptor MissingPublicParameterlessConstructor = new(
             id: "PCFGGEN002",
-            title: "Binding target must have a public parameterless constructor",
-            messageFormat: "CfgBind.Bind<T> and CfgBind.TryBind<T> require '{0}' to declare a public parameterless constructor",
+            title: "Binding target must have a usable constructor",
+            messageFormat: "Binding '{0}' requires a public parameterless constructor or a positional record primary constructor",
             category: "PicoCfg.Gen",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true

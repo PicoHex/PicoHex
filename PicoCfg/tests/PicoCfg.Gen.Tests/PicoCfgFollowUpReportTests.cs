@@ -449,6 +449,139 @@ public sealed class PicoCfgFollowUpReportTests
         string[] Warnings,
         string GeneratedSource
     );
+
+    // --- 2026.8.8 residual Issue A: positional records with nested-type ctor params ---
+
+    [Test]
+    public async Task PositionalRecordWithNestedRecordCtorParam_CompilesWithoutErrors()
+    {
+        // Report repro: ModelCostTier's ctor parameter Cost is itself a
+        // positional record; PricingRow's Tiers ctor parameter is a collection.
+        var result = await CompileAndGetErrorsAsync(
+            nameof(PositionalRecordWithNestedRecordCtorParam_CompilesWithoutErrors),
+            """
+            using System.Collections.Generic;
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public sealed record ModelCost(decimal Input, decimal Output);
+
+            public sealed record ModelCostTier(ModelCost Cost, long InputTokensAbove);
+
+            public sealed record PricingRow(ModelCost Base, IReadOnlyList<ModelCostTier>? Tiers);
+
+            public sealed class RegistryConfig
+            {
+                public Dictionary<string, PricingRow> Models { get; set; } = new();
+            }
+
+            public static class Entry
+            {
+                public static RegistryConfig Run(ICfg cfg) => CfgBind.Bind<RegistryConfig>(cfg);
+            }
+            """
+        );
+
+        await AssertCompilationSucceeded(
+            result,
+            nameof(PositionalRecordWithNestedRecordCtorParam_CompilesWithoutErrors)
+        );
+    }
+
+    [Test]
+    public async Task PositionalRecordsFromReferencedAssembly_CompileWithoutErrors()
+    {
+        // Records defined in a SEPARATE assembly (DTO library + app): the
+        // generator sees them as metadata symbols with no syntax. The primary
+        // constructor must still be detected symbolically, otherwise Bind_N is
+        // never emitted while BindInto_N is — CS0103.
+        var dtoSource = """
+            using System.Collections.Generic;
+
+            public sealed record ModelCost(decimal Input, decimal Output);
+
+            public sealed record ModelCostTier(ModelCost Cost, long InputTokensAbove);
+
+            public sealed record PricingRow(ModelCost Base, IReadOnlyList<ModelCostTier>? Tiers);
+
+            public sealed class RegistryConfig
+            {
+                public Dictionary<string, PricingRow> Models { get; set; } = new();
+            }
+            """;
+
+        var dtoCompilation = CSharpCompilation.Create(
+            assemblyName: "ReproDtos",
+            syntaxTrees: [CSharpSyntaxTree.ParseText(dtoSource, CSharpParseOptions.Default)],
+            references: RoslynTestHelpers.GetMetadataReferences(),
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+        );
+        using var dtoMs = new MemoryStream();
+        var dtoEmit = dtoCompilation.Emit(dtoMs);
+        await Assert.That(dtoEmit.Success).IsTrue();
+        var dtoRef = MetadataReference.CreateFromImage(dtoMs.ToArray());
+
+        var consumerSource = """
+            using PicoCfg;
+            using PicoCfg.Abs;
+
+            public static class Entry
+            {
+                public static RegistryConfig Run(ICfg cfg) => CfgBind.Bind<RegistryConfig>(cfg);
+            }
+            """;
+
+        var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
+        var consumerCompilation = CSharpCompilation.Create(
+            assemblyName: "ReproConsumer",
+            syntaxTrees: [CSharpSyntaxTree.ParseText(consumerSource, parseOptions)],
+            references: RoslynTestHelpers.GetMetadataReferences().Append(dtoRef),
+            options: new CSharpCompilationOptions(
+                OutputKind.DynamicallyLinkedLibrary,
+                nullableContextOptions: NullableContextOptions.Enable,
+                generalDiagnosticOption: ReportDiagnostic.Error
+            )
+        );
+
+        var generator = new PicoCfgBindGenerator();
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [generator.AsSourceGenerator()],
+            parseOptions: parseOptions
+        );
+        driver = driver.RunGeneratorsAndUpdateCompilation(
+            consumerCompilation,
+            out var outputCompilation,
+            out var driverDiagnostics
+        );
+        using var ms = new MemoryStream();
+        var emitResult = outputCompilation.Emit(ms);
+
+        var allDiagnostics = ImmutableArray<Diagnostic>
+            .Empty.AddRange(outputCompilation.GetDiagnostics())
+            .AddRange(driverDiagnostics)
+            .AddRange(emitResult.Diagnostics);
+        var errors = allDiagnostics
+            .Where(d => d.Severity == DiagnosticSeverity.Error)
+            .Select(d => d.ToString())
+            .ToArray();
+
+        if (errors.Length > 0)
+        {
+            var dumpPath = Path.Combine(
+                Path.GetTempPath(),
+                "PicoCfgFollowUpBug_CrossAssembly_Diagnostic.g.cs"
+            );
+            var generatedSource = driver
+                .GetRunResult()
+                .Results.SelectMany(r => r.GeneratedSources)
+                .FirstOrDefault(s => s.HintName == "PicoCfgBindRegistrations.g.cs");
+            await File.WriteAllTextAsync(dumpPath, generatedSource.SourceText.ToString());
+            Console.WriteLine($"Generated source dumped to: {dumpPath}");
+            Console.WriteLine(string.Join(Environment.NewLine, errors.Take(10)));
+        }
+
+        await Assert.That(errors.Length).IsEqualTo(0);
+    }
 }
 
 #pragma warning restore CS0618

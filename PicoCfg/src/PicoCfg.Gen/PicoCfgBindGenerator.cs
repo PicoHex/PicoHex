@@ -85,6 +85,21 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
                     && sortedTypeToIndex.TryGetValue(prop.NestedType, out var nestedIdx)
                 )
                 {
+                    // A nested type without any usable construction path (no public
+                    // parameterless constructor and no detectable primary
+                    // constructor) cannot produce a Bind_N method — referencing it
+                    // would emit CS0103. Skip the property and report instead.
+                    if (!CanConstruct(validTargets[nestedIdx]))
+                    {
+                        ReportAll(
+                            context,
+                            NestedTypeLocations(prop.NestedType),
+                            Diagnostics.MissingPublicParameterlessConstructor,
+                            prop.NestedType.ToDisplayString()
+                        );
+                        continue;
+                    }
+
                     prop.NestedModelIndex = nestedIdx;
                 }
             }
@@ -96,7 +111,12 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
         {
             foreach (var prop in target.Properties)
             {
-                FillNestedElementIndices(prop.ElementBinding, sortedTypeToIndex);
+                FillNestedElementIndices(
+                    prop.ElementBinding,
+                    sortedTypeToIndex,
+                    validTargets,
+                    context
+                );
             }
         }
 
@@ -187,9 +207,17 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
         return truncated;
     }
 
+    private static bool CanConstruct(TargetModel target) =>
+        target.HasPublicParameterlessConstructor || target.HasPrimaryConstructor;
+
+    private static IEnumerable<Location> NestedTypeLocations(ITypeSymbol type) =>
+        type.Locations.Length > 0 ? [type.Locations[0]] : [Location.None];
+
     private static void FillNestedElementIndices(
         ElementBindingModel? element,
-        Dictionary<ITypeSymbol, int> sortedTypeToIndex
+        Dictionary<ITypeSymbol, int> sortedTypeToIndex,
+        IReadOnlyList<TargetModel> validTargets,
+        SourceProductionContext context
     )
     {
         if (element is null)
@@ -201,10 +229,23 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
             && sortedTypeToIndex.TryGetValue(nestedType, out var nestedIdx)
         )
         {
+            if (!CanConstruct(validTargets[nestedIdx]))
+            {
+                // Unconstructible element type — skip the element binding instead
+                // of emitting a reference to a never-emitted Bind_N (CS0103).
+                ReportAll(
+                    context,
+                    NestedTypeLocations(element.Type),
+                    Diagnostics.MissingPublicParameterlessConstructor,
+                    nestedType.ToDisplayString()
+                );
+                return;
+            }
+
             element.NestedModelIndex = nestedIdx;
         }
 
-        FillNestedElementIndices(element.Element, sortedTypeToIndex);
+        FillNestedElementIndices(element.Element, sortedTypeToIndex, validTargets, context);
     }
 
     /// <summary>

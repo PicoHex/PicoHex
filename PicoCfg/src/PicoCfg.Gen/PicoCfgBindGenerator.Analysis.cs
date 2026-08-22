@@ -175,41 +175,88 @@ public sealed partial class PicoCfgBindGenerator
     /// whose parameters match the record declaration's positional parameter list
     /// (names and order). Returns <see langword="null"/> for body-only records.
     /// </summary>
+    /// <summary>
+    /// Finds a positional record's primary constructor. For source-defined
+    /// records the constructor's parameters are matched exactly against the
+    /// record declaration's positional parameter list. For records from
+    /// referenced assemblies (no syntax available) the primary constructor is
+    /// inferred symbolically: the instance constructor whose parameters align
+    /// with the record's own properties by name and type (metadata symbols do
+    /// not expose the copy constructor, and all constructors report
+    /// <c>IsImplicitlyDeclared == false</c>, so name/type alignment is the
+    /// only reliable signal). Returns <see langword="null"/> for body-only
+    /// records and classes.
+    /// </summary>
     private static IMethodSymbol? FindPrimaryConstructor(INamedTypeSymbol type)
     {
         var recordSyntax = type
             .DeclaringSyntaxReferences.Select(static r => r.GetSyntax())
             .OfType<RecordDeclarationSyntax>()
             .FirstOrDefault(static r => r.ParameterList is { Parameters.Count: > 0 });
-        if (recordSyntax?.ParameterList is not { Parameters.Count: > 0 } parameterList)
-            return null;
+        if (recordSyntax?.ParameterList is { Parameters.Count: > 0 } parameterList)
+        {
+            var paramNames = parameterList
+                .Parameters.Select(static p => p.Identifier.ValueText)
+                .ToArray();
 
-        var paramNames = parameterList
-            .Parameters.Select(static p => p.Identifier.ValueText)
-            .ToArray();
+            foreach (var ctor in type.InstanceConstructors)
+            {
+                if (ctor.Parameters.Length != paramNames.Length)
+                    continue;
 
+                var matches = true;
+                for (var i = 0; i < paramNames.Length; i++)
+                {
+                    if (
+                        !string.Equals(
+                            ctor.Parameters[i].Name,
+                            paramNames[i],
+                            StringComparison.Ordinal
+                        )
+                    )
+                    {
+                        matches = false;
+                        break;
+                    }
+                }
+
+                if (matches)
+                    return ctor;
+            }
+        }
+
+        // Metadata path: pick the constructor with the most parameters whose
+        // parameters all align with same-named properties of the record.
+        IMethodSymbol? best = null;
+        var bestCount = -1;
         foreach (var ctor in type.InstanceConstructors)
         {
-            if (ctor.Parameters.Length != paramNames.Length)
+            if (ctor.Parameters.Length == 0)
                 continue;
 
-            var matches = true;
-            for (var i = 0; i < paramNames.Length; i++)
+            var aligned = 0;
+            foreach (var parameter in ctor.Parameters)
             {
+                var property = type.GetMembers(parameter.Name)
+                    .OfType<IPropertySymbol>()
+                    .FirstOrDefault();
                 if (
-                    !string.Equals(ctor.Parameters[i].Name, paramNames[i], StringComparison.Ordinal)
+                    property is not null
+                    && SymbolEqualityComparer.Default.Equals(property.Type, parameter.Type)
                 )
                 {
-                    matches = false;
-                    break;
+                    aligned++;
                 }
             }
 
-            if (matches)
-                return ctor;
+            if (aligned == ctor.Parameters.Length && ctor.Parameters.Length > bestCount)
+            {
+                best = ctor;
+                bestCount = ctor.Parameters.Length;
+            }
         }
 
-        return null;
+        return best;
     }
 
     /// <summary>
