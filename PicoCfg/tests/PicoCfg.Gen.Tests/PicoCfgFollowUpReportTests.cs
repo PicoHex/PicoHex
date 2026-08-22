@@ -89,7 +89,7 @@ public sealed class PicoCfgFollowUpReportTests
     [Test]
     public async Task DeeplyNestedDictionaryValueTypes_CompileWithoutDiagnostics()
     {
-        // Issue C: the documented 5-level nesting limit must not truncate the
+        // Issue C: the nesting depth limit must not truncate the
         // reported shape (Dictionary<string, PricingRow> → Tiers → Cost → Input).
         var result = await CompileAndGetErrorsAsync(
             nameof(DeeplyNestedDictionaryValueTypes_CompileWithoutDiagnostics),
