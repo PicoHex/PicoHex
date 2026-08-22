@@ -116,3 +116,160 @@ public class CfgBuilderJsonExtensionsTests
         await Assert.That(all["timeout"]).IsEqualTo("30");
     }
 }
+
+// --- BUG-REPORT 2026.8.7 follow-up: opt-in array flattening (Issue B) ---
+
+public sealed class CfgBuilderJsonArrayFlatteningTests
+{
+    [Test]
+    public async Task AddJson_WithoutFlattenArrays_StillSkipsArrays()
+    {
+        // Backward compatibility: the default keeps the documented skip behavior.
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson("""{"Items": [1, 2, 3], "Name": "t"}""");
+
+        var root = await builder.BuildAsync();
+
+        await Assert.That(root.GetValue("Name")).IsEqualTo("t");
+        await Assert.That(root.GetValue("Items:0")).IsNull();
+        await Assert.That(root.GetValue("Items")).IsNull();
+    }
+
+    [Test]
+    public async Task AddJson_WithFlattenArrays_FlattensScalarArrayElements()
+    {
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson("""{"Items": [1, 2, 3], "Name": "t"}""", flattenArrays: true);
+
+        var root = await builder.BuildAsync();
+
+        await Assert.That(root.GetValue("Items:0")).IsEqualTo("1");
+        await Assert.That(root.GetValue("Items:1")).IsEqualTo("2");
+        await Assert.That(root.GetValue("Items:2")).IsEqualTo("3");
+        await Assert.That(root.GetValue("Name")).IsEqualTo("t");
+    }
+
+    [Test]
+    public async Task AddJson_WithFlattenArrays_FlattensObjectArrayElements()
+    {
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson(
+            """{"Items": [{"Name": "a", "Port": 1}, {"Name": "b", "Port": 2}]}""",
+            flattenArrays: true
+        );
+
+        var root = await builder.BuildAsync();
+
+        await Assert.That(root.GetValue("Items:0:Name")).IsEqualTo("a");
+        await Assert.That(root.GetValue("Items:0:Port")).IsEqualTo("1");
+        await Assert.That(root.GetValue("Items:1:Name")).IsEqualTo("b");
+        await Assert.That(root.GetValue("Items:1:Port")).IsEqualTo("2");
+    }
+
+    [Test]
+    public async Task AddJson_WithFlattenArrays_FlattensNestedArrays()
+    {
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson("""{"M": [[1, 2], [3, 4]]}""", flattenArrays: true);
+
+        var root = await builder.BuildAsync();
+
+        await Assert.That(root.GetValue("M:0:0")).IsEqualTo("1");
+        await Assert.That(root.GetValue("M:0:1")).IsEqualTo("2");
+        await Assert.That(root.GetValue("M:1:0")).IsEqualTo("3");
+        await Assert.That(root.GetValue("M:1:1")).IsEqualTo("4");
+    }
+
+    [Test]
+    public async Task AddJson_WithFlattenArrays_MixedObjectsArraysAndScalars()
+    {
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson(
+            """{"A": {"B": "v"}, "Items": [{"X": 1}, 2], "Name": "t"}""",
+            flattenArrays: true
+        );
+
+        var root = await builder.BuildAsync();
+
+        await Assert.That(root.GetValue("A:B")).IsEqualTo("v");
+        await Assert.That(root.GetValue("Items:0:X")).IsEqualTo("1");
+        await Assert.That(root.GetValue("Items:1")).IsEqualTo("2");
+        await Assert.That(root.GetValue("Name")).IsEqualTo("t");
+    }
+
+    [Test]
+    public async Task AddJson_WithFlattenArrays_ArrayOfArraysWithObjects()
+    {
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson("""{"items": [{"a": [1, 2]}, {"a": [3]}]}""", flattenArrays: true);
+
+        var root = await builder.BuildAsync();
+
+        await Assert.That(root.GetValue("items:0:a:0")).IsEqualTo("1");
+        await Assert.That(root.GetValue("items:0:a:1")).IsEqualTo("2");
+        await Assert.That(root.GetValue("items:1:a:0")).IsEqualTo("3");
+        await Assert.That(root.GetValue("items:0:0")).IsNull();
+        await Assert.That(root.GetValue("items:1:0")).IsNull();
+    }
+
+    [Test]
+    public async Task AddJson_WithFlattenArrays_ArrayWithNullElementsAdvancesIndex()
+    {
+        var builder = Cfg.CreateBuilder();
+        builder.AddJson("""{"Items": [1, null, 3]}""", flattenArrays: true);
+
+        var root = await builder.BuildAsync();
+
+        // null occupies an element slot: the third element is index 2, not 1.
+        await Assert.That(root.GetValue("Items:0")).IsEqualTo("1");
+        await Assert.That(root.GetValue("Items:1")).IsNull();
+        await Assert.That(root.GetValue("Items:2")).IsEqualTo("3");
+    }
+
+    [Test]
+    public async Task AddJsonFile_WithFlattenArrays_FlattensArrayElements()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"picocfg-json-arrays-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(path, """{"Items": ["text", "image"], "Name": "t"}""");
+
+            var builder = Cfg.CreateBuilder();
+            builder.AddJsonFile(path, flattenArrays: true);
+
+            await using var root = await builder.BuildAsync();
+
+            await Assert.That(root.GetValue("Items:0")).IsEqualTo("text");
+            await Assert.That(root.GetValue("Items:1")).IsEqualTo("image");
+            await Assert.That(root.GetValue("Name")).IsEqualTo("t");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public async Task AddJsonFile_WithoutFlattenArrays_StillSkipsArrays()
+    {
+        var path = Path.Combine(
+            Path.GetTempPath(),
+            $"picocfg-json-arrays-skip-{Guid.NewGuid():N}.json"
+        );
+        try
+        {
+            await File.WriteAllTextAsync(path, """{"Items": ["text", "image"]}""");
+
+            var builder = Cfg.CreateBuilder();
+            builder.AddJsonFile(path);
+
+            await using var root = await builder.BuildAsync();
+
+            await Assert.That(root.GetValue("Items:0")).IsNull();
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+}

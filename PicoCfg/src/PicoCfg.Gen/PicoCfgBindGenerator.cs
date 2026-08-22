@@ -4,6 +4,13 @@ namespace PicoCfg.Gen;
 [Generator(LanguageNames.CSharp)]
 public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
 {
+    /// <summary>
+    /// Maximum number of nested type levels the generator expands. Dictionary value
+    /// types and collection element types count toward the limit (each nested class
+    /// level adds one). Types at the boundary are truncated with PCFGGEN009.
+    /// </summary>
+    private const int NestingDepthLimit = 8;
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var calls = context
@@ -43,13 +50,13 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
         }
 
         // Phase 2: Recursively discover nested bindable targets from property types
-        DiscoverNestedTargets(targets, context);
+        var truncatedTypes = DiscoverNestedTargets(targets, context);
 
         // Phase 3: Analyze all targets
         var validTargets = new List<TargetModel>(targets.Count);
         foreach (var registration in targets.Values)
         {
-            if (!TryAnalyzeTarget(context, registration, out var model))
+            if (!TryAnalyzeTarget(context, registration, targets, truncatedTypes, out var model))
                 continue;
 
             validTargets.Add(model);
@@ -100,14 +107,21 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
         );
     }
 
-    private static void DiscoverNestedTargets(
+    /// <summary>
+    /// Discovers nested bindable targets from property types, breadth-first, down
+    /// to <see cref="NestingDepthLimit"/> levels. Types at the boundary are added
+    /// to <paramref name="targets"/> but their members are not expanded; they are
+    /// returned in the truncated set so analysis can skip their unknown property
+    /// graph instead of generating references to never-emitted bind methods.
+    /// </summary>
+    private static ISet<ITypeSymbol> DiscoverNestedTargets(
         Dictionary<ITypeSymbol, TargetRegistration> targets,
         SourceProductionContext context
     )
     {
-        const int maxDepth = 5;
         var queue = new Queue<ITypeSymbol>(targets.Keys);
         var depth = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
+        var truncated = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
         var reportedTruncated = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
 
         foreach (var key in targets.Keys)
@@ -118,15 +132,16 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
             var type = queue.Dequeue();
             var currentDepth = depth.TryGetValue(type, out var d) ? d : 0;
 
-            if (currentDepth >= maxDepth)
+            if (currentDepth >= NestingDepthLimit)
             {
+                truncated.Add(type);
                 if (reportedTruncated.Add(type))
                 {
                     context.ReportDiagnostic(
                         Diagnostic.Create(
                             Diagnostics.NestingTruncated,
                             Location.None,
-                            maxDepth,
+                            NestingDepthLimit,
                             type.ToDisplayString()
                         )
                     );
@@ -168,6 +183,8 @@ public sealed partial class PicoCfgBindGenerator : IIncrementalGenerator
                 }
             }
         }
+
+        return truncated;
     }
 
     private static void FillNestedElementIndices(

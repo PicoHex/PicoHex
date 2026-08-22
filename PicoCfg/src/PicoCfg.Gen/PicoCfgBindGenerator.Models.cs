@@ -28,7 +28,8 @@ public sealed partial class PicoCfgBindGenerator
         ImmutableArray<PropertyModel> properties,
         bool hasPublicParameterlessConstructor,
         bool isRecordClass,
-        bool hasPrimaryConstructor
+        bool hasPrimaryConstructor,
+        IMethodSymbol? primaryConstructor = null
     )
     {
         public INamedTypeSymbol TargetType { get; } = targetType;
@@ -37,6 +38,12 @@ public sealed partial class PicoCfgBindGenerator
         public bool HasPublicParameterlessConstructor { get; } = hasPublicParameterlessConstructor;
         public bool IsRecordClass { get; } = isRecordClass;
         public bool HasPrimaryConstructor { get; } = hasPrimaryConstructor;
+
+        /// <summary>
+        /// The primary constructor of a positional record (e.g. <c>record R(int A)</c>).
+        /// <see langword="null" /> for classes and body-only records.
+        /// </summary>
+        public IMethodSymbol? PrimaryConstructor { get; } = primaryConstructor;
     }
 
     private sealed class PropertyModel(

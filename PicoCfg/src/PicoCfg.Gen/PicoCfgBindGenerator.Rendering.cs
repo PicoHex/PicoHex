@@ -29,12 +29,10 @@ public sealed partial class PicoCfgBindGenerator
                 "global::PicoCfg.PicoCfgGeneratedTryBindDelegate<" + typeName + ">";
             var bindIntoDelegateType =
                 "global::PicoCfg.PicoCfgGeneratedBindIntoDelegate<" + typeName + ">";
-            var hasCtor = target.HasPublicParameterlessConstructor
-                ? "(" + bindDelegateType + ")Bind_" + i
-                : "null";
-            var hasTryBind = target.HasPublicParameterlessConstructor
-                ? "(" + tryBindDelegateType + ")TryBind_" + i
-                : "null";
+            var canConstruct =
+                target.HasPublicParameterlessConstructor || target.HasPrimaryConstructor;
+            var hasCtor = canConstruct ? "(" + bindDelegateType + ")Bind_" + i : "null";
+            var hasTryBind = canConstruct ? "(" + tryBindDelegateType + ")TryBind_" + i : "null";
 
             sb.Append("        global::PicoCfg.CfgBindRuntime.Register<")
                 .Append(typeName)
@@ -67,9 +65,20 @@ public sealed partial class PicoCfgBindGenerator
         var typeName = target.TargetType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var hasInitOnly = target.Properties.Any(static p => p.RequiresInitializerSyntax);
 
-        if (target.HasPublicParameterlessConstructor)
+        if (target.HasPublicParameterlessConstructor || target.HasPrimaryConstructor)
         {
-            if (hasInitOnly)
+            if (
+                !target.HasPublicParameterlessConstructor
+                && target.PrimaryConstructor is { } primaryCtor
+            )
+            {
+                // Positional records (primary constructor, no public parameterless
+                // constructor) construct via their primary constructor, mapping
+                // parameters to properties by name.
+                AppendBindMethodWithPrimaryCtor(sb, target, primaryCtor, index, typeName);
+                AppendTryBindMethodWithPrimaryCtor(sb, target, primaryCtor, index, typeName);
+            }
+            else if (hasInitOnly)
             {
                 AppendBindMethodWithInitOnly(sb, target, index, typeName);
                 AppendTryBindMethodWithInitOnly(sb, target, index, typeName);
@@ -122,6 +131,8 @@ public sealed partial class PicoCfgBindGenerator
         {
             if (property.RequiresInitializerSyntax)
                 continue;
+            if (IsUnresolvedNestedProperty(property))
+                continue;
             AppendBindProperty(sb, target, property, throwOnFailure: true);
         }
         sb.AppendLine("    }");
@@ -137,6 +148,8 @@ public sealed partial class PicoCfgBindGenerator
         foreach (var property in target.Properties)
         {
             if (property.RequiresInitializerSyntax)
+                continue;
+            if (IsUnresolvedNestedProperty(property))
                 continue;
             AppendBindProperty(sb, target, property, throwOnFailure: false);
         }
@@ -161,11 +174,172 @@ public sealed partial class PicoCfgBindGenerator
 
         AppendInlinePropertyValues(sb, target, throwOnFailure: true, hasAnyVar: false);
 
-        sb.Append("        return new ").Append(typeName).AppendLine();
+        sb.Append("        return ");
+        AppendConstructionCore(sb, target, typeName, ctorArgs: null, consumedProperties: null);
+        sb.AppendLine("    }");
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// Emits <c>Bind_&lt;index&gt;</c> for a positional record: every inline property
+    /// value is resolved first, then the record is constructed through its primary
+    /// constructor (parameters map to properties by name) and any remaining
+    /// non-constructor properties are assigned via an object initializer.
+    /// </summary>
+    private static void AppendBindMethodWithPrimaryCtor(
+        StringBuilder sb,
+        TargetModel target,
+        IMethodSymbol primaryCtor,
+        int index,
+        string typeName
+    )
+    {
+        sb.Append("    private static ")
+            .Append(typeName)
+            .Append(" Bind_")
+            .Append(index)
+            .AppendLine("(global::PicoCfg.Abs.ICfg cfg, string? section)");
+        sb.AppendLine("    {");
+
+        AppendInlinePropertyValues(sb, target, throwOnFailure: true, hasAnyVar: false);
+
+        var ctorArgs = BuildPrimaryCtorArguments(target, primaryCtor);
+        var consumed = GetPrimaryCtorConsumedProperties(target, primaryCtor);
+        sb.Append("        return ");
+        AppendConstructionCore(sb, target, typeName, ctorArgs, consumed);
+        sb.AppendLine("    }");
+        sb.AppendLine();
+    }
+
+    private static void AppendTryBindMethodWithPrimaryCtor(
+        StringBuilder sb,
+        TargetModel target,
+        IMethodSymbol primaryCtor,
+        int index,
+        string typeName
+    )
+    {
+        sb.Append("    private static bool TryBind_")
+            .Append(index)
+            .Append("(global::PicoCfg.Abs.ICfg cfg, string? section, out ")
+            .Append(typeName)
+            .AppendLine(" value)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        var any = false;");
+        sb.Append("        value = default!;").AppendLine();
+        sb.AppendLine();
+
+        AppendInlinePropertyValues(sb, target, throwOnFailure: false, hasAnyVar: true);
+
+        sb.AppendLine();
+        var ctorArgs = BuildPrimaryCtorArguments(target, primaryCtor);
+        var consumed = GetPrimaryCtorConsumedProperties(target, primaryCtor);
+        sb.Append("        value = ");
+        AppendConstructionCore(sb, target, typeName, ctorArgs, consumed);
+        sb.AppendLine("        return any;");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// Builds the constructor argument expressions for a positional record's
+    /// primary constructor. Each parameter maps to its same-named bindable
+    /// property's inline value variable; parameters without a bindable property
+    /// fall back to <c>default</c>.
+    /// </summary>
+    private static List<string>? BuildPrimaryCtorArguments(
+        TargetModel target,
+        IMethodSymbol primaryCtor
+    )
+    {
+        if (primaryCtor.Parameters.Length == 0)
+            return null;
+
+        var args = new List<string>(primaryCtor.Parameters.Length);
+        foreach (var parameter in primaryCtor.Parameters)
+        {
+            var property = FindBindableProperty(target, parameter.Name);
+            var canPass = property is not null && !IsUnresolvedNestedProperty(property);
+            args.Add(
+                canPass ? "__value_" + property!.Name
+                : parameter.Type.IsReferenceType ? "default!"
+                : "default"
+            );
+        }
+        return args;
+    }
+
+    /// <summary>
+    /// Names of the bindable properties consumed by the primary constructor's
+    /// parameters — these are passed positionally and must not be repeated in
+    /// the object initializer.
+    /// </summary>
+    private static HashSet<string> GetPrimaryCtorConsumedProperties(
+        TargetModel target,
+        IMethodSymbol primaryCtor
+    )
+    {
+        var consumed = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var parameter in primaryCtor.Parameters)
+        {
+            if (FindBindableProperty(target, parameter.Name) is { } property)
+                consumed.Add(property.Name);
+        }
+        return consumed;
+    }
+
+    private static PropertyModel? FindBindableProperty(TargetModel target, string name)
+    {
+        foreach (var property in target.Properties)
+        {
+            if (property.Name == name)
+                return property;
+        }
+
+        foreach (var property in target.Properties)
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                return property;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Emits <c>new TypeName(...) { ... };</c>. When <paramref name="ctorArgs"/>
+    /// is non-null the type is constructed with positional arguments and the
+    /// initializer is limited to properties not consumed by those arguments.
+    /// The caller prefixes the assignment target (<c>return </c> or <c>value = </c>).
+    /// </summary>
+    private static void AppendConstructionCore(
+        StringBuilder sb,
+        TargetModel target,
+        string typeName,
+        List<string>? ctorArgs,
+        HashSet<string>? consumedProperties
+    )
+    {
+        if (ctorArgs is { Count: > 0 })
+        {
+            sb.Append("new ")
+                .Append(typeName)
+                .Append('(')
+                .Append(string.Join(", ", ctorArgs))
+                .AppendLine(")");
+        }
+        else
+        {
+            sb.Append("new ").Append(typeName).AppendLine();
+        }
+
         sb.AppendLine("        {");
         for (var i = 0; i < target.Properties.Length; i++)
         {
             var property = target.Properties[i];
+            if (IsUnresolvedNestedProperty(property))
+                continue;
+            if (consumedProperties is not null && consumedProperties.Contains(property.Name))
+                continue;
             var separator = i < target.Properties.Length - 1 ? "," : "";
             sb.Append("            ")
                 .Append(property.Name)
@@ -175,8 +349,6 @@ public sealed partial class PicoCfgBindGenerator
                 .AppendLine();
         }
         sb.AppendLine("        };");
-        sb.AppendLine("    }");
-        sb.AppendLine();
     }
 
     private static void AppendTryBindMethodWithInitOnly(
@@ -199,21 +371,10 @@ public sealed partial class PicoCfgBindGenerator
         AppendInlinePropertyValues(sb, target, throwOnFailure: false, hasAnyVar: true);
 
         sb.AppendLine();
-        sb.Append("        value = new ").Append(typeName).AppendLine();
-        sb.AppendLine("        {");
-        for (var i = 0; i < target.Properties.Length; i++)
-        {
-            var property = target.Properties[i];
-            var separator = i < target.Properties.Length - 1 ? "," : "";
-            sb.Append("            ")
-                .Append(property.Name)
-                .Append(" = __value_")
-                .Append(property.Name)
-                .Append(separator)
-                .AppendLine();
-        }
-        sb.AppendLine("        };");
+        sb.Append("        value = ");
+        AppendConstructionCore(sb, target, typeName, ctorArgs: null, consumedProperties: null);
         sb.AppendLine("        return any;");
+        ;
         sb.AppendLine("    }");
         sb.AppendLine();
     }
@@ -376,6 +537,15 @@ public sealed partial class PicoCfgBindGenerator
             sb.AppendLine();
     }
 
+    /// <summary>
+    /// True when a nested property's target type never made it into the final
+    /// sorted model set (truncated below the nesting depth limit or excluded by
+    /// analysis diagnostics) — its <c>Bind_&lt;N&gt;</c> method does not exist, so
+    /// the property must be skipped rather than referencing <c>Bind_-1</c>.
+    /// </summary>
+    private static bool IsUnresolvedNestedProperty(PropertyModel property) =>
+        property.ScalarKind == ScalarKind.Nested && property.NestedModelIndex < 0;
+
     private static void AppendInlinePropertyValues(
         StringBuilder sb,
         TargetModel target,
@@ -387,6 +557,8 @@ public sealed partial class PicoCfgBindGenerator
         {
             if (property.ScalarKind == ScalarKind.Nested)
             {
+                if (property.NestedModelIndex < 0)
+                    continue;
                 AppendNestedInlineValue(sb, property, hasAnyVar);
                 continue;
             }
@@ -793,6 +965,8 @@ public sealed partial class PicoCfgBindGenerator
 
         if (element.Kind == ScalarKind.Nested)
         {
+            if (element.NestedModelIndex < 0)
+                return;
             var elemVar = depth == 0 ? "__elem_" + property.Name : $"__elem_{depth}";
             sb.Append("            var ")
                 .Append(elemVar)

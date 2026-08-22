@@ -6,6 +6,8 @@ public sealed partial class PicoCfgBindGenerator
     private static bool TryAnalyzeTarget(
         SourceProductionContext context,
         TargetRegistration registration,
+        IReadOnlyDictionary<ITypeSymbol, TargetRegistration> knownTargets,
+        ISet<ITypeSymbol> truncatedTypes,
         out TargetModel model
     )
     {
@@ -15,7 +17,7 @@ public sealed partial class PicoCfgBindGenerator
         {
             ReportAll(
                 context,
-                registration.Locations,
+                GetTypeLevelLocations(registration, registration.TargetType),
                 Diagnostics.TargetMustBeClosedNamedType,
                 registration.TargetType.ToDisplayString()
             );
@@ -26,7 +28,7 @@ public sealed partial class PicoCfgBindGenerator
         {
             ReportAll(
                 context,
-                registration.Locations,
+                GetTypeLevelLocations(registration, namedType),
                 Diagnostics.TargetMustBeClosedNamedType,
                 namedType.ToDisplayString()
             );
@@ -37,7 +39,7 @@ public sealed partial class PicoCfgBindGenerator
         {
             ReportAll(
                 context,
-                registration.Locations,
+                GetTypeLevelLocations(registration, namedType),
                 Diagnostics.TargetMustBeReferenceType,
                 namedType.ToDisplayString()
             );
@@ -45,12 +47,8 @@ public sealed partial class PicoCfgBindGenerator
         }
 
         var isRecordClass = namedType.IsRecord && namedType.TypeKind == TypeKind.Class;
-        var hasPrimaryCtor =
-            isRecordClass
-            && namedType
-                .DeclaringSyntaxReferences.Select(static r => r.GetSyntax())
-                .OfType<RecordDeclarationSyntax>()
-                .Any(static r => r.ParameterList?.Parameters.Count > 0);
+        var primaryConstructor = isRecordClass ? FindPrimaryConstructor(namedType) : null;
+        var hasPrimaryCtor = primaryConstructor is not null;
 
         var properties = new List<PropertyModel>();
         foreach (var member in namedType.GetMembers())
@@ -60,6 +58,21 @@ public sealed partial class PicoCfgBindGenerator
 
             if (property.IsStatic || property.DeclaredAccessibility != Accessibility.Public)
                 continue;
+
+            // A nested type that hit the nesting depth limit (PCFGGEN009) was never
+            // expanded, so its nested property graph is unknown. Skip such properties
+            // instead of generating Bind_-1 references (CS0103).
+            if (ContainsTruncatedNestedType(property.Type, knownTargets, truncatedTypes))
+            {
+                ReportAll(
+                    context,
+                    registration.Locations.Concat([property.Locations[0]]),
+                    Diagnostics.NestingTruncated,
+                    NestingDepthLimit,
+                    property.Type.ToDisplayString()
+                );
+                continue;
+            }
 
             if (property.IsIndexer)
             {
@@ -122,7 +135,7 @@ public sealed partial class PicoCfgBindGenerator
         {
             ReportAll(
                 context,
-                registration.Locations,
+                GetTypeLevelLocations(registration, namedType),
                 Diagnostics.MissingPublicParameterlessConstructor,
                 namedType.ToDisplayString()
             );
@@ -135,9 +148,90 @@ public sealed partial class PicoCfgBindGenerator
             [.. properties],
             hasPublicParameterlessCtor,
             isRecordClass,
-            hasPrimaryCtor
+            hasPrimaryCtor,
+            primaryConstructor
         );
         return true;
+    }
+
+    /// <summary>
+    /// Locations for a type-level diagnostic: the explicit bind call sites when the
+    /// type was requested directly, otherwise the type's own declaration (discovered
+    /// nested types carry no call-site locations and would otherwise fail silently).
+    /// </summary>
+    private static IEnumerable<Location> GetTypeLevelLocations(
+        TargetRegistration registration,
+        ITypeSymbol type
+    )
+    {
+        if (registration.Locations.Count > 0)
+            return registration.Locations;
+
+        return type.Locations.Length > 0 ? [type.Locations[0]] : [Location.None];
+    }
+
+    /// <summary>
+    /// Finds a positional record's primary constructor: the instance constructor
+    /// whose parameters match the record declaration's positional parameter list
+    /// (names and order). Returns <see langword="null"/> for body-only records.
+    /// </summary>
+    private static IMethodSymbol? FindPrimaryConstructor(INamedTypeSymbol type)
+    {
+        var recordSyntax = type
+            .DeclaringSyntaxReferences.Select(static r => r.GetSyntax())
+            .OfType<RecordDeclarationSyntax>()
+            .FirstOrDefault(static r => r.ParameterList is { Parameters.Count: > 0 });
+        if (recordSyntax?.ParameterList is not { Parameters.Count: > 0 } parameterList)
+            return null;
+
+        var paramNames = parameterList
+            .Parameters.Select(static p => p.Identifier.ValueText)
+            .ToArray();
+
+        foreach (var ctor in type.InstanceConstructors)
+        {
+            if (ctor.Parameters.Length != paramNames.Length)
+                continue;
+
+            var matches = true;
+            for (var i = 0; i < paramNames.Length; i++)
+            {
+                if (
+                    !string.Equals(ctor.Parameters[i].Name, paramNames[i], StringComparison.Ordinal)
+                )
+                {
+                    matches = false;
+                    break;
+                }
+            }
+
+            if (matches)
+                return ctor;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// True when <paramref name="type"/> is a nested class (or a collection whose
+    /// element graph contains a nested class) that hit the nesting depth limit and
+    /// was therefore never expanded by <see cref="DiscoverNestedTargets"/> — either
+    /// because it sits at the truncation boundary or below it (in which case it was
+    /// never even added to the known target set).
+    /// </summary>
+    private static bool ContainsTruncatedNestedType(
+        ITypeSymbol type,
+        IReadOnlyDictionary<ITypeSymbol, TargetRegistration> knownTargets,
+        ISet<ITypeSymbol> truncatedTypes
+    )
+    {
+        if (IsNestedBindableType(type))
+            return truncatedTypes.Contains(type) || !knownTargets.ContainsKey(type);
+
+        if (TryGetCollectionKind(type, out _, out var elementType) && elementType is not null)
+            return ContainsTruncatedNestedType(elementType, knownTargets, truncatedTypes);
+
+        return false;
     }
 
     private static bool TryCreatePropertyModel(

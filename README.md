@@ -186,7 +186,10 @@ var settings = CfgBind.Bind<AppSettings>(cfg, "App");
   - Generates `Bind<T>` / `TryBind<T>` / `BindInto<T>` delegates for any type used with `CfgBind.Bind<T>()`
   - **Topological sort** of nested types to ensure inner types generate before their parents
   - Contract versioning (`CfgBindRuntime.ContractVersion = 2`) — generated code checks compatibility
-  - Maximum nesting depth of 5 with diagnostic on truncation
+  - Maximum nesting depth of 8 with diagnostic on truncation
+  - Positional records (primary constructors) bind natively — the generator
+    constructs them through their primary constructor, so `record R(int A)` and
+    records with `IReadOnlyList<T>` members work as nested or dictionary-value types
 - **Options pattern** — `CfgOptions<T>` (cached at construction) and `CfgOptionsSnapshot<T>` (rebinds on every access)
 - **Validation** — `CfgValidator.ValidateOrThrow()` with `System.ComponentModel.DataAnnotations`
 - **DI integration** (`PicoCfg.DI`) — `RegisterCfgRoot()`, `RegisterCfgTransient<T>()`, `RegisterCfgOptionsSingleton<T>()`, etc.
